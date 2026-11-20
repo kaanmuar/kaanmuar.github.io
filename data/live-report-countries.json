@@ -906,6 +906,19 @@
    ],
    "at": "2026-11-15"
   },
+  "altamira-tours.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +58-414-931.58.91",
+    "RDAP registrant in VE",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "althompson.com": {
    "country": "KY",
    "scope": "country",
@@ -1536,6 +1549,19 @@
    ],
    "at": "2026-11-09"
   },
+  "autocars44.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584127115313",
+    "phone +58414-3246701 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
+  },
   "autoscout24.com": {
    "country": "",
    "scope": "worldwide",
@@ -1545,6 +1571,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "autosmediterraneo.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "phone +34 964 22 00 54",
+    "phone +34 964 22 00 54 (legal/contact page)",
+    "address names ES (legal/contact page)",
+    "RDAP registrant in ES"
+   ],
+   "at": "2026-11-20"
   },
   "avelectriciangta.com": {
    "country": "CA",
@@ -1581,6 +1620,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "b2bve.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +584143969184",
+    "phone +584143969184 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "baddiehub.com": {
    "country": "BZ",
@@ -4232,6 +4284,19 @@
    ],
    "at": "2026-11-09"
   },
+  "darwincd.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584125447114",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "dat.com": {
    "country": "US",
    "scope": "country",
@@ -5295,6 +5360,19 @@
     "locale es-MX"
    ],
    "at": "2026-11-09"
+  },
+  "dsinternacional.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58 424 161 7308",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
   },
   "dst.dk": {
    "country": "DK",
@@ -7381,6 +7459,19 @@
    ],
    "at": "2026-11-16"
   },
+  "fundacionpolinalecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +59322555188",
+    "phone +59322555188 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
   "fundednext.com": {
    "country": "",
    "scope": "worldwide",
@@ -7681,6 +7772,19 @@
     "in the CrUX top sites of LT only"
    ],
    "at": "2026-11-09"
+  },
+  "giuliaridesign.net": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +584142762037",
+    "phone +584142762037 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "givamblog.com": {
    "country": "BR",
@@ -8377,6 +8481,19 @@
    ],
    "at": "2026-11-09"
   },
+  "hgcontadoresecu.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593995813670",
+    "phone +593995813670 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
   "hhoteldubai.com": {
    "country": "AE",
    "scope": "country",
@@ -8576,6 +8693,18 @@
    ],
    "at": "2026-11-15"
   },
+  "hotelgrandgalaxie.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58 424 233 0508",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "hotelmiramarperu.com": {
    "country": "PE",
    "scope": "country",
@@ -8709,6 +8838,19 @@
     "written in es, spoken in DO"
    ],
    "at": "2026-11-09"
+  },
+  "hvdes.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593979208000",
+    "Google Maps link in EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-20"
   },
   "hymnary.org": {
    "country": "US",
@@ -8961,6 +9103,19 @@
    ],
    "at": "2026-11-09"
   },
+  "inboundgroupca.com": {
+   "country": "CN",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +86-四川省成都市成华区人民路507号",
+    "RDAP registrant in CN",
+    "locale zh-CN",
+    "locale zh-CN (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
   "index-education.com": {
    "country": "FR",
    "scope": "country",
@@ -9152,6 +9307,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "inverpropiedad.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584122273127",
+    "phone +584122273127 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
   },
   "invoice4u.co.il": {
    "country": "IL",
@@ -12334,6 +12502,19 @@
    ],
    "at": "2026-11-09"
   },
+  "novumideas.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +58 (0212) 9518337 (legal/contact page)",
+    "address names VE",
+    "address names VE (legal/contact page)",
+    "RDAP registrant in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "nr1.md": {
    "country": "MD",
    "scope": "country",
@@ -12924,6 +13105,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "overqvyc.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "CIF/NIF printed",
+    "CIF/NIF printed (legal/contact page)",
+    "phone +34 614 896 730",
+    "phone +34 614 896 730 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "ozap.com": {
    "country": "FR",
@@ -14805,6 +14999,19 @@
     "written in en, spoken in ZA"
    ],
    "at": "2026-11-09"
+  },
+  "remaxhabitat.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +582129597008",
+    "phone +582129597008 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
   },
   "remidental.com": {
    "country": "BE",
@@ -18606,6 +18813,19 @@
    ],
    "at": "2026-11-09"
   },
+  "tuwebcaracas.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.91,
+   "by": "signals",
+   "evidence": [
+    "phone +58 (0212) 326.84.28 (legal/contact page)",
+    "Google Maps link in VE (legal/contact page)",
+    "address names VE",
+    "address names VE (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
   "tv4.se": {
    "country": "SE",
    "scope": "country",
@@ -19657,6 +19877,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "warairamar.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58-424-280-8446",
+    "address names VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
   },
   "waterhouse.nyc": {
    "country": "US",

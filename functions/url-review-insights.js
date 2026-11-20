@@ -108,7 +108,7 @@ function normal(value) {
     const url = new URL(value);
     url.hash = "";
     let path = url.pathname.replace(/\/index\.html?$/i, "/");
-    if (path.length > 1) path = path.replace(/\/+$/, "");
+    if (path.length > 1) path = path.replace(/(?<!\/)\/+$/, "");
     return url.protocol + "//" + url.host.toLowerCase() + path + url.search;
   } catch (error) {
     return String(value || "");
@@ -768,7 +768,7 @@ function localChecks(local, host, add) {
 
 // Safe Browsing status, the domain's registration, and how mail to the domain is protected in transit.
 function domainChecks(extras, dnsInfo, dnsRead, add) {
-  const end = (text) => String(text).replace(/\.*$/, ".");
+  const end = (text) => String(text).replace(/(?<!\.)\.*$/, ".");
   const sb = extras.safeBrowsing;
   if (sb && sb.ok) {
     const words = sb.threats.map((item) => THREAT_WORDS[item] ? say("threat." + item) : item.toLowerCase().replace(/_/g, " "));
@@ -781,7 +781,7 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
   threatLists.addFindings(extras.threatLists, add);
   const dom = extras.domain;
   if (dom && dom.read) {
-    const registrar = dom.registrar ? String(dom.registrar).replace(/\.*$/, "") : "";
+    const registrar = dom.registrar ? String(dom.registrar).replace(/(?<!\.)\.*$/, "") : "";
     const held = dom.registrar ? say("sec-domain.held", { domain: dom.domain, registrar: dom.registrar }) : dom.domain;
     if (dom.expires && dom.daysLeft < 0) add("Security", "fail", "high", "sec-domain-expiry", say("sec-domain-expiry.expired.title"),
       say("sec-domain-expiry.expired.evidence", { held, date: dom.expires }), say("sec-domain-expiry.expired.fix"), { effort: "minutes", cases: ["SEC-12"] });
@@ -1668,7 +1668,7 @@ function analyze(input) {
   } else if (jar.length) {
     add("Security", "pass", "info", "sec-cookies", say("sec-cookies.pass.title"), say("sec-cookies.pass.evidence", { cookies: say("sec-cookies.count", { n: cookieNames(jar).length }), pages: say("pagesN", { n: new Set(jar.map((cookie) => cookie.path)).size }) }), "", { cases: ["SEC-06"] });
   }
-  const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d+\.\d+/.test(value || ""));
+  const version = [hdr.server, rawHeaders.poweredBy].filter((value) => /\d\.\d/.test(value || ""));
   if (version.length) add("Security", "risk", "low", "sec-version", say("sec-version.title"), say("sec-version.evidence", { list: { items: version } }), say("sec-version.fix"), { effort: "minutes", cases: ["SEC-07"] });
   const noSri = [];
   read.forEach((page) => ((page.inspect.sri && page.inspect.sri.missing) || []).forEach((h) => { if (!NO_SRI_HOSTS.test(h) && noSri.indexOf(h) === -1) noSri.push(h); }));
@@ -1694,7 +1694,7 @@ function analyze(input) {
   trustGrade.securityTxtFindings(sec, add);
   if (sec) {
     if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || "")) {
-      const expires = ((sec.body || "").match(/^\s*expires\s*:\s*(.+)$/im) || [])[1];
+      const expires = ((sec.body || "").match(/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*expires\s*:\s*(.+)$/im) || [])[1];
       const past = expires && !isNaN(Date.parse(expires)) && Date.parse(expires) < Date.now();
       if (past) add("Security", "risk", "medium", "sec-securitytxt", say("sec-securitytxt.expired.title"), say("sec-securitytxt.expired.evidence", { date: expires.trim() }), say("sec-securitytxt.expired.fix"), { effort: "minutes" });
       else add("Security", "pass", "info", "sec-securitytxt", say("sec-securitytxt.pass.title"), say("sec-securitytxt.pass.evidence"), "");
@@ -2032,7 +2032,7 @@ function fixKit(ctx) {
     { name: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups", missing: COOP_GUARDED.indexOf(policyOf(hdr.coop)) === -1 }
   ];
   const social = face.social || {};
-  const name = social.ogSiteName || String(face.title || ctx.host).split(/\s+[|–—·-]\s+/)[0].trim() || ctx.host;
+  const name = social.ogSiteName || String(face.title || ctx.host).split(/(?<!\s)\s+[|–—·-]\s+/)[0].trim() || ctx.host;
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [

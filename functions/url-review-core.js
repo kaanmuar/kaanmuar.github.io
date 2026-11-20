@@ -12,6 +12,7 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const { replaceBlocks } = require("./tag-blocks");
 const headOrder = require("./url-review-head-order");
 const pageGraph = require("./url-review-page-graph");
 const cyberPassive = require("./url-review-cyber-passive");
@@ -122,7 +123,7 @@ function sectionPrefix(url) {
   try {
     const path = new URL(url).pathname || "/";
     if (path === "/") return "";
-    return path.replace(/\/+$/, "");
+    return path.replace(/(?<!\/)\/+$/, "");
   } catch (error) {
     return "";
   }
@@ -131,7 +132,7 @@ function sectionPrefix(url) {
 function underSection(url, prefix) {
   if (!prefix) return true;
   try {
-    const path = new URL(url).pathname.replace(/\/+$/, "") || "/";
+    const path = new URL(url).pathname.replace(/(?<!\/)\/+$/, "") || "/";
     return path === prefix || path.startsWith(prefix + "/");
   } catch (error) {
     return false;
@@ -338,9 +339,9 @@ function cfEmail(hex) {
 function emailsInText(text, max) {
   const out = [];
   const plain = String(text || "")
-    .replace(/\s*(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, "@")
-    .replace(/\s*(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, ".");
-  (plain.match(/[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}/gi) || []).forEach((raw) => {
+    .replace(/(?<!\s)\s+(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*|(?:\[at\]|\(at\)|\{at\}|\[arroba\]|\(arroba\))\s*/gi, "@")
+    .replace(/(?<!\s)\s+(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*|(?:\[dot\]|\(dot\)|\{dot\}|\[punto\]|\(punto\))\s*/gi, ".");
+  [...plain.matchAll(/([a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})|[a-z0-9._%+-]+/gi)].map((m) => m[1]).filter(Boolean).forEach((raw) => {
     const email = mailOf(raw.replace(/^[._%+-]+/, ""));
     if (email && !/\.(png|jpe?g|gif|webp|svg)$/.test(email) && out.indexOf(email) === -1 && out.length < (max || 5)) out.push(email);
   });
@@ -1678,9 +1679,14 @@ function collect(html, name) {
   return String(html || "").match(new RegExp("<" + name + "\\b[^>]*>", "gi")) || [];
 }
 
+// Tag and block regexes here end in a branch, group 1, that takes an unclosed tag (and for blocks the rest of the
+// text) so later starts do not each rescan it (#3965); that branch keeps its text and is never counted as a match.
+const blankBlock = (block, open) => (open ? block : " ");
+const closedMatches = (re, text) => [...String(text).matchAll(re)].filter((m) => !m[1]).map((m) => m[0]);
+
 function textOf(html, name) {
   const match = String(html || "").match(new RegExp("<" + name + "\\b[^>]*>([\\s\\S]*?)</" + name + ">", "i"));
-  return match ? decode(match[1].replace(/<[^>]+>/g, " ")) : "";
+  return match ? decode(match[1].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)) : "";
 }
 
 const AUTH_ROUTE = /\/(auth|oauth2?|log_?out|sign_?out)(\/|$|\?)/i;
@@ -1828,7 +1834,7 @@ function robotsAllows(pathname, groups) {
 const CHALLENGES = [
   ["Cloudflare", /<title>\s*(?:Just a moment\.\.\.|Attention Required! \| Cloudflare)\s*<\/title>|window\._cf_chl_opt\b/i],
   ["Radware", /<title>\s*Radware (?:Bot Manager Captcha|Captcha Page|Page)\s*<\/title>/i],
-  ["Akamai", /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>[\s\S]{0,2000}errors\.edgesuite\.net/i],
+  ["Akamai", /\/_sec\/cp_challenge\/|<title>\s*Access Denied\s*<\/title>(?:(?!<title>\s*Access Denied\s*<\/title>)[\s\S]){0,2000}errors\.edgesuite\.net/i],
   ["Imperva", /Incapsula incident ID|_Incapsula_Resource\?CWUDNSAI=/i],
   ["DataDome", /captcha-delivery\.com/i],
   ["PerimeterX", /id=["']px-captcha["']|<title>\s*Access to this page has been denied\.?\s*<\/title>/i],
@@ -1876,7 +1882,7 @@ function ownMarkup(html, pageUrl) {
     return out;
   };
   return String(html || "")
-    .replace(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi, blankBlock)
     .replace(/(<(script|style)\b[^>]*>[\s\S]*?<\/\2\s*>|<!--[\s\S]*?-->|<[a-z!/][^>]*>)|[^<]+/gi, (all, kept) => kept ? tag(kept) : " ");
 }
 
@@ -1905,10 +1911,9 @@ function technologies(html, headers, pageUrl, generator) {
 }
 
 function visibleText(html) {
-  return decode(String(html || "")
-    .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " "));
+  return decode(replaceBlocks(String(html || ""), /<(script|style|noscript|template|svg|head)\b/gi, " ")
+    .replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock)
+    .replace(/<[^>]+>|(<[^>]*$)/g, blankBlock));
 }
 
 const STOPWORDS = {
@@ -1934,7 +1939,7 @@ function outline(html) {
   const re = /<h([1-3])\b[^<>]*>((?:[^<]|<(?!h[1-3]\b|\/h\1>))*)<\/h\1>/gi;
   let match;
   while ((match = re.exec(String(html || ""))) && heads.length < 30) {
-    const text = decode(match[2].replace(/<[^>]+>/g, " "));
+    const text = decode(match[2].replace(/<[^>]+>|(<[^>]*$)/g, blankBlock));
     if (text) heads.push({ level: Number(match[1]), text: clean(text, 120) });
   }
   return heads;
@@ -1950,7 +1955,7 @@ const ANALYTICS_TAGS = [
   ["Universal Analytics", /["'=]UA-\d{4,10}-\d{1,4}["'&]/, /["'=](UA-\d{4,10}-\d{1,4})["'&]/g],
   ["Google Tag Manager", /googletagmanager\.com\/gtm\.js|GTM-[A-Z0-9]{4,9}/, /(GTM-[A-Z0-9]{4,9})\b/g],
   ["Google Ads", /["'=]AW-\d{6,12}["'&]/, /["'=](AW-\d{6,12})["'&]/g],
-  ["Meta Pixel", /connect\.facebook\.net\/[^"']*\/fbevents\.js|fbq\(\s*['"]init/, /fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g],
+  ["Meta Pixel", /connect\.facebook\.net\/(?:(?!connect\.facebook\.net\/(?!fbevents\.js))[^"'])*\/fbevents\.js|fbq\(\s*['"]init/, /fbq\(\s*['"]init['"]\s*,\s*['"]?(\d{8,20})/g],
   ["LinkedIn Insight", /snap\.licdn\.com|_linkedin_partner_id/, /_linkedin_partner_id\s*=\s*["']?(\d{3,12})/g],
   ["TikTok Pixel", /analytics\.tiktok\.com|ttq\.load\(/, /ttq\.load\(\s*['"]([A-Z0-9]{10,30})/g],
   ["X Pixel", /static\.ads-twitter\.com|twq\(\s*['"]config/, null],
@@ -1961,7 +1966,7 @@ const ANALYTICS_TAGS = [
   ["HubSpot", /js\.hs-scripts\.com|js\.hs-analytics\.net/, /js\.hs-scripts\.com\/(\d{3,12})/g],
   ["Adobe Analytics", /assets\.adobedtm\.com|AppMeasurement/, null],
   ["Matomo", /matomo\.js|piwik\.js|_paq\.push/, null],
-  ["Plausible", /plausible\.io\/js|\/js\/script\.js["'][^>]*data-domain/, null],
+  ["Plausible", /plausible\.io\/js|\/js\/script\.js["'](?:(?!\/js\/script\.js["'])[^>])*data-domain/, null],
   ["Fathom", /cdn\.usefathom\.com/, null],
   ["Umami", /cloud\.umami\.is|\/umami\.js|data-website-id=/, null],
   ["PostHog", /posthog\.init|posthog-js|\.posthog\.com/, null],
@@ -1987,7 +1992,7 @@ const CONSENT_TOOLS = [
   ["Complianz", /complianz/i],
   ["Quantcast Choice", /quantcast\.mgr|cmp\.quantcast/i],
   ["TrustArc", /trustarc|consent\.truste/i],
-  ["Klaro", /klaro(-[\w-]+)?(\.min)?\.js|klaroConfig/],
+  ["Klaro", /klaro(-(?:(?!klaro-[\w-])[\w-])+)?(\.min)?\.js|klaroConfig/],
   ["EU Cookie Compliance", /eu[_-]cookie[_-]compliance|id=["']sliding-popup["']/i],
   ["CookieConsent", /cookieconsent(\.min)?\.js|CookieConsent\.run/i],
   ["Borlabs", /borlabs-cookie/i],
@@ -2002,7 +2007,7 @@ function consentModeOf(body) {
   const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([^{}]{0,1200})\}/g;
   let match;
   while ((match = re.exec(body)) && blocks.length < 8) {
-    const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || "";
+    const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]|region['"]?\s*:\s*\[[^\]]*$/) || [])[1] || "";
     const regions = [...list.matchAll(/['"]([A-Za-z]{2}(?:-[A-Za-z0-9]{1,3})?)['"]/g)].map((hit) => hit[1].toUpperCase());
     blocks.push({
       analytics: (match[1].match(/analytics_storage['"]?\s*:\s*['"](denied|granted)/) || [])[1] || "",
@@ -2047,14 +2052,14 @@ function analyticsScan(html) {
     gtmIds,
     gtagLoads: (body.match(/googletagmanager\.com\/gtag\/js/g) || []).length,
     gtmLoads: (body.match(/googletagmanager\.com\/gtm\.js/g) || []).length,
-    loader: /<script\b[^>]*\ssrc\s*=\s*["'][^"']*(analytics|gtag|gtm|tracking|tagmanager)[^"']*["']/i.test(body),
+    loader: /<script\b(?:(?!<script\b)[^>])*\ssrc\s*=\s*["'](?=[^"']*["'])[^"']*?(analytics|gtag|gtm|tracking|tagmanager)/i.test(body),
     dataLayer: /dataLayer\s*=|dataLayer\.push/.test(body)
   };
 }
 
 function schemaScan(html) {
   const result = { errors: 0, items: [], emails: [] };
-  const blocks = String(html || "").match(/<script\b[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi) || [];
+  const blocks = closedMatches(/<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>|(<script\b(?=[^>]*application\/ld\+json)[^>]*>[\s\S]*|<script\b[^>]*)/gi, html || "");
   // A Person's email is a private address, so only organizations and contact points count.
   const keepEmails = (node, types) => {
     if (types.some((type) => /^Person$/i.test(type))) return;
@@ -2091,18 +2096,18 @@ function inspect(html, headers, pageUrl) {
   const title = textOf(html, "title");
   const description = collect(html, "meta").map((tag) => attr(tag, "name").toLowerCase() === "description" ? attr(tag, "content") : "").find(Boolean) || "";
   const canonical = collect(html, "link").map((tag) => attr(tag, "rel").toLowerCase() === "canonical" ? attr(tag, "href") : "").find(Boolean) || "";
-  const htmlTag = (html.match(/<html\b[^>]*>/i) || [""])[0];
-  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<template\b[\s\S]*?<\/template>/gi, " ");
+  const htmlTag = closedMatches(/<html\b[^>]*>|(<html\b)[^>]*$/gi, html)[0] || "";
+  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, blankBlock).replace(/<template\b[\s\S]*?<\/template>|(<template\b)[\s\S]*/gi, blankBlock);
   // The HTML parser copies attributes of a stray later <html> tag onto the root when the root lacks them.
-  const lang = attr(htmlTag, "lang") || (hasAttr(htmlTag, "lang") ? "" : collect(markup.replace(/<!--[\s\S]*?-->/g, " "), "html").map((tag) => attr(tag, "lang")).find(Boolean) || "");
-  const h1 = (markup.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/gi) || []).map((tag) => decode(tag.replace(/<[^>]+>/g, " "))).filter(Boolean);
+  const lang = attr(htmlTag, "lang") || (hasAttr(htmlTag, "lang") ? "" : collect(markup.replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock), "html").map((tag) => attr(tag, "lang")).find(Boolean) || "");
+  const h1 = closedMatches(/<h1\b[^>]*>[\s\S]*?<\/h1>|(<h1\b)[\s\S]*/gi, markup).map((tag) => decode(tag.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock))).filter(Boolean);
   const images = collect(markup, "img");
   const missingAlt = images.filter((tag) => !hasAttr(tag, "alt")).length;
   const forms = collect(markup, "form").length;
   const password = /<input\b[^<>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
   const labelFor = new Set(collect(markup, "label").map((tag) => attr(tag, "for")).filter(Boolean));
-  const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
+  const unlabeled = closedMatches(/<(?:input|select|textarea)\b[^>]*>|(<(?:input|select|textarea)\b)[^>]*$/gi, markup.replace(/<label\b[\s\S]*?<\/label>|(<label\b)[\s\S]*/gi, blankBlock)).filter((tag) => {
     const type = attr(tag, "type").toLowerCase();
     if (/^(hidden|submit|button|reset|image)$/.test(type)) return false;
     if (hiddenTag(tag)) return false;
@@ -2177,7 +2182,7 @@ function inspect(html, headers, pageUrl) {
     return name === key ? attr(tag, "content") : "";
   }).find(Boolean) || "";
   const viewportContent = metaValue("viewport").toLowerCase();
-  const head = (html.match(/<head\b[\s\S]*?<\/head>/i) || [""])[0];
+  const head = closedMatches(/<head\b[\s\S]*?<\/head>|(<head\b)[\s\S]*/gi, html)[0] || "";
   const scriptTags = collect(html, "script");
   const crossScripts = scriptTags.filter((tag) => {
     const src = attr(tag, "src");
@@ -2192,14 +2197,14 @@ function inspect(html, headers, pageUrl) {
     .concat(linksAll.filter((tag) => /(^|\s)stylesheet(\s|$)/i.test(attr(tag, "rel")) && attr(tag, "href") && crossOrigin(attr(tag, "href")))
       .map((tag) => ({ kind: "style", host: crossOrigin(attr(tag, "href")), integrity: attr(tag, "integrity"), hasCrossorigin: /\scrossorigin\b/i.test(tag) })));
   const scriptUrls = scripts.map((src) => { try { return new URL(src, pageUrl).toString(); } catch (error) { return ""; } }).filter((url) => /^https?:/i.test(url)).slice(0, 80);
-  const inlineScripts = (html.match(/<script\b[^>]*>[\s\S]*?<\/script>/gi) || []).filter((block) => {
+  const inlineScripts = closedMatches(/<script\b[^>]*>[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, html).filter((block) => {
     const open = block.match(/^<script\b[^>]*>/i)[0];
     if (attr(open, "src")) return false;
     const type = attr(open, "type").toLowerCase();
     if (type && !/javascript|module|^text\/babel$/.test(type)) return false;
     return /\S/.test(block.replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, ""));
-  }).length + (html.match(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=/gi) || []).length;
-  const inlineStyles = (html.match(/<style\b/gi) || []).length + (html.match(/<[a-z][^>]*\sstyle\s*=/gi) || []).length;
+  }).length + closedMatches(/<[a-z][^>]*\son(?:click|load|error|submit|change|mouseover|focus|blur|input|keydown|keyup)\s*=|(<[a-z])[^>]*/gi, html).length;
+  const inlineStyles = (html.match(/<style\b/gi) || []).length + closedMatches(/<[a-z][^>]*\sstyle\s*=|(<[a-z])[^>]*/gi, html).length;
   const text = visibleText(html);
   const socialLinks = [];
   collect(markup, "a").forEach((tag) => {
@@ -2209,9 +2214,9 @@ function inspect(html, headers, pageUrl) {
       if (parsed.protocol === "https:" && SOCIAL_HOSTS.test(parsed.hostname) && parsed.pathname.length > 1 && !/\/(share|sharer|intent|shareArticle)/i.test(parsed.pathname) && socialLinks.indexOf(href) === -1 && socialLinks.length < 12) socialLinks.push(href);
     } catch (error) { /* not a profile link */ }
   });
-  const anchors = (markup.match(/<a\b[^>]*>[\s\S]*?<\/a>/gi) || []).slice(0, 800).map((block) => {
+  const anchors = closedMatches(/<a\b[^>]*>[\s\S]*?<\/a>|(<a\b)[\s\S]*/gi, markup).slice(0, 800).map((block) => {
     const open = block.match(/^<a\b[^>]*>/i)[0];
-    return { href: attr(open, "href"), text: decode(block.replace(/<[^>]+>/g, " ")), label: [attr(open, "aria-label"), attr(open, "title")].join(" ") };
+    return { href: attr(open, "href"), text: decode(block.replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)), label: [attr(open, "aria-label"), attr(open, "title")].join(" ") };
   });
   const libraries = [];
   scripts.slice(0, 60).forEach((src) => {
@@ -2229,23 +2234,23 @@ function inspect(html, headers, pageUrl) {
     if (!/^https?:$/.test(target.protocol) || registrable(target.hostname) !== registrable(pageHost)) return false;
     const values = [];
     target.searchParams.forEach((value) => values.push(value));
-    return values.some((value) => /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value));
+    return values.some((value) => /(?<![^\s@])[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(value) && !/@(?:group|import|resource)\.calendar\.google\.com\b/i.test(value));
   }).length;
   const hreflang = linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang"))
     .slice(0, 30).map((tag) => ({ lang: clean(attr(tag, "hreflang").toLowerCase(), 16), href: absolute(attr(tag, "href")) }));
   const iconTag = linksAll.find((tag) => /(^|\s)(icon|shortcut icon|apple-touch-icon)(\s|$)/i.test(attr(tag, "rel")));
   const signals = {
-    viewport: /<meta\b[^>]*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
+    viewport: /<meta\b(?:(?!<meta\b)[^>])*\bname\s*=\s*(?:["']viewport["']|viewport\b)/i.test(html),
     styled: /<style\b/i.test(html),
     openGraph: metas.some((tag) => /^og:/i.test(attr(tag, "property"))),
     twitter: metas.some((tag) => /^twitter:/i.test(attr(tag, "name"))),
     jsonLd: (html.match(/application\/ld\+json/gi) || []).length,
     iframes: (html.match(/<iframe\b/gi) || []).length,
-    untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>/gi, " "), "iframe").filter((tag) => !attr(tag, "title") && !hiddenTag(tag)).length,
+    untitledFrames: collect(markup.replace(/<noscript\b[\s\S]*?<\/noscript>|(<noscript\b)[\s\S]*/gi, blankBlock), "iframe").filter((tag) => !attr(tag, "title") && !hiddenTag(tag)).length,
     h2: (html.match(/<h2\b/gi) || []).length,
-    mixed: (markup.match(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\//gi) || []).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
+    mixed: closedMatches(/<(?:script|img|iframe|source|video|audio|embed|track)\b[^>]*\ssrc\s*=\s*["']?http:\/\/|(<(?:script|img|iframe|source|video|audio|embed|track)\b)[^>]*/gi, markup).length + linksAll.filter((tag) => /stylesheet|icon|preload|manifest/i.test(attr(tag, "rel")) && /^http:\/\//i.test(attr(tag, "href"))).length,
     hreflang: linksAll.filter((tag) => attr(tag, "rel").toLowerCase().indexOf("alternate") !== -1 && attr(tag, "hreflang")).length,
-    skip: /<a\b[^>]*href\s*=\s*["']#[^"']+/i.test(html),
+    skip: /<a\b(?:(?!<a\b)[^>])*href\s*=\s*["']#[^"']+/i.test(html),
     main: /<main\b|\brole\s*=\s*["']?main\b/i.test(html),
     consent: /cookie|consent|gdpr|privacidad/i.test(html.slice(0, 120000)),
     privacyLink: /privacy|privacidad|legal|aviso/i.test(html),
@@ -2253,16 +2258,16 @@ function inspect(html, headers, pageUrl) {
     noscript: /<noscript\b/i.test(html),
     fileInput: /type\s*=\s*["']file["']/i.test(html),
     search: /type\s*=\s*["']search["']|role\s*=\s*["']search["']/i.test(html),
-    required: (html.match(/<input\b[^>]*\brequired\b/gi) || []).length,
+    required: closedMatches(/<input\b[^>]*\brequired\b|(<input\b)[^>]*/gi, html).length,
     video: (html.match(/<video\b/gi) || []).length,
     permissions: header(headers, "permissions-policy") || header(headers, "feature-policy"),
     thirdParty: scriptHosts,
-    imgNoSize: (markup.match(/<img\b[^>]*>/gi) || []).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
+    imgNoSize: closedMatches(/<img\b[^>]*>|(<img\b)[^>]*$/gi, markup).filter((tag) => !attr(tag, "width") && !attr(tag, "height")).length,
     robotsMeta: metas.some((tag) => attr(tag, "name").toLowerCase() === "robots"),
     cacheControl: header(headers, "cache-control"),
     apiHint: /graphql|wp-json|openapi|swagger/i.test(html.slice(0, 200000)),
     manifest: linksAll.some((tag) => /manifest/i.test(attr(tag, "rel"))),
-    appShell: text.length < 300 && /<div\b[^>]*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'][^>]*>\s*<\/div>/i.test(html),
+    appShell: text.length < 300 && /<div\b(?:(?!<div\b)[^>])*\bid\s*=\s*["'](root|app|__next|__nuxt|svelte|___gatsby)["'](?:(?!\bid\s*=\s*["'](?:root|app|__next|__nuxt|svelte|___gatsby)["'])[^>])*>\s*<\/div>/i.test(html),
     zoomBlocked: /user-scalable\s*=\s*(no|0)\b/.test(viewportContent) || /maximum-scale\s*=\s*(1(\.0+)?|0?\.\d+)\b/.test(viewportContent),
     positiveTabindex: (html.match(/\btabindex\s*=\s*["']?[1-9]/gi) || []).length,
     blockingScripts: collect(head, "script").filter((tag) => attr(tag, "src") && !/\b(async|defer)\b/i.test(tag) && attr(tag, "type").toLowerCase() !== "module").length,
@@ -2294,7 +2299,7 @@ function inspect(html, headers, pageUrl) {
     words: text ? text.split(/\s+/).length : 0,
     questionHeadings: outline(html).filter((item) => item.level > 1 && (/\?$/.test(item.text) || /^¿/.test(item.text))).length,
     author: clean(metaValue("author") || metaValue("article:author"), 120),
-    dated: !!(metaValue("article:published_time") || metaValue("article:modified_time") || /<time\b[^>]*datetime\s*=/i.test(html)),
+    dated: !!(metaValue("article:published_time") || metaValue("article:modified_time") || /<time\b(?:(?!<time\b)[^>])*datetime\s*=/i.test(html)),
     icon: iconTag ? absolute(attr(iconTag, "href")) : "",
     seo: {
       robots: clean(metaValue("robots"), 160),
@@ -2445,7 +2450,7 @@ function journeys(pages, dom) {
   const heading = (page) => {
     const text = clean((page && page.inspect && page.inspect.h1 && page.inspect.h1[0]) || "", 200);
     if (!text) return "";
-    return text.length > 40 ? text.slice(0, 40).replace(/\s+\S*$/, "") : text;
+    return text.length > 40 ? text.slice(0, 40).replace(/(?<!\s)\s+\S*$/, "") : text;
   };
   return ((dom && dom.nav) || [])
     .filter((link) => lastingLink(link))
@@ -2458,7 +2463,7 @@ function journeys(pages, dom) {
 
 // A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
 function privacyCheck(link, path) {
-  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
+  const tail = link && link.href ? String(link.href).split(/[?#]/)[0].replace(/(?<!\/)\/+$/, "").split("/").pop().replace(/["\\]/g, "") : "";
   return tail ? { check: { kind: "count", path, selector: "a[href*=\"" + tail + "\" i]", op: "gte", n: 1 } } : {};
 }
 
@@ -2566,7 +2571,7 @@ function propose(pages, robotsBlocked, limits, dom) {
   const cspHeader = String(face.headers.csp || "");
   const cspMeta = String(face.headers.metaCsp || "");
   const csp = [cspHeader, cspMeta].filter(Boolean).join("; ");
-  const cspGaps = csp ? [/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp) ? "'unsafe-inline' without a nonce or hash" : "", /'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : "", !/frame-ancestors/.test(cspHeader) ? "no frame-ancestors" : "", !/(default|script)-src/.test(csp) ? "no script-src or default-src" : "", /(default|script)-src[^;]*\s\*(\s|;|$)/.test(csp) ? "a wildcard script source" : ""].filter(Boolean) : [];
+  const cspGaps = csp ? [/'unsafe-inline'/.test(csp) && !/'nonce-|'sha(256|384|512)-|'strict-dynamic'/.test(csp) ? "'unsafe-inline' without a nonce or hash" : "", /'unsafe-eval'/.test(csp) ? "'unsafe-eval'" : "", !/frame-ancestors/.test(cspHeader) ? "no frame-ancestors" : "", !/(default|script)-src/.test(csp) ? "no script-src or default-src" : "", /(default|script)-src(?:(?!(?:default|script)-src)[^;])*\s\*(\s|;|$)/.test(csp) ? "a wildcard script source" : ""].filter(Boolean) : [];
   addCase(cases, { id: "SEC-03", layer: "Security", title: here + " sends a content security policy that limits scripts", why: (csp ? "content-security-policy is present on " + here + (cspGaps.length ? ", with " + cspGaps.join(", ") : " and names script sources and frame-ancestors") + "." : "content-security-policy was absent on " + here + ".") + " The policy would be checked for script-src and frame-ancestors, not only for the header name.", fw: browser });
   addCase(cases, { id: "SEC-04", layer: "Security", title: here + " sets nosniff and a frame policy", why: "x-content-type-options: " + (face.headers.nosniff || "absent") + ". x-frame-options: " + (face.headers.frame || "absent") + (/allow-from/i.test(face.headers.frame || "") ? ", which current browsers ignore" : "") + ". CSP frame-ancestors: " + ((cspHeader.match(/frame-ancestors\s+([^;]+)/i) || [])[1] || "absent").trim() + ". Either one is a frame policy. A framed copy of " + here + " would be expected to fail when a frame policy is present.", fw: browser });
   addCase(cases, { id: "SEC-05", layer: "Security", title: here + " sets Referrer-Policy", why: (face.headers.referrer ? "referrer-policy on " + here + " is " + face.headers.referrer + "." : "referrer-policy was absent on " + here + ".") + " The later case would open an outbound link and confirm the referrer is no wider than the policy.", fw: browser });

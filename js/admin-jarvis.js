@@ -2646,8 +2646,17 @@ export function mountJarvis({
 	const CY_LEVEL = { critical: 'down', high: 'quiet', watch: 'ok' };
 	// Cloudflare Radar, last 24 h (#3935): internal personal use only (CC BY-NC 4.0), never shown to customers.
 	function radarBlock(rd) {
-		if (!rd) return '<p class="jv-note">Cloudflare Radar 24 h attack traffic: not read yet. The threat feeds job reads it every 30 minutes.</p>';
-		const line = (rows, label) => `<li><b>${esc(label)}</b>: ${rows && rows.length ? rows.slice(0, 5).map((r) => `${esc(r.name || r.cc)} ${fmt(r.share)}%`).join(' · ') : 'none read'}</li>`;
+		if (!rd)
+			return '<p class="jv-note">Cloudflare Radar 24 h attack traffic: not read yet. The threat feeds job reads it every 30 minutes.</p>';
+		const line = (rows, label) =>
+			`<li><b>${esc(label)}</b>: ${
+				rows && rows.length
+					? rows
+							.slice(0, 5)
+							.map((r) => `${esc(r.name || r.cc)} ${fmt(r.share)}%`)
+							.join(' · ')
+					: 'none read'
+			}</li>`;
 		return `<h4 class="jv-sub">Attack traffic, last 24 h · Cloudflare Radar</h4><ul class="jv-facts">${line(rd.layer3Origin, 'Network attacks from')}${line(rd.layer3Target, 'Network attacks to')}${line(rd.layer7Origin, 'Web attacks from')}${line(rd.layer7Target, 'Web attacks to')}</ul><p class="jv-note">Share of each attack type's traffic, data as of ${esc(when(rd.asOf))}. Not for customers, reports or the public map.</p>`;
 	}
 
@@ -2675,12 +2684,9 @@ export function mountJarvis({
 		const c = S.external.checks;
 		const mp = c && c.ok && c.map;
 		if (!mp || !mp.ranges || !Object.keys(mp.ranges).length)
-			return panel(
-				'review-cyber-map',
-				'Cyber-attack map',
-				waiting('checks', 'Reading the global cyber feed…'),
-				{ wide: true }
-			);
+			return panel('review-cyber-map', 'Cyber-attack map', waiting('checks', 'Reading the global cyber feed…'), {
+				wide: true,
+			});
 		if (!S.world && !S.worldLoading) loadWorld();
 		const range = mp.ranges[S.cyRange] ? S.cyRange : 'live';
 		const cur = mp.ranges[range];
@@ -2727,7 +2733,11 @@ export function mountJarvis({
 		const top = cur.countries.slice(0, 12);
 		const rank = table(
 			[
-				['Country', (x) => `<button type="button" class="jv-link" data-cy-cc="${esc(x.cc)}">${esc(names[x.cc] || x.cc)}</button> <span class="jv-note">${esc(x.cc)}</span>`],
+				[
+					'Country',
+					(x) =>
+						`<button type="button" class="jv-link" data-cy-cc="${esc(x.cc)}">${esc(names[x.cc] || x.cc)}</button> <span class="jv-note">${esc(x.cc)}</span>`,
+				],
 				['Events', (x) => fmt(x.count)],
 				['Share', (x) => x.share + '%'],
 				['7 d', (x) => fmt(((mp.ranges['7d'] || {}).countries || []).find((y) => y.cc === x.cc)?.count || 0)],
@@ -2737,7 +2747,9 @@ export function mountJarvis({
 					'Ours',
 					(x) => {
 						const o = ours[x.cc];
-						return o ? `${o.direct ? `<span class="jv-chip c-slow">${o.direct} exposed</span> ` : ''}${o.regional ? `<span class="jv-chip c-average">${o.regional} same country</span>` : ''}` : '—';
+						return o
+							? `${o.direct ? `<span class="jv-chip c-slow">${o.direct} exposed</span> ` : ''}${o.regional ? `<span class="jv-chip c-average">${o.regional} same country</span>` : ''}`
+							: '—';
 					},
 				],
 			],
@@ -2778,27 +2790,34 @@ export function mountJarvis({
             ${radarBlock(c.radar)}
             <h4 class="jv-sub">Cyber-attack and breach headlines${sel ? ' · ' + esc(names[sel] || sel) : ''} · ${fmt(events.length)}</h4>${headlines}
             <p class="jv-note">${esc((mp.attributions || []).join(' · '))}</p>`;
-		return panel(
-			'review-cyber-map',
-			`Cyber-attack map · ${esc(CY_RANGES.find((r) => r[0] === range)[1])}`,
-			body,
-			{
-				wide: true,
-				keep: true,
-				plate: true,
-				data: cur.countries.map((x) => ({ cc: x.cc, country: names[x.cc] || x.cc, events: x.count, share: x.share, exposedReports: (ours[x.cc] || {}).direct || 0, sameCountryReports: (ours[x.cc] || {}).regional || 0 })),
-				note: `News telemetry: GDELT Project feed, updated hourly${mp.slice ? ' (latest file ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
-			}
-		);
+		return panel('review-cyber-map', `Cyber-attack map · ${esc(CY_RANGES.find((r) => r[0] === range)[1])}`, body, {
+			wide: true,
+			keep: true,
+			plate: true,
+			data: cur.countries.map((x) => ({
+				cc: x.cc,
+				country: names[x.cc] || x.cc,
+				events: x.count,
+				share: x.share,
+				exposedReports: (ours[x.cc] || {}).direct || 0,
+				sameCountryReports: (ours[x.cc] || {}).regional || 0,
+			})),
+			note: `News telemetry: GDELT Project feed, updated hourly${mp.slice ? ' (latest file ' + esc(mp.slice) + ')' : ''}${mp.updatedAt ? ', stored ' + esc(when(mp.updatedAt)) : ''}; CISA KEV ${esc(mp.kevVersion || '')}; DROP network counts. ${mp.historyDays ? fmt(mp.historyDays) + ' days of history kept. ' : ''}Counts are cited reports by country, not confirmed attacks. The pins mark where a report of ours has a threat finding.`,
+		});
 	}
 
 	function exposurePanel() {
 		const c = S.external.checks;
 		const ex = c && c.ok && c.exposure;
 		if (!ex)
-			return panel('review-exposed', 'Who might be impacted', waiting('checks', 'Matching the threat ledger to reports…'), {
-				wide: true,
-			});
+			return panel(
+				'review-exposed',
+				'Who might be impacted',
+				waiting('checks', 'Matching the threat ledger to reports…'),
+				{
+					wide: true,
+				}
+			);
 		const t = ex.totals || {};
 		const names = ensureWorldNames();
 		const who = (d) =>
@@ -2817,8 +2836,12 @@ export function mountJarvis({
 					(d) =>
 						d.findings
 							.slice(0, 3)
-							.map((f) => `<span title="${esc(f.evidence)}">${esc(f.kind)} · ${esc(f.source)}${f.delistStatus && f.delistStatus !== 'none' ? ' · delist ' + esc(f.delistStatus) : ''}</span>`)
-							.join('<br>') + (d.findingCount > 3 ? `<br><span class="jv-note">+${d.findingCount - 3} more</span>` : ''),
+							.map(
+								(f) =>
+									`<span title="${esc(f.evidence)}">${esc(f.kind)} · ${esc(f.source)}${f.delistStatus && f.delistStatus !== 'none' ? ' · delist ' + esc(f.delistStatus) : ''}</span>`
+							)
+							.join('<br>') +
+						(d.findingCount > 3 ? `<br><span class="jv-note">+${d.findingCount - 3} more</span>` : ''),
 				],
 				['Reviewed', (d) => esc(d.reviewedAt ? when(d.reviewedAt) : '')],
 			],
@@ -2840,7 +2863,11 @@ export function mountJarvis({
 			[
 				['Site', (r) => esc(r.host)],
 				['Customer', (r) => `${esc(r.email)}${r.paid ? ' <span class="jv-chip c-fast">paid</span>' : ''}`],
-				['Why', (r) => `${esc(r.basis)} <button type="button" class="jv-link" data-cy-cc="${esc(r.country)}">${esc(names[r.country] || r.country)}</button> · ${fmt(r.liveCount)} events`],
+				[
+					'Why',
+					(r) =>
+						`${esc(r.basis)} <button type="button" class="jv-link" data-cy-cc="${esc(r.country)}">${esc(names[r.country] || r.country)}</button> · ${fmt(r.liveCount)} events`,
+				],
 				['Reviewed', (r) => esc(r.reviewedAt ? when(r.reviewedAt) : '')],
 			],
 			ex.regional,
@@ -2865,7 +2892,15 @@ export function mountJarvis({
 			{
 				wide: true,
 				keep: true,
-				data: ex.direct.map((d) => ({ host: d.host, customer: d.email, paid: d.paid, level: d.level, country: d.country, findings: d.findings.map((f) => f.kind).join(', '), reviewedAt: d.reviewedAt })),
+				data: ex.direct.map((d) => ({
+					host: d.host,
+					customer: d.email,
+					paid: d.paid,
+					level: d.level,
+					country: d.country,
+					findings: d.findings.map((f) => f.kind).join(', '),
+					reviewedAt: d.reviewedAt,
+				})),
 				note: `Directly exposed means the report found a critical, high or watch finding on that site (known exploited software, a vulnerable library, a listed network or host, a leaked secret). Same country is context, not proof: it only means the site is hosted or based where the global feed is busy. ${t.regionalSweep ? fmt(t.regionalSweep) + ' of our own sweep sites are in those countries too. ' : ''}Test accounts are left out.`,
 			}
 		);

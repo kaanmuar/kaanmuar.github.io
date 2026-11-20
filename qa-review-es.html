@@ -524,9 +524,9 @@
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
     <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/qa-review-folds.css?v=20261119-3826" as="style">
-    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261119-3826"></noscript>
+    <link rel="preload" href="css/qa-review-folds.css?v=20261120-3826" as="style">
+    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826"></noscript>
     <link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
@@ -1422,6 +1422,9 @@
         .batch-lead-tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cyan); }
         .batch-host { font-weight: 600; }
         .batch-check { flex-basis: 100%; margin: 0; }
+
+        .batch-file-clear { font: inherit; font-size: 13px; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+        #batch-text:disabled, #batch-file:disabled { opacity: .55; cursor: not-allowed; }
         .batch-url, .batch-state, .batch-score { font-size: 13px; opacity: .85; }
         #batch-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
         #batch-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -1698,13 +1701,13 @@
                 <div>
                     <p class="eyebrow" data-live-eyebrow lang="es" translate="no">Informes en vivo</p>
                     <h2 id="live-title" class="live-title" data-live-title lang="es" translate="no">Sitios reales. Análisis reales. <em>Abre el informe que quieras.</em></h2>
-                    <p class="live-lede" data-live-lede lang="es" translate="no"><b>4082 sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Los sitios que aparecen en una lista de phishing o malware nunca se publican. Solo para ver y compartir.</p>
+                    <p class="live-lede" data-live-lede lang="es" translate="no"><b>4171 sitios públicos</b>, analizados con la misma revisión que cualquiera puede ejecutar: portales de gobierno, medios de noticias, bancos, universidades, proyectos de código abierto y sistemas de transporte. Recorre el carrusel, filtra por sector o país y abre un informe. Las revisiones que la gente solicita se suman en un lote diario. Los sitios que aparecen en una lista de phishing o malware nunca se publican. Solo para ver y compartir.</p>
                     <p class="live-follow" data-live-follow lang="es" translate="no">Nuevos informes cada día en <a href="https://t.me/qalab_live" rel="noopener" target="_blank">Telegram</a> y <a href="https://www.reddit.com/r/QALabLiveReports/" rel="noopener" target="_blank">Reddit</a>.</p>
                 </div>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="es" translate="no">Los Live Reports necesitan JavaScript para abrirse. Al 19 de noviembre de 2026, la serie reúne 4082 sitios públicos en 27 sectores, analizados desde el 19 de octubre de 2026 con la misma revisión que cualquiera puede ejecutar; las nuevas revisiones se suman en un lote diario. La puntuación general promedio es 64 sobre 100: SEO 67, GEO 85, analítica 67, seguridad 44, accesibilidad 58 y rendimiento 66. Las puntuaciones generales más altas son sevielectro.com 96, MDN Web Docs 95, CA.gov 92 y GOV.UK 92. La serie incluye portales de gobierno como GOV.UK, GOV.CO y la Alcaldía de Bogotá; gobiernos regionales como CA.gov, la Generalitat de Catalunya y la Gobernación del Valle del Cauca; medios como BBC, The Guardian y El País; bancos como Bancolombia y Davivienda; universidades como MIT, Stanford y la Universidad de los Andes; proyectos de código abierto como Python.org, Node.js y Kubernetes; y sistemas de transporte como TransMilenio y el Metro de Medellín. Cada informe es un análisis automatizado de páginas públicas, un punto de partida y no un veredicto.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="es" translate="no">Los Live Reports necesitan JavaScript para abrirse. Al 20 de noviembre de 2026, la serie reúne 4171 sitios públicos en 27 sectores, analizados desde el 19 de octubre de 2026 con la misma revisión que cualquiera puede ejecutar; las nuevas revisiones se suman en un lote diario. La puntuación general promedio es 64 sobre 100: SEO 67, GEO 85, analítica 67, seguridad 44, accesibilidad 58 y rendimiento 66. Las puntuaciones generales más altas son sevielectro.com 96, MDN Web Docs 95, CA.gov 92 y GOV.UK 92. La serie incluye portales de gobierno como GOV.UK, GOV.CO y la Alcaldía de Bogotá; gobiernos regionales como CA.gov, la Generalitat de Catalunya y la Gobernación del Valle del Cauca; medios como BBC, The Guardian y El País; bancos como Bancolombia y Davivienda; universidades como MIT, Stanford y la Universidad de los Andes; proyectos de código abierto como Python.org, Node.js y Kubernetes; y sistemas de transporte como TransMilenio y el Metro de Medellín. Cada informe es un análisis automatizado de páginas públicas, un punto de partida y no un veredicto.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1778,6 +1781,8 @@
                         <label class="check" for="batch-file"><span data-batch-copy="fileLabel">Load a file</span>
                             <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" disabled>
                         </label>
+                        <button type="button" class="batch-file-clear" id="batch-file-clear" data-batch-copy="fileRemove" hidden>Remove the file</button>
+                        <p class="muted" id="batch-source-note"></p>
                         <label class="check"><input id="batch-lead-report" type="checkbox" disabled> <span data-batch-copy="leadReport">Use the open report’s URL as the lead</span></label>
                         <p class="muted" id="batch-lead-note"></p>
                         <p class="muted" data-batch-copy="previewTitle">Ready to run</p>
@@ -2071,7 +2076,7 @@
         <article class="card" data-insight id="site-graph"></article>
         <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle" lang="es" translate="no">Seguridad y correo</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 id="targeted-head" data-face="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden lang="es" translate="no">¿Fue atacado?</h2>
+        <h2 id="targeted-head" data-line="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden lang="es" translate="no">¿Fue atacado?</h2>
         <article class="card" id="targeted" hidden></article>
         <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle" lang="es" translate="no">Cada control, con su veredicto</h2>
         <div data-insight>
@@ -2288,14 +2293,14 @@
 <script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
 <script src="js/qa-review-arena.js?v=20261118a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
-<script src="js/qa-review-batch-copy.js?v=20261117-3737" defer></script>
-<script src="js/qa-review-batch.js?v=20261120-3988" defer></script>
+<script src="js/qa-review-batch-copy.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-batch.js?v=20261120-3999" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261119i-3946" defer></script>
 <script src="js/qa-review-findings-copy.es.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261119-3850" defer></script>
-<script src="js/qa-review.js?v=20261119-3979" defer></script>
+<script src="js/qa-review.js?v=20261120-3826" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
-<script src="js/qa-review-multi.js?v=20261102q" defer></script>
+<script src="js/qa-review-multi.js?v=20261120-3826" defer></script>
 <script src="js/url-suggest.js?v=20261120-3988" defer></script>
 <script src="js/qa-review-live.js?v=20261110d" defer></script>
 </body>

@@ -181,9 +181,9 @@ function parse(text, items) {
   rows.forEach((r) => {
     const p = r && byKey[r.id];
     if (!p) return;
-    let msg = String(r.text || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
+    let msg = String(r.text || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
     let once = false;
-    msg = msg.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/\s+([,.])/g, "$1").replace(/\s{2,}/g, " ").trim();
+    msg = msg.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/(?<!\s)\s+([,.])/g, "$1").replace(/\s{2,}/g, " ").trim();
     if (msg && !once) msg += " {link}";
     if (!R.shown(p.target) && (new RegExp("\\b" + p.target.score + "\\b").test(msg) || /\b\d{1,3}\s*\/\s*100\b/.test(msg))) msg = "";
     const body = msg.replace("{link}", "").trim().length;
@@ -229,7 +229,7 @@ async function profilePosts(f, p) {
     }
     if (!channel) return [];
     const xml = await text("https://www.youtube.com/feeds/videos.xml?channel_id=" + channel);
-    return Array.from(String(xml).matchAll(/<entry>[\s\S]*?<\/entry>/g)).map((m) => {
+    return Array.from(String(xml).matchAll(/<entry>[\s\S]*?<\/entry>|(<entry>)[\s\S]*/g)).filter((m) => !m[1]).map((m) => {
       const entry = m[0];
       const id = (entry.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/) || [])[1];
       const at = (entry.match(/<published>([^<]+)<\/published>/) || [])[1];

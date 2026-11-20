@@ -42,7 +42,7 @@ const fill = (s, v) => String(s || "").replace(/\{(\w+)\}/g, (m, k) => (v[k] ===
 const copyOf = (lang) => COPY[C.LANGS.includes(lang) ? lang : "en"] || COPY.en;
 const weekOf = (now) => Math.floor(now / WEEK);
 const weekday = (now) => new Date(E.bogotaDay(now) + "T12:00:00Z").getUTCDay();
-const lower = (s) => String(s || "").toLowerCase().replace(/\/+$/, "");
+const lower = (s) => String(s || "").toLowerCase().replace(/(?<!\/)\/+$/, "");
 const iso = (ms) => new Date(ms).toISOString();
 const stateRef = (db) => db.collection(STATE()[0]).doc(STATE()[1]);
 

@@ -44,6 +44,13 @@ function loadEnvFile(name) {
 }
 loadEnvFile('.env');
 loadEnvFile('.secret.local');
+// The Firebase Web API key is public, but it is not kept in the repo: a missing value stops the server at startup (#3970).
+if (!process.env.FIREBASE_WEB_KEY) {
+	console.error(
+		'FIREBASE_WEB_KEY is not set. Add it to functions/.secret.local (or export it), then start the review server again.'
+	);
+	process.exit(1);
+}
 
 function paymentKeys() {
 	return {
@@ -349,7 +356,7 @@ async function localSignIn(req, res, pathName, origin, deviceHint) {
 	if (pathName === '/auth/provider') {
 		let decoded = null;
 		try {
-			decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY || 'AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w')(
+			decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY)(
 				String(body.idToken || '')
 			);
 		} catch (error) {

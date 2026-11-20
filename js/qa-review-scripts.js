@@ -478,8 +478,8 @@
 		')); })';
 	// The words, addresses and overlay hosts functions/url-review-legal.js reads as a link to an accessibility statement.
 	const STATEMENT = {
-		text: '^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)\\S*\\s+(statement|erkl[äa]rung)|accessibilit[ée]\\s*:\\s*(non|partiellement|totalement)\\s+conforme',
-		href: '\\/[a-z-]*(accessib|accesib|acessib|barrierefrei)[a-z-]*(\\.[a-z]+)?\\/?$',
+		text: '^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)(?<=(?:^|\\s)(?:(?!accessib|barrierefrei)\\S)*(?:accessib|barrierefrei))\\S*\\s+(statement|erkl[äa]rung)|accessibilit[ée]\\s*:\\s*(non|partiellement|totalement)\\s+conforme',
+		href: '\\/(?=[a-z-]*(accessib|accesib|acessib|barrierefrei))[a-z-]*(\\.[a-z]+)?\\/?$',
 		away: '\\/(forums?|blog|news|tags?|categor(y|ies)|topics?|support|help|kb|articles?|docs?|products?|collections?)\\/',
 		overlay:
 			'(^|\\.)(accessibe\\.com|userway\\.org|audioeye\\.com|equalweb\\.com|userway\\.com|accessiblyapp\\.com|eye-able\\.com)$',

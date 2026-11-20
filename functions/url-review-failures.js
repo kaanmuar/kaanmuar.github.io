@@ -51,7 +51,7 @@ const clip = (value, max) => String(value == null ? "" : value).replace(/\s+/g, 
 
 // Order matters: a message that names both a refused plain read and a browser that did not finish is a browser cause.
 const CAUSES = [
-  ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value|invalid nested entity|field name .+ is reserved/i],
+  ["save", "The finished report could not be saved", /not a valid Firestore document|as a Firestore value|invalid nested entity|field name (?<=(?:^|[\n\r\u2028\u2029])(?:(?!field name ).)*field name ).+ is reserved/i],
   ["input", "The address could not be reviewed", /^Enter a|Only https URLs|Remove the username|standard https port|not a public website|private address/i],
   ["headers", "The site's response headers are past the review's limit", /Header overflow|HPE_HEADER_OVERFLOW|response headers are past/i],
   ["dns", "The host name did not resolve", /did not resolve|ENOTFOUND|EAI_AGAIN/i],
@@ -87,7 +87,7 @@ function causeOf(message) {
   const found = CAUSES.find(([, , pattern]) => pattern.test(text));
   if (!found) return { id: "unknown", label: "The review failed for a reason with no class yet" };
   const status = (text.match(/status (\d{3})/) || [])[1];
-  const vendor = (text.match(/\b(?:a|an) (.+?) bot check/) || [])[1];
+  const vendor = (text.match(/\b(?:a|an) (?<=(?:^|[\n\r\u2028\u2029])(?:(?!\b(?:a|an) ).)*\b(?:a|an) )(.+?) bot check/) || [])[1];
   return Object.assign({ id: found[0], label: found[1] }, status ? { status: Number(status) } : {}, vendor ? { vendor } : {});
 }
 
@@ -469,9 +469,55 @@ function fixBefore(cause, attempt) {
 
 // The issue is public: no asker names or emails, and no query strings, which can carry tokens.
 const wordOf = (word) => new RegExp("(^|[^\\w@.])" + word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\w@])", "gi");
-const scrubbed = (text, max, hidden) => clip((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text))
-  .replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]")
-  .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"), max);
+const scrubbed = (text, max, hidden) => clip(hideQueries(hideEmails((hidden || []).reduce((out, word) => out.replace(wordOf(word), "$1[asker]"), String(text == null ? "" : text)))), max);
+
+// text.replace(/[^\s@<>"'(),;]+@[^\s@<>"'(),;]+\.[a-z]{2,}/gi, "[email]"), read from each "@" so a long run with no address is read once.
+const NOT_ADDRESS = /[\s@<>"'(),;]/;
+const LETTER = /[a-z]/i;
+function hideEmails(text) {
+  const inAddress = (i) => i < text.length && !NOT_ADDRESS.test(text[i]);
+  let out = "";
+  let from = 0;
+  for (let at = text.indexOf("@"); at !== -1; at = text.indexOf("@", at + 1)) {
+    let start = at;
+    while (start > from && inAddress(start - 1)) start -= 1;
+    if (start === at) continue;
+    let domainEnd = at + 1;
+    while (inAddress(domainEnd)) domainEnd += 1;
+    let dot = domainEnd - 3;
+    while (dot >= at + 2 && !(text[dot] === "." && LETTER.test(text[dot + 1]) && LETTER.test(text[dot + 2]))) dot -= 1;
+    if (dot < at + 2) continue;
+    let end = dot + 3;
+    while (end < domainEnd && LETTER.test(text[end])) end += 1;
+    out += text.slice(from, start) + "[email]";
+    from = end;
+  }
+  return out + text.slice(from);
+}
+
+// text.replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>)]*/gi, "$1?…"); a link with no query is read once, not once per "http" in it.
+const LINK_START = /https?:\/\//gi;
+const IN_LINK = /[^\s?#"'<>]/;
+const IN_QUERY = /[^\s"'<>)]/;
+function hideQueries(text) {
+  let out = "";
+  let from = 0;
+  let readTo = 0;
+  let m;
+  LINK_START.lastIndex = 0;
+  while ((m = LINK_START.exec(text))) {
+    if (m.index < readTo) continue;
+    let end = LINK_START.lastIndex;
+    while (end < text.length && IN_LINK.test(text[end])) end += 1;
+    readTo = end;
+    if (end === LINK_START.lastIndex || (text[end] !== "?" && text[end] !== "#")) continue;
+    let tail = end + 1;
+    while (tail < text.length && IN_QUERY.test(text[tail])) tail += 1;
+    out += text.slice(from, end) + "?…";
+    from = readTo = LINK_START.lastIndex = tail;
+  }
+  return out + text.slice(from);
+}
 
 // A failure is a lead while the probe still sees its cause and no re-run or later fix has settled it; a re-run is one when it failed.
 // A failure whose re-run failed is left to the re-run, so it is not listed twice or under a fix that shipped after it.
@@ -783,5 +829,5 @@ module.exports = {
   KEEP_DAYS, MAX_LINES, RECHECK_DAYS, RERUN_DAYS, RERUN_FRAMEWORKS, FIXES, SUMMARY_FIELDS, RERUN_FIELDS,
   causeOf, failureRecord, failureFromAlert, stateOf, diagnose, probeNeedsTcp, probeNeedsBrowser, unreadUrl, probeLines,
   recheckDue, rerunTrigger, rerunPlan, rerunDoc, rerunMark, sentRecord, rerunMail,
-  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide
+  bugPlan, bugFollowUps, periodFailures, failureRow, failureDetail, SITE_REASONS, siteSide, hideEmails, hideQueries
 };

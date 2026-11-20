@@ -646,7 +646,7 @@
 						String(r || '')
 							.trim()
 							.replace(/^https:\/\/github\.com\//, '')
-							.replace(/\/+$/, '')
+							.replace(/(?<!\/)\/+$/, '')
 					)
 					.filter((r) => /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(r))
 			)
@@ -676,15 +676,55 @@
 	function chartPrefs(charts) {
 		return cleanCharts(charts);
 	}
+	const LINE_BREAK = /[\n\r\u2028\u2029]/;
+	/** Index where the run of whitespace ending just before `i` begins (#3965, linear stand-in for a leading \s*). */
+	function spaceRunStart(s, i) {
+		let at = i;
+		while (at > 0 && /\s/.test(s[at - 1])) at -= 1;
+		return at;
+	}
+	/**
+	 * Same result as s.replace(/\s*\([^)]*\)\s*$/, '') without the backtracking (#3965): the last ")" must close the
+	 * first "(" after the ")" before it, with only whitespace after it.
+	 */
+	function stripTrailingParen(s) {
+		const close = s.lastIndexOf(')');
+		if (close < 0 || /\S/.test(s.slice(close + 1))) return s;
+		const prev = close > 0 ? s.lastIndexOf(')', close - 1) : -1;
+		const open = s.indexOf('(', prev + 1);
+		if (open < 0 || open > close) return s;
+		return s.slice(0, spaceRunStart(s, open));
+	}
+	/**
+	 * Same result as s.replace(/\s*\(.*\)$/, '') without the backtracking (#3965): the string ends in ")" and the
+	 * "(" is the first one after the last line break before that ")" ("." does not cross a line break).
+	 */
+	function stripTrailingParenLine(s) {
+		const last = s.length - 1;
+		if (last < 1 || s[last] !== ')') return s;
+		let from = last;
+		while (from > 0 && !LINE_BREAK.test(s[from - 1])) from -= 1;
+		const open = s.indexOf('(', from);
+		if (open < 0 || open >= last) return s;
+		return s.slice(0, spaceRunStart(s, open));
+	}
+	/** Same answer as /Android.+Mobile/.test(ua) without the backtracking (#3965): "Mobile" at least one character after "Android" on one line. */
+	function androidMobileUa(ua) {
+		return String(ua)
+			.split(LINE_BREAK)
+			.some((line) => {
+				const at = line.indexOf('Android');
+				return at >= 0 && line.indexOf('Mobile', at + 8) >= 0;
+			});
+	}
 	function panelSlug(title) {
-		const slug = String(title || '')
-			.split(' · ')[0]
-			.replace(/\s*\([^)]*\)\s*$/, '')
+		const slug = stripTrailingParen(String(title || '').split(' · ')[0])
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/^-+|-+$/g, '')
+			.replace(/^-+/, '')
+			.replace(/(?<!-)-+$/, '')
 			.slice(0, 80)
-			.replace(/-+$/, '');
+			.replace(/(?<!-)-+$/, '');
 		return slug || 'panel';
 	}
 	const layoutIds = (list) =>
@@ -723,12 +763,23 @@
 	}
 
 	/** The plate's pan strip around each map or dense SVG in a panel body (#3984): the SVG keeps its own markup. */
-	const PLATE_SVG = /<svg class="(?:jv-geo-map|jv-heat|jv-fl)"[\s\S]*?<\/svg>/g;
+	const PLATE_SVG_OPEN = /<svg class="(?:jv-geo-map|jv-heat|jv-fl)"/g;
 	function plateWrap(html) {
-		return String(html).replace(
-			PLATE_SVG,
-			(svg) => `<div class="jv-plate-strip"><div class="jv-plate-inner">${svg}</div></div>`
-		);
+		// Each opening tag runs to the first </svg> after it (#3965: indexOf instead of a lazy [\s\S]*? per start).
+		const text = String(html);
+		let out = '';
+		let done = 0;
+		PLATE_SVG_OPEN.lastIndex = 0;
+		let m;
+		while ((m = PLATE_SVG_OPEN.exec(text))) {
+			const close = text.indexOf('</svg>', m.index + m[0].length);
+			if (close < 0) break;
+			const stop = close + 6;
+			out += `${text.slice(done, m.index)}<div class="jv-plate-strip"><div class="jv-plate-inner">${text.slice(m.index, stop)}</div></div>`;
+			done = stop;
+			PLATE_SVG_OPEN.lastIndex = stop;
+		}
+		return out + text.slice(done);
 	}
 
 	function cleanStretch(map) {
@@ -1398,9 +1449,7 @@
 			const hits = (c.families || []).filter((x) => x.hits);
 			if (hits.length)
 				add(
-					hits.some(
-						(x) => ['phishing', 'linked', 'kev', 'osv', 'drop', 'feodo'].includes(x.id) && x.customerHits
-					)
+					hits.some((x) => ['phishing', 'linked', 'kev', 'osv', 'drop', 'feodo'].includes(x.id) && x.customerHits)
 						? 'warn'
 						: 'info',
 					`New checks in range: ${hits.map((x) => `${x.label} ${x.hits}`).join('; ')}.`,
@@ -1483,7 +1532,9 @@
 											hotNow: ((c.map.ranges && c.map.ranges.live && c.map.ranges.live.countries) || [])
 												.slice(0, 5)
 												.map((x) => x.cc + ' ' + x.count),
-											headlines: (c.map.events || []).slice(0, 5).map((e) => e.source + ' (' + (e.countries || []).join('/') + ')'),
+											headlines: (c.map.events || [])
+												.slice(0, 5)
+												.map((e) => e.source + ' (' + (e.countries || []).join('/') + ')'),
 										},
 									}
 								: {},
@@ -1498,7 +1549,10 @@
 											hotCountries: (c.exposure.hot || []).map((x) => x.cc + ' ' + x.count),
 											customers: (c.exposure.customers || [])
 												.slice(0, 5)
-												.map((x) => x.email + ' (' + x.level + ', ' + x.reports + ' report' + (x.reports === 1 ? '' : 's') + ')'),
+												.map(
+													(x) =>
+														x.email + ' (' + x.level + ', ' + x.reports + ' report' + (x.reports === 1 ? '' : 's') + ')'
+												),
 										},
 									}
 								: {}
@@ -2488,7 +2542,8 @@
 			prefix: 'review:exposed',
 			impact: 4,
 			levels: ['warn', 'alert'],
-			title: 'Warn the customers whose reports carry a threat finding, from Jarvis > URL Review > Who might be impacted',
+			title:
+				'Warn the customers whose reports carry a threat finding, from Jarvis > URL Review > Who might be impacted',
 			tab: 'review',
 		},
 		{
@@ -3619,7 +3674,7 @@
 			/iPad|Tablet/.test(ua) ||
 			(/Android/.test(ua) && !/Mobile/.test(ua)) ||
 			(/Macintosh/.test(ua) && o.touch === true);
-		const phoneUa = o.mobile === true || /Android.+Mobile|iPhone|iPod/.test(ua);
+		const phoneUa = o.mobile === true || /iPhone|iPod/.test(ua) || androidMobileUa(ua);
 		let kind = 'desktop';
 		let posture = null;
 		if (foldable && (split || short >= 600)) {
@@ -3760,7 +3815,7 @@
 				})
 			);
 			((x.lists && x.lists.sources) || []).forEach((r) =>
-				bump(sources, String(r.label).replace(/\s*\(tagged link\)$/, ''), num(r.value))
+				bump(sources, String(r.label).replace(/(?<!\s)\s*\(tagged link\)$/, ''), num(r.value))
 			);
 		});
 		const total = grid.reduce((s, row) => s + row.reduce((a, b) => a + b, 0), 0);
@@ -3845,7 +3900,7 @@
 		const e = external || {};
 		const conn = connections(e, pending).map((c) => ({
 			group: 'Connections',
-			name: c.name.replace(/\s*\(.*\)$/, ''),
+			name: stripTrailingParenLine(c.name),
 			level: { live: 'good', partial: 'warn', down: 'alert' }[c.state] || 'off',
 			detail: c.detail || c.state,
 		}));
@@ -4096,6 +4151,9 @@
 		githubRepos,
 		LAYOUT_TABS,
 		panelSlug,
+		stripTrailingParen,
+		stripTrailingParenLine,
+		androidMobileUa,
 		cleanLayout,
 		cleanSize,
 		cleanStretch,

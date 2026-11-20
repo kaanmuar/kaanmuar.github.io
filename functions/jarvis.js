@@ -744,7 +744,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
 function speakable(text) {
   return String(text || "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)(?:\]\(([^)]*)(\))?)?/g, (link, label, target, close) => (target && close ? label : link))
     .replace(/^[\s>*#-]+/gm, "")
     .replace(/[*_`#]/g, "")
     .replace(/\s+/g, " ")

@@ -250,6 +250,74 @@ test.describe('Bulk list predictions and checks (#3988)', () => {
 	});
 });
 
+test.describe('Bulk list: text or file, not both (#3999)', () => {
+	const CSV = {
+		name: 'sites.csv',
+		mimeType: 'text/csv',
+		buffer: Buffer.from('url\nhttps://a.example/\nhttps://b.example/\n'),
+	};
+
+	async function openList(page, lang) {
+		await open(page, lang);
+		await page.locator('[data-url-mode="many"]').click();
+		const list = page.locator('#batch-text');
+		await expect(list).toBeEnabled();
+		await expect(page.locator('#batch-file')).toBeEnabled();
+		return list;
+	}
+
+	test('typing addresses disables the file picker, and emptying the box frees it', async ({ page }) => {
+		const list = await openList(page);
+		await list.fill('a.example\nb.example');
+		await expect(page.locator('#batch-file')).toBeDisabled();
+		await expect(page.locator('#batch-source-note')).toHaveText('Clear the text box to load a file instead.');
+		await list.fill('  \n');
+		await expect(page.locator('#batch-file')).toBeEnabled();
+		await expect(page.locator('#batch-source-note')).toHaveText('');
+	});
+
+	test('a loaded file fills the list and disables the text box until the file is removed', async ({ page }) => {
+		const list = await openList(page);
+		await page.locator('#batch-file').setInputFiles(CSV);
+		await expect(page.locator('#batch-preview li')).toHaveCount(2);
+		await expect(list).toBeDisabled();
+		await expect(page.locator('#batch-file')).toBeEnabled();
+		await expect(page.locator('#batch-source-note')).toHaveText(
+			'Loaded sites.csv. Remove the file to type addresses.'
+		);
+		await page.locator('#batch-file-clear').click();
+		await expect(list).toBeEnabled();
+		await expect(list).toHaveValue('');
+		await expect(list).toBeFocused();
+		await expect(page.locator('#batch-file-clear')).toBeHidden();
+		await expect(page.locator('#batch-preview li')).toHaveCount(0);
+		await list.fill('c.example\nd.example');
+		await expect(page.locator('#batch-file')).toBeDisabled();
+	});
+
+	test('a loaded file can be replaced by another file', async ({ page }) => {
+		await openList(page);
+		await page.locator('#batch-file').setInputFiles(CSV);
+		await expect(page.locator('#batch-preview li')).toHaveCount(2);
+		await page.locator('#batch-file').setInputFiles({
+			name: 'more.txt',
+			mimeType: 'text/plain',
+			buffer: Buffer.from('c.example\nd.example\ne.example\n'),
+		});
+		await expect(page.locator('#batch-preview li')).toHaveCount(3);
+		await expect(page.locator('#batch-source-note')).toContainText('more.txt');
+	});
+
+	test('the lock notes speak the page language', async ({ page }) => {
+		const list = await openList(page, 'es');
+		await list.fill('a.example');
+		await expect(page.locator('#batch-source-note')).toHaveText('Vacía el cuadro de texto para cargar un archivo.');
+		await list.fill('');
+		await page.locator('#batch-file').setInputFiles(CSV);
+		await expect(page.locator('#batch-file-clear')).toHaveText('Quitar el archivo');
+	});
+});
+
 test.describe('Report competitor box predictions', () => {
 	async function openCompare(page) {
 		await open(page);

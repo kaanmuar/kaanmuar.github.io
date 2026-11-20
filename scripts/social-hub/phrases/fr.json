@@ -402,6 +402,10 @@
  },
  "aria-selected on tabs: the selected tab that lies (WCAG ⟦1⟧)": "aria-selected sur les onglets : l’onglet sélectionné qui ment (WCAG ⟦1⟧)",
  "Armenia's city hall: no main landmark.": "Mairie d’Armenia : aucun repère main.",
+ "asoto.digital:": {
+  "text": "asoto.digital :",
+  "machine": true
+ },
  "Assert each one answers below ⟦1⟧.": "Vérifiez que chacune répond en moins de ⟦1⟧.",
  "Astro Tutorial:": "Tutoriel Astro :",
  "Atlántico: alt text everywhere, no HSTS.": "Atlántico : du texte alt partout, pas de HSTS.",
@@ -527,9 +531,17 @@
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Mais ⟦1⟧ interdit bingbot sur tout le site, et l’index de Bing alimente aussi Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Mais ⟦1⟧ interdit ChatGPT-User, l’agent qui ouvre une page quand quelqu’un interroge ChatGPT à son sujet.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Mais ⟦1⟧ interdit OAI-SearchBot et neuf autres agents de recherche IA : leurs réponses ne peuvent pas le citer.",
+ "But ⟦1⟧ elements must be contained in a ⟦2⟧ or ⟦3⟧.": {
+  "text": "Mais les éléments ⟦1⟧ doivent être contenus dans un ⟦2⟧ ou un ⟦3⟧.",
+  "machine": true
+ },
  "But ⟦1⟧ form controls have no label.": "Mais ⟦1⟧ champs de formulaire n’ont pas de libellé.",
  "But ⟦1⟧ front-end libraries have known flaws.": "Mais ⟦1⟧ bibliothèques front-end ont des failles connues.",
  "But ⟦1⟧ has Google MX records and no SPF or DMARC record, so anyone can send mail in its name.": "Mais ⟦1⟧ a des enregistrements MX Google et aucun enregistrement SPF ni DMARC : n’importe qui peut envoyer des e-mails en son nom.",
+ "But ⟦1⟧ images are more than twice the size shown.": {
+  "text": "Mais les images ⟦1⟧ sont plus de deux fois plus grandes que celles affichées.",
+  "machine": true
+ },
  "But ⟦1⟧ images have no alt attribute.": "Mais ⟦1⟧ images n’ont pas d’attribut alt.",
  "But ⟦1⟧ images have no width or height.": {
   "text": "Mais les images ⟦1⟧ n'ont ni largeur ni hauteur.",
@@ -538,6 +550,10 @@
  "But ⟦1⟧ inner pages name ⟦2⟧ as their canonical, which asks search engines to index the home instead.": "Mais ⟦1⟧ pages internes désignent ⟦2⟧ comme canonical, ce qui demande aux moteurs d’indexer l’accueil à la place.",
  "But ⟦1⟧ internal link leads to an error.": "Mais ⟦1⟧ lien interne mène à une erreur.",
  "But ⟦1⟧ internal links lead to an error.": "Mais ⟦1⟧ liens internes mènent à une erreur.",
+ "But ⟦1⟧ JSON-LD block does not parse.": {
+  "text": "Mais le bloc ⟦1⟧ JSON-LD n'est pas analysé.",
+  "machine": true
+ },
  "But ⟦1⟧ JSON-LD blocks do not parse.": "Mais ⟦1⟧ blocs JSON-LD ne s’analysent pas.",
  "But ⟦1⟧ language alternate problems.": "Mais ⟦1⟧ problèmes d’alternates de langue.",
  "But ⟦1⟧ links on the English home page use /content/mygov/ paths that ⟦2⟧ to /en/, so every click takes an extra hop.": "Mais ⟦1⟧ liens de l’accueil anglais utilisent des chemins /content/mygov/ qui font une ⟦2⟧ vers /en/ : chaque clic coûte un saut de plus.",
@@ -554,6 +570,10 @@
  "But ⟦1⟧ page has no title.": "Mais ⟦1⟧ page n’a pas de titre.",
  "But ⟦1⟧ pages analyzed have no ⟦2⟧, the home page included.": "Mais ⟦1⟧ pages analysées n’ont pas de ⟦2⟧, accueil compris.",
  "But ⟦1⟧ pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.": "Mais ⟦1⟧ pages analysées utilisent un tabindex positif, qui fait passer un élément avant tout le reste dans l’ordre du clavier.",
+ "But ⟦1⟧ pages ask search engines not to index them.": {
+  "text": "Mais les pages ⟦1⟧ demandent aux moteurs de recherche de ne pas les indexer.",
+  "machine": true
+ },
  "But ⟦1⟧ pages configure two GA4 properties, G-R2FPS06ZSD and G-N4639JFT8D, so numbers split unless both teams know.": "Mais ⟦1⟧ pages configurent deux propriétés GA4, G-R2FPS06ZSD et G-N4639JFT8D : les chiffres se divisent si les deux équipes ne le savent pas.",
  "But ⟦1⟧ pages have no meta description.": {
   "text": "Mais les pages ⟦1⟧ n'ont pas de méta description.",
@@ -620,8 +640,16 @@
   "text": "Mais certains rôles ARIA doivent contenir des enfants particuliers.",
   "machine": true
  },
+ "But cross-Origin-Opener-Policy is not sent.": {
+  "text": "Mais cross-Origin-Opener-Policy n’est pas envoyé.",
+  "machine": true
+ },
  "But CSP frame-ancestors allows *.⟦1⟧ and *.⟦2⟧, hosts any Azure customer can publish on, so any of them could embed its pages.": "Mais la CSP frame-ancestors autorise *.⟦1⟧ et *.⟦2⟧, des hôtes où tout client Azure peut publier : n’importe lequel pourrait intégrer ses pages.",
  "But DMARC is p=none, so spoofed ⟦1⟧ mail is reported, not stopped.": "Mais DMARC est en p=none : le courrier ⟦1⟧ usurpé est signalé, pas bloqué.",
+ "But elements must have their visible text as part of their accessible name.": {
+  "text": "Mais les éléments doivent avoir leur texte visible dans le cadre de leur nom accessible.",
+  "machine": true
+ },
  "But elements must meet minimum color contrast ratio thresholds.": "Mais les éléments doivent respecter les seuils minimaux de contraste des couleurs.",
  "But every page analyzed loads ⟦1⟧ twice, for two GA4 IDs, so one visit can land in two reports.": "Mais chaque page analysée charge ⟦1⟧ deux fois, pour deux ID GA4 : une visite peut atterrir dans deux rapports.",
  "But every page analyzed loads its two logo images over ⟦1⟧ so browsers must upgrade or block them.": "Mais chaque page analysée charge ses deux logos en ⟦1⟧ : les navigateurs doivent les mettre à niveau ou les bloquer.",
@@ -973,6 +1001,10 @@
  "Coursera taps take ⟦1⟧ ms to answer.": "Chez Coursera, un tap met ⟦1⟧ ms à répondre.",
  "Craig Morten shows how Guidepup lets a Playwright test drive a real screen reader and assert on what VoiceOver, NVDA or Orca actually announces, instead of reading the accessibility tree.": "Craig Morten montre comment Guidepup permet à un test Playwright de piloter un vrai lecteur d’écran et de vérifier ce que VoiceOver, NVDA ou Orca annoncent réellement, au lieu de lire l’arbre d’accessibilité.",
  "Creative Commons moves to https with ⟦1⟧.": "Creative Commons passe en https avec ⟦1⟧.",
+ "Cross-Origin-Opener-Policy.": {
+  "text": "Politique d'ouverture d'origine croisée.",
+  "machine": true
+ },
  "CSS Animation Triggers: a first draft": "CSS Animation Triggers : un premier brouillon",
  "Cúcuta redirects to https, but no HSTS.": "Cúcuta redirige vers https, mais sans HSTS.",
  "Cultura Bogotá keeps Universal Analytics.": "Cultura Bogotá garde Universal Analytics.",
@@ -1151,6 +1183,10 @@
  "Figma guards its pages, but has no ⟦1⟧.": "Figma protège ses pages, mais n’a pas de ⟦1⟧.",
  "File each failure with its criterion number.": "Signalez chaque échec avec le numéro de son critère.",
  "Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.": "Remplissez les propriétés requises de chaque type JSON-LD, puis testez-le dans le Rich Results Test.",
+ "Fill the required properties of each JSON-LD type, then test it in the Rich…": {
+  "text": "Remplissez les propriétés requises de chaque type JSON-LD, puis testez-le dans le Rich…",
+  "machine": true
+ },
  "Filter by collect or gtag before you click anything.": "Filtrez par collect ou gtag avant de cliquer quoi que ce soit.",
  "Finance wants it committed by December.": "Le service financier veut qu’il soit engagé d’ici décembre.",
  "Find elements the way your users do with cy.getByRole()": "Trouvez les éléments comme vos utilisateurs avec cy.getByRole()",
@@ -1499,6 +1535,10 @@
   "text": "Gardez le corps du texte à un rapport de contraste de ⟦1⟧ ou plus par rapport à…",
   "machine": true
  },
+ "Keep body text at a ⟦1⟧ contrast ratio or more…": {
+  "text": "Gardez le corps du texte à un rapport de contraste de ⟦1⟧ ou plus…",
+  "machine": true
+ },
  "Keep each sitemap to its own host.": "Limitez chaque sitemap à son propre hôte.",
  "Keep INP under ⟦1⟧ ms.": "Gardez l’INP sous ⟦1⟧ ms.",
  "Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.": "Gardez une propriété GA4 par site, chargée une fois, idéalement via Tag Manager, et retirez l’ancien ID.",
@@ -1751,6 +1791,10 @@
  "One server setting covers them all.": "Un seul réglage serveur les couvre toutes.",
  "One site, one GA4 property, one ⟦1⟧.": "Un site, une propriété GA4, un ⟦1⟧.",
  "One stray comma hides all of it.": "Une virgule égarée masque tout.",
+ "One stray comma hides all…": {
+  "text": "Une virgule égarée cache tout…",
+  "machine": true
+ },
  "One stray comma…": {
   "text": "Une virgule perdue…",
   "machine": true
@@ -1880,6 +1924,10 @@
  "Publish SPF for the senders you use and a DMARC policy.": "Publiez un SPF pour vos expéditeurs et une politique DMARC.",
  "Publish the sitemap at the address ⟦1⟧ names, or fix the Sitemap: line to point at the real file.": "Publiez le sitemap à l’adresse indiquée par ⟦1⟧, ou corrigez la ligne Sitemap: pour qu’elle pointe vers le vrai fichier.",
  "Publish them as /⟦1⟧.": "Publiez-les sous /⟦1⟧.",
+ "Put each li inside a ul or ol.": {
+  "text": "Mettez chaque li dans un ul ou un ol.",
+  "machine": true
+ },
  "Put lang on the html tag of every language version: ⟦1⟧, ⟦2⟧, ⟦3⟧.": "Mettez lang sur la balise html de chaque version linguistique : ⟦1⟧, ⟦2⟧, ⟦3⟧.",
  "Put the mouse away.": "Rangez la souris.",
  "Put the organization's name in the home title, with what people come for.": "Mettez le nom de l’organisation dans le titre d’accueil, avec ce que les gens viennent chercher.",
@@ -1925,6 +1973,10 @@
   "machine": true
  },
  "Real run, requested card. ⟦1⟧:": "Analyse réelle, carte sur demande. ⟦1⟧ :",
+ "Real run, requested card. asoto.digital:": {
+  "text": "Course réelle, carte demandée. asoto.digital :",
+  "machine": true
+ },
  "Real run, worldwide card.": "Analyse réelle, carte mondiale.",
  "Real run, worldwide card. ⟦1⟧ receives mail, but has no SPF.": "Analyse réelle, carte mondiale. ⟦1⟧ reçoit des e-mails, mais n’a pas de SPF.",
  "Real run, worldwide card. ⟦1⟧'s home page has an empty headline.": "Analyse réelle, carte mondiale. L’accueil de ⟦1⟧ a un headline vide.",
@@ -1961,6 +2013,14 @@
  "Report: ⟦1⟧": "Rapport : ⟦1⟧",
  "Reporting SEO when GA4 sees less": "Rendre compte du SEO quand GA4 voit moins",
  "Request your error page and every PDF you link to.": "Demandez votre page d’erreur et chaque PDF vers lequel vous renvoyez.",
+ "Resize images to at most twice the width they are shown at, and give phones smaller files with srcset.": {
+  "text": "Redimensionnez les images à au plus deux fois la largeur sur laquelle elles sont affichées et donnez aux téléphones des fichiers plus petits avec srcset.",
+  "machine": true
+ },
+ "Resize images to at most twice the width they are shown at, and give phones smaller…": {
+  "text": "Redimensionnez les images à au plus deux fois la largeur sur laquelle elles sont affichées et réduisez la taille des téléphones…",
+  "machine": true
+ },
  "Retire the UA- tag; feed one GA4 property through Tag Manager or gtag, not both.": "Retirez la balise UA- ; alimentez une seule propriété GA4 via Tag Manager ou gtag, pas les deux.",
  "Return a real ⟦1⟧ status for unknown paths, with a helpful page, so search engines drop dead URLs.": "Renvoyez un vrai statut ⟦1⟧ pour les chemins inconnus, avec une page utile, pour que les moteurs abandonnent les URL mortes.",
  "Return a real ⟦1⟧ status for unknown URLs, with a helpful page and a search box.": "Renvoyez un vrai statut ⟦1⟧ pour les URL inconnues, avec une page utile et un champ de recherche.",
@@ -2102,11 +2162,23 @@
  "Send Content-Security-Policy: frame-ancestors 'self' on pages that no partner needs to embed.": "Envoyez Content-Security-Policy: frame-ancestors 'self' sur les pages qu’aucun partenaire n’a besoin d’intégrer.",
  "Send Content-Security-Policy: frame-ancestors 'self', or X-Frame-Options:": "Envoyez Content-Security-Policy: frame-ancestors 'self', ou X-Frame-Options:",
  "Send Content-Security-Policy: frame-ancestors 'self'.": "Envoyez Content-Security-Policy: frame-ancestors 'self'.",
+ "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so windows on other sites lose their handle to the page.": {
+  "text": "Envoyez Cross-Origin-Opener-Policy: same-origin-allow-popups, afin que les fenêtres des autres sites perdent leur accès à la page.",
+  "machine": true
+ },
+ "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so…": {
+  "text": "Envoyer Cross-Origin-Opener-Policy: même origine-autoriser-les popups, donc…",
+  "machine": true
+ },
  "Send Cypress Accessibility and UI Coverage results anywhere with webhooks": "Envoyez les résultats de Cypress Accessibility et UI Coverage où vous voulez grâce aux webhooks",
  "Send each one there in a single redirect, and update the links you control.": "Envoyez chacun directement à destination en une seule redirection, et mettez à jour les liens que vous maîtrisez.",
  "Send each one there in a single redirect, and…": "Envoyez chacun directement à destination en une seule redirection, et…",
  "Send frame-ancestors 'self' in a CSP, or X-Frame-Options:": "Envoyez frame-ancestors 'self' dans une CSP, ou X-Frame-Options:",
  "Send frame-ancestors 'self' in the CSP, or X-Frame-Options:": "Envoyez frame-ancestors 'self' dans la CSP, ou X-Frame-Options:",
+ "Send frame-ancestors 'self' in the CSP, or X-Frame-Options…": {
+  "text": "Envoyez les ancêtres du cadre « soi » dans le CSP, ou X-Frame-Options…",
+  "machine": true
+ },
  "Send HSTS with a one-year max-age once every subdomain serves https.": "Envoyez HSTS avec un max-age d’un an dès que chaque sous-domaine sert du https.",
  "Send HSTS with a one-year max-age, and make the http redirect a ⟦1⟧ or ⟦2⟧.": "Envoyez HSTS avec un max-age d’un an, et faites de la redirection http un ⟦1⟧ ou un ⟦2⟧.",
  "Send HSTS with max-age=⟦1⟧ on every https response, then consider preload.": "Envoyez HSTS avec max-age=⟦1⟧ sur chaque réponse https, puis envisagez le preload.",
@@ -2147,6 +2219,10 @@
  },
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sécurité ⟦4⟧, A11y ⟦5⟧, Vitesse ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analysées, ⟦9⟧ oct. ⟦10⟧.",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sécurité ⟦4⟧, A11y ⟦5⟧, Vitesse ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analysées, ⟦9⟧ oct. ⟦10⟧.",
+ "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. asoto.digital, ⟦7⟧ pages analyzed, ⟦8⟧ Nov ⟦9⟧.": {
+  "text": "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Sécurité ⟦4⟧, A11y ⟦5⟧, Vitesse ⟦6⟧. asoto.digital, ⟦7⟧ pages analysées, ⟦8⟧ novembre ⟦9⟧.",
+  "machine": true
+ },
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
  "SEO card.": "Carte SEO.",
  "SEO Week Becomes Relevance, the Premier AI Search Conference, Returning April ⟦1⟧–⟦2⟧, ⟦3⟧, in New York City": "SEO Week devient Relevance, la grande conférence sur la recherche IA, de retour du ⟦1⟧ au ⟦2⟧ avril ⟦3⟧ à New York",
@@ -2154,6 +2230,10 @@
  "SEO Works found that organic delivered ⟦1⟧ times the traffic of AI assistants and roughly ⟦2⟧ […] The post AI Search Is Not a Distraction, It’s a Branding Channel appeared first on…": "SEO Works a constaté que l'organique a généré ⟦1⟧ fois plus de trafic que les assistants IA et environ ⟦2⟧ […] L'article La recherche IA n'est pas une distraction, c'est un canal de marque est apparu en premier sur…",
  "Serve ⟦1⟧ from the same host as the pages it lists, and name it in ⟦2⟧.": {
   "text": "Servez ⟦1⟧ du même hôte que les pages qu'il répertorie et nommez-le en ⟦2⟧.",
+  "machine": true
+ },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it in…": {
+  "text": "Servez ⟦1⟧ du même hôte que les pages qu'il répertorie et nommez-le dans…",
   "machine": true
  },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
@@ -2234,6 +2314,14 @@
  "Start here:": "Commencez ici :",
  "Start in report-only mode, read the reports, then enforce it.": "Commencez en mode report-only, lisez les rapports, puis appliquez la politique.",
  "Start in report-only mode, read the reports, then…": "Commencez en mode report-only, lisez les rapports, puis…",
+ "Start the aria-label with the words that are visible on the control.": {
+  "text": "Commencez l'aria-label avec les mots visibles sur le contrôle.",
+  "machine": true
+ },
+ "Start the aria-label with the words that are visible on the…": {
+  "text": "Commencez l'aria-label avec les mots visibles sur le…",
+  "machine": true
+ },
  "Start with a report-only CSP, read the reports for a few weeks, then enforce it.": "Commencez par une CSP en report-only, lisez les rapports pendant quelques semaines, puis appliquez-la.",
  "Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.": "Commencez par Content-Security-Policy-Report-Only pour voir ce qui casserait, puis appliquez. default-src 'self' est un bon début.",
  "Start with four headers:": "Commencez par quatre en-têtes :",
@@ -2354,6 +2442,10 @@
   "machine": true
  },
  "The gap: outdated libraries.": "Le point faible : des bibliothèques obsolètes.",
+ "The gap: oversized images.": {
+  "text": "Le fossé : des images surdimensionnées.",
+  "machine": true
+ },
  "The gap: page titles.": "Le point faible : les titres de page.",
  "The gap: schema fields.": "Le point faible : les champs schema.",
  "The gap: tap targets.": {
@@ -2474,6 +2566,10 @@
  "Tie each field to a ⟦1⟧, or give it an aria-label.": "Associez chaque champ à un ⟦1⟧, ou donnez-lui un aria-label.",
  "Tighten the content security policy one directive at a time, starting from default-src 'self'.": {
   "text": "Renforcez la politique de sécurité du contenu une directive à la fois, en commençant par default-src 'self'.",
+  "machine": true
+ },
+ "Tighten the content security policy one directive at a time, starting from…": {
+  "text": "Renforcez la politique de sécurité des contenus une directive à la fois, en commençant par…",
   "machine": true
  },
  "Time to first byte is a floor for everything else.": "Le temps jusqu’au premier octet est un plancher pour tout le reste.",
@@ -2638,6 +2734,10 @@
   "text": "Lorsque vous utilisez des rôles ARIA, imbriquez-les de la même manière que…",
   "machine": true
  },
+ "When you use ARIA roles, nest them the way…": {
+  "text": "Lorsque vous utilisez des rôles ARIA, imbriquez-les comme…",
+  "machine": true
+ },
  "When you use ARIA roles, nest them the…": {
   "text": "Lorsque vous utilisez des rôles ARIA, imbriquez-les dans…",
   "machine": true
@@ -2683,6 +2783,10 @@
  "Wrap the primary content of every template in one ⟦1⟧ for skip links.": "Placez le contenu principal de chaque modèle dans un seul ⟦1⟧ pour les liens d’évitement.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the pitch, not the crawler.": "Rédigez une description d’environ ⟦1⟧ caractères pour chaque page clé : c’est vous qui choisissez l’accroche, pas le crawler.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the crawler.": "Rédigez une description d’environ ⟦1⟧ caractères pour chaque page clé : c’est vous qui choisissez l’extrait, pas le crawler.",
+ "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the…": {
+  "text": "Écrivez une description d'environ ⟦1⟧ caractères pour chaque page clé, de sorte que vous choisissez l'extrait, pas le…",
+  "machine": true
+ },
  "Write a description of about ⟦1⟧ characters for your ten most visited pages, starting with the home page.": "Rédigez une description d’environ ⟦1⟧ caractères pour vos dix pages les plus visitées, en commençant par l’accueil.",
  "Write a description per page that says what that page answers.": "Rédigez pour chaque page une description qui dit à quoi elle répond.",
  "Write a fixed home description about your service.": "Rédigez une description fixe de l’accueil qui présente votre service.",

@@ -1491,6 +1491,7 @@
 			.map(
 				(item) =>
 					'<li><span class="alarm-kicker">' +
+					(LINE_LEVEL[item.level] ? lineFace(LINE_LEVEL[item.level], 16) : '') +
 					esc(rc.word('alertLevel', item.level, item.level)) +
 					' · ' +
 					esc(item.id) +
@@ -1762,6 +1763,27 @@
 			)
 			.join('');
 	const areaFace = (area) => (FACE_AREA[area] ? faceImgs(FACE_AREA[area], 14) : '');
+	// Cyber side (#3826, line light): one line face per attack kind and per threat level. One file each, with its own colours in both themes.
+	const LINE_KIND = {
+		'known-exploit-software': 'exploit',
+		'c2-indicator': 'malware',
+		'phishing-host': 'phishing',
+		'malware-host': 'malware',
+		'hacked-spam': 'hack',
+		cloaking: 'hack',
+		'exposed-secret': 'exposed',
+		lookalike: 'lookalike',
+		'mail-blocklist': 'spam',
+		'outdated-cms': 'exploit',
+		'breach-news': 'history',
+		'cert-anomaly': 'lookalike',
+		'ransomware-news': 'ransomware',
+		'attack-trend': 'cybermap',
+		'ddos-context': 'ddos',
+	};
+	const LINE_LEVEL = { critical: 'lvl-critical', high: 'lvl-high', watch: 'lvl-watch', info: 'lvl-info' };
+	const lineFace = (id, size) =>
+		'<img class="face face-line" src="assets/faces/line/' + id + '.svg?v=' + FACE_V + '" alt="" width="' + size + '" height="' + size + '" loading="lazy" decoding="async">';
 	let findingFilter = { area: 'All', verdict: 'open' };
 
 	// The section painters draw into the report on this page, or, while slotRoot is set, into one column
@@ -5865,6 +5887,7 @@
 				items
 					.map((item) => {
 						const lvl = ['critical', 'high', 'watch', 'info'].includes(item.level) ? item.level : 'info';
+						const kindFace = LINE_KIND[item.kind] ? lineFace(LINE_KIND[item.kind], 16) : '';
 						const lvlText = rc.word('severity', lvl, lvl);
 						const kindText = rc.word('targetedKind', item.kind, item.kind || '');
 						const roleText = item.role ? rc.word('targetedRole', item.role, item.role) : '';
@@ -5894,9 +5917,10 @@
 							'<span class="targeted-badge is-' +
 							esc(lvl) +
 							'">' +
+							lineFace(LINE_LEVEL[lvl], 16) +
 							esc(lvlText) +
 							'</span>' +
-							(kindText ? '<span class="badge">' + esc(kindText) + '</span>' : '') +
+							(kindText ? '<span class="badge">' + kindFace + esc(kindText) + '</span>' : '') +
 							(roleText ? '<span class="badge">' + esc(roleText) + '</span>' : '') +
 							(confText ? '<span class="badge">' + esc(confText) + '</span>' : '') +
 							'</div>' +
@@ -6460,7 +6484,8 @@
 		button.setAttribute('aria-controls', panel.id);
 		const label = document.createElement('span');
 		while (heading.firstChild) label.appendChild(heading.firstChild);
-		if (heading.dataset.face) label.insertAdjacentHTML('afterbegin', '<span class="fold-face" aria-hidden="true">' + faceImgs(heading.dataset.face, 22) + '</span>');
+		if (heading.dataset.line) label.insertAdjacentHTML('afterbegin', '<span class="fold-face" aria-hidden="true">' + lineFace(heading.dataset.line, 22) + '</span>');
+		else if (heading.dataset.face) label.insertAdjacentHTML('afterbegin', '<span class="fold-face" aria-hidden="true">' + faceImgs(heading.dataset.face, 22) + '</span>');
 		const icon = document.createElement('span');
 		icon.className = 'fold-icon';
 		icon.setAttribute('aria-hidden', 'true');

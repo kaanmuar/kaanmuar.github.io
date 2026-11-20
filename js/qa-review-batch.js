@@ -321,6 +321,48 @@
 		}
 	}
 
+	// The list comes from the text box or from a file, never both (#3999): typing locks the file picker,
+	// and a loaded file locks the text box until the file is removed.
+	let fileName = '';
+
+	function lock(el, on) {
+		if (!el) return;
+		if (on) {
+			el.dataset.locked = '1';
+			el.disabled = true;
+		} else if (el.dataset.locked) {
+			delete el.dataset.locked;
+			el.disabled = false;
+		}
+		el.setAttribute('aria-disabled', on ? 'true' : 'false');
+	}
+
+	function syncSource() {
+		const text = document.getElementById('batch-text');
+		const file = document.getElementById('batch-file');
+		const clear = document.getElementById('batch-file-clear');
+		const note = document.getElementById('batch-source-note');
+		if (!text || !file) return;
+		const typed = !fileName && text.value.trim() !== '';
+		lock(file, typed);
+		lock(text, !!fileName);
+		if (clear) clear.hidden = !fileName;
+		if (note) note.textContent = fileName ? bc().t('fileLocksText', { name: fileName }) : typed ? bc().t('textLocksFile') : '';
+	}
+
+	function removeFile() {
+		const text = document.getElementById('batch-text');
+		const file = document.getElementById('batch-file');
+		fileName = '';
+		if (file) file.value = '';
+		if (text) {
+			text.value = '';
+			syncSource();
+			text.dispatchEvent(new Event('input', { bubbles: true }));
+			text.focus();
+		} else syncSource();
+	}
+
 	function wire() {
 		if (!document.getElementById('url-mode')) return;
 		bc().paint();
@@ -328,7 +370,11 @@
 			btn.addEventListener('click', () => setMode(btn.getAttribute('data-url-mode')));
 		});
 		const text = document.getElementById('batch-text');
-		if (text) text.addEventListener('input', refreshPreview);
+		if (text)
+			text.addEventListener('input', () => {
+				syncSource();
+				refreshPreview();
+			});
 		const lead = document.getElementById('batch-lead-report');
 		if (lead) lead.addEventListener('change', refreshPreview);
 		const file = document.getElementById('batch-file');
@@ -338,14 +384,19 @@
 				if (!picked) return;
 				const reader = new FileReader();
 				reader.onload = () => {
+					fileName = picked.name;
 					if (text) {
 						text.value = String(reader.result || '');
+						syncSource();
 						text.dispatchEvent(new Event('input', { bubbles: true }));
 					} else refreshPreview();
 				};
 				reader.readAsText(picked);
 			});
 		}
+		const clear = document.getElementById('batch-file-clear');
+		if (clear) clear.addEventListener('click', removeFile);
+		syncSource();
 		setMode('one');
 	}
 

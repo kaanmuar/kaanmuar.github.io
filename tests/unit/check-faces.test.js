@@ -33,3 +33,27 @@ test('shipped faces are self-contained: no scripts, no outside references, reduc
 		assert.match(svg, /prefers-reduced-motion:reduce/, f);
 	}
 });
+
+test('every comparison section that wears a face names one that exists in both themes', () => {
+	const js = fs.readFileSync(path.join(root, 'js/qa-review-multi.js'), 'utf8');
+	const map = js.match(/const SECTION_FACE = (\{[^}]+\})/)[1];
+	const ids = [...map.matchAll(/: "([a-z0-9-]+)"/g)].map((m) => m[1]);
+	assert.ok(ids.length >= 15, 'the comparison report tags its sections');
+	for (const id of new Set(ids)) {
+		assert.ok(fs.existsSync(face(id)), `${id}.svg`);
+		assert.ok(fs.existsSync(face(id, '-light')), `${id}-light.svg`);
+	}
+});
+
+test('every cyber line face the report uses exists, and each page tags its cyber heading the same way', () => {
+	const js = fs.readFileSync(path.join(root, 'js/qa-review.js'), 'utf8');
+	const block = (name) => js.match(new RegExp(`const ${name} = (\\{[\\s\\S]*?\\n\\t?\\};|\\{[^}]*\\});`))[1];
+	const ids = [
+		...[...block('LINE_KIND').matchAll(/: '([a-z-]+)'/g)].map((m) => m[1]),
+		...[...block('LINE_LEVEL').matchAll(/: '([a-z-]+)'/g)].map((m) => m[1]),
+	];
+	assert.ok(ids.length >= 15, 'the report maps its cyber kinds and levels');
+	for (const id of new Set(ids)) assert.ok(fs.existsSync(path.join(root, 'assets/faces/line', `${id}.svg`)), `${id}.svg`);
+	const tags = PAGES.map((p) => [...fs.readFileSync(path.join(root, p), 'utf8').matchAll(/<h2 id="targeted-head" data-line="([a-z-]+)"/g)].map((m) => m[1]));
+	for (const t of tags) assert.deepEqual(t, ['targeted'], 'the cyber heading uses the line face');
+});

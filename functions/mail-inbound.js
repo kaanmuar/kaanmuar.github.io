@@ -42,7 +42,7 @@ const clip = (value, max) => {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 };
 
-const domainOf = (email) => String(email || "").toLowerCase().split("@").pop().replace(/[>\s]+$/, "");
+const domainOf = (email) => String(email || "").toLowerCase().split("@").pop().replace(/(?<![>\s])[>\s]+$/, "");
 const inFamily = (domain, list) => list.some((d) => domain === d || domain.endsWith("." + d));
 const serviceOf = (domain) => SERVICES.find((s) => inFamily(domain, s.domains)) || null;
 
@@ -52,18 +52,78 @@ function header(headers, name) {
   return Array.isArray(v) ? v.join("\n") : String(v || "");
 }
 
+/** First index >= i where the global re matches s, else s.length; i must never go down between calls. */
+function seeker(s, re) {
+  let hit = -1;
+  return (i) => {
+    if (hit < i) { re.lastIndex = i; const m = re.exec(s); hit = m ? m.index : s.length; }
+    return hit;
+  };
+}
+
+/**
+ * The [1] of each s.matchAll(/spf=pass[^;]*?smtp\.mailfrom=(?:[^@\s;]*@)?([a-z0-9.-]+)/gi), in one pass. A failed spf=pass
+ * fails again for every later one before the same ";", and every mailfrom= inside one [^@\s;] run ends that run at the same place.
+ */
+function spfPassFroms(s) {
+  const out = [];
+  const pass = /spf=pass/gi;
+  const host = /[a-z0-9.-]+/iy;
+  const semi = seeker(s, /;/g);
+  const from = seeker(s, /smtp\.mailfrom=/gi);
+  const stop = seeker(s, /[@\s;]/g);
+  const hostAt = (i) => { host.lastIndex = i; const m = host.exec(s); return m ? m[0] : ""; };
+  for (let m; (m = pass.exec(s));) {
+    const end = semi(m.index + 8);
+    pass.lastIndex = end;
+    for (let k = from(m.index + 8); k < end; k = from(k + 14)) {
+      const r = k + 14;
+      const t = stop(r);
+      const after = s[t] === "@" ? hostAt(t + 1) : "";
+      const got = after || hostAt(r);
+      if (!got) continue;
+      out.push(got);
+      pass.lastIndex = (after ? t + 1 : r) + got.length;
+      break;
+    }
+  }
+  return out;
+}
+
 /** Domains that passed DKIM (header.d) or SPF (smtp.mailfrom) in the Authentication-Results ImprovMX adds. */
 function passedDomains(headers) {
   const out = new Set();
   const auth = header(headers, "Authentication-Results");
-  for (const m of auth.matchAll(/dkim=pass[^;]*?header\.(?:d|i)=@?([a-z0-9.-]+)/gi)) out.add(m[1].toLowerCase());
-  for (const m of auth.matchAll(/spf=pass[^;]*?smtp\.mailfrom=(?:[^@\s;]*@)?([a-z0-9.-]+)/gi)) out.add(m[1].toLowerCase());
+  for (const m of auth.matchAll(/dkim=pass[^;]*?header\.(?:d|i)=@?([a-z0-9.-]+)|dkim=pass[^;]*/gi)) if (m[1]) out.add(m[1].toLowerCase());
+  for (const d of spfPassFroms(auth)) out.add(d.toLowerCase());
   return [...out];
 }
 
+/** s.replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ") in one pass: once a tag has no closer left, its later openers cannot match either. */
+function dropBlocks(s) {
+  const open = /<(style|script)/gi;
+  const close = { style: /<\/style>/gi, script: /<\/script>/gi };
+  let out = "";
+  let at = 0;
+  let m;
+  while ((m = open.exec(s))) {
+    const tag = m[1].toLowerCase();
+    const shut = close[tag];
+    if (!shut) continue;
+    shut.lastIndex = open.lastIndex;
+    if (!shut.exec(s)) {
+      close[tag] = null;
+      continue;
+    }
+    out += s.slice(at, m.index) + " ";
+    at = open.lastIndex = shut.lastIndex;
+  }
+  return out + s.slice(at);
+}
+
 function htmlText(html) {
-  return String(html || "").replace(/<(style|script)[\s\S]*?<\/\1>/gi, " ").replace(/<br\s*\/?>|<\/(p|div|tr|td|h\d|li)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, "\"").replace(/&amp;/g, "&").replace(/[ \t]+/g, " ");
+  return dropBlocks(String(html || "")).replace(/<br\s*\/?>|<\/(p|div|tr|td|h\d|li)>/gi, "\n")
+    .replace(/<[^>]+>|(<[^>]*$)/g, (m, open) => open || " ").replace(/&nbsp;/g, " ").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, "\"").replace(/&amp;/g, "&").replace(/[ \t]+/g, " ");
 }
 
 /** The parts of an ImprovMX webhook payload the rules use. */
@@ -185,7 +245,9 @@ function replyMail(payload) {
 function replyAuth(headers) {
   const auth = header(headers, "Authentication-Results");
   const spf = (auth.match(/\bspf=([a-z]+)/i) || [])[1] || "";
-  const dkim = [...auth.matchAll(/\bdkim=([a-z]+)[^;]*?header\.(?:d|i)=@?([a-z0-9.-]+)/gi)].map((m) => "{@" + m[2].toLowerCase() + " : " + m[1].toLowerCase() + "}");
+  // Branch 2 is the only backtrack into the result word that can match (dkim=passheader.d=x); branch 3 skips a ;-part no later dkim= in it can match.
+  const dkim = [...auth.matchAll(/\bdkim=(?=([a-z]+))\1[^;]*?header\.(?:d|i)=@?([a-z0-9.-]+)|\bdkim=([a-z]+)header\.(?:d|i)=@?([a-z0-9.-]+)|\bdkim=[a-z][^;]*/gi)]
+    .filter((m) => m[2] || m[4]).map((m) => "{@" + (m[2] || m[4]).toLowerCase() + " : " + (m[1] || m[3]).toLowerCase() + "}");
   return { spf: spf.toLowerCase(), dkim: dkim.join(", ") };
 }
 

@@ -12,4 +12,32 @@ allprojects {
     dependencyLocking {
         lockAllConfigurations()
     }
+    // OSV (#4006): AGP's unified-test-platform tooling pulls grpc-netty 1.57.0 -> netty 4.1.93.Final (CVEs fixed
+    // by 4.1.137). Force the whole netty 4.1 family up; drop once AGP ships a newer grpc/netty.
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "io.netty" && requested.name.startsWith("netty-") && !requested.name.startsWith("netty-tcnative")) {
+                useVersion("4.1.137.Final")
+                because("OSV netty CVEs fixed in <= 4.1.137.Final (#4006)")
+            }
+        }
+    }
+}
+
+// Versions past the advisories OSV reports (#3967). These artifacts only come in through the Android unified
+// test platform host (netty via grpc-netty, guava, protobuf-java, commons-io), not the shipped APK.
+allprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "io.netty") {
+                useVersion("4.1.137.Final")
+            } else if (requested.group == "com.google.guava" && requested.name == "guava") {
+                useVersion("33.7.2-jre")
+            } else if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java") {
+                useVersion("3.25.5")
+            } else if (requested.group == "commons-io" && requested.name == "commons-io") {
+                useVersion("2.14.0")
+            }
+        }
+    }
 }

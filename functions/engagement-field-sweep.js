@@ -31,7 +31,7 @@ function toPost(item, now) {
 
 /** Pull today's proposals.json from the live site; returns posts and counts for the meta envelope. */
 async function recentPosts(fetchImpl, site, now) {
-  const base = String(site || "https://carlosandmunoz.com/").replace(/\/+$/, "");
+  const base = String(site || "https://carlosandmunoz.com/").replace(/(?<!\/)\/+$/, "");
   const empty = { posts: [], count: 0, tender: 0, at: "" };
   if (!fetchImpl) return empty;
   try {
