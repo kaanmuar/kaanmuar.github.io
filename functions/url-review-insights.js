@@ -15,6 +15,7 @@ const lookalikes = require("./url-review-lookalikes");
 const hackSigns = require("./url-review-hack-signs");
 const targeted = require("./url-review-targeted");
 const geoAgent = require("./url-review-geo-agent");
+const cyberPassive = require("./url-review-cyber-passive");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1675,6 +1676,7 @@ function analyze(input) {
   const noSri = [];
   read.forEach((page) => ((page.inspect.sri && page.inspect.sri.missing) || []).forEach((h) => { if (!NO_SRI_HOSTS.test(h) && noSri.indexOf(h) === -1) noSri.push(h); }));
   if (noSri.length) add("Security", "risk", "low", "sec-sri", say("sec-sri.title", { n: noSri.length }), say("sec-sri.evidence", { list: some(noSri, 4) }), say("sec-sri.fix"), { count: noSri.length, effort: "minutes" });
+  cyberPassive.findings({ csp: [hdr.csp, hdr.metaCsp], read }, add);
   const mixed = read.filter((page) => (page.inspect.signals && page.inspect.signals.mixed) > 0);
   if (mixed.length) add("Security", "risk", "medium", "sec-mixed", say("sec-mixed.title", { n: mixed.length }), say("listDot", { list: some(mixed.map((page) => say("pathNote", { path: page.path, note: page.inspect.signals.mixed })), 3) }), say("sec-mixed.fix"), { pages: mixed.map((page) => page.path), effort: "minutes", cases: ["SEC-09"] });
   const tls = extras.tls || null;

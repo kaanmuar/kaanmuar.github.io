@@ -5,6 +5,9 @@ const path = require('path');
 
 const SOURCE = 'https://raw.githubusercontent.com/RetireJS/retire.js/master/repository/jsrepository-v4.json';
 const OUT = path.join(__dirname, '..', 'functions', 'assets', 'retire.json');
+// The v6 combined file also lists script addresses that retire.js knows to serve backdoored code (#3842).
+const BACKDOORED_SOURCE = 'https://raw.githubusercontent.com/RetireJS/retire.js/master/repository/jsrepository-v6-combined.json';
+const BACKDOORED_OUT = path.join(__dirname, '..', 'functions', 'assets', 'retire-backdoored.json');
 const SKIP = new Set(['retire-example', 'dont check']);
 const KEEP = ['uri', 'filename', 'filecontent', 'func'];
 // Report names. Entries that share one (the jQuery UI widgets) are merged.
@@ -111,7 +114,39 @@ async function main() {
 	);
 }
 
-main().catch((error) => {
-	console.error(error.message);
-	process.exit(1);
-});
+async function backdoored() {
+	const res = await fetch(BACKDOORED_SOURCE);
+	if (!res.ok) throw new Error('retire.js v6 list answered ' + res.status);
+	const repo = (await res.json()).backdoored || {};
+	const entries = [];
+	Object.keys(repo)
+		.sort()
+		.forEach((name) => {
+			(repo[name] || []).forEach((item) => {
+				const extractors = (item.extractors || []).filter((source) => {
+					try {
+						new RegExp(source);
+						return true;
+					} catch (error) {
+						return false;
+					}
+				});
+				if (extractors.length) entries.push({ name, severity: item.severity || 'high', summary: trim(item.summary, 200), extractors });
+			});
+		});
+	const body = {
+		source: BACKDOORED_SOURCE,
+		license: 'Apache-2.0, RetireJS contributors',
+		fetched: new Date().toISOString().slice(0, 10),
+		entries,
+	};
+	fs.writeFileSync(BACKDOORED_OUT, JSON.stringify(body) + '\n');
+	console.log(entries.length + ' backdoored entries written to ' + path.relative(process.cwd(), BACKDOORED_OUT));
+}
+
+main()
+	.then(backdoored)
+	.catch((error) => {
+		console.error(error.message);
+		process.exit(1);
+	});
