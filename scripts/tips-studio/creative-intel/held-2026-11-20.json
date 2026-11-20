@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-20",
+  "draft": true,
+  "hold": true,
+  "tips": [
+    {
+      "id": "held-2026-11-20-1",
+      "hold": true,
+      "draft": true,
+      "kind": "list",
+      "topic": "WebDev",
+      "tag": "WebDev",
+      "title": [
+        "Three checks most sites still skip."
+      ],
+      "body": "Three checks most sites still skip. Tied to the field's #WebDev conversation — keep it practical for URL Review.",
+      "action": "Open a URL review on your site.",
+      "tags": [
+        "WebDev",
+        "QA"
+      ]
+    },
+    {
+      "id": "held-2026-11-20-2",
+      "hold": true,
+      "draft": true,
+      "kind": "myth",
+      "topic": "A11y",
+      "tag": "Accessibility",
+      "title": [
+        "Myth: SEO starts after you ship."
+      ],
+      "body": "Myth: accessibility is only an alt-text problem. Tied to the field's #Accessibility conversation — keep it practical for URL Review.",
+      "action": "Open a URL review on your site.",
+      "tags": [
+        "Accessibility",
+        "QA"
+      ]
+    },
+    {
+      "id": "held-2026-11-20-3",
+      "hold": true,
+      "draft": true,
+      "kind": "trend",
+      "topic": "SEO",
+      "tag": "SEO",
+      "title": [
+        "What the feed got right about site quality today."
+      ],
+      "body": "What the feed got right about site quality today. Tied to the field's #SEO conversation — keep it practical for URL Review.",
+      "action": "Open a URL review on your site.",
+      "tags": [
+        "SEO",
+        "QA"
+      ]
+    }
+  ]
+}
