@@ -242,6 +242,30 @@
 		}
 	}
 
+	// A details opened just now grows over its CSS transition, later still on a busy machine, and clips its content meanwhile: a smooth scroll aimed into the clipped part never moves the page (#3974).
+	function unfoldDone(folds) {
+		const whole = (fold) => {
+			const bottom = fold.getBoundingClientRect().bottom + 1;
+			const parts = [...fold.children].filter((part) => part.tagName !== 'SUMMARY' && part.getClientRects().length);
+			return parts.length > 0 && parts.every((part) => part.getBoundingClientRect().bottom <= bottom);
+		};
+		return new Promise((done) => {
+			let waiting = true;
+			const finish = () => {
+				if (!waiting) return;
+				waiting = false;
+				done();
+			};
+			setTimeout(finish, 2000);
+			const check = () => {
+				if (!waiting) return;
+				if (folds.every(whole)) finish();
+				else requestAnimationFrame(check);
+			};
+			requestAnimationFrame(check);
+		});
+	}
+
 	function blurFields() {
 		const active = document.activeElement;
 		const tip = $('site-tour-tooltip');
@@ -289,14 +313,14 @@
 		clearHit();
 		if (typeof step.prepare === 'function') step.prepare();
 		const el = step.selector ? document.querySelector(step.selector) : null;
-		let unfolded = false;
+		const folds = [];
 		for (
 			let fold = el && el.closest('details:not([open])');
 			fold;
 			fold = fold.parentElement && fold.parentElement.closest('details:not([open])')
 		) {
 			fold.open = true;
-			unfolded = true;
+			folds.push(fold);
 		}
 		blurFields();
 		pinTip();
@@ -313,8 +337,7 @@
 				});
 				if (narrow) setTimeout(() => clearOfTip(el), 420);
 			};
-			// A details opened just now grows over its CSS transition, so a scroll aimed at once lands short of the target.
-			if (unfolded) setTimeout(reveal, 460);
+			if (folds.length) unfoldDone(folds).then(reveal);
 			else reveal();
 		}
 		const ms = step.demoMs || 1400;

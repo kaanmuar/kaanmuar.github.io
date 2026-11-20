@@ -157,6 +157,28 @@ for (const [screen, viewport] of Object.entries(SCREENS)) {
 	});
 }
 
+// On a busy runner a folded step was still clipped when the tour scrolled to its target, so the page never moved (#3974).
+test('a tour step in a slowly unfolding section still scrolls its target into view', async ({ page }) => {
+	await primeReview(page);
+	await page.addInitScript(() => {
+		document.addEventListener('DOMContentLoaded', () => {
+			const style = document.createElement('style');
+			style.textContent = '.term-group::details-content { transition-delay: .8s !important; }';
+			document.head.appendChild(style);
+		});
+	});
+	await page.goto('/qa-review.html');
+	await page.evaluate(() => {
+		document.getElementById('req-cases').open = false;
+		window.scrollTo(0, 0);
+		window.SiteTour.start({
+			name: 'slow fold',
+			steps: [{ selector: '#fw-picker', title: 'Frameworks', body: 'Pick.' }],
+		});
+	});
+	await expect(page.locator('#fw-picker')).toBeInViewport({ timeout: 5000 });
+});
+
 test('the URL review tour copy has every step in all six languages', () => {
 	const source = fs.readFileSync(path.join(__dirname, '../js/qa-review-report-copy.js'), 'utf8');
 	const tours = {};
