@@ -135,6 +135,7 @@ test("targeted.check detects CISA KEV, OSV (excluding non-commercial prefixes), 
     feeds,
     index: dbip,
     certspotterKey: "cs_test_key",
+    deep: true,
     resolver: {
       resolve4: async () => ["45.155.205.42"],
       resolve6: async () => [],
@@ -181,6 +182,47 @@ test("targeted.check detects CISA KEV, OSV (excluding non-commercial prefixes), 
       assert.ok(x && !/\{[a-z]+\}/.test(x), lang + " " + row.key + " fix");
     }
   }
+});
+
+test("the plain read leaves the certificate-transparency read and the breach-news match to the Deep check (#3946)", async () => {
+  const feeds = {
+    kev: targeted.parseCisaKev(SAMPLE_KEV),
+    dropV4: targeted.parseDropV4(SAMPLE_DROP4),
+    asnDrop: targeted.parseAsnDrop(SAMPLE_ASNDROP),
+    feodo: targeted.parseFeodo([]),
+    tor: targeted.parseTorExits(""),
+    gdelt: targeted.parseGdeltGkg(SAMPLE_GKG)
+  };
+  const calls = [];
+  const fetch = async (url) => {
+    calls.push(new URL(url).hostname);
+    return fakeRes(200, []);
+  };
+  const result = await targeted.check({
+    url: "https://shop.acme-retail.de/",
+    host: "shop.acme-retail.de",
+    cert: { missingIntermediate: "R3" },
+    libraries: []
+  }, {
+    allowTestHost: true,
+    feeds,
+    index: hostGeo.buildDbipIndex(SAMPLE_CSV, "2026-11"),
+    certspotterKey: "cs_test_key",
+    resolver: { resolve4: async () => ["203.0.113.9"], resolve6: async () => [], resolveTxt: async () => [] },
+    fetch,
+    now: Date.parse("2026-11-19T12:00:00Z")
+  });
+  assert.equal(result.breachNews.length, 0);
+  assert.equal(result.certCheck.ctChecked, false);
+  assert.ok(!calls.includes("api.certspotter.com"));
+  assert.ok(!result.sourcesRead.includes("CertSpotter CT"));
+  assert.ok(result.sourcesSkipped.includes("CertSpotter CT (Deep check)"));
+  assert.ok(result.sourcesSkipped.includes("News match for this site (Deep check)"));
+  // The certificate chain itself is still read: it needs no outside source.
+  assert.ok(result.certCheck.anomalies.some((row) => row.kind === "missing-intermediate"));
+  const keys = [];
+  targeted.addFindings(result, (area, verdict, severity, key) => keys.push(key));
+  assert.ok(!keys.includes("sec-breach-news"));
 });
 
 test("previewReport, publicReport and ownerNotice never leak targeted findings or report.targeted (#3816, #3818)", () => {
