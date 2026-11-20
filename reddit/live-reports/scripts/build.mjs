@@ -43,7 +43,7 @@ FONTS.forEach(([family, pkg, style, weights]) => weights.forEach((weight) => ["l
 fs.writeFileSync(path.join(PUB, "css/fonts.css"), faces.join("\n") + "\n");
 
 let html = fs.readFileSync(path.join(ROOT, "live.html"), "utf8");
-const drop = [/^\s*<meta http-equiv="Content-Security-Policy"[^\n]*\n/m, /^\s*<script src="https:\/\/telegram\.org[^\n]*\n/m,
+const drop = [/^\s*<meta http-equiv="Content-Security-Policy"[^\n]*\n/m, /^\s*<script src="assets\/vendor\/tma-sdk-[^\n]*\n/m,
   /^\s*<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com">\n/m, /^\s*<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^\n]*\n/m,
   /^\s*<meta name="live-telegram-app"[^\n]*\n/m];
 drop.forEach((re) => {
