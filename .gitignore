@@ -83,3 +83,8 @@ assets/review-arena/*-v2.jpg
 # Tool scout output (#3857): Tailwind scans tracked text, so the weekly files are force-added by the workflow
 scripts/tool-scout/reports/
 scripts/tool-scout/seen.json
+
+# Feature deck (#3931): pictures made for the PowerPoint, rebuilt by scripts/feature-deck/render-pptx-assets.js
+scripts/feature-deck/.cache/
+# Feature deck (#3931): the HTML deck is published at /presentation/; the PowerPoint is rebuilt on request
+presentation/*.pptx
