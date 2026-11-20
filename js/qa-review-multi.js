@@ -881,8 +881,20 @@
     if (window.SiteTheme) SiteTheme.apply(on, false);
     else document.documentElement.classList.toggle("dark-mode", on);
   }
+  // A site look (data-look) paints cards, tiles and panels from variables of its own, which a page printed from the
+  // comparison does not carry: borders turn black and corners square. Paper takes the plain report styles, so the
+  // look attributes go for the print and come back after, and the PDF's page never has them.
+  const LOOK_ATTR = /^data-look/;
+  let looksBeforePrint = [];
+  function dropLook() {
+    if (looksBeforePrint.length) return;
+    const root = document.documentElement;
+    looksBeforePrint = [...root.attributes].filter((attr) => LOOK_ATTR.test(attr.name)).map((attr) => [attr.name, attr.value]);
+    looksBeforePrint.forEach(([name]) => root.removeAttribute(name));
+  }
   function startPrint() {
     document.body.classList.add("printing-multi");
+    dropLook();
     if (!document.documentElement.classList.contains("dark-mode")) return;
     darkBeforePrint = true;
     setDark(false);
@@ -907,6 +919,8 @@
   });
   window.addEventListener("afterprint", () => {
     document.body.classList.remove("printing-multi");
+    looksBeforePrint.forEach(([name, value]) => document.documentElement.setAttribute(name, value));
+    looksBeforePrint = [];
     if (darkBeforePrint) setDark(true);
     darkBeforePrint = false;
     openedForPrint.forEach((item) => { item.open = false; });
@@ -945,7 +959,7 @@
       mark.setAttribute("data-logo", img.getAttribute("data-logo"));
       img.replaceWith(mark);
     });
-    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style").map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
+    const theme = [...document.documentElement.attributes].filter((attr) => attr.name !== "style" && !LOOK_ATTR.test(attr.name)).map((attr) => " " + attr.name + '="' + esc(attr.name === "class" ? attr.value.replace(/\bdark-mode\b/g, "").trim() : attr.value) + '"').join("");
     return "<!doctype html><html" + theme + '><head><meta charset="utf-8"><title>' + esc(made.columns.map((col) => col.host).join(" " + t("vs") + " ")) + "</title><style>" + css.replace(/<\/style/gi, "<\\/style") +
       "</style></head><body class=\"" + esc(document.body.className) + ' printing-multi multi-pdf"><div class="dash-overlay multi-overlay open" id="multi-overlay">' + copy.outerHTML + "</div></body></html>";
   }
