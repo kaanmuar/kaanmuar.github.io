@@ -8717,13 +8717,16 @@ exports.mailInbound = functions.runWith({ timeoutSeconds: 60, memory: "256MB", m
       return;
     }
     const row = mailInbound.codeOf(mail);
+    // A bounce, auto-reply or complaint is named in the answer and the log (class and code only), never stored or acted on here (#3837).
+    const bounce = row ? "" : mailInbound.bounceLabel(req.body);
+    if (bounce) console.log("mailInbound: " + bounce + " to " + (mail.alias || "?"));
     if (!row && (mail.alias === "qa" || mailFace.isFaceAlias(mail.alias)) && !mailInbound.fromUs(mail.fromEmail)) {
       const out = await takeOwnerReply(mailInbound.replyMail(req.body), mailInbound.replyAuth(req.body.headers), true);
-      res.status(200).send(out.outcome === "taken" ? "owner reply " + out.id : out.outcome === "seen" ? "seen" : "no code, " + out.outcome);
+      res.status(200).send((out.outcome === "taken" ? "owner reply " + out.id : out.outcome === "seen" ? "seen" : "no code, " + out.outcome) + (bounce ? ", " + bounce : ""));
       return;
     }
     if (!row) {
-      res.status(200).send("no code");
+      res.status(200).send(bounce ? "no code, " + bounce : "no code");
       return;
     }
     const now = Date.now();
