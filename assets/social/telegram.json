@@ -430,6 +430,28 @@
     "checked": "2026-11-19T18:43:24.932Z"
    }
   ],
+  "auto-2026-11-18/30-u-aijabogados-cl": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "119",
+    "at": "2026-11-20T17:19:01.895Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/119",
+    "checked": "2026-11-20T17:19:07.515Z"
+   }
+  ],
+  "auto-2026-11-18/36-u-aire-plus-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "121",
+    "at": "2026-11-20T17:19:12.514Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/121",
+    "checked": "2026-11-20T17:19:19.240Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -929,6 +951,17 @@
     "checked": "2026-11-19T02:12:09.892Z"
    }
   ],
+  "runs-100/01-wikipedia": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "122",
+    "at": "2026-11-20T17:19:19.241Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/122",
+    "checked": "2026-11-20T17:19:23.800Z"
+   }
+  ],
   "runs-2026-10/01-govuk": [
    {
     "channel": "telegram",
@@ -1015,6 +1048,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/111",
     "checked": "2026-11-19T18:43:30.238Z"
+   }
+  ],
+  "runs-2026-10/09-un": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "120",
+    "at": "2026-11-20T17:19:07.515Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/120",
+    "checked": "2026-11-20T17:19:12.514Z"
    }
   ],
   "runs-3/01-ilo": [
