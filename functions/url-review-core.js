@@ -12,6 +12,8 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { URL } = require("url");
 const insights = require("./url-review-insights");
+const headOrder = require("./url-review-head-order");
+const pageGraph = require("./url-review-page-graph");
 const cyberPassive = require("./url-review-cyber-passive");
 const linkedRisk = require("./url-review-linked-risk");
 const { legalLinks, germanSpeaking } = require("./url-review-legal");
@@ -2319,6 +2321,8 @@ function inspect(html, headers, pageUrl) {
     },
     schema: schemaScan(html),
     analytics: analyticsScan(html),
+    headOrder: headOrder.analyze(html),
+    minhash: pageGraph.minhash(text),
     socialLinks,
     mailtos,
     local: { phones, maps: mapsLinks },
@@ -3745,6 +3749,7 @@ async function reviewTarget(rawUrl, hooks) {
   if (prefix) note("Later pages stay under " + prefix + ".");
   const keep = (url) => !prefix || underSection(url, prefix);
   const homeInspect = inspect(first.body, first.headers, first.url);
+  homeInspect.headOrder = headOrder.analyze(first.body, { detail: true });
   const sitemapPromise = stopped ? Promise.resolve({ status: 0, urls: [] }) : readSitemap(origin.origin, robotsText, halt, acceptLanguage).catch(() => ({ status: 0, urls: [] }));
   const extrasPromise = stopped ? Promise.resolve({}) : gatherExtras(first, robotsText, robots, halt, note, { webrisk: controls.webrisk, doh: passive ? null : controls.doh, places: controls.places, inspect: homeInspect, sitemap: sitemapPromise, acceptLanguage }).catch(() => ({}));
   const canBrowse = !stopped && !readInBrowser && typeof controls.browse === "function";
