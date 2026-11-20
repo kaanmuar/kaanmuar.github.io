@@ -26,7 +26,8 @@ const SCAN_LIMIT = 300000;
 const MAX_LISTED = 40;
 const META_EQUIV = /^(accept-ch|content-security-policy|content-type|default-style|delegate-ch|origin-trial|x-dns-prefetch-control|refresh)$/i;
 const DATA_SCRIPT = /^(application\/(ld\+)?json|importmap|speculationrules)\b|json$/i;
-const TOKEN = /<!--[\s\S]*?-->|<(script|style|title|noscript|template)\b([^>]*)>([\s\S]*?)<\/\1\s*>|<(meta|link|base)\b([^>]*)>|<\/head\s*>|<body\b/gi;
+const PAIRED = new Set(["script", "style", "title", "noscript", "template"]);
+const VOID = new Set(["meta", "link", "base"]);
 
 function attr(source, name) {
   const match = new RegExp("(?:^|\\s)" + name + "\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s\"'>]+))", "i").exec(source);
@@ -69,31 +70,73 @@ function safeOpenTag(tag) {
   return tag.replace(/((?:href|src)\s*=\s*["']?[^"'\s>?]*)\?[^"'\s>]*/gi, "$1").replace(/\s+/g, " ").slice(0, 140);
 }
 
+// The index of the ">" that closes the tag opened at `from`, skipping any ">" inside a quoted value; -1 when it never closes.
+function tagEnd(source, from) {
+  let quote = "";
+  for (let i = from + 1; i < source.length; i++) {
+    const char = source.charAt(i);
+    if (quote) {
+      if (char === quote) quote = "";
+    } else if (char === "\"" || char === "'") quote = char;
+    else if (char === ">") return i;
+  }
+  return -1;
+}
+
+const NAME_CHAR = /[a-z0-9-]/;
+
+// Scans by hand, not with one big pattern, so a hostile page cannot make it slow (linear in the HTML).
 function elements(html) {
   const source = String(html || "").slice(0, SCAN_LIMIT);
-  const headTag = /<head\b[^>]*>/i.exec(source);
-  const start = headTag ? headTag.index + headTag[0].length : 0;
+  const lower = source.toLowerCase();
+  let pos = 0;
+  const headAt = lower.indexOf("<head");
+  if (headAt !== -1 && !NAME_CHAR.test(lower.charAt(headAt + 5))) {
+    const close = tagEnd(source, headAt);
+    if (close !== -1) pos = close + 1;
+  }
   const found = [];
-  TOKEN.lastIndex = start;
-  let match;
-  while ((match = TOKEN.exec(source))) {
-    const text = match[0];
-    if (text.charAt(1) === "!") continue;
-    if (/^<\/head/i.test(text) || /^<body/i.test(text)) break;
-    const paired = match[1];
-    const name = paired || match[4];
-    const lower = name.toLowerCase();
-    if (lower === "noscript" || lower === "template") continue;
-    const attrs = paired ? match[2] : match[5];
-    const body = paired ? match[3] : "";
+  while (pos < source.length) {
+    const open = lower.indexOf("<", pos);
+    if (open === -1) break;
+    if (lower.startsWith("<!--", open)) {
+      const end = lower.indexOf("-->", open + 4);
+      if (end === -1) break;
+      pos = end + 3;
+      continue;
+    }
+    let nameEnd = open + 1;
+    if (lower.charAt(nameEnd) === "/") nameEnd++;
+    const nameStart = nameEnd;
+    while (nameEnd < lower.length && NAME_CHAR.test(lower.charAt(nameEnd))) nameEnd++;
+    const name = lower.slice(nameStart, nameEnd);
+    const closing = nameStart > open + 1;
+    if (closing && name === "head") break;
+    if (!closing && name === "body") break;
+    const close = tagEnd(source, open);
+    if (close === -1) break;
+    pos = close + 1;
+    if (closing || (!PAIRED.has(name) && !VOID.has(name))) continue;
+    const attrs = source.slice(nameEnd, close).replace(/\/$/, "");
+    let body = "";
+    let text = source.slice(open, close + 1);
+    if (PAIRED.has(name)) {
+      const end = lower.indexOf("</" + name, pos);
+      if (end === -1) break;
+      body = source.slice(pos, end);
+      const endClose = lower.indexOf(">", end);
+      pos = endClose === -1 ? source.length : endClose + 1;
+      text = source.slice(open, pos);
+    }
+    if (name === "noscript" || name === "template") continue;
     const kind = classify(name, attrs, body);
     let snippet;
-    if (paired && lower !== "title" && !has(attrs, "src")) {
+    if (PAIRED.has(name) && name !== "title" && !has(attrs, "src")) {
       const size = Buffer.byteLength(body);
-      snippet = "<" + lower + (attrs.trim() ? " " + safeOpenTag(attrs.trim()) : "") + ">…</" + lower + "> (" + (size >= 1000 ? Math.round(size / 100) / 10 + " kB" : size + " B") + " inline)";
-    } else if (lower === "title") snippet = "<title>…</title>";
-    else if (paired) snippet = safeOpenTag("<" + lower + attrs + ">") + "</" + lower + ">";
-    else snippet = safeOpenTag("<" + lower + attrs + ">");
+      snippet = "<" + name + (attrs.trim() ? " " + safeOpenTag(attrs.trim()) : "") + ">…</" + name + "> (" + (size >= 1000 ? Math.round(size / 100) / 10 + " kB" : size + " B") + " inline)";
+    } else if (name === "title") snippet = "<title>…</title>";
+    else if (PAIRED.has(name)) snippet = safeOpenTag("<" + name + attrs + ">") + "</" + name + ">";
+    else snippet = safeOpenTag("<" + name + attrs + ">");
     found.push({ kind, weight: WEIGHT[kind], snippet, bytes: Buffer.byteLength(text) });
   }
   return found;
