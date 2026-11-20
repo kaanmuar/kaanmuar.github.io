@@ -5,6 +5,13 @@
 //   POST /delete {ids:[...]}
 //   POST /complete {system, prompt, json, max_tokens}  -> {text} or {json}  (the outreach runs of #1980)
 // Bearer TOKEN on every call.
+import { createBreaker, resilientCall } from "../../shared/breaker.js";
+
+// Workers AI and Vectorize calls (#3838): retry transient 429/5xx/network errors with jittered backoff; ten failures in a
+// row pause the calls for 30s. The free-allocation error (4006) is not transient and passes straight through.
+const aiBreaker = createBreaker({ name: "workers-ai", threshold: 10, coolDownMs: 30000 });
+const transient = (e) => { const m = String((e && e.message) || e); return !/\b4006\b|daily free allocation/.test(m) && /\b(429|5\d\d)\b|capacity|overloaded|timed? ?out|network|temporar|unavailable/i.test(m); };
+const guarded = (fn) => resilientCall(fn, { breaker: aiBreaker, isRetryable: transient, retries: 2 });
 const EMBED = "@cf/baai/bge-m3";
 const LLM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const SYSTEM = "You plan coding tasks in one repo: a static site (HTML/JS/CSS on GitHub Pages), Firebase functions in functions/, a Jarvis admin dashboard and its Android app in android/, and media scripts in scripts/. "
@@ -16,13 +23,13 @@ const RULES = [".cursor/rules/jarvis-mobile-parity.mdc", ".cursor/rules/social-c
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 async function embed(env, texts) {
-  const res = await env.AI.run(EMBED, { text: texts });
+  const res = await guarded(() => env.AI.run(EMBED, { text: texts }));
   return res.data;
 }
 
 async function triage(env, { prompt = "", model = "", class: kind = "" }) {
   const [vector] = await embed(env, [prompt.slice(0, 2000)]);
-  const { matches = [] } = await env.VEC.query(vector, { topK: 16, returnMetadata: "all" });
+  const { matches = [] } = await guarded(() => env.VEC.query(vector, { topK: 16, returnMetadata: "all" }));
   const hits = matches.filter((m) => m.score > 0.45).map((m) => m.metadata);
   const files = hits.filter((h) => h.kind === "file");
   const tickets = hits.filter((h) => h.kind === "issue").slice(0, 4).map((h) => ({ ref: h.ref, title: h.title }));
@@ -30,14 +37,14 @@ async function triage(env, { prompt = "", model = "", class: kind = "" }) {
 
   let plan = [], picked = [], rules = [];
   try {
-    const res = await env.AI.run(LLM, {
+    const res = await guarded(() => env.AI.run(LLM, {
       max_tokens: 400,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: `Task (${kind || "unclassified"}):\n${prompt.slice(0, 3000)}\n\nCandidate files:\n${candidates || "none"}\n\nRule list: ${RULES.join(", ")}` },
       ],
-    });
+    }));
     const out = typeof res.response === "string" ? JSON.parse(res.response) : res.response;
     plan = (out.plan || []).slice(0, 5).map(String);
     picked = (out.files || []).map((f) => files[Number(f.n) - 1] && { ref: files[Number(f.n) - 1].ref, why: String(f.why || "") }).filter(Boolean);
@@ -56,19 +63,19 @@ async function index(env, { items = [] }) {
   items = items.slice(0, 50);
   if (!items.length) return { upserted: 0 };
   const vectors = await embed(env, items.map((i) => i.text.slice(0, 2000)));
-  await env.VEC.upsert(items.map((i, n) => ({ id: i.id, values: vectors[n], metadata: i.meta })));
+  await guarded(() => env.VEC.upsert(items.map((i, n) => ({ id: i.id, values: vectors[n], metadata: i.meta }))));
   return { upserted: items.length };
 }
 
 async function complete(env, { system = "", prompt = "", json: asJson = false, max_tokens = 800 }) {
-  const res = await env.AI.run(LLM, {
+  const res = await guarded(() => env.AI.run(LLM, {
     max_tokens: Math.min(Number(max_tokens) || 800, 2500),
     ...(asJson ? { response_format: { type: "json_object" } } : {}),
     messages: [
       ...(system ? [{ role: "system", content: String(system).slice(0, 6000) }] : []),
       { role: "user", content: String(prompt).slice(0, 16000) },
     ],
-  });
+  }));
   const out = res.response;
   if (!asJson) return { text: typeof out === "string" ? out : JSON.stringify(out) };
   return { json: typeof out === "string" ? JSON.parse(out) : out };
@@ -87,6 +94,7 @@ export default {
       if (pathname === "/complete") return json(await complete(env, body));
     } catch (e) {
       console.error(pathname, e);
+      if (e && e.name === "BreakerOpenError") return json({ error: "unavailable", detail: e.message }, 503);
       // Only the Workers Free plan stops at 10,000 neurons a day; the account is on Workers Paid (#2290).
       if (/\b4006\b|daily free allocation/.test(String(e && e.message))) return json({ error: "quota", detail: "Workers AI refused the call for the free daily allocation: check that the Cloudflare account is still on Workers Paid (#2290)." }, 429);
       return json({ error: "failed" }, 500);
