@@ -106,6 +106,14 @@ function budget(name, env) {
 
 // Longer than any job's timeout (rerunReviewFailures, 1800 s), so a start this old with no end is a run that crashed.
 const CRASH_AFTER = 45 * 60000;
+// A run that finished with a warning for this long counts as a problem (#3811).
+const WARN_AFTER = 24 * H;
+
+// What a job returned: a note string, or { note, warn: true } for a run that finished but could not do its work (#3811).
+function outcome(result) {
+  if (result && typeof result === "object") return { note: typeof result.note === "string" ? result.note : "", warn: !!result.warn };
+  return { note: typeof result === "string" ? result : "", warn: false };
+}
 
 // runs: { job: { startedAt, endedAt, ok, error } }. since: when the ledger started, so a new job is not "missed".
 function overdue(runs, now, since) {
@@ -123,8 +131,10 @@ function overdue(runs, now, since) {
     }
     if (run.ok === false) out.push({ job: row.job, why: "failed: " + String(run.error || "").slice(0, 160) });
     else if (now - Date.parse(run.endedAt) > limit) out.push({ job: row.job, why: "last ended " + run.endedAt });
+    // A job that ran but could not do its work (a rate-limited key) is a warning; after a day of it, a problem (#3811).
+    else if (run.warn && run.warnSince && now - Date.parse(run.warnSince) > WARN_AFTER) out.push({ job: row.job, why: "warning since " + run.warnSince + ": " + String(run.note || "").slice(0, 160) });
   });
   return out;
 }
 
-module.exports = { TIME_ZONE, JOBS, BUDGETS, CRASH_AFTER, job, cron, budget, overdue };
+module.exports = { TIME_ZONE, JOBS, BUDGETS, CRASH_AFTER, WARN_AFTER, outcome, job, cron, budget, overdue };
