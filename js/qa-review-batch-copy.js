@@ -11,6 +11,9 @@
 			listHint:
 				'One https address per line, or load a .txt / .csv with a url column. Up to {n}. The first is the lead.',
 			fileLabel: 'Load a file',
+			fileRemove: 'Remove the file',
+			textLocksFile: 'Clear the text box to load a file instead.',
+			fileLocksText: 'Loaded {name}. Remove the file to type addresses.',
 			leadReport: 'Use the open report’s URL as the lead',
 			leadReportOff: 'Open one of your reports first to use it as the lead.',
 			leadBadge: 'Lead',
@@ -59,6 +62,9 @@
 			listHint:
 				'Una dirección https por línea, o carga un .txt / .csv con una columna url. Hasta {n}. La primera es la principal.',
 			fileLabel: 'Cargar un archivo',
+			fileRemove: 'Quitar el archivo',
+			textLocksFile: 'Vacía el cuadro de texto para cargar un archivo.',
+			fileLocksText: 'Se cargó {name}. Quita el archivo para escribir direcciones.',
 			leadReport: 'Usar la URL del informe abierto como principal',
 			leadReportOff: 'Abre primero uno de tus informes para usarlo como principal.',
 			leadBadge: 'Principal',
@@ -108,6 +114,9 @@
 			listHint:
 				'Um endereço https por linha, ou carregue um .txt / .csv com uma coluna url. Até {n}. O primeiro é o principal.',
 			fileLabel: 'Carregar um arquivo',
+			fileRemove: 'Remover o arquivo',
+			textLocksFile: 'Limpe a caixa de texto para carregar um arquivo.',
+			fileLocksText: '{name} carregado. Remova o arquivo para digitar endereços.',
 			leadReport: 'Usar a URL do relatório aberto como principal',
 			leadReportOff: 'Abra primeiro um dos seus relatórios para usá-lo como principal.',
 			leadBadge: 'Principal',
@@ -157,6 +166,9 @@
 			listHint:
 				'Eine https-Adresse pro Zeile, oder eine .txt / .csv mit einer url-Spalte laden. Bis zu {n}. Die erste ist die Leitadresse.',
 			fileLabel: 'Datei laden',
+			fileRemove: 'Datei entfernen',
+			textLocksFile: 'Leeren Sie das Textfeld, um stattdessen eine Datei zu laden.',
+			fileLocksText: '{name} geladen. Entfernen Sie die Datei, um Adressen einzugeben.',
 			leadReport: 'URL des offenen Berichts als Leitadresse verwenden',
 			leadReportOff: 'Öffnen Sie zuerst einen Ihrer Berichte, um ihn als Leitadresse zu nutzen.',
 			leadBadge: 'Leitadresse',
@@ -206,6 +218,9 @@
 			listHint:
 				'Une adresse https par ligne, ou chargez un .txt / .csv avec une colonne url. Jusqu’à {n}. La première est la principale.',
 			fileLabel: 'Charger un fichier',
+			fileRemove: 'Retirer le fichier',
+			textLocksFile: 'Videz la zone de texte pour charger un fichier.',
+			fileLocksText: '{name} chargé. Retirez le fichier pour saisir des adresses.',
 			leadReport: 'Utiliser l’URL du rapport ouvert comme principale',
 			leadReportOff: 'Ouvrez d’abord un de vos rapports pour l’utiliser comme principale.',
 			leadBadge: 'Principale',
@@ -255,6 +270,9 @@
 			listHint:
 				'Un indirizzo https per riga, oppure carica un .txt / .csv con una colonna url. Fino a {n}. Il primo è il principale.',
 			fileLabel: 'Carica un file',
+			fileRemove: 'Rimuovi il file',
+			textLocksFile: 'Svuota la casella di testo per caricare un file.',
+			fileLocksText: '{name} caricato. Rimuovi il file per scrivere gli indirizzi.',
 			leadReport: 'Usa l’URL del report aperto come principale',
 			leadReportOff: 'Apri prima uno dei tuoi report per usarlo come principale.',
 			leadBadge: 'Principale',
