@@ -3,1252 +3,1929 @@
  * Streams a read log, keeps every try, and allows one completed review
  * per browser id and per network address.
  */
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const core = require("../functions/url-review-core");
-const softQuota = require("../functions/url-review-soft-quota");
-const newsWire = require("../functions/news-wire");
-const desk = require("../functions/url-review-desk");
-const offers = require("../functions/url-review-offers");
-const compare = require("../functions/url-review-compare");
-const auth = require("../functions/url-review-auth");
-const phraser = require("../functions/url-review-phrase");
-const accountData = require("../functions/url-review-account-data");
-const oauth = require("../functions/url-review-oauth");
-const fixOffers = require("../functions/url-review-fix-offers");
-const fixCheckout = require("../functions/url-review-fix-checkout");
-const fixRereview = require("../functions/url-review-fix-rereview");
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const core = require('../functions/url-review-core');
+const softQuota = require('../functions/url-review-soft-quota');
+const newsWire = require('../functions/news-wire');
+const desk = require('../functions/url-review-desk');
+const offers = require('../functions/url-review-offers');
+const compare = require('../functions/url-review-compare');
+const auth = require('../functions/url-review-auth');
+const phraser = require('../functions/url-review-phrase');
+const accountData = require('../functions/url-review-account-data');
+const oauth = require('../functions/url-review-oauth');
+const fixOffers = require('../functions/url-review-fix-offers');
+const fixCheckout = require('../functions/url-review-fix-checkout');
+const fixRereview = require('../functions/url-review-fix-rereview');
+const threats = require('../functions/url-review-threats');
+const reviewMap = require('../functions/url-review-map');
 const localSoftQuota = softQuota.memoryStore();
 
 // Keys deployed through Secret Manager are kept locally in functions/.secret.local, as the emulator reads them.
 function loadEnvFile(name) {
-  const file = path.join(__dirname, "..", "functions", name);
-  let text = "";
-  try { text = fs.readFileSync(file, "utf8"); } catch (error) { return; }
-  text.split("\n").forEach((line) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) return;
-    const eq = trimmed.indexOf("=");
-    if (eq < 1) return;
-    const key = trimmed.slice(0, eq).trim();
-    if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
-  });
+	const file = path.join(__dirname, '..', 'functions', name);
+	let text = '';
+	try {
+		text = fs.readFileSync(file, 'utf8');
+	} catch (error) {
+		return;
+	}
+	text.split('\n').forEach((line) => {
+		const trimmed = line.trim();
+		if (!trimmed || trimmed.startsWith('#')) return;
+		const eq = trimmed.indexOf('=');
+		if (eq < 1) return;
+		const key = trimmed.slice(0, eq).trim();
+		if (!process.env[key]) process.env[key] = trimmed.slice(eq + 1).trim();
+	});
 }
-loadEnvFile(".env");
-loadEnvFile(".secret.local");
+loadEnvFile('.env');
+loadEnvFile('.secret.local');
+// The Firebase Web API key is public, but it is not kept in the repo: a missing value stops the server at startup (#3970).
+if (!process.env.FIREBASE_WEB_KEY) {
+	console.error(
+		'FIREBASE_WEB_KEY is not set. Add it to functions/.secret.local (or export it), then start the review server again.'
+	);
+	process.exit(1);
+}
 
 function paymentKeys() {
-  return {
-    secret: process.env.STRIPE_SECRET_KEY || "",
-    wompiKey: process.env.WOMPI_PRIVATE_KEY || "",
-    mercadoPagoToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
-    paypalClientId: process.env.PAYPAL_CLIENT_ID || "",
-    paypalSecret: process.env.PAYPAL_CLIENT_SECRET || "",
-    paypalMode: process.env.PAYPAL_MODE || ""
-  };
+	return {
+		secret: process.env.STRIPE_SECRET_KEY || '',
+		wompiKey: process.env.WOMPI_PRIVATE_KEY || '',
+		mercadoPagoToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+		paypalClientId: process.env.PAYPAL_CLIENT_ID || '',
+		paypalSecret: process.env.PAYPAL_CLIENT_SECRET || '',
+		paypalMode: process.env.PAYPAL_MODE || '',
+	};
 }
 
 function payReturn(purpose, choice, reference, lang) {
-  const base = "http://127.0.0.1:8765/" + core.payPage(lang) + "?purpose=" + purpose + "&provider=" + choice;
-  if (choice === "stripe") {
-    return {
-      successUrl: base + "&result=success&session_id={CHECKOUT_SESSION_ID}",
-      cancelUrl: base + "&result=cancel",
-      pendingUrl: base + "&result=pending"
-    };
-  }
-  return {
-    successUrl: base + "&result=success&reference=" + reference,
-    cancelUrl: base + "&result=cancel&reference=" + reference,
-    pendingUrl: base + "&result=pending&reference=" + reference
-  };
+	const base = 'http://127.0.0.1:8765/' + core.payPage(lang) + '?purpose=' + purpose + '&provider=' + choice;
+	if (choice === 'stripe') {
+		return {
+			successUrl: base + '&result=success&session_id={CHECKOUT_SESSION_ID}',
+			cancelUrl: base + '&result=cancel',
+			pendingUrl: base + '&result=pending',
+		};
+	}
+	return {
+		successUrl: base + '&result=success&reference=' + reference,
+		cancelUrl: base + '&result=cancel&reference=' + reference,
+		pendingUrl: base + '&result=pending&reference=' + reference,
+	};
 }
 
 const PORT = 8768;
 const runs = new Map();
 const activeRuns = new Map();
 const deskSessions = new Map();
-const FILE = path.join(__dirname, "..", "runner-results", "url-reviews.jsonl");
-const ALERT_FILE = path.join(__dirname, "..", "runner-results", "url-review-alerts.jsonl");
+const FILE = path.join(__dirname, '..', 'runner-results', 'url-reviews.jsonl');
+const ALERT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-alerts.jsonl');
+const THREAT_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-threats.jsonl');
+const MAP_FILE = path.join(__dirname, '..', 'runner-results', 'url-review-map-global.json');
 const ALLOW = new Set([
-  "http://127.0.0.1:8765",
-  "http://localhost:8765",
-  "http://127.0.0.1:8768",
-  "http://localhost:8768"
+	'http://127.0.0.1:8765',
+	'http://localhost:8765',
+	'http://127.0.0.1:8768',
+	'http://localhost:8768',
 ]);
 
 function readStore() {
-  try {
-    return fs.readFileSync(FILE, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
-  } catch (error) {
-    return [];
-  }
+	try {
+		return fs
+			.readFileSync(FILE, 'utf8')
+			.split('\n')
+			.filter(Boolean)
+			.map((line) => JSON.parse(line));
+	} catch (error) {
+		return [];
+	}
 }
 
 // The production run doc keeps `addons`; here they are the paid-addon rows written on confirm.
 function addonsOf(reportId) {
-  const found = readStore().filter((row) => row && row.status === "paid-addon" && row.reportId === reportId && row.paid === true).map((row) => row.purpose);
-  return found.filter((purpose, index) => found.indexOf(purpose) === index);
+	const found = readStore()
+		.filter((row) => row && row.status === 'paid-addon' && row.reportId === reportId && row.paid === true)
+		.map((row) => row.purpose);
+	return found.filter((purpose, index) => found.indexOf(purpose) === index);
 }
 
 function readAlerts() {
-  try {
-    return fs.readFileSync(ALERT_FILE, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
-  } catch (error) {
-    return [];
-  }
+	try {
+		return fs
+			.readFileSync(ALERT_FILE, 'utf8')
+			.split('\n')
+			.filter(Boolean)
+			.map((line) => JSON.parse(line));
+	} catch (error) {
+		return [];
+	}
 }
 
 function mailAlert(note) {
-  const key = process.env.SENDGRID_API_KEY || "";
-  const from = process.env.SENDGRID_FROM || "";
-  if (!key || !from) return;
-  let sgMail = null;
-  try { sgMail = require("@sendgrid/mail"); } catch (error) { return; }
-  sgMail.setApiKey(key);
-  sgMail.send({
-    to: "qa@carlosandmunoz.com",
-    from,
-    subject: note.subject,
-    text: (note.title + "\n\n" + (note.detail || "")).slice(0, 4000)
-  }).catch((error) => {
-    console.error("Review alert mail failed:", error && error.message ? error.message : "send failed");
-  });
+	const key = process.env.SENDGRID_API_KEY || '';
+	const from = process.env.SENDGRID_FROM || '';
+	if (!key || !from) return;
+	let sgMail = null;
+	try {
+		sgMail = require('@sendgrid/mail');
+	} catch (error) {
+		return;
+	}
+	sgMail.setApiKey(key);
+	sgMail
+		.send({
+			to: 'qa@carlosandmunoz.com',
+			from,
+			subject: note.subject,
+			text: (note.title + '\n\n' + (note.detail || '')).slice(0, 4000),
+		})
+		.catch((error) => {
+			console.error('Review alert mail failed:', error && error.message ? error.message : 'send failed');
+		});
 }
 
 function storeAlert(note) {
-  const saved = Object.assign({}, note, { id: note.id || crypto.randomBytes(8).toString("hex") });
-  fs.mkdirSync(path.dirname(ALERT_FILE), { recursive: true });
-  fs.appendFileSync(ALERT_FILE, JSON.stringify(saved) + "\n");
-  return saved;
+	const saved = Object.assign({}, note, { id: note.id || crypto.randomBytes(8).toString('hex') });
+	fs.mkdirSync(path.dirname(ALERT_FILE), { recursive: true });
+	fs.appendFileSync(ALERT_FILE, JSON.stringify(saved) + '\n');
+	return saved;
 }
 
 function noteReview(kind, source) {
-  const saved = storeAlert(desk.alertFrom(kind, source || {}));
-  mailAlert(saved);
-  return saved;
+	const saved = storeAlert(desk.alertFrom(kind, source || {}));
+	mailAlert(saved);
+	return saved;
 }
 
 function deskCookie(req) {
-  return (String(req.headers.cookie || "").match(/(?:^|; )qa_desk=([a-f0-9]{32})/) || [])[1] || "";
+	return (String(req.headers.cookie || '').match(/(?:^|; )qa_desk=([a-f0-9]{32})/) || [])[1] || '';
 }
 
 function deskOperator(req) {
-  const session = deskSessions.get(deskCookie(req));
-  if (!session || session.until < Date.now()) return null;
-  return session;
+	const session = deskSessions.get(deskCookie(req));
+	if (!session || session.until < Date.now()) return null;
+	return session;
 }
 
 function verifyDeskSignIn(idToken) {
-  return desk.verifyOperator(idToken);
+	return desk.verifyOperator(idToken);
 }
 
 function seedAlerts() {
-  if (readAlerts().length) return;
-  desk.alertsFromHistory(readStore()).forEach((note) => storeAlert(note));
+	if (readAlerts().length) return;
+	desk.alertsFromHistory(readStore()).forEach((note) => storeAlert(note));
+}
+
+function readThreatsLocal() {
+	const map = new Map();
+	readStore().forEach((row) => {
+		threats.recordsFromReview(row).forEach((item) => map.set(item.id, item));
+	});
+	try {
+		fs.readFileSync(THREAT_FILE, 'utf8')
+			.split('\n')
+			.filter(Boolean)
+			.forEach((line) => {
+				const item = threats.normalizeRecord(JSON.parse(line));
+				map.set(item.id, item);
+			});
+	} catch (error) { /* empty */ }
+	return Array.from(map.values());
 }
 
 function writeRecord(record) {
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
-  fs.appendFileSync(FILE, JSON.stringify(record) + "\n");
-  const kind = desk.kindFor(record);
-  if (kind) noteReview(kind, record);
+	fs.mkdirSync(path.dirname(FILE), { recursive: true });
+	fs.appendFileSync(FILE, JSON.stringify(record) + '\n');
+	const kind = desk.kindFor(record);
+	if (kind) noteReview(kind, record);
+	const items = threats.recordsFromReview(record);
+	if (items.length) {
+		items.forEach((item) => fs.appendFileSync(THREAT_FILE, JSON.stringify(item) + '\n'));
+	}
 }
 
 // Production changes a row inside a Firestore transaction; this mirror rewrites the line.
 function updateRecord(id, patch) {
-  const rows = readStore().map((row) => (row && row.id === id ? Object.assign({}, row, patch) : row));
-  fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row) + "\n").join(""));
+	const rows = readStore().map((row) => (row && row.id === id ? Object.assign({}, row, patch) : row));
+	fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row) + '\n').join(''));
 }
 
 async function sessionEmail(body) {
-  const signedIn = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
-  return signedIn.ok ? signedIn.email : "";
+	const signedIn = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
+	return signedIn.ok ? signedIn.email : '';
 }
 
 function passRequest(source) {
-  return {
-    frameworks: core.normalizeFrameworks(source.frameworks),
-    tools: core.normalizeTools(source.tools),
-    pages: source.pages == null || source.pages === "" ? undefined : Number(source.pages),
-    depth: source.depth == null || source.depth === "" ? undefined : Number(source.depth)
-  };
+	return {
+		frameworks: core.normalizeFrameworks(source.frameworks),
+		tools: core.normalizeTools(source.tools),
+		pages: source.pages == null || source.pages === '' ? undefined : Number(source.pages),
+		depth: source.depth == null || source.depth === '' ? undefined : Number(source.depth),
+	};
 }
 
 function originOf(req) {
-  return ALLOW.has(req.headers.origin) ? req.headers.origin : "http://127.0.0.1:8765";
+	return ALLOW.has(req.headers.origin) ? req.headers.origin : 'http://127.0.0.1:8765';
 }
 
 function clientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  return forwarded || req.socket.remoteAddress || "";
+	const forwarded = String(req.headers['x-forwarded-for'] || '')
+		.split(',')[0]
+		.trim();
+	return forwarded || req.socket.remoteAddress || '';
 }
 
 function deviceFrom(req, body) {
-  const cookie = String(req.headers.cookie || "");
-  const saved = (cookie.match(/(?:^|; )qr_device=([a-f0-9]{16})/) || [])[1] || "";
-  const sent = String((body && body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
-  if (/^[a-f0-9]{16}$/.test(sent)) return sent;
-  return saved || crypto.randomBytes(8).toString("hex");
+	const cookie = String(req.headers.cookie || '');
+	const saved = (cookie.match(/(?:^|; )qr_device=([a-f0-9]{16})/) || [])[1] || '';
+	const sent = String((body && body.deviceId) || '')
+		.replace(/[^a-f0-9]/g, '')
+		.slice(0, 16);
+	if (/^[a-f0-9]{16}$/.test(sent)) return sent;
+	return saved || crypto.randomBytes(8).toString('hex');
 }
 
 function sendJson(res, status, body, origin, deviceId) {
-  const headers = {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-    "x-content-type-options": "nosniff",
-    "referrer-policy": "no-referrer",
-    "access-control-allow-origin": origin,
-    "access-control-allow-credentials": "true",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    "set-cookie": "qr_device=" + deviceId + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax"
-  };
-  res.writeHead(status, headers);
-  res.end(JSON.stringify(body));
+	const headers = {
+		'content-type': 'application/json; charset=utf-8',
+		'cache-control': 'no-store',
+		'x-content-type-options': 'nosniff',
+		'referrer-policy': 'no-referrer',
+		'access-control-allow-origin': origin,
+		'access-control-allow-credentials': 'true',
+		'access-control-allow-methods': 'GET, POST, OPTIONS',
+		'access-control-allow-headers': 'content-type',
+		'set-cookie': 'qr_device=' + deviceId + '; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax',
+	};
+	res.writeHead(status, headers);
+	res.end(JSON.stringify(body));
 }
 
 function startStream(res, origin, deviceId) {
-  res.writeHead(200, {
-    "content-type": "application/x-ndjson; charset=utf-8",
-    "cache-control": "no-store",
-    "access-control-allow-origin": origin,
-    "access-control-allow-credentials": "true",
-    "set-cookie": "qr_device=" + deviceId + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax"
-  });
+	res.writeHead(200, {
+		'content-type': 'application/x-ndjson; charset=utf-8',
+		'cache-control': 'no-store',
+		'access-control-allow-origin': origin,
+		'access-control-allow-credentials': 'true',
+		'set-cookie': 'qr_device=' + deviceId + '; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax',
+	});
 }
 
 function line(res, payload) {
-  if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
+	if (!res.writableEnded) res.write(JSON.stringify(payload) + '\n');
 }
 
 function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on("data", (chunk) => {
-      size += chunk.length;
-      if (size > 20000) {
-        reject(Object.assign(new Error("The request is too large."), { status: 413 }));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"));
-      } catch (error) {
-        reject(Object.assign(new Error("The request was not JSON."), { status: 400 }));
-      }
-    });
-    req.on("error", reject);
-  });
+	return new Promise((resolve, reject) => {
+		const chunks = [];
+		let size = 0;
+		req.on('data', (chunk) => {
+			size += chunk.length;
+			if (size > 20000) {
+				reject(Object.assign(new Error('The request is too large.'), { status: 413 }));
+				req.destroy();
+				return;
+			}
+			chunks.push(chunk);
+		});
+		req.on('end', () => {
+			try {
+				resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
+			} catch (error) {
+				reject(Object.assign(new Error('The request was not JSON.'), { status: 400 }));
+			}
+		});
+		req.on('error', reject);
+	});
 }
 
 // Sign-ins live in memory here; the code is printed instead of emailed.
 const signIns = auth.memoryStore();
 
 async function localSignIn(req, res, pathName, origin, deviceHint) {
-  const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
-  if (req.method === "GET" && pathName === "/auth/providers") {
-    sendJson(res, 200, { providers: auth.enabledProviders(enabled, oauth.ready(process.env)) }, origin, deviceHint);
-    return;
-  }
-  let body = {};
-  try { body = await readBody(req); } catch (error) { body = {}; }
-  const answer = (result) => sendJson(res, result.ok ? 200 : result.status, result.ok
-    ? { ok: true, session: result.session, email: result.email, provider: result.provider, name: result.name || "", picture: result.picture || "" }
-    : { error: result.error, code: result.code || "" }, origin, deviceHint);
-  const mailCode = async (input) => {
-    const started = await auth.startEmail(signIns, Object.assign({ ip: clientIp(req) }, input));
-    if (!started.ok) return answer(started);
-    console.log("Sign-in code for " + started.email + ": " + started.code + "  link: http://127.0.0.1:8765/qa-review.html?signin=" + started.id + "&key=" + started.token);
-    sendJson(res, 200, { ok: true, id: started.id, sentTo: auth.maskEmail(started.email) }, origin, deviceHint);
-  };
-  if (pathName === "/auth/email") return mailCode({ email: body.email, deviceKey: body.deviceKey });
-  if (pathName === "/auth/email/finish") return answer(await auth.finishEmail(signIns, body));
-  if (pathName === "/auth/provider") {
-    let decoded = null;
-    try {
-      decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY || "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w")(String(body.idToken || ""));
-    } catch (error) {
-      sendJson(res, 401, { error: "That sign-in was not accepted. Try again." }, origin, deviceHint);
-      return;
-    }
-    const result = await auth.providerSignIn(signIns, decoded, { deviceKey: body.deviceKey, profile: body.profile, googleAccessToken: body.googleAccessToken, enabled });
-    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
-    return answer(result);
-  }
-  const oauthStart = pathName.match(/^\/auth\/oauth\/([a-z]+)\/start$/);
-  if (oauthStart) {
-    // The page's own origin, so the device key the browser keeps there is the one that finishes.
-    const page = (/:8765$/.test(origin) ? origin : "http://127.0.0.1:8765") + "/qa-review.html";
-    const result = await oauth.startOAuth(signIns, { provider: oauthStart[1], deviceKey: body.deviceKey, ip: clientIp(req), enabled, env: process.env, redirectUri: page });
-    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, url: result.url } : { error: result.error }, origin, deviceHint);
-    return;
-  }
-  if (pathName === "/auth/oauth/finish") {
-    const result = await oauth.finishOAuth(signIns, { state: body.state, code: body.code, error: body.error, deviceKey: body.deviceKey, enabled, env: process.env });
-    if (result.verifyEmail) return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
-    return answer(result);
-  }
-  if (pathName === "/auth/session") {
-    const result = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
-    sendJson(res, result.ok ? 200 : result.status, result.ok ? { ok: true, email: result.email, provider: result.provider } : { error: result.error, signIn: true }, origin, deviceHint);
-    return;
-  }
-  if (pathName === "/auth/signout") {
-    await auth.closeSession(signIns, body.session);
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  sendJson(res, 404, { error: "Not found." }, origin, deviceHint);
+	const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
+	if (req.method === 'GET' && pathName === '/auth/providers') {
+		sendJson(res, 200, { providers: auth.enabledProviders(enabled, oauth.ready(process.env)) }, origin, deviceHint);
+		return;
+	}
+	let body = {};
+	try {
+		body = await readBody(req);
+	} catch (error) {
+		body = {};
+	}
+	const answer = (result) =>
+		sendJson(
+			res,
+			result.ok ? 200 : result.status,
+			result.ok
+				? {
+						ok: true,
+						session: result.session,
+						email: result.email,
+						provider: result.provider,
+						name: result.name || '',
+						picture: result.picture || '',
+					}
+				: { error: result.error, code: result.code || '' },
+			origin,
+			deviceHint
+		);
+	const mailCode = async (input) => {
+		const started = await auth.startEmail(signIns, Object.assign({ ip: clientIp(req) }, input));
+		if (!started.ok) return answer(started);
+		console.log(
+			'Sign-in code for ' +
+				started.email +
+				': ' +
+				started.code +
+				'  link: http://127.0.0.1:8765/qa-review.html?signin=' +
+				started.id +
+				'&key=' +
+				started.token
+		);
+		sendJson(res, 200, { ok: true, id: started.id, sentTo: auth.maskEmail(started.email) }, origin, deviceHint);
+	};
+	if (pathName === '/auth/email') return mailCode({ email: body.email, deviceKey: body.deviceKey });
+	if (pathName === '/auth/email/finish') return answer(await auth.finishEmail(signIns, body));
+	if (pathName === '/auth/provider') {
+		let decoded = null;
+		try {
+			decoded = await auth.lookupIdToken(process.env.FIREBASE_WEB_KEY)(
+				String(body.idToken || '')
+			);
+		} catch (error) {
+			sendJson(res, 401, { error: 'That sign-in was not accepted. Try again.' }, origin, deviceHint);
+			return;
+		}
+		const result = await auth.providerSignIn(signIns, decoded, {
+			deviceKey: body.deviceKey,
+			profile: body.profile,
+			googleAccessToken: body.googleAccessToken,
+			enabled,
+		});
+		if (result.verifyEmail)
+			return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+		return answer(result);
+	}
+	const oauthStart = pathName.match(/^\/auth\/oauth\/([a-z]+)\/start$/);
+	if (oauthStart) {
+		// The page's own origin, so the device key the browser keeps there is the one that finishes.
+		const page = (/:8765$/.test(origin) ? origin : 'http://127.0.0.1:8765') + '/qa-review.html';
+		const result = await oauth.startOAuth(signIns, {
+			provider: oauthStart[1],
+			deviceKey: body.deviceKey,
+			ip: clientIp(req),
+			enabled,
+			env: process.env,
+			redirectUri: page,
+		});
+		sendJson(
+			res,
+			result.ok ? 200 : result.status,
+			result.ok ? { ok: true, url: result.url } : { error: result.error },
+			origin,
+			deviceHint
+		);
+		return;
+	}
+	if (pathName === '/auth/oauth/finish') {
+		const result = await oauth.finishOAuth(signIns, {
+			state: body.state,
+			code: body.code,
+			error: body.error,
+			deviceKey: body.deviceKey,
+			enabled,
+			env: process.env,
+		});
+		if (result.verifyEmail)
+			return mailCode({ email: result.email, provider: result.provider, uid: result.uid, deviceKey: body.deviceKey });
+		return answer(result);
+	}
+	if (pathName === '/auth/session') {
+		const result = await auth.checkSession(signIns, Object.assign({}, body, { touch: false }));
+		sendJson(
+			res,
+			result.ok ? 200 : result.status,
+			result.ok ? { ok: true, email: result.email, provider: result.provider } : { error: result.error, signIn: true },
+			origin,
+			deviceHint
+		);
+		return;
+	}
+	if (pathName === '/auth/signout') {
+		await auth.closeSession(signIns, body.session);
+		sendJson(res, 200, { ok: true }, origin, deviceHint);
+		return;
+	}
+	sendJson(res, 404, { error: 'Not found.' }, origin, deviceHint);
 }
 
 const server = http.createServer(async (req, res) => {
-  const origin = originOf(req);
-  if (req.method === "OPTIONS") {
-    sendJson(res, 204, {}, origin, deviceFrom(req, {}));
-    return;
-  }
-  const url = new URL(req.url, "http://127.0.0.1:" + PORT);
-  const deviceHint = deviceFrom(req, {});
-  if (req.method === "GET" && url.pathname === "/news") {
-    try {
-      const news = await newsWire.loadNews({
-        country: url.searchParams.get("country"),
-        lang: url.searchParams.get("lang"),
-        city: url.searchParams.get("city")
-      });
-      sendJson(res, 200, news, origin, deviceHint);
-    } catch (error) {
-      sendJson(res, 200, { country: "", lang: "en", items: [] }, origin, deviceHint);
-    }
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/health") {
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  if (url.pathname.startsWith("/auth/")) {
-    await localSignIn(req, res, url.pathname, origin, deviceHint);
-    return;
-  }
-  if (req.method === "GET" && (url.pathname === "/desk" || url.pathname === "/desk/failures")) {
-    res.writeHead(200, {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
-      "x-robots-tag": "noindex",
-      "x-content-type-options": "nosniff"
-    });
-    res.end(url.pathname === "/desk" ? desk.PAGE : desk.FAILURES_PAGE);
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/desk/failures/data") {
-    if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
-      return;
-    }
-    sendJson(res, 200, { failures: [], bugs: [], fixes: [] }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/desk/session") {
-    let sessionBody = {};
-    try { sessionBody = await readBody(req); } catch (error) { sessionBody = {}; }
-    let email = null;
-    try { email = await verifyDeskSignIn(sessionBody.idToken); } catch (error) { email = null; }
-    if (!email) {
-      sendJson(res, 403, { error: "This account cannot open the desk." }, origin, deviceHint);
-      return;
-    }
-    const token = crypto.randomBytes(16).toString("hex");
-    deskSessions.set(token, { email, until: Date.now() + 12 * 60 * 60 * 1000 });
-    res.writeHead(200, {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "x-robots-tag": "noindex",
-      "access-control-allow-origin": origin,
-      "access-control-allow-credentials": "true",
-      "set-cookie": "qa_desk=" + token + "; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax"
-    });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/desk/logout") {
-    deskSessions.delete(deskCookie(req));
-    res.writeHead(200, {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-      "set-cookie": "qa_desk=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"
-    });
-    res.end(JSON.stringify({ ok: true }));
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/desk/data") {
-    if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
-      return;
-    }
-    sendJson(res, 200, desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values())), origin, deviceHint);
-    return;
-  }
-  if (req.method === "GET" && (url.pathname === "/account" || url.pathname === "/qa-review-account.html")) {
-    res.writeHead(200, {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
-      "x-robots-tag": "noindex"
-    });
-    res.end(fs.readFileSync(path.join(__dirname, "..", "qa-review-account.html")));
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/desk/pass") {
-    if (!deskOperator(req)) {
-      sendJson(res, 401, { error: "Sign in with the operator account." }, origin, deviceHint);
-      return;
-    }
-    let passBody = {};
-    try { passBody = await readBody(req); } catch (error) { passBody = {}; }
-    const email = String(passBody.email || "").trim().toLowerCase();
-    const plan = offers.planById(passBody.plan || "freelancer");
-    if (!email || email.indexOf("@") === -1) {
-      sendJson(res, 400, { error: "That address is missing." }, origin, deviceHint);
-      return;
-    }
-    const until = new Date(Date.now() + plan.days * 24 * 60 * 60 * 1000).toISOString();
-    writeRecord({
-      id: crypto.randomBytes(9).toString("hex"),
-      status: "monthly-pass",
-      email,
-      plan: plan.id,
-      priceUsd: plan.usd,
-      paid: false,
-      localPass: true,
-      paidUntil: until,
-      createdAt: new Date().toISOString()
-    });
-    sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && ["/account/runs", "/account/compare", "/account/stop", "/account/export", "/account/delete", "/account/delete-runs"].indexOf(url.pathname) !== -1) {
-    let accountBody = {};
-    try { accountBody = await readBody(req); } catch (error) { accountBody = {}; }
-    const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
-    if (!signedIn.ok) {
-      sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/account/runs") {
-      sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/account/compare") {
-      const records = readStore();
-      const open = new Set(offers.accountFile(records, signedIn.email).runs.filter((run) => run.open).map((run) => run.id));
-      const made = compare.savedComparison(records, signedIn.email, accountBody.ids, (row) => open.has(row.id));
-      sendJson(res, made.error ? 400 : 200, made, origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/account/export") {
-      const data = await accountData.exportAccount(signIns, signedIn.email);
-      data.reviews = readStore().filter((row) => row.email === signedIn.email);
-      sendJson(res, 200, data, origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/account/delete-runs") {
-      const ids = Array.isArray(accountBody.ids) ? accountBody.ids.slice(0, 200).map(String) : [];
-      if (!ids.length) {
-        sendJson(res, 400, { error: "Pick at least one review to delete." }, origin, deviceHint);
-        return;
-      }
-      const rows = readStore();
-      const local = auth.memoryStore();
-      for (const row of rows) await local.set("url_reviews", row.id, row);
-      const counts = await accountData.deleteRuns(local, signedIn.email, ids);
-      const kept = [];
-      for (const row of rows) {
-        const now = await local.get("url_reviews", row.id);
-        if (now) kept.push(Object.assign({ id: row.id }, now));
-      }
-      fs.writeFileSync(FILE, kept.map((row) => JSON.stringify(row) + "\n").join(""));
-      sendJson(res, 200, Object.assign({ ok: true }, counts), origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/account/delete") {
-      if (String(accountBody.confirm || "").trim().toLowerCase() !== signedIn.email) {
-        sendJson(res, 400, { error: "Type the address you are signed in with to confirm." }, origin, deviceHint);
-        return;
-      }
-      const at = new Date().toISOString();
-      const rows = readStore().filter((row) => row.email !== signedIn.email || accountData.isPayment(row) || row.status === "follow-stop");
-      fs.writeFileSync(FILE, rows.map((row) => JSON.stringify(row.email === signedIn.email && accountData.isPayment(row) && !row.accountDeletedAt ? Object.assign({ id: row.id }, accountData.paymentOnly(row, at)) : row) + "\n").join(""));
-      await accountData.deleteAccount(signIns, signedIn.email);
-      sendJson(res, 200, { ok: true }, origin, deviceHint);
-      return;
-    }
-    writeRecord({
-      id: crypto.randomBytes(9).toString("hex"),
-      status: "follow-stop",
-      email: signedIn.email,
-      via: "account",
-      createdAt: new Date().toISOString()
-    });
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/review/capture") {
-    let body = {};
-    try { body = await readBody(req); } catch (error) { body = {}; }
-    const reportId = String((body && body.reportId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const kind = ["print", "printscreen", "copy", "case-print"].indexOf(String((body && body.kind) || "")) === -1 ? "" : String(body.kind);
-    if (!reportId || !kind) {
-      sendJson(res, 400, { error: "The capture note was incomplete." }, origin, deviceHint);
-      return;
-    }
-    const found = readStore().reverse().find((row) => row && row.id === reportId && row.report);
-    if (!found) {
-      sendJson(res, 404, { error: "That report was not found on this machine." }, origin, deviceHint);
-      return;
-    }
-    writeRecord({
-      id: reportId,
-      status: "capture",
-      kind,
-      at: new Date().toISOString(),
-      deviceId: deviceFrom(req, body)
-    });
-    sendJson(res, 200, { ok: true }, origin, deviceFrom(req, body));
-    return;
-  }
-  if ((req.method === "GET" && url.pathname === "/review") || (req.method === "POST" && url.pathname === "/review/open")) {
-    let openBody = {};
-    if (req.method === "POST") {
-      try { openBody = await readBody(req); } catch (error) { openBody = {}; }
-    }
-    const id = req.method === "GET" ? url.searchParams.get("id") || "" : String(openBody.id || "");
-    const found = readStore().reverse().find((row) => row.id === id);
-    if (!found || !found.report) {
-      sendJson(res, 404, { error: "That report was not found on this machine." }, origin, deviceHint);
-      return;
-    }
-    const paidLater = readStore().some((row) => row && row.status === "paid-report" && row.reportId === found.id && row.paid === true);
-    const proof = req.method === "GET" ? {} : { session: openBody.session, deviceKey: openBody.deviceKey };
-    const access = await auth.reportAccess(signIns, proof, Object.assign({}, found, { paid: found.paid === true || paidLater }), found.free === true);
-    if (access.locked) {
-      sendJson(res, access.status, {
-        error: access.error,
-        signIn: true,
-        locked: true,
-        id: found.id,
-        host: found.report.host,
-        status: found.status,
-        frameworks: found.frameworks || [],
-        preview: core.previewReport(found.report)
-      }, origin, deviceHint);
-      return;
-    }
-    const addons = addonsOf(found.id);
-    if (!access.ok) {
-      let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
-      try { priced = core.priceForReport(found.frameworks || [], core.toolsForCharge((found.report && found.report.tools) || []), core.creditFor({ addons })); } catch (error) { priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] }; }
-      if (offers.reopenFree(found, Date.now())) {
-        const preview = core.previewReport(found.report);
-        sendJson(res, 200, {
-          report: addons.indexOf("fixlist") !== -1 && found.report.insights ? Object.assign(preview, { insights: found.report.insights }) : preview,
-          frameworks: found.frameworks || [],
-          paid: false,
-          free: false,
-          addons,
-          reopenUntil: offers.reopenFreeUntil(found),
-          priceUsd: priced.usd,
-          creditUsd: priced.creditUsd || 0,
-          tools: priced.tools || [],
-          id: found.id,
-          host: found.report.host
-        }, origin, found.deviceId || deviceHint);
-        return;
-      }
-      sendJson(res, 402, Object.assign({
-        paymentRequired: true,
-        priceUsd: priced.usd,
-        creditUsd: priced.creditUsd || 0,
-        frameworks: priced.frameworks,
-        tools: priced.tools || [],
-        id: found.id,
-        host: found.report.host,
-        status: found.status,
-        addons,
-        preview: core.previewReport(found.report)
-      }, addons.indexOf("fixlist") !== -1 ? { insights: found.report.insights || null } : {}), origin, found.deviceId || deviceHint);
-      return;
-    }
-    const other = openBody.vs ? readStore().reverse().find((row) => row.id === openBody.vs && row.id !== found.id) : null;
-    const otherOpen = other && (await auth.reportAccess(signIns, proof, other, other.free === true)).ok;
-    const pair = other ? compare.savedComparison([found, other], found.email, [found.id, other.id], (row) => row === found || otherOpen) : null;
-    const versus = pair && pair.list && pair.list[0] && pair.list[0].compare;
-    sendJson(res, 200, Object.assign({ report: found.report, frameworks: found.frameworks, paid: true, addons }, versus ? { versus } : {}), origin, found.deviceId || deviceHint);
-    return;
-  }
-  if (req.method === "POST" && (url.pathname === "/review/ask" || url.pathname === "/review/ask/phrase")) {
-    let askBody = {};
-    try { askBody = await readBody(req); } catch (error) { askBody = {}; }
-    const id = String(askBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const rows = readStore();
-    const found = id ? rows.slice().reverse().find((row) => row && row.id === id && row.report) : null;
-    const paidLater = !!found && rows.some((row) => row && row.status === "paid-report" && row.reportId === found.id && row.paid === true);
-    const access = await auth.askAccess(signIns, askBody, found, paidLater || (!!found && found.free === true));
-    if (!access.ok) {
-      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
-      return;
-    }
-    if (url.pathname === "/review/ask/phrase") {
-      const result = await phraser.phrase({ key: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL, store: signIns, id, input: askBody });
-      sendJson(res, result.ok ? 200 : result.status, result.ok ? { text: result.text } : { error: result.error, code: result.code }, origin, deviceHint);
-      return;
-    }
-    sendJson(res, 200, { ok: true, phrase: !!process.env.GEMINI_API_KEY }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/review/fix/offers") {
-    sendJson(res, 200, { packages: fixOffers.publicPackages() }, origin, deviceHint);
-    return;
-  }
-  // Saved to runner-results only: the local server mails no one.
-  if (req.method === "POST" && url.pathname === "/review/fix/request") {
-    let fixBody = {};
-    try { fixBody = await readBody(req); } catch (error) { fixBody = {}; }
-    const id = String(fixBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const found = id ? readStore().slice().reverse().find((row) => row && row.id === id && row.report) : null;
-    const access = await auth.askAccess(signIns, fixBody, found, true);
-    if (!access.ok) {
-      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
-      return;
-    }
-    const record = fixOffers.requestRecord(fixBody, found, access.email, Date.now());
-    if (record.error) {
-      sendJson(res, 400, { error: record.error, code: "invalid" }, origin, deviceHint);
-      return;
-    }
-    const fixId = crypto.randomBytes(10).toString("hex");
-    fs.appendFileSync(path.join(path.dirname(FILE), "url-review-fix-requests.jsonl"), JSON.stringify(Object.assign({ id: fixId }, record)) + "\n");
-    sendJson(res, 200, { ok: true, id: fixId, email: record.email, status: record.status, package: record.package, priceUsd: record.priceUsd || 0 }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/review/fix/recheck") {
-    let fixBody = {};
-    try { fixBody = await readBody(req); } catch (error) { fixBody = {}; }
-    const id = String(fixBody.id || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const found = id ? readStore().slice().reverse().find((row) => row && row.id === id && row.report) : null;
-    const access = await auth.askAccess(signIns, fixBody, found, false);
-    if (!access.ok) {
-      sendJson(res, access.status, { error: access.error, code: access.code || "", signIn: !!access.signIn }, origin, deviceHint);
-      return;
-    }
-    const record = fixRereview.selfRecord(found, access.email, fixBody.lang, Date.now());
-    if (record.error) {
-      sendJson(res, 400, { error: record.error, code: "invalid" }, origin, deviceHint);
-      return;
-    }
-    fs.appendFileSync(path.join(path.dirname(FILE), "url-review-fix-requests.jsonl"), JSON.stringify(Object.assign({ id: "self-" + id }, record)) + "\n");
-    sendJson(res, 200, { ok: true, id: "self-" + id, email: record.email, status: record.status }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && (url.pathname === "/review/pay" || url.pathname === "/pay")) {
-    sendJson(res, 402, {
-      paymentRequired: true,
-      priceUsd: core.PRICE_USD,
-      error: "After 7 days, reopening a report asks for payment. A card payment is not connected on this page."
-    }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && (url.pathname === "/review/stop" || url.pathname === "/stop")) {
-    let stopBody = {};
-    try { stopBody = await readBody(req); } catch (error) { stopBody = {}; }
-    const stop = await auth.stopRun(signIns, stopBody);
-    if (!stop.ok) {
-      sendJson(res, stop.status, { error: stop.error, signIn: !!stop.signIn }, origin, deviceHint);
-      return;
-    }
-    const run = runs.get(String(stopBody.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32));
-    if (run) run.stopped = true;
-    sendJson(res, 200, { ok: true, stopped: !!run }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/place") {
-    sendJson(res, 200, { ok: true }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/standing") {
-    let standingBody = {};
-    try { standingBody = await readBody(req); } catch (error) { standingBody = {}; }
-    const records = readStore();
-    const standing = core.standingFor(records, { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
-    const email = await sessionEmail(standingBody);
-    const soft = await localSoftQuota.peek({ ip: clientIp(req), email: email || "" });
-    // This server has no free accounts and charges no return step, so it reports neither.
-    sendJson(res, 200, {
-      billing: standing.billing,
-      free: false,
-      percent: 0,
-      compareUsd: core.COMPARE_CENTS / 100,
-      pass: email ? offers.passView(offers.passFor(records, email)) : null,
-      lastPlan: email ? offers.lastPassPlan(records, email) : "",
-      plans: offers.passPlans(),
-      softLeft: soft.left,
-      softCap: soft.cap,
-      softSignedIn: soft.signedIn
-    }, origin, deviceHint);
-    return;
-  }
-  if (req.method === "GET" && url.pathname === "/checkout/quote") {
-    try {
-      const layerQuery = url.searchParams.get("layers");
-      const pageQuery = url.searchParams.get("pages");
-      const purposeQuery = url.searchParams.get("purpose");
-      const passQuery = offers.knownPlan(url.searchParams.get("pass") || "");
-      if (purposeQuery === "fix") {
-        const fixQuote = fixCheckout.quote(url.searchParams.get("package") || "");
-        if (!fixQuote) {
-          sendJson(res, 400, { error: "That fix package is not offered." }, origin, deviceHint);
-          return;
-        }
-        const fixCop = await core.copQuote(fixQuote.usd);
-        sendJson(res, 200, Object.assign(fixQuote, { cop: fixCop.pesos, rate: fixCop.rate }), origin, deviceHint);
-        return;
-      }
-      if (purposeQuery === "pass" || passQuery) {
-        const pricedPass = purposeQuery === "pass" ? core.priceForPass(url.searchParams.get("plan"))
-          : core.priceForPassExtras(passQuery, passRequest(Object.fromEntries(url.searchParams)));
-        const passQuote = pricedPass.usd ? await core.copQuote(pricedPass.usd) : { pesos: 0, rate: 0 };
-        sendJson(res, 200, Object.assign({}, pricedPass, {
-          cop: passQuote.pesos,
-          rate: passQuote.rate,
-          plan: (pricedPass.plan && pricedPass.plan.id) || pricedPass.plan,
-          pass: offers.passPlans().find((row) => row.id === (purposeQuery === "pass" ? pricedPass.plan : passQuery.id))
-        }), origin, deviceHint);
-        return;
-      }
-      let priced = purposeQuery === "fixlist"
-        ? core.priceForFixList()
-        : purposeQuery === "credentials"
-        ? core.priceForCredentials()
-        : purposeQuery === "alerts"
-          ? core.priceForAlerts(url.searchParams.get("count"))
-          : layerQuery
-            ? core.priceForLayers(layerQuery)
-            : pageQuery
-              ? core.priceForRun({
-            frameworks: url.searchParams.get("frameworks") || "",
-            tools: url.searchParams.get("tools") || "",
-            pages: pageQuery,
-            depth: url.searchParams.get("depth"),
-            billing: url.searchParams.get("billing") || "",
-            compareWith: compare.cleanId(url.searchParams.get("compareWith")),
-            competitors: url.searchParams.get("competitors")
-          })
-          : core.priceFor(url.searchParams.get("frameworks") || "", url.searchParams.get("tools") || "");
-      if (purposeQuery === "report" && url.searchParams.get("reportId")) {
-        priced = core.priceForReport(priced.frameworks, priced.tools, core.creditFor({ addons: addonsOf(url.searchParams.get("reportId")) }));
-      }
-      const quote = await core.copQuote(priced.usd);
-      sendJson(res, 200, {
-        usd: priced.usd,
-        cop: quote.pesos,
-        rate: quote.rate,
-        count: priced.count,
-        frameworks: priced.frameworks,
-        tools: priced.tools || [],
-        discount: priced.discount || [],
-        pages: priced.pages,
-        depth: priced.depth,
-        billing: priced.billing,
-        frameworkUsd: priced.frameworkUsd,
-        scopeUsd: priced.scopeUsd,
-        pageUsd: priced.pageUsd,
-        depthUsd: priced.depthUsd,
-        competitors: priced.competitors,
-        eachUsd: priced.eachUsd,
-        perFramework: priced.each,
-        creditUsd: priced.creditUsd || 0
-      }, origin, deviceHint);
-    } catch (error) {
-      sendJson(res, error.status || 502, { error: error.message || "The peso price could not be loaded." }, origin, deviceHint);
-    }
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/checkout") {
-    let payBody = {};
-    try { payBody = await readBody(req); } catch (error) { payBody = {}; }
-    const choice = core.paymentChoice(payBody.provider || "paypal");
-    const purpose = ["report", "fixlist", "cases", "credentials", "alerts", "pass"].indexOf(payBody.purpose) === -1 ? "new-run" : payBody.purpose;
-    const passOwner = purpose === "pass" || (purpose === "new-run" && !!payBody.pass) ? await sessionEmail(payBody) : "";
-    if ((purpose === "pass" || (purpose === "new-run" && payBody.pass)) && !passOwner) {
-      sendJson(res, 401, { error: "Sign in first. A pass belongs to the address you sign in with. No charge was made.", signIn: true }, origin, deviceHint);
-      return;
-    }
-    const passOn = purpose === "new-run" && payBody.pass ? offers.passRun(readStore(), passOwner, passRequest(payBody)) : null;
-    if (purpose === "new-run" && payBody.pass && !(passOn && passOn.due)) {
-      sendJson(res, 400, { error: "This run has nothing to pay on your pass. No charge was made." }, origin, deviceHint);
-      return;
-    }
-    const reportId = String(payBody.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-    const deviceId = deviceFrom(req, payBody);
-    const reference = crypto.randomBytes(8).toString("hex");
-    if (!choice) {
-      sendJson(res, 400, { error: "PayPal is the payment method for this review. No charge was made." }, origin, deviceId);
-      return;
-    }
-    const urls = payReturn(purpose, choice, reference, payBody.lang);
-    try {
-      const stored = purpose === "report" || purpose === "fixlist" ? (readStore().find((item) => item && item.id === reportId && item.report) || {}) : {};
-      const access = purpose === "report" || purpose === "fixlist" ? await auth.reportAccess(signIns, payBody, stored, false) : { ok: true };
-      if (!access.ok && access.status !== 402) {
-        sendJson(res, access.status, { error: access.locked ? "Only the account that ran this report can unlock it. Sign in with that account. No charge was made." : access.error, signIn: !!access.signIn }, origin, deviceId);
-        return;
-      }
-      if (purpose === "fixlist" && !reportId) {
-        sendJson(res, 400, { error: "A fix list belongs to one report. Open the report first. No charge was made." }, origin, deviceId);
-        return;
-      }
-      const creditCents = purpose === "report" ? core.creditFor({ addons: addonsOf(reportId) }) : 0;
-      const priced = purpose === "pass"
-        ? core.priceForPass(payBody.plan)
-        : passOn
-        ? passOn.extras
-        : purpose === "fixlist"
-        ? core.priceForFixList()
-        : purpose === "cases"
-        ? core.priceForLayers(payBody.layers)
-        : purpose === "credentials"
-          ? core.priceForCredentials()
-          : purpose === "alerts"
-            ? core.priceForAlerts(payBody.alertCount)
-            : purpose === "report"
-              ? core.priceForReport(stored.frameworks || [], core.toolsForCharge((stored.report && stored.report.tools) || [], payBody.tools), creditCents)
-            : core.priceForRun({
-            frameworks: payBody.frameworks,
-            tools: payBody.tools,
-            pages: payBody.pages,
-            depth: payBody.depth,
-            billing: payBody.billing,
-            compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
-            competitors: payBody.competitors
-          });
-      const session = await core.startCheckout(Object.assign({
-        provider: choice,
-        purpose,
-        reportId,
-        deviceId,
-        reference,
-        frameworks: priced.frameworks || [],
-        tools: priced.tools || [],
-        layers: priced.layers || [],
-        pages: priced.pages,
-        depth: priced.depth,
-        billing: priced.billing,
-        compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
-        competitors: priced.competitors,
-        alertCount: priced.alertCount,
-        priceUsd: priced.usd,
-        plan: purpose === "pass" ? priced.plan : "",
-        passPlan: passOn ? passOn.plan.id : "",
-        creditCents,
-        successUrl: urls.successUrl,
-        cancelUrl: urls.cancelUrl,
-        pendingUrl: urls.pendingUrl
-      }, paymentKeys()));
-      writeRecord({
-        id: reference,
-        status: "checkout-open",
-        provider: core.paymentProvider(choice),
-        method: choice,
-        externalId: session.id,
-        reference,
-        purpose,
-        reportId,
-        deviceId,
-        frameworks: priced.frameworks || [],
-        tools: priced.tools || [],
-        layers: priced.layers || [],
-        pages: priced.pages || null,
-        depth: priced.depth || null,
-        billing: priced.billing || "",
-        compareWith: purpose === "new-run" ? compare.cleanId(payBody.compareWith) : "",
-        competitors: priced.competitors || null,
-        priceUsd: priced.usd,
-        ...(passOwner ? { email: passOwner, plan: purpose === "pass" ? priced.plan : passOn.plan.id, passExtra: !!passOn } : {}),
-        amount: session.amount,
-        currency: session.currency,
-        paid: false,
-        createdAt: new Date().toISOString()
-      });
-      sendJson(res, 200, { url: session.url, id: session.id, provider: session.provider, currency: session.currency, amount: session.amount }, origin, deviceId);
-    } catch (error) {
-      sendJson(res, error.status || 502, { error: error.message || "Payment could not be started.", paymentRequired: true, priceUsd: core.PRICE_USD }, origin, deviceId);
-    }
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/checkout/confirm") {
-    let confirmBody = {};
-    try { confirmBody = await readBody(req); } catch (error) { confirmBody = {}; }
-    const deviceId = deviceFrom(req, confirmBody);
-    const choice = core.paymentChoice(confirmBody.provider || "paypal");
-    if (!choice) {
-      sendJson(res, 400, { error: "PayPal is the payment method for this review. No charge was recorded." }, origin, deviceId);
-      return;
-    }
-    try {
-      const result = await core.inspectPayment(Object.assign({
-        provider: choice,
-        sessionId: String(confirmBody.sessionId || "")
-      }, paymentKeys()));
-      if (!result.paid) {
-        sendJson(res, 402, {
-          paid: false,
-          pending: !!result.pending,
-          error: result.pending ? "The payment is still pending. Nothing was unlocked." : "The payment is not confirmed. No charge was recorded here."
-        }, origin, deviceId);
-        return;
-      }
-      const prior = readStore().find((row) => row && row.sessionId === result.sessionId && row.paid === true);
-      if (prior) {
-        sendJson(res, 200, { paid: true, purpose: offers.paidPurpose(prior.purpose) }, origin, deviceId);
-        return;
-      }
-      let purpose = offers.paidPurpose(result.purpose);
-      let reportId = String(result.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-      let payer = result.deviceId || deviceId;
-      let frameworks = result.frameworks || [];
-      let priceUsd = result.amount || 0;
-      let compareWith = "";
-      let competitors = 1;
-      let open = null;
-      if (choice !== "stripe") {
-        open = readStore().find((row) => row && row.status === "checkout-open" && row.reference === result.reference);
-        const sameLink = !result.linkId || (open && open.externalId === result.linkId);
-        if (!open || open.provider !== result.provider || open.amount !== result.amount || !sameLink) {
-          sendJson(res, 402, { paid: false, error: "This payment does not match an open checkout." }, origin, deviceId);
-          return;
-        }
-        purpose = offers.paidPurpose(open.purpose);
-        reportId = String(open.reportId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
-        payer = open.deviceId || deviceId;
-        frameworks = open.frameworks || [];
-        result.tools = open.tools || [];
-        priceUsd = open.priceUsd || result.amount;
-        compareWith = compare.cleanId(open.compareWith);
-        result.pages = open.pages;
-        result.depth = open.depth;
-        result.billing = open.billing;
-        if (compareWith && open.billing === "compare") competitors = Math.max(1, Math.min(core.MAX_COMPETITORS, Number(open.competitors) || 1));
-      }
-      if (purpose === "pass") {
-        const records = readStore();
-        const owner = String((open && open.email) || "");
-        const bought = offers.passPurchase(open && open.plan, records, owner, Date.now(), {
-          id: "pass-" + (result.reference || crypto.randomBytes(8).toString("hex")),
-          provider: result.provider,
-          method: choice,
-          deviceId: payer,
-          sessionId: result.sessionId,
-          reference: result.reference || "",
-          amount: result.amount,
-          currency: result.currency,
-          createdAt: new Date().toISOString()
-        });
-        if (bought.replaces) updateRecord(bought.replaces, { replacedBy: bought.row.id });
-        writeRecord(bought.row);
-        sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
-        return;
-      }
-      const addon = offers.ADDONS.indexOf(purpose) !== -1;
-      const paidRow = {
-        id: purpose === "report" && reportId ? "paid-report-" + reportId : addon ? "paid-" + purpose + "-" + (result.reference || crypto.randomBytes(9).toString("hex")) : crypto.randomBytes(9).toString("hex"),
-        status: purpose === "report" && reportId ? "paid-report" : addon ? "paid-addon" : "run-credit",
-        purpose,
-        reportId: purpose === "report" || addon ? reportId : "",
-        paid: true,
-        provider: result.provider,
-        method: choice,
-        deviceId: payer,
-        sessionId: result.sessionId,
-        frameworks,
-        tools: result.tools || [],
-        pages: result.pages || core.INCLUDED_PAGES,
-        depth: result.depth || core.INCLUDED_DEPTH,
-        billing: result.billing || "run",
-        compareWith: purpose === "new-run" ? compareWith : "",
-        createdAt: new Date().toISOString(),
-        priceUsd,
-        amount: result.amount,
-        currency: result.currency,
-        ...(open && open.passExtra ? { passExtra: true, plan: open.plan, email: open.email, usedAt: "" } : {})
-      };
-      // One comparison checkout leaves a credit for each competitor; the first carries the payment.
-      writeRecord(competitors > 1 ? Object.assign({}, paidRow, { competitors }) : paidRow);
-      for (let n = 2; n <= competitors; n += 1) {
-        writeRecord(Object.assign({}, paidRow, { id: crypto.randomBytes(9).toString("hex"), priceUsd: 0, amount: 0, paidWith: paidRow.id, competitors }));
-      }
-      sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
-    } catch (error) {
-      sendJson(res, error.status || 502, { paid: false, error: error.message || "The payment could not be confirmed." }, origin, deviceId);
-    }
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/review/preview") {
-    let body = {};
-    try {
-      body = await readBody(req);
-    } catch (error) {
-      sendJson(res, error.status || 400, { error: error.message }, origin, deviceHint);
-      return;
-    }
-    const deviceId = deviceFrom(req, body);
-    const intake = await core.screenSoftPreview(body, req.headers);
-    if (!intake.ok) {
-      sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
-      return;
-    }
-    const ip = clientIp(req);
-    const email = (await sessionEmail(body)) || "";
-    const standing = await localSoftQuota.peek({ ip, email });
-    if (!standing.ok) {
-      sendJson(res, 429, {
-        error: softQuota.quotaMessage(standing),
-        code: "soft-quota",
-        softLeft: 0,
-        softCap: standing.cap,
-        signIn: !standing.signedIn,
-        softPreview: true
-      }, origin, deviceId);
-      return;
-    }
-    const quota = await localSoftQuota.take({ ip, email });
-    if (!quota.ok) {
-      sendJson(res, 429, {
-        error: softQuota.quotaMessage(quota),
-        code: "soft-quota",
-        softLeft: 0,
-        softCap: quota.cap,
-        signIn: !quota.signedIn,
-        softPreview: true
-      }, origin, deviceId);
-      return;
-    }
-    const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
-    const run = { stopped: false };
-    runs.set(runId, run);
-    res.on("close", () => {
-      if (!res.writableEnded) run.stopped = true;
-    });
-    startStream(res, origin, deviceId);
-    try {
-      if (email) intake.value.email = email;
-      const report = await core.reviewTarget(intake.value.url, {
-        softPreview: true,
-        log: (text) => line(res, { type: "log", text }),
-        stopped: () => run.stopped,
-        asker: { reasonCode: "soft-preview", email: email || "" },
-        maxPages: core.SOFT_PREVIEW_PAGES,
-        maxDepth: core.SOFT_PREVIEW_DEPTH,
-        pageLang: intake.value.pageLang,
-        browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-        pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-        crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-        webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined
-      });
-      const record = core.intakeRecord(intake.value, report, {
-        ip,
-        deviceId,
-        userAgent: req.headers["user-agent"],
-        acceptLanguage: req.headers["accept-language"],
-        country: "",
-        region: "",
-        city: ""
-      });
-      writeRecord(record);
-      const shown = core.previewReport(report);
-      line(res, { type: "done", report: shown, frameworks: record.frameworks, paid: false, softPreview: true, priceUsd: 0, softLeft: quota.left, softCap: quota.cap });
-      res.end();
-    } catch (error) {
-      line(res, { type: "error", error: error.message || "The preview failed." });
-      res.end();
-    } finally {
-      runs.delete(runId);
-    }
-    return;
-  }
-  if (req.method !== "POST" || url.pathname !== "/review") {
-    sendJson(res, 404, { error: "Not found." }, origin, deviceHint);
-    return;
-  }
-  let body = {};
-  try {
-    body = await readBody(req);
-  } catch (error) {
-    sendJson(res, error.status || 400, { error: error.message }, origin, deviceHint);
-    return;
-  }
-  const deviceId = deviceFrom(req, body);
-  const signedIn = await auth.checkSession(signIns, body);
-  if (!signedIn.ok) {
-    sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceId);
-    return;
-  }
-  body.email = signedIn.email;
-  const intake = await core.screenIntake(body, req.headers);
-  if (!intake.ok) {
-    sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
-    return;
-  }
-  const base = intake.value.compareWith ? readStore().find((row) => row.id === intake.value.compareWith) || null : null;
-  const refused = intake.value.compareWith ? compare.baseProblem(base, signedIn.email, intake.value.url) : "";
-  if (refused) {
-    sendJson(res, 400, { error: refused, compare: true }, origin, deviceId);
-    return;
-  }
-  const identity = { deviceId, ip: clientIp(req) };
-  let decision = core.judgeAttempts(readStore(), identity, intake.value);
-  // A signed-in run on an open pass with runs left takes one run; asking beyond the plan needs its extras paid first.
-  const passOn = !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid"
-    ? offers.passRun(readStore(), signedIn.email, intake.value) : null;
-  if (passOn && passOn.due) {
-    decision = Object.assign({ ok: false, code: "payment", pass: passOn.plan.id, runsLeft: offers.passLeft(passOn.row),
-      message: "This run asks for more than your " + passOn.plan.name + " pass. It uses one pass run and charges only the extras: " + passOn.extras.usd + " USD." },
-    passOn.extras, { priceUsd: passOn.extras.usd, billing: "pass" });
-  } else if (passOn) {
-    updateRecord(passOn.row.id, { runs: offers.passRuns(passOn.row), runsUsed: (Number(passOn.row.runsUsed) || 0) + 1, lastRunAt: new Date().toISOString() });
-    if (passOn.credit) updateRecord(passOn.credit.id, { usedAt: new Date().toISOString() });
-    decision = { ok: true, consumeId: "", pass: { id: passOn.row.id, plan: passOn.plan.id, name: passOn.plan.name, left: offers.passLeft(passOn.row) - 1, extrasUsd: passOn.extras ? passOn.extras.usd : 0 } };
-  }
-  if (decision.ok && decision.consumeId) {
-    writeRecord({
-      id: crypto.randomBytes(9).toString("hex"),
-      status: "run-credit-used",
-      creditId: decision.consumeId,
-      deviceId,
-      createdAt: new Date().toISOString()
-    });
-  }
-  if (!decision.ok) {
-    writeRecord({
-      id: crypto.randomBytes(9).toString("hex"),
-      createdAt: new Date().toISOString(),
-      status: decision.code === "payment" ? "payment-due" : "blocked",
-      deviceId,
-      ip: identity.ip,
-      name: intake.value.name,
-      email: intake.value.email,
-      reason: intake.value.reason,
-      requestedUrl: intake.value.url,
-      log: [{ at: new Date().toISOString(), text: decision.message }]
-    });
-    sendJson(res, decision.code === "payment" ? 402 : 429, {
-      error: decision.message,
-      paymentRequired: decision.code === "payment",
-      purpose: decision.code === "payment" ? "new-run" : "",
-      priceUsd: decision.priceUsd || 0,
-      frameworks: decision.frameworks || [],
-      tools: decision.tools || [],
-      pages: decision.pages,
-      depth: decision.depth,
-      billing: decision.billing || "",
-      pass: decision.pass || "",
-      runsLeft: decision.runsLeft,
-      frameworkUsd: decision.frameworkUsd,
-      scopeUsd: decision.scopeUsd,
-      pageUsd: decision.pageUsd,
-      depthUsd: decision.depthUsd
-    }, origin, deviceId);
-    return;
-  }
-  const runId = String(body.runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32) || crypto.randomBytes(8).toString("hex");
-  const claim = await auth.claimRun(signIns, { runId, email: signedIn.email, deviceKey: body.deviceKey });
-  if (!claim.ok) {
-    sendJson(res, claim.status, { error: claim.error }, origin, deviceId);
-    return;
-  }
-  const run = { stopped: false };
-  runs.set(runId, run);
-  activeRuns.set(runId, {
-    runId,
-    at: new Date().toISOString(),
-    name: intake.value.name,
-    email: intake.value.email,
-    url: intake.value.url
-  });
-  noteReview("started", {
-    runId,
-    name: intake.value.name,
-    email: intake.value.email,
-    requestedUrl: intake.value.url,
-    status: "running",
-    frameworks: intake.value.frameworks,
-    pages: intake.value.pages,
-    depth: intake.value.depth,
-    reason: intake.value.reason
-  });
-  res.on("close", () => {
-    if (!res.writableEnded) run.stopped = true;
-  });
-  startStream(res, origin, deviceId);
-  try {
-    const report = await core.reviewTarget(intake.value.url, {
-      log: (text) => line(res, { type: "log", text }),
-      stopped: () => run.stopped,
-      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
-      maxPages: intake.value.pages,
-      maxDepth: intake.value.depth,
-      pageLang: intake.value.pageLang,
-      section: intake.value.section,
-      passive: !!intake.value.compareWith,
-      browse: process.env.CHROME_PATH ? (job) => require("../functions/url-review-browser").browse(job) : undefined,
-      pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
-      webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-      places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined
-    });
-    const record = core.intakeRecord(intake.value, report, {
-      ip: identity.ip,
-      deviceId,
-      creditId: decision.consumeId || "",
-      userAgent: req.headers["user-agent"],
-      acceptLanguage: req.headers["accept-language"],
-      country: "",
-      region: "",
-      city: ""
-    });
-    if (decision.pass) Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
-    if (decision.pass && offers.passAddons(decision.pass.plan).length) record.addons = offers.passAddons(decision.pass.plan);
-    const prior = core.pickPreviousRun(readStore().filter((row) => row.email === intake.value.email), report);
-    const history = prior ? core.compareRuns(prior.report, report) : null;
-    if (history) report.history = history;
-    if (base) report.compare = compare.compareSites(base.report, report);
-    writeRecord(record);
-    const shown = record.paid === true ? report : Object.assign(core.previewReport(report), report.compare ? { compare: report.compare } : {});
-    line(res, { type: "done", report: shown, frameworks: record.frameworks, paid: record.paid === true, priceUsd: record.priceUsd });
-    res.end();
-  } catch (error) {
-    noteReview("failed", {
-      runId,
-      name: intake.value.name,
-      email: intake.value.email,
-      requestedUrl: intake.value.url,
-      status: "failed",
-      reason: error.message || "The review failed."
-    });
-    line(res, { type: "error", error: error.message || "The review failed." });
-    res.end();
-  } finally {
-    runs.delete(runId);
-    await signIns.remove("url_review_stops", runId);
-    activeRuns.delete(runId);
-  }
+	const origin = originOf(req);
+	if (req.method === 'OPTIONS') {
+		sendJson(res, 204, {}, origin, deviceFrom(req, {}));
+		return;
+	}
+	const url = new URL(req.url, 'http://127.0.0.1:' + PORT);
+	const deviceHint = deviceFrom(req, {});
+	if (req.method === 'GET' && url.pathname === '/news') {
+		try {
+			const news = await newsWire.loadNews({
+				country: url.searchParams.get('country'),
+				lang: url.searchParams.get('lang'),
+				city: url.searchParams.get('city'),
+			});
+			sendJson(res, 200, news, origin, deviceHint);
+		} catch (error) {
+			sendJson(res, 200, { country: '', lang: 'en', items: [] }, origin, deviceHint);
+		}
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/health') {
+		sendJson(res, 200, { ok: true }, origin, deviceHint);
+		return;
+	}
+	if (url.pathname.startsWith('/auth/')) {
+		await localSignIn(req, res, url.pathname, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && (url.pathname === '/desk' || url.pathname === '/desk/failures')) {
+		res.writeHead(200, {
+			'content-type': 'text/html; charset=utf-8',
+			'cache-control': 'no-store',
+			'x-robots-tag': 'noindex',
+			'x-content-type-options': 'nosniff',
+		});
+		res.end(url.pathname === '/desk' ? desk.PAGE : desk.FAILURES_PAGE);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/failures/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		sendJson(res, 200, { failures: [], bugs: [], fixes: [] }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/session') {
+		let sessionBody = {};
+		try {
+			sessionBody = await readBody(req);
+		} catch (error) {
+			sessionBody = {};
+		}
+		let email = null;
+		try {
+			email = await verifyDeskSignIn(sessionBody.idToken);
+		} catch (error) {
+			email = null;
+		}
+		if (!email) {
+			sendJson(res, 403, { error: 'This account cannot open the desk.' }, origin, deviceHint);
+			return;
+		}
+		const token = crypto.randomBytes(16).toString('hex');
+		deskSessions.set(token, { email, until: Date.now() + 12 * 60 * 60 * 1000 });
+		res.writeHead(200, {
+			'content-type': 'application/json; charset=utf-8',
+			'cache-control': 'no-store',
+			'x-robots-tag': 'noindex',
+			'access-control-allow-origin': origin,
+			'access-control-allow-credentials': 'true',
+			'set-cookie': 'qa_desk=' + token + '; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax',
+		});
+		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/logout') {
+		deskSessions.delete(deskCookie(req));
+		res.writeHead(200, {
+			'content-type': 'application/json; charset=utf-8',
+			'cache-control': 'no-store',
+			'set-cookie': 'qa_desk=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax',
+		});
+		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+	if (req.method === 'GET' && (url.pathname === '/desk/world.json' || url.pathname === '/assets/jarvis/world.json')) {
+		res.writeHead(200, {
+			'content-type': 'application/json; charset=utf-8',
+			'cache-control': 'no-store',
+			'access-control-allow-origin': origin,
+		});
+		res.end(fs.readFileSync(path.join(__dirname, '..', 'assets', 'jarvis', 'world.json')));
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/threats/global') {
+		let rawMap = null;
+		try {
+			rawMap = JSON.parse(fs.readFileSync(MAP_FILE, 'utf8'));
+		} catch (error) {
+			rawMap = null;
+		}
+		const payload = rawMap
+			? reviewMap.buildGlobalMapPayload(rawMap, Object.fromEntries(url.searchParams))
+			: await reviewMap.loadGlobalMapPayload({
+				storage: null,
+				fetch: process.env.URL_REVIEW_LIVE_MAP === '1' ? global.fetch : false,
+				query: Object.fromEntries(url.searchParams),
+			});
+		sendJson(res, 200, payload, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/map/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const payload = reviewMap.buildDeskMapData(
+			readThreatsLocal(),
+			readStore(),
+			Object.fromEntries(url.searchParams)
+		);
+		sendJson(res, 200, payload, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/threats/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const all = readThreatsLocal();
+		const filtered = threats.filterThreats(all, Object.fromEntries(url.searchParams));
+		sendJson(res, 200, { summary: threats.summarizeThreats(all), items: filtered }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/threats') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let tBody = {};
+		try {
+			tBody = await readBody(req);
+		} catch (error) {
+			tBody = {};
+		}
+		const all = readThreatsLocal();
+		if (tBody.action === 'backfill') {
+			fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+			fs.writeFileSync(THREAT_FILE, all.map((r) => JSON.stringify(r) + '\n').join(''));
+			sendJson(res, 200, { ok: true, scanned: readStore().length, stored: all.length }, origin, deviceHint);
+			return;
+		}
+		const prev = all.find((item) => item.id === tBody.id);
+		if (!prev) {
+			sendJson(res, 404, { error: 'That threat entry was not found.' }, origin, deviceHint);
+			return;
+		}
+		const next = threats.normalizeRecord(Object.assign({}, prev, {
+			delist_status: tBody.delist_status != null ? tBody.delist_status : prev.delist_status,
+			note: tBody.note != null ? tBody.note : prev.note,
+			public_ok: typeof tBody.public_ok === 'boolean' ? tBody.public_ok : prev.public_ok
+		}));
+		fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
+		fs.appendFileSync(THREAT_FILE, JSON.stringify(next) + '\n');
+		sendJson(res, 200, { ok: true, item: next }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		sendJson(res, 200, desk.snapshot(readStore(), readAlerts(), Array.from(activeRuns.values())), origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && (url.pathname === '/account' || url.pathname === '/qa-review-account.html')) {
+		res.writeHead(200, {
+			'content-type': 'text/html; charset=utf-8',
+			'cache-control': 'no-store',
+			'x-robots-tag': 'noindex',
+		});
+		res.end(fs.readFileSync(path.join(__dirname, '..', 'qa-review-account.html')));
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/pass') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let passBody = {};
+		try {
+			passBody = await readBody(req);
+		} catch (error) {
+			passBody = {};
+		}
+		const email = String(passBody.email || '')
+			.trim()
+			.toLowerCase();
+		const plan = offers.planById(passBody.plan || 'freelancer');
+		if (!email || email.indexOf('@') === -1) {
+			sendJson(res, 400, { error: 'That address is missing.' }, origin, deviceHint);
+			return;
+		}
+		const until = new Date(Date.now() + plan.days * 24 * 60 * 60 * 1000).toISOString();
+		writeRecord({
+			id: crypto.randomBytes(9).toString('hex'),
+			status: 'monthly-pass',
+			email,
+			plan: plan.id,
+			priceUsd: plan.usd,
+			paid: false,
+			localPass: true,
+			paidUntil: until,
+			createdAt: new Date().toISOString(),
+		});
+		sendJson(res, 200, { ok: true, paidUntil: until, charged: false }, origin, deviceHint);
+		return;
+	}
+	if (
+		req.method === 'POST' &&
+		[
+			'/account/runs',
+			'/account/compare',
+			'/account/stop',
+			'/account/export',
+			'/account/delete',
+			'/account/delete-runs',
+		].indexOf(url.pathname) !== -1
+	) {
+		let accountBody = {};
+		try {
+			accountBody = await readBody(req);
+		} catch (error) {
+			accountBody = {};
+		}
+		const signedIn = await auth.checkSession(signIns, Object.assign({}, accountBody, { touch: false }));
+		if (!signedIn.ok) {
+			sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceHint);
+			return;
+		}
+		if (url.pathname === '/account/runs') {
+			sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
+			return;
+		}
+		if (url.pathname === '/account/compare') {
+			const records = readStore();
+			const open = new Set(
+				offers
+					.accountFile(records, signedIn.email)
+					.runs.filter((run) => run.open)
+					.map((run) => run.id)
+			);
+			const made = compare.savedComparison(records, signedIn.email, accountBody.ids, (row) => open.has(row.id));
+			sendJson(res, made.error ? 400 : 200, made, origin, deviceHint);
+			return;
+		}
+		if (url.pathname === '/account/export') {
+			const data = await accountData.exportAccount(signIns, signedIn.email);
+			data.reviews = readStore().filter((row) => row.email === signedIn.email);
+			sendJson(res, 200, data, origin, deviceHint);
+			return;
+		}
+		if (url.pathname === '/account/delete-runs') {
+			const ids = Array.isArray(accountBody.ids) ? accountBody.ids.slice(0, 200).map(String) : [];
+			if (!ids.length) {
+				sendJson(res, 400, { error: 'Pick at least one review to delete.' }, origin, deviceHint);
+				return;
+			}
+			const rows = readStore();
+			const local = auth.memoryStore();
+			for (const row of rows) await local.set('url_reviews', row.id, row);
+			const counts = await accountData.deleteRuns(local, signedIn.email, ids);
+			const kept = [];
+			for (const row of rows) {
+				const now = await local.get('url_reviews', row.id);
+				if (now) kept.push(Object.assign({ id: row.id }, now));
+			}
+			fs.writeFileSync(FILE, kept.map((row) => JSON.stringify(row) + '\n').join(''));
+			sendJson(res, 200, Object.assign({ ok: true }, counts), origin, deviceHint);
+			return;
+		}
+		if (url.pathname === '/account/delete') {
+			if (
+				String(accountBody.confirm || '')
+					.trim()
+					.toLowerCase() !== signedIn.email
+			) {
+				sendJson(res, 400, { error: 'Type the address you are signed in with to confirm.' }, origin, deviceHint);
+				return;
+			}
+			const at = new Date().toISOString();
+			const rows = readStore().filter(
+				(row) => row.email !== signedIn.email || accountData.isPayment(row) || row.status === 'follow-stop'
+			);
+			fs.writeFileSync(
+				FILE,
+				rows
+					.map(
+						(row) =>
+							JSON.stringify(
+								row.email === signedIn.email && accountData.isPayment(row) && !row.accountDeletedAt
+									? Object.assign({ id: row.id }, accountData.paymentOnly(row, at))
+									: row
+							) + '\n'
+					)
+					.join('')
+			);
+			await accountData.deleteAccount(signIns, signedIn.email);
+			sendJson(res, 200, { ok: true }, origin, deviceHint);
+			return;
+		}
+		writeRecord({
+			id: crypto.randomBytes(9).toString('hex'),
+			status: 'follow-stop',
+			email: signedIn.email,
+			via: 'account',
+			createdAt: new Date().toISOString(),
+		});
+		sendJson(res, 200, { ok: true }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/review/capture') {
+		let body = {};
+		try {
+			body = await readBody(req);
+		} catch (error) {
+			body = {};
+		}
+		const reportId = String((body && body.reportId) || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		const kind =
+			['print', 'printscreen', 'copy', 'case-print'].indexOf(String((body && body.kind) || '')) === -1
+				? ''
+				: String(body.kind);
+		if (!reportId || !kind) {
+			sendJson(res, 400, { error: 'The capture note was incomplete.' }, origin, deviceHint);
+			return;
+		}
+		const found = readStore()
+			.reverse()
+			.find((row) => row && row.id === reportId && row.report);
+		if (!found) {
+			sendJson(res, 404, { error: 'That report was not found on this machine.' }, origin, deviceHint);
+			return;
+		}
+		writeRecord({
+			id: reportId,
+			status: 'capture',
+			kind,
+			at: new Date().toISOString(),
+			deviceId: deviceFrom(req, body),
+		});
+		sendJson(res, 200, { ok: true }, origin, deviceFrom(req, body));
+		return;
+	}
+	if (
+		(req.method === 'GET' && url.pathname === '/review') ||
+		(req.method === 'POST' && url.pathname === '/review/open')
+	) {
+		let openBody = {};
+		if (req.method === 'POST') {
+			try {
+				openBody = await readBody(req);
+			} catch (error) {
+				openBody = {};
+			}
+		}
+		const id = req.method === 'GET' ? url.searchParams.get('id') || '' : String(openBody.id || '');
+		const found = readStore()
+			.reverse()
+			.find((row) => row.id === id);
+		if (!found || !found.report) {
+			sendJson(res, 404, { error: 'That report was not found on this machine.' }, origin, deviceHint);
+			return;
+		}
+		const paidLater = readStore().some(
+			(row) => row && row.status === 'paid-report' && row.reportId === found.id && row.paid === true
+		);
+		const proof = req.method === 'GET' ? {} : { session: openBody.session, deviceKey: openBody.deviceKey };
+		const access = await auth.reportAccess(
+			signIns,
+			proof,
+			Object.assign({}, found, { paid: found.paid === true || paidLater }),
+			found.free === true
+		);
+		if (access.locked) {
+			sendJson(
+				res,
+				access.status,
+				{
+					error: access.error,
+					signIn: true,
+					locked: true,
+					id: found.id,
+					host: found.report.host,
+					status: found.status,
+					frameworks: found.frameworks || [],
+					preview: core.previewReport(found.report),
+				},
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		const addons = addonsOf(found.id);
+		if (!access.ok) {
+			let priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
+			try {
+				priced = core.priceForReport(
+					found.frameworks || [],
+					core.toolsForCharge((found.report && found.report.tools) || []),
+					core.creditFor({ addons })
+				);
+			} catch (error) {
+				priced = { usd: core.PRICE_PER_FRAMEWORK, frameworks: [] };
+			}
+			if (offers.reopenFree(found, Date.now())) {
+				const preview = core.previewReport(found.report);
+				sendJson(
+					res,
+					200,
+					{
+						report:
+							addons.indexOf('fixlist') !== -1 && found.report.insights
+								? Object.assign(preview, { insights: found.report.insights })
+								: preview,
+						frameworks: found.frameworks || [],
+						paid: false,
+						free: false,
+						addons,
+						reopenUntil: offers.reopenFreeUntil(found),
+						priceUsd: priced.usd,
+						creditUsd: priced.creditUsd || 0,
+						tools: priced.tools || [],
+						id: found.id,
+						host: found.report.host,
+					},
+					origin,
+					found.deviceId || deviceHint
+				);
+				return;
+			}
+			sendJson(
+				res,
+				402,
+				Object.assign(
+					{
+						paymentRequired: true,
+						priceUsd: priced.usd,
+						creditUsd: priced.creditUsd || 0,
+						frameworks: priced.frameworks,
+						tools: priced.tools || [],
+						id: found.id,
+						host: found.report.host,
+						status: found.status,
+						addons,
+						preview: core.previewReport(found.report),
+					},
+					addons.indexOf('fixlist') !== -1 ? { insights: found.report.insights || null } : {}
+				),
+				origin,
+				found.deviceId || deviceHint
+			);
+			return;
+		}
+		const other = openBody.vs
+			? readStore()
+					.reverse()
+					.find((row) => row.id === openBody.vs && row.id !== found.id)
+			: null;
+		const otherOpen = other && (await auth.reportAccess(signIns, proof, other, other.free === true)).ok;
+		const pair = other
+			? compare.savedComparison([found, other], found.email, [found.id, other.id], (row) => row === found || otherOpen)
+			: null;
+		const versus = pair && pair.list && pair.list[0] && pair.list[0].compare;
+		sendJson(
+			res,
+			200,
+			Object.assign(
+				{ report: found.report, frameworks: found.frameworks, paid: true, addons },
+				versus ? { versus } : {}
+			),
+			origin,
+			found.deviceId || deviceHint
+		);
+		return;
+	}
+	if (req.method === 'POST' && (url.pathname === '/review/ask' || url.pathname === '/review/ask/phrase')) {
+		let askBody = {};
+		try {
+			askBody = await readBody(req);
+		} catch (error) {
+			askBody = {};
+		}
+		const id = String(askBody.id || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		const rows = readStore();
+		const found = id
+			? rows
+					.slice()
+					.reverse()
+					.find((row) => row && row.id === id && row.report)
+			: null;
+		const paidLater =
+			!!found &&
+			rows.some((row) => row && row.status === 'paid-report' && row.reportId === found.id && row.paid === true);
+		const access = await auth.askAccess(signIns, askBody, found, paidLater || (!!found && found.free === true));
+		if (!access.ok) {
+			sendJson(
+				res,
+				access.status,
+				{ error: access.error, code: access.code || '', signIn: !!access.signIn },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		if (url.pathname === '/review/ask/phrase') {
+			const result = await phraser.phrase({
+				key: process.env.GEMINI_API_KEY,
+				model: process.env.GEMINI_MODEL,
+				store: signIns,
+				id,
+				input: askBody,
+			});
+			sendJson(
+				res,
+				result.ok ? 200 : result.status,
+				result.ok ? { text: result.text } : { error: result.error, code: result.code },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		sendJson(res, 200, { ok: true, phrase: !!process.env.GEMINI_API_KEY }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/review/fix/offers') {
+		sendJson(res, 200, { packages: fixOffers.publicPackages() }, origin, deviceHint);
+		return;
+	}
+	// Saved to runner-results only: the local server mails no one.
+	if (req.method === 'POST' && url.pathname === '/review/fix/request') {
+		let fixBody = {};
+		try {
+			fixBody = await readBody(req);
+		} catch (error) {
+			fixBody = {};
+		}
+		const id = String(fixBody.id || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		const found = id
+			? readStore()
+					.slice()
+					.reverse()
+					.find((row) => row && row.id === id && row.report)
+			: null;
+		const access = await auth.askAccess(signIns, fixBody, found, true);
+		if (!access.ok) {
+			sendJson(
+				res,
+				access.status,
+				{ error: access.error, code: access.code || '', signIn: !!access.signIn },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		const record = fixOffers.requestRecord(fixBody, found, access.email, Date.now());
+		if (record.error) {
+			sendJson(res, 400, { error: record.error, code: 'invalid' }, origin, deviceHint);
+			return;
+		}
+		const fixId = crypto.randomBytes(10).toString('hex');
+		fs.appendFileSync(
+			path.join(path.dirname(FILE), 'url-review-fix-requests.jsonl'),
+			JSON.stringify(Object.assign({ id: fixId }, record)) + '\n'
+		);
+		sendJson(
+			res,
+			200,
+			{
+				ok: true,
+				id: fixId,
+				email: record.email,
+				status: record.status,
+				package: record.package,
+				priceUsd: record.priceUsd || 0,
+			},
+			origin,
+			deviceHint
+		);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/review/fix/recheck') {
+		let fixBody = {};
+		try {
+			fixBody = await readBody(req);
+		} catch (error) {
+			fixBody = {};
+		}
+		const id = String(fixBody.id || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		const found = id
+			? readStore()
+					.slice()
+					.reverse()
+					.find((row) => row && row.id === id && row.report)
+			: null;
+		const access = await auth.askAccess(signIns, fixBody, found, false);
+		if (!access.ok) {
+			sendJson(
+				res,
+				access.status,
+				{ error: access.error, code: access.code || '', signIn: !!access.signIn },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		const record = fixRereview.selfRecord(found, access.email, fixBody.lang, Date.now());
+		if (record.error) {
+			sendJson(res, 400, { error: record.error, code: 'invalid' }, origin, deviceHint);
+			return;
+		}
+		fs.appendFileSync(
+			path.join(path.dirname(FILE), 'url-review-fix-requests.jsonl'),
+			JSON.stringify(Object.assign({ id: 'self-' + id }, record)) + '\n'
+		);
+		sendJson(res, 200, { ok: true, id: 'self-' + id, email: record.email, status: record.status }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && (url.pathname === '/review/pay' || url.pathname === '/pay')) {
+		sendJson(
+			res,
+			402,
+			{
+				paymentRequired: true,
+				priceUsd: core.PRICE_USD,
+				error: 'After 7 days, reopening a report asks for payment. A card payment is not connected on this page.',
+			},
+			origin,
+			deviceHint
+		);
+		return;
+	}
+	if (req.method === 'POST' && (url.pathname === '/review/stop' || url.pathname === '/stop')) {
+		let stopBody = {};
+		try {
+			stopBody = await readBody(req);
+		} catch (error) {
+			stopBody = {};
+		}
+		const stop = await auth.stopRun(signIns, stopBody);
+		if (!stop.ok) {
+			sendJson(res, stop.status, { error: stop.error, signIn: !!stop.signIn }, origin, deviceHint);
+			return;
+		}
+		const run = runs.get(
+			String(stopBody.runId || '')
+				.replace(/[^a-f0-9]/g, '')
+				.slice(0, 32)
+		);
+		if (run) run.stopped = true;
+		sendJson(res, 200, { ok: true, stopped: !!run }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/place') {
+		sendJson(res, 200, { ok: true }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/standing') {
+		let standingBody = {};
+		try {
+			standingBody = await readBody(req);
+		} catch (error) {
+			standingBody = {};
+		}
+		const records = readStore();
+		const standing = core.standingFor(records, { deviceId: deviceFrom(req, standingBody), ip: clientIp(req) });
+		const email = await sessionEmail(standingBody);
+		const soft = await localSoftQuota.peek({ ip: clientIp(req), email: email || '' });
+		// This server has no free accounts and charges no return step, so it reports neither.
+		sendJson(
+			res,
+			200,
+			{
+				billing: standing.billing,
+				free: false,
+				percent: 0,
+				compareUsd: core.COMPARE_CENTS / 100,
+				pass: email ? offers.passView(offers.passFor(records, email)) : null,
+				lastPlan: email ? offers.lastPassPlan(records, email) : '',
+				plans: offers.passPlans(),
+				softLeft: soft.left,
+				softCap: soft.cap,
+				softSignedIn: soft.signedIn,
+			},
+			origin,
+			deviceHint
+		);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/checkout/quote') {
+		try {
+			const layerQuery = url.searchParams.get('layers');
+			const pageQuery = url.searchParams.get('pages');
+			const purposeQuery = url.searchParams.get('purpose');
+			const passQuery = offers.knownPlan(url.searchParams.get('pass') || '');
+			if (purposeQuery === 'fix') {
+				const fixQuote = fixCheckout.quote(url.searchParams.get('package') || '');
+				if (!fixQuote) {
+					sendJson(res, 400, { error: 'That fix package is not offered.' }, origin, deviceHint);
+					return;
+				}
+				const fixCop = await core.copQuote(fixQuote.usd);
+				sendJson(res, 200, Object.assign(fixQuote, { cop: fixCop.pesos, rate: fixCop.rate }), origin, deviceHint);
+				return;
+			}
+			if (purposeQuery === 'pass' || passQuery) {
+				const pricedPass =
+					purposeQuery === 'pass'
+						? core.priceForPass(url.searchParams.get('plan'))
+						: core.priceForPassExtras(passQuery, passRequest(Object.fromEntries(url.searchParams)));
+				const passQuote = pricedPass.usd ? await core.copQuote(pricedPass.usd) : { pesos: 0, rate: 0 };
+				sendJson(
+					res,
+					200,
+					Object.assign({}, pricedPass, {
+						cop: passQuote.pesos,
+						rate: passQuote.rate,
+						plan: (pricedPass.plan && pricedPass.plan.id) || pricedPass.plan,
+						pass: offers
+							.passPlans()
+							.find((row) => row.id === (purposeQuery === 'pass' ? pricedPass.plan : passQuery.id)),
+					}),
+					origin,
+					deviceHint
+				);
+				return;
+			}
+			let priced =
+				purposeQuery === 'fixlist'
+					? core.priceForFixList()
+					: purposeQuery === 'credentials'
+						? core.priceForCredentials()
+						: purposeQuery === 'alerts'
+							? core.priceForAlerts(url.searchParams.get('count'))
+							: layerQuery
+								? core.priceForLayers(layerQuery)
+								: pageQuery
+									? core.priceForRun({
+											frameworks: url.searchParams.get('frameworks') || '',
+											tools: url.searchParams.get('tools') || '',
+											pages: pageQuery,
+											depth: url.searchParams.get('depth'),
+											billing: url.searchParams.get('billing') || '',
+											compareWith: compare.cleanId(url.searchParams.get('compareWith')),
+											competitors: url.searchParams.get('competitors'),
+										})
+									: core.priceFor(url.searchParams.get('frameworks') || '', url.searchParams.get('tools') || '');
+			if (purposeQuery === 'report' && url.searchParams.get('reportId')) {
+				priced = core.priceForReport(
+					priced.frameworks,
+					priced.tools,
+					core.creditFor({ addons: addonsOf(url.searchParams.get('reportId')) })
+				);
+			}
+			const quote = await core.copQuote(priced.usd);
+			sendJson(
+				res,
+				200,
+				{
+					usd: priced.usd,
+					cop: quote.pesos,
+					rate: quote.rate,
+					count: priced.count,
+					frameworks: priced.frameworks,
+					tools: priced.tools || [],
+					discount: priced.discount || [],
+					pages: priced.pages,
+					depth: priced.depth,
+					billing: priced.billing,
+					frameworkUsd: priced.frameworkUsd,
+					scopeUsd: priced.scopeUsd,
+					pageUsd: priced.pageUsd,
+					depthUsd: priced.depthUsd,
+					competitors: priced.competitors,
+					eachUsd: priced.eachUsd,
+					perFramework: priced.each,
+					creditUsd: priced.creditUsd || 0,
+				},
+				origin,
+				deviceHint
+			);
+		} catch (error) {
+			sendJson(
+				res,
+				error.status || 502,
+				{ error: error.message || 'The peso price could not be loaded.' },
+				origin,
+				deviceHint
+			);
+		}
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/checkout') {
+		let payBody = {};
+		try {
+			payBody = await readBody(req);
+		} catch (error) {
+			payBody = {};
+		}
+		const choice = core.paymentChoice(payBody.provider || 'paypal');
+		const purpose =
+			['report', 'fixlist', 'cases', 'credentials', 'alerts', 'pass'].indexOf(payBody.purpose) === -1
+				? 'new-run'
+				: payBody.purpose;
+		const passOwner =
+			purpose === 'pass' || (purpose === 'new-run' && !!payBody.pass) ? await sessionEmail(payBody) : '';
+		if ((purpose === 'pass' || (purpose === 'new-run' && payBody.pass)) && !passOwner) {
+			sendJson(
+				res,
+				401,
+				{ error: 'Sign in first. A pass belongs to the address you sign in with. No charge was made.', signIn: true },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		const passOn =
+			purpose === 'new-run' && payBody.pass ? offers.passRun(readStore(), passOwner, passRequest(payBody)) : null;
+		if (purpose === 'new-run' && payBody.pass && !(passOn && passOn.due)) {
+			sendJson(
+				res,
+				400,
+				{ error: 'This run has nothing to pay on your pass. No charge was made.' },
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		const reportId = String(payBody.reportId || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32);
+		const deviceId = deviceFrom(req, payBody);
+		const reference = crypto.randomBytes(8).toString('hex');
+		if (!choice) {
+			sendJson(
+				res,
+				400,
+				{ error: 'PayPal is the payment method for this review. No charge was made.' },
+				origin,
+				deviceId
+			);
+			return;
+		}
+		const urls = payReturn(purpose, choice, reference, payBody.lang);
+		try {
+			const stored =
+				purpose === 'report' || purpose === 'fixlist'
+					? readStore().find((item) => item && item.id === reportId && item.report) || {}
+					: {};
+			const access =
+				purpose === 'report' || purpose === 'fixlist'
+					? await auth.reportAccess(signIns, payBody, stored, false)
+					: { ok: true };
+			if (!access.ok && access.status !== 402) {
+				sendJson(
+					res,
+					access.status,
+					{
+						error: access.locked
+							? 'Only the account that ran this report can unlock it. Sign in with that account. No charge was made.'
+							: access.error,
+						signIn: !!access.signIn,
+					},
+					origin,
+					deviceId
+				);
+				return;
+			}
+			if (purpose === 'fixlist' && !reportId) {
+				sendJson(
+					res,
+					400,
+					{ error: 'A fix list belongs to one report. Open the report first. No charge was made.' },
+					origin,
+					deviceId
+				);
+				return;
+			}
+			const creditCents = purpose === 'report' ? core.creditFor({ addons: addonsOf(reportId) }) : 0;
+			const priced =
+				purpose === 'pass'
+					? core.priceForPass(payBody.plan)
+					: passOn
+						? passOn.extras
+						: purpose === 'fixlist'
+							? core.priceForFixList()
+							: purpose === 'cases'
+								? core.priceForLayers(payBody.layers)
+								: purpose === 'credentials'
+									? core.priceForCredentials()
+									: purpose === 'alerts'
+										? core.priceForAlerts(payBody.alertCount)
+										: purpose === 'report'
+											? core.priceForReport(
+													stored.frameworks || [],
+													core.toolsForCharge((stored.report && stored.report.tools) || [], payBody.tools),
+													creditCents
+												)
+											: core.priceForRun({
+													frameworks: payBody.frameworks,
+													tools: payBody.tools,
+													pages: payBody.pages,
+													depth: payBody.depth,
+													billing: payBody.billing,
+													compareWith: purpose === 'new-run' ? compare.cleanId(payBody.compareWith) : '',
+													competitors: payBody.competitors,
+												});
+			const session = await core.startCheckout(
+				Object.assign(
+					{
+						provider: choice,
+						purpose,
+						reportId,
+						deviceId,
+						reference,
+						frameworks: priced.frameworks || [],
+						tools: priced.tools || [],
+						layers: priced.layers || [],
+						pages: priced.pages,
+						depth: priced.depth,
+						billing: priced.billing,
+						compareWith: purpose === 'new-run' ? compare.cleanId(payBody.compareWith) : '',
+						competitors: priced.competitors,
+						alertCount: priced.alertCount,
+						priceUsd: priced.usd,
+						plan: purpose === 'pass' ? priced.plan : '',
+						passPlan: passOn ? passOn.plan.id : '',
+						creditCents,
+						successUrl: urls.successUrl,
+						cancelUrl: urls.cancelUrl,
+						pendingUrl: urls.pendingUrl,
+					},
+					paymentKeys()
+				)
+			);
+			writeRecord({
+				id: reference,
+				status: 'checkout-open',
+				provider: core.paymentProvider(choice),
+				method: choice,
+				externalId: session.id,
+				reference,
+				purpose,
+				reportId,
+				deviceId,
+				frameworks: priced.frameworks || [],
+				tools: priced.tools || [],
+				layers: priced.layers || [],
+				pages: priced.pages || null,
+				depth: priced.depth || null,
+				billing: priced.billing || '',
+				compareWith: purpose === 'new-run' ? compare.cleanId(payBody.compareWith) : '',
+				competitors: priced.competitors || null,
+				priceUsd: priced.usd,
+				...(passOwner
+					? { email: passOwner, plan: purpose === 'pass' ? priced.plan : passOn.plan.id, passExtra: !!passOn }
+					: {}),
+				amount: session.amount,
+				currency: session.currency,
+				paid: false,
+				createdAt: new Date().toISOString(),
+			});
+			sendJson(
+				res,
+				200,
+				{
+					url: session.url,
+					id: session.id,
+					provider: session.provider,
+					currency: session.currency,
+					amount: session.amount,
+				},
+				origin,
+				deviceId
+			);
+		} catch (error) {
+			sendJson(
+				res,
+				error.status || 502,
+				{ error: error.message || 'Payment could not be started.', paymentRequired: true, priceUsd: core.PRICE_USD },
+				origin,
+				deviceId
+			);
+		}
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/checkout/confirm') {
+		let confirmBody = {};
+		try {
+			confirmBody = await readBody(req);
+		} catch (error) {
+			confirmBody = {};
+		}
+		const deviceId = deviceFrom(req, confirmBody);
+		const choice = core.paymentChoice(confirmBody.provider || 'paypal');
+		if (!choice) {
+			sendJson(
+				res,
+				400,
+				{ error: 'PayPal is the payment method for this review. No charge was recorded.' },
+				origin,
+				deviceId
+			);
+			return;
+		}
+		try {
+			const result = await core.inspectPayment(
+				Object.assign(
+					{
+						provider: choice,
+						sessionId: String(confirmBody.sessionId || ''),
+					},
+					paymentKeys()
+				)
+			);
+			if (!result.paid) {
+				sendJson(
+					res,
+					402,
+					{
+						paid: false,
+						pending: !!result.pending,
+						error: result.pending
+							? 'The payment is still pending. Nothing was unlocked.'
+							: 'The payment is not confirmed. No charge was recorded here.',
+					},
+					origin,
+					deviceId
+				);
+				return;
+			}
+			const prior = readStore().find((row) => row && row.sessionId === result.sessionId && row.paid === true);
+			if (prior) {
+				sendJson(res, 200, { paid: true, purpose: offers.paidPurpose(prior.purpose) }, origin, deviceId);
+				return;
+			}
+			let purpose = offers.paidPurpose(result.purpose);
+			let reportId = String(result.reportId || '')
+				.replace(/[^a-f0-9]/g, '')
+				.slice(0, 32);
+			let payer = result.deviceId || deviceId;
+			let frameworks = result.frameworks || [];
+			let priceUsd = result.amount || 0;
+			let compareWith = '';
+			let competitors = 1;
+			let open = null;
+			if (choice !== 'stripe') {
+				open = readStore().find((row) => row && row.status === 'checkout-open' && row.reference === result.reference);
+				const sameLink = !result.linkId || (open && open.externalId === result.linkId);
+				if (!open || open.provider !== result.provider || open.amount !== result.amount || !sameLink) {
+					sendJson(res, 402, { paid: false, error: 'This payment does not match an open checkout.' }, origin, deviceId);
+					return;
+				}
+				purpose = offers.paidPurpose(open.purpose);
+				reportId = String(open.reportId || '')
+					.replace(/[^a-f0-9]/g, '')
+					.slice(0, 32);
+				payer = open.deviceId || deviceId;
+				frameworks = open.frameworks || [];
+				result.tools = open.tools || [];
+				priceUsd = open.priceUsd || result.amount;
+				compareWith = compare.cleanId(open.compareWith);
+				result.pages = open.pages;
+				result.depth = open.depth;
+				result.billing = open.billing;
+				if (compareWith && open.billing === 'compare')
+					competitors = Math.max(1, Math.min(core.MAX_COMPETITORS, Number(open.competitors) || 1));
+			}
+			if (purpose === 'pass') {
+				const records = readStore();
+				const owner = String((open && open.email) || '');
+				const bought = offers.passPurchase(open && open.plan, records, owner, Date.now(), {
+					id: 'pass-' + (result.reference || crypto.randomBytes(8).toString('hex')),
+					provider: result.provider,
+					method: choice,
+					deviceId: payer,
+					sessionId: result.sessionId,
+					reference: result.reference || '',
+					amount: result.amount,
+					currency: result.currency,
+					createdAt: new Date().toISOString(),
+				});
+				if (bought.replaces) updateRecord(bought.replaces, { replacedBy: bought.row.id });
+				writeRecord(bought.row);
+				sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
+				return;
+			}
+			const addon = offers.ADDONS.indexOf(purpose) !== -1;
+			const paidRow = {
+				id:
+					purpose === 'report' && reportId
+						? 'paid-report-' + reportId
+						: addon
+							? 'paid-' + purpose + '-' + (result.reference || crypto.randomBytes(9).toString('hex'))
+							: crypto.randomBytes(9).toString('hex'),
+				status: purpose === 'report' && reportId ? 'paid-report' : addon ? 'paid-addon' : 'run-credit',
+				purpose,
+				reportId: purpose === 'report' || addon ? reportId : '',
+				paid: true,
+				provider: result.provider,
+				method: choice,
+				deviceId: payer,
+				sessionId: result.sessionId,
+				frameworks,
+				tools: result.tools || [],
+				pages: result.pages || core.INCLUDED_PAGES,
+				depth: result.depth || core.INCLUDED_DEPTH,
+				billing: result.billing || 'run',
+				compareWith: purpose === 'new-run' ? compareWith : '',
+				createdAt: new Date().toISOString(),
+				priceUsd,
+				amount: result.amount,
+				currency: result.currency,
+				...(open && open.passExtra ? { passExtra: true, plan: open.plan, email: open.email, usedAt: '' } : {}),
+			};
+			// One comparison checkout leaves a credit for each competitor; the first carries the payment.
+			writeRecord(competitors > 1 ? Object.assign({}, paidRow, { competitors }) : paidRow);
+			for (let n = 2; n <= competitors; n += 1) {
+				writeRecord(
+					Object.assign({}, paidRow, {
+						id: crypto.randomBytes(9).toString('hex'),
+						priceUsd: 0,
+						amount: 0,
+						paidWith: paidRow.id,
+						competitors,
+					})
+				);
+			}
+			sendJson(res, 200, { paid: true, purpose }, origin, deviceId);
+		} catch (error) {
+			sendJson(
+				res,
+				error.status || 502,
+				{ paid: false, error: error.message || 'The payment could not be confirmed.' },
+				origin,
+				deviceId
+			);
+		}
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/review/preview') {
+		let body = {};
+		try {
+			body = await readBody(req);
+		} catch (error) {
+			sendJson(res, error.status || 400, { error: error.message }, origin, deviceHint);
+			return;
+		}
+		const deviceId = deviceFrom(req, body);
+		const intake = await core.screenSoftPreview(body, req.headers);
+		if (!intake.ok) {
+			sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
+			return;
+		}
+		const ip = clientIp(req);
+		const email = (await sessionEmail(body)) || '';
+		const standing = await localSoftQuota.peek({ ip, email });
+		if (!standing.ok) {
+			sendJson(
+				res,
+				429,
+				{
+					error: softQuota.quotaMessage(standing),
+					code: 'soft-quota',
+					softLeft: 0,
+					softCap: standing.cap,
+					signIn: !standing.signedIn,
+					softPreview: true,
+				},
+				origin,
+				deviceId
+			);
+			return;
+		}
+		const quota = await localSoftQuota.take({ ip, email });
+		if (!quota.ok) {
+			sendJson(
+				res,
+				429,
+				{
+					error: softQuota.quotaMessage(quota),
+					code: 'soft-quota',
+					softLeft: 0,
+					softCap: quota.cap,
+					signIn: !quota.signedIn,
+					softPreview: true,
+				},
+				origin,
+				deviceId
+			);
+			return;
+		}
+		const runId =
+			String(body.runId || '')
+				.replace(/[^a-f0-9]/g, '')
+				.slice(0, 32) || crypto.randomBytes(8).toString('hex');
+		const run = { stopped: false };
+		runs.set(runId, run);
+		res.on('close', () => {
+			if (!res.writableEnded) run.stopped = true;
+		});
+		startStream(res, origin, deviceId);
+		try {
+			if (email) intake.value.email = email;
+			const report = await core.reviewTarget(intake.value.url, {
+				softPreview: true,
+				log: (text) => line(res, { type: 'log', text }),
+				stopped: () => run.stopped,
+				asker: { reasonCode: 'soft-preview', email: email || '' },
+				maxPages: core.SOFT_PREVIEW_PAGES,
+				maxDepth: core.SOFT_PREVIEW_DEPTH,
+				pageLang: intake.value.pageLang,
+				browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
+				pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+				crux:
+					process.env.CRUX_KEY || process.env.PAGESPEED_KEY
+						? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY)
+						: undefined,
+				webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+			});
+			const record = core.intakeRecord(intake.value, report, {
+				ip,
+				deviceId,
+				userAgent: req.headers['user-agent'],
+				acceptLanguage: req.headers['accept-language'],
+				country: '',
+				region: '',
+				city: '',
+			});
+			writeRecord(record);
+			const shown = core.previewReport(report);
+			line(res, {
+				type: 'done',
+				report: shown,
+				frameworks: record.frameworks,
+				paid: false,
+				softPreview: true,
+				priceUsd: 0,
+				softLeft: quota.left,
+				softCap: quota.cap,
+			});
+			res.end();
+		} catch (error) {
+			line(res, { type: 'error', error: error.message || 'The preview failed.' });
+			res.end();
+		} finally {
+			runs.delete(runId);
+		}
+		return;
+	}
+	if (req.method !== 'POST' || url.pathname !== '/review') {
+		sendJson(res, 404, { error: 'Not found.' }, origin, deviceHint);
+		return;
+	}
+	let body = {};
+	try {
+		body = await readBody(req);
+	} catch (error) {
+		sendJson(res, error.status || 400, { error: error.message }, origin, deviceHint);
+		return;
+	}
+	const deviceId = deviceFrom(req, body);
+	const signedIn = await auth.checkSession(signIns, body);
+	if (!signedIn.ok) {
+		sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceId);
+		return;
+	}
+	body.email = signedIn.email;
+	const intake = await core.screenIntake(body, req.headers);
+	if (!intake.ok) {
+		sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
+		return;
+	}
+	const base = intake.value.compareWith ? readStore().find((row) => row.id === intake.value.compareWith) || null : null;
+	const refused = intake.value.compareWith ? compare.baseProblem(base, signedIn.email, intake.value.url) : '';
+	if (refused) {
+		sendJson(res, 400, { error: refused, compare: true }, origin, deviceId);
+		return;
+	}
+	const identity = { deviceId, ip: clientIp(req) };
+	let decision = core.judgeAttempts(readStore(), identity, intake.value);
+	// A signed-in run on an open pass with runs left takes one run; asking beyond the plan needs its extras paid first.
+	const passOn =
+		!decision.consumeId && decision.code !== 'stopped' && decision.code !== 'invalid'
+			? offers.passRun(readStore(), signedIn.email, intake.value)
+			: null;
+	if (passOn && passOn.due) {
+		decision = Object.assign(
+			{
+				ok: false,
+				code: 'payment',
+				pass: passOn.plan.id,
+				runsLeft: offers.passLeft(passOn.row),
+				message:
+					'This run asks for more than your ' +
+					passOn.plan.name +
+					' pass. It uses one pass run and charges only the extras: ' +
+					passOn.extras.usd +
+					' USD.',
+			},
+			passOn.extras,
+			{ priceUsd: passOn.extras.usd, billing: 'pass' }
+		);
+	} else if (passOn) {
+		updateRecord(passOn.row.id, {
+			runs: offers.passRuns(passOn.row),
+			runsUsed: (Number(passOn.row.runsUsed) || 0) + 1,
+			lastRunAt: new Date().toISOString(),
+		});
+		if (passOn.credit) updateRecord(passOn.credit.id, { usedAt: new Date().toISOString() });
+		decision = {
+			ok: true,
+			consumeId: '',
+			pass: {
+				id: passOn.row.id,
+				plan: passOn.plan.id,
+				name: passOn.plan.name,
+				left: offers.passLeft(passOn.row) - 1,
+				extrasUsd: passOn.extras ? passOn.extras.usd : 0,
+			},
+		};
+	}
+	if (decision.ok && decision.consumeId) {
+		writeRecord({
+			id: crypto.randomBytes(9).toString('hex'),
+			status: 'run-credit-used',
+			creditId: decision.consumeId,
+			deviceId,
+			createdAt: new Date().toISOString(),
+		});
+	}
+	if (!decision.ok) {
+		writeRecord({
+			id: crypto.randomBytes(9).toString('hex'),
+			createdAt: new Date().toISOString(),
+			status: decision.code === 'payment' ? 'payment-due' : 'blocked',
+			deviceId,
+			ip: identity.ip,
+			name: intake.value.name,
+			email: intake.value.email,
+			reason: intake.value.reason,
+			requestedUrl: intake.value.url,
+			log: [{ at: new Date().toISOString(), text: decision.message }],
+		});
+		sendJson(
+			res,
+			decision.code === 'payment' ? 402 : 429,
+			{
+				error: decision.message,
+				paymentRequired: decision.code === 'payment',
+				purpose: decision.code === 'payment' ? 'new-run' : '',
+				priceUsd: decision.priceUsd || 0,
+				frameworks: decision.frameworks || [],
+				tools: decision.tools || [],
+				pages: decision.pages,
+				depth: decision.depth,
+				billing: decision.billing || '',
+				pass: decision.pass || '',
+				runsLeft: decision.runsLeft,
+				frameworkUsd: decision.frameworkUsd,
+				scopeUsd: decision.scopeUsd,
+				pageUsd: decision.pageUsd,
+				depthUsd: decision.depthUsd,
+			},
+			origin,
+			deviceId
+		);
+		return;
+	}
+	const runId =
+		String(body.runId || '')
+			.replace(/[^a-f0-9]/g, '')
+			.slice(0, 32) || crypto.randomBytes(8).toString('hex');
+	const claim = await auth.claimRun(signIns, { runId, email: signedIn.email, deviceKey: body.deviceKey });
+	if (!claim.ok) {
+		sendJson(res, claim.status, { error: claim.error }, origin, deviceId);
+		return;
+	}
+	const run = { stopped: false };
+	runs.set(runId, run);
+	activeRuns.set(runId, {
+		runId,
+		at: new Date().toISOString(),
+		name: intake.value.name,
+		email: intake.value.email,
+		url: intake.value.url,
+	});
+	noteReview('started', {
+		runId,
+		name: intake.value.name,
+		email: intake.value.email,
+		requestedUrl: intake.value.url,
+		status: 'running',
+		frameworks: intake.value.frameworks,
+		pages: intake.value.pages,
+		depth: intake.value.depth,
+		reason: intake.value.reason,
+	});
+	res.on('close', () => {
+		if (!res.writableEnded) run.stopped = true;
+	});
+	startStream(res, origin, deviceId);
+	try {
+		const report = await core.reviewTarget(intake.value.url, {
+			log: (text) => line(res, { type: 'log', text }),
+			stopped: () => run.stopped,
+			asker: { reasonCode: intake.value.reasonCode, email: intake.value.email },
+			maxPages: intake.value.pages,
+			maxDepth: intake.value.depth,
+			pageLang: intake.value.pageLang,
+			section: intake.value.section,
+			targeted: intake.value.targeted === false ? false : undefined,
+			passive: !!intake.value.compareWith,
+			browse: process.env.CHROME_PATH ? (job) => require('../functions/url-review-browser').browse(job) : undefined,
+			pagespeed: process.env.PAGESPEED_KEY ? (url) => core.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+			crux:
+				process.env.CRUX_KEY || process.env.PAGESPEED_KEY
+					? (url) => core.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY)
+					: undefined,
+			webrisk: process.env.WEBRISK_KEY ? (url) => core.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+			places: process.env.PLACES_KEY ? (request) => core.placesSearch(request, process.env.PLACES_KEY) : undefined,
+		});
+		const record = core.intakeRecord(intake.value, report, {
+			ip: identity.ip,
+			deviceId,
+			creditId: decision.consumeId || '',
+			userAgent: req.headers['user-agent'],
+			acceptLanguage: req.headers['accept-language'],
+			country: '',
+			region: '',
+			city: '',
+		});
+		if (decision.pass)
+			Object.assign(record, {
+				paid: true,
+				priceUsd: decision.pass.extrasUsd,
+				passId: decision.pass.id,
+				passPlan: decision.pass.plan,
+			});
+		if (decision.pass && offers.passAddons(decision.pass.plan).length)
+			record.addons = offers.passAddons(decision.pass.plan);
+		const prior = core.pickPreviousRun(
+			readStore().filter((row) => row.email === intake.value.email),
+			report
+		);
+		const history = prior ? core.compareRuns(prior.report, report) : null;
+		if (history) report.history = history;
+		if (base) report.compare = compare.compareSites(base.report, report);
+		writeRecord(record);
+		const shown =
+			record.paid === true
+				? report
+				: Object.assign(core.previewReport(report), report.compare ? { compare: report.compare } : {});
+		line(res, {
+			type: 'done',
+			report: shown,
+			frameworks: record.frameworks,
+			paid: record.paid === true,
+			priceUsd: record.priceUsd,
+		});
+		res.end();
+	} catch (error) {
+		noteReview('failed', {
+			runId,
+			name: intake.value.name,
+			email: intake.value.email,
+			requestedUrl: intake.value.url,
+			status: 'failed',
+			reason: error.message || 'The review failed.',
+		});
+		line(res, { type: 'error', error: error.message || 'The review failed.' });
+		res.end();
+	} finally {
+		runs.delete(runId);
+		await signIns.remove('url_review_stops', runId);
+		activeRuns.delete(runId);
+	}
 });
 
 seedAlerts();
-server.listen(PORT, "127.0.0.1", () => {
-  console.log("URL review listening on http://127.0.0.1:" + PORT);
+server.listen(PORT, '127.0.0.1', () => {
+	console.log('URL review listening on http://127.0.0.1:' + PORT);
 });

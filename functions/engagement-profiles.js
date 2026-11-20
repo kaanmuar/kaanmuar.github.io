@@ -53,7 +53,7 @@ const lang2 = (v) => String(v || "").slice(0, 2).toLowerCase();
 // Paths on a network's own host that are not an account: sharing, search, posts, the network's own pages.
 const NOT_ACCOUNT = /^(share|sharer|sharer\.php|intent|home|search|hashtag|explore|i|p|reel|reels|watch|status|login|signup|privacy|legal|help|about|policies|tos|terms|settings|dialog|plugins|groups|events|pages|profile\.php)$/i;
 // Mastodon servers go by many names; a /@user path on a host like these is taken as one.
-const MASTODON_HOST = /(^|\.)(mastodon\.[a-z.]+|mstdn\.[a-z.]+|[a-z0-9-]*masto[a-z0-9-]*\.[a-z.]+|fosstodon\.org|hachyderm\.io|infosec\.exchange|social\.[a-z0-9.-]+|toot\.[a-z.]+|chaos\.social|det\.social|norden\.social|troet\.cafe)$/i;
+const MASTODON_HOST = /(^|\.)(mastodon\.[a-z.]{1,25}|mstdn\.[a-z.]{1,25}|(?=[a-z0-9-]*masto)[a-z0-9-]+\.[a-z.]{1,25}|fosstodon\.org|hachyderm\.io|infosec\.exchange|social\.[a-z0-9.-]{1,25}|toot\.[a-z.]{1,25}|chaos\.social|det\.social|norden\.social|troet\.cafe)$/i;
 
 /** One profile link as { network, handle, url }, or null when it is not an account page on a network we know. */
 function profileOf(href, base) {
@@ -83,10 +83,10 @@ function profileOf(href, base) {
 function profilesOf(html, base) {
   const text = String(html || "").slice(0, 800000);
   const hrefs = [];
-  const linkRe = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  const linkRe = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
   let m;
   while ((m = linkRe.exec(text)) && hrefs.length < 1500) hrefs.push(m[1] || m[2] || "");
-  const sameRe = /"sameAs"\s*:\s*(\[[^\]]*\]|"[^"]*")/g;
+  const sameRe = /"sameAs"\s*:\s*(\[[^\[\]]*\]|"[^"]*")/g;
   while ((m = sameRe.exec(text))) {
     try { [].concat(JSON.parse(m[1])).forEach((x) => typeof x === "string" && hrefs.push(x)); } catch (error) { /* not JSON */ }
   }
@@ -181,9 +181,9 @@ function parse(text, items) {
   rows.forEach((r) => {
     const p = r && byKey[r.id];
     if (!p) return;
-    let msg = String(r.text || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
+    let msg = String(r.text || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
     let once = false;
-    msg = msg.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/\s+([,.])/g, "$1").replace(/\s{2,}/g, " ").trim();
+    msg = msg.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/(?<!\s)\s+([,.])/g, "$1").replace(/\s{2,}/g, " ").trim();
     if (msg && !once) msg += " {link}";
     if (!R.shown(p.target) && (new RegExp("\\b" + p.target.score + "\\b").test(msg) || /\b\d{1,3}\s*\/\s*100\b/.test(msg))) msg = "";
     const body = msg.replace("{link}", "").trim().length;
@@ -229,7 +229,7 @@ async function profilePosts(f, p) {
     }
     if (!channel) return [];
     const xml = await text("https://www.youtube.com/feeds/videos.xml?channel_id=" + channel);
-    return Array.from(String(xml).matchAll(/<entry>[\s\S]*?<\/entry>/g)).map((m) => {
+    return Array.from(String(xml).matchAll(/<entry>[\s\S]*?<\/entry>|(<entry>)[\s\S]*/g)).filter((m) => !m[1]).map((m) => {
       const entry = m[0];
       const id = (entry.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/) || [])[1];
       const at = (entry.match(/<published>([^<]+)<\/published>/) || [])[1];

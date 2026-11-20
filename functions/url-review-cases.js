@@ -43,7 +43,7 @@ function open(verdict) {
 }
 
 function hostOf(origin) {
-  try { return new URL(origin).host; } catch (error) { return String(origin || "").replace(/^https?:\/\//, "").replace(/\/.*$/, ""); }
+  try { return new URL(origin).host; } catch (error) { return String(origin || "").replace(/^https?:\/\//, "").replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, ""); }
 }
 
 // A finding page on another host (a subdomain in search results) comes as a full address and is shown as one (#3309).

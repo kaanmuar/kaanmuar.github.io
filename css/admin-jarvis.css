@@ -83,10 +83,73 @@
 .jv-spark { width: 100%; height: 32px; display: block; margin-top: 0.2rem; }
 
 .jv-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 0.75rem; }
-.jv-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 0.85rem 0.95rem; backdrop-filter: blur(6px); min-width: 0; position: relative; }
+.jv-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 0.85rem 0.95rem; backdrop-filter: blur(6px); min-width: 0; position: relative; --jv-size-h: 1; --jv-size-w: 1; }
 .jv-panel::after { content: ""; position: absolute; top: -1px; left: 18px; width: 46px; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); border-radius: 2px; }
-.jv-panel.is-wide { grid-column: 1 / -1; }
+.jv-panel.is-wide, .jv-panel.is-size-wide { grid-column: 1 / -1; }
+.jv-panel.is-size-mid:not(.is-wide):not(.is-size-wide) { grid-column: span 2; }
 .jv-panel.is-tall { grid-row: span 2; }
+.jv-panel-body { min-width: 0; }
+/* #3611 / #3709: height via zoom; width continuous on the panel box (span only reserves columns). */
+.jv-panel.is-resized { --jv-span: 1; }
+.jv-panel.is-resized > .jv-panel-body { zoom: var(--jv-size-h); }
+@supports not (zoom: 1) {
+    .jv-panel.is-resized > .jv-panel-body {
+        transform: scaleY(var(--jv-size-h));
+        transform-origin: top left;
+    }
+}
+/* Multi-col: width in column-units = w, cell is span columns → fraction w/span of the cell. */
+@media (min-width: 721px) {
+    .jv-panel.is-resized:not(.is-wide):not(.is-size-wide) {
+        width: calc(100% * var(--jv-size-w) / var(--jv-span));
+        max-width: none;
+        justify-self: start;
+        box-sizing: border-box;
+        z-index: 1;
+    }
+}
+/* 1-col phone: span classes are no-ops, so width must track w directly or east/west drag looks dead. */
+@media (max-width: 720px) {
+    .jv-panel.is-resized {
+        width: calc(100% * var(--jv-size-w));
+        max-width: none;
+        justify-self: start;
+        box-sizing: border-box;
+        z-index: 1;
+    }
+}
+.jv-panel.is-resizing { outline: 1px solid rgba(56, 225, 255, 0.55); outline-offset: 1px; }
+/* #3673: long-press arms resize; dashed outline while armed so nav stays free until then. */
+.jv-panel.is-resize-armed { outline: 1px dashed rgba(56, 225, 255, 0.45); outline-offset: 2px; }
+.jv-resize {
+    position: absolute; z-index: 3; padding: 0; margin: 0; border: 0; background: transparent; opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+}
+.jv-panel:hover > .jv-resize, .jv-panel:focus-within > .jv-resize, .jv-panel.is-resizing > .jv-resize,
+.jv-panel.is-resize-armed > .jv-resize { opacity: 1; }
+.jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { left: 18%; right: 18%; height: 10px; cursor: ns-resize; }
+.jv-resize[data-resize="n"] { top: 0; }
+.jv-resize[data-resize="s"] { bottom: 0; }
+.jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { top: 18%; bottom: 18%; width: 10px; cursor: ew-resize; }
+.jv-resize[data-resize="e"] { right: 0; }
+.jv-resize[data-resize="w"] { left: 0; }
+.jv-panel:hover > .jv-resize[data-resize="n"], .jv-panel.is-resizing > .jv-resize[data-resize="n"], .jv-panel.is-resize-armed > .jv-resize[data-resize="n"],
+.jv-panel:hover > .jv-resize[data-resize="s"], .jv-panel.is-resizing > .jv-resize[data-resize="s"], .jv-panel.is-resize-armed > .jv-resize[data-resize="s"] {
+    background: linear-gradient(to bottom, transparent, rgba(56, 225, 255, 0.35), transparent);
+}
+.jv-panel:hover > .jv-resize[data-resize="e"], .jv-panel.is-resizing > .jv-resize[data-resize="e"], .jv-panel.is-resize-armed > .jv-resize[data-resize="e"],
+.jv-panel:hover > .jv-resize[data-resize="w"], .jv-panel.is-resizing > .jv-resize[data-resize="w"], .jv-panel.is-resize-armed > .jv-resize[data-resize="w"] {
+    background: linear-gradient(to right, transparent, rgba(56, 225, 255, 0.35), transparent);
+}
+@media (pointer: coarse) {
+    .jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { height: 18px; }
+    .jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { width: 18px; }
+    /* Hidden and non-hit until long-press (#3673), so scroll and tab taps are not stolen. */
+    .jv-panel > .jv-resize { opacity: 0; pointer-events: none; }
+    .jv-panel.is-resize-armed > .jv-resize,
+    .jv-panel.is-resizing > .jv-resize { opacity: 1; pointer-events: auto; }
+}
+@media print { .jv-resize { display: none !important; } }
 .jv-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
 .jv-panel h3 { margin: 0; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); font-weight: 600; }
 .jv-fold { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
@@ -662,6 +725,10 @@
 .jv-panel[data-chart-stretch="3"] { --jv-panel-stretch: 2; }
 .jv-panel.is-chart-tall { grid-row: span 2; }
 .jv-panel[data-chart-stretch="3"] .jv-tip { font-size: 0.82rem; }
+/* 3×1 / 3×2 plate (#3984, Android #3978): a map or dense SVG spans the row; at 3×2 it is twice as wide and pans sideways. */
+.jv-plate-strip { overflow-x: auto; overscroll-behavior-x: contain; max-width: 100%; }
+.jv-plate-inner { width: 100%; }
+.jv-panel[data-plate="2"] .jv-plate-inner { width: 200%; }
 .jv-chart-y { position: relative; }
 .jv-chart-y .jv-axis-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); white-space: nowrap; }
 .jv-chart-yticks { position: relative; min-width: 1.6rem; }
@@ -747,6 +814,18 @@
 .jv-proc-open { justify-self: start; margin-top: 0.3rem; border-color: var(--amber); color: var(--amber); }
 .jv-proc time { font: 0.78rem ui-monospace, Menlo, monospace; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .jv-proc.is-running time { color: var(--cyan); }
+/* Change ledger (#3794): one row per shipped change, "worse" the loudest. */
+.jv-ledger-sum { margin: 0 0 0.5rem; font: 600 0.82rem ui-monospace, Menlo, monospace; color: var(--cyan); }
+.jv-ledger-sum.is-worse { color: var(--pink); }
+.jv-ledger { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.jv-ledger-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: start; padding: 0.45rem 0.55rem; border: 1px solid transparent; border-radius: 8px; }
+.jv-ledger-row.is-worse { background: rgba(255, 77, 141, 0.1); border-color: rgba(255, 77, 141, 0.55); }
+.jv-ledger-main { min-width: 0; display: grid; gap: 0.15rem; }
+.jv-ledger-main b { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.jv-ledger-main small { color: var(--muted); font-size: 0.78rem; overflow-wrap: anywhere; }
+.jv-ledger-nums { font: 0.8rem ui-monospace, Menlo, monospace; color: var(--text); font-variant-numeric: tabular-nums; }
+.jv-ledger-row.is-worse .jv-ledger-nums { color: var(--pink); }
+.jv-chip.is-worse { background: rgba(255, 77, 141, 0.2); font-weight: 700; }
 /* Console (#2810): one log, in its own tab or docked over any tab from the >_ button. */
 .jv-con { display: flex; flex-direction: column; height: min(78vh, 980px); min-height: 320px; background: #01070c; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font: 0.78rem/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .jv-con-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); background: rgba(9, 30, 44, 0.6); }
@@ -805,7 +884,34 @@
 /* Map tab (#2976) */
 .jv-geo-controls { flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .jv-geo-metric { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.8rem; color: var(--dim); }
-.jv-geo-wrap { width: 100%; overflow: hidden; border-radius: 10px; background: #0a141b; }
+.jv-geo-wrap { width: 100%; overflow: hidden; border-radius: 10px; background: #0a141b; position: relative; }
+.jv-geo-wrap.is-playing { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.6rem; }
+.jv-geo-wrap.is-playing > .jv-geo-map,
+.jv-geo-wrap.is-playing > .jv-geo-legend,
+.jv-geo-wrap.is-playing > .jv-geo-scale,
+.jv-geo-wrap.is-playing > .jv-geo-lights,
+.jv-geo-wrap.is-playing > .jv-note { grid-column: 1; }
+.jv-geo-play-stats { grid-column: 2; grid-row: 1 / span 6; align-self: stretch; min-width: 11rem; max-width: 14rem; margin: 0.35rem 0.35rem 0.35rem 0; padding: 0.45rem 0.55rem; background: rgba(4, 18, 28, 0.92); border: 1px solid var(--line); border-radius: 10px; }
+.jv-geo-play-stats h4 { margin: 0.35rem 0 0.25rem; }
+.jv-geo-play-stats h4:first-child { margin-top: 0; }
+.jv-geo-play-total { margin: 0; }
+.jv-geo-play-total strong { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; color: #fff; }
+.jv-geo-play-total .jv-note { display: block; margin-top: 0.2rem; font-size: 0.72rem; }
+.jv-geo-count { font-variant-numeric: tabular-nums; }
+[data-view="geo"].is-geo-playing [data-panel-id="geo-ranking"],
+[data-view="geo"].is-geo-playing .jv-geo-chg-scale,
+[data-view="geo"].is-geo-playing .jv-geo-legend,
+[data-view="geo"].is-geo-playing .jv-geo-lights { opacity: 0.55; transition: opacity 0.35s ease; }
+@media (max-width: 720px) {
+  .jv-geo-wrap.is-playing { grid-template-columns: 1fr; }
+  .jv-geo-play-stats { grid-column: 1; grid-row: auto; max-width: none; margin: 0 0 0.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-view="geo"].is-geo-playing [data-panel-id="geo-ranking"],
+  [data-view="geo"].is-geo-playing .jv-geo-chg-scale,
+  [data-view="geo"].is-geo-playing .jv-geo-legend,
+  [data-view="geo"].is-geo-playing .jv-geo-lights { transition: none; opacity: 0.72; }
+}
 .jv-geo-map { display: block; width: 100%; height: auto; }
 .jv-geo-c { stroke: #0a141b; stroke-width: 0.5; cursor: pointer; transition: fill 0.25s, stroke 0.2s; outline: none; }
 .jv-geo-c.is-target { stroke: #2d5366; stroke-width: 0.8; }
@@ -828,6 +934,20 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-date-kind { font-size: 0.68rem; padding: 0 0.4rem; }
 .jv-dates-country .jv-btn { margin-left: 0.3rem; }
 @media (prefers-reduced-motion: reduce) { .jv-geo-c { transition: none; } }
+/* The live cyber-attack map on the URL Review tab (#3894): shaded by cited events, pinned where a report of ours has a threat finding. */
+.jv-cy-wrap { width: 100%; overflow: hidden; border-radius: 10px; background: #0a141b; position: relative; margin-top: 0.5rem; }
+.jv-cy-c { stroke: #0a141b; stroke-width: 0.5; cursor: pointer; transition: fill 0.25s, stroke 0.2s; outline: none; }
+.jv-cy-c:hover, .jv-cy-c:focus-visible { stroke: #fff; stroke-width: 1.2; }
+.jv-cy-c.is-on { stroke: var(--amber); stroke-width: 2; }
+circle.jv-cy-c { stroke: #fff; stroke-width: 0.6; }
+.jv-cy-pin { fill: var(--cyan); stroke: #fff; stroke-width: 1.2; filter: drop-shadow(0 0 4px var(--cyan)); }
+.jv-cy-scale > i { background: linear-gradient(90deg, rgba(255, 77, 141, 0.18), rgba(255, 77, 141, 1)); }
+.jv-cy-key { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--cyan); border: 1px solid #fff; margin-right: 0.35rem; vertical-align: -1px; }
+.jv-cy-card { margin-top: 0.6rem; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 12px; background: rgba(56, 225, 255, 0.04); }
+.jv-cy-feed li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
+.jv-cy-feed button.jv-chip { cursor: pointer; background: transparent; }
+@media (prefers-reduced-motion: reduce) { .jv-cy-c { transition: none; } }
+
 .jv-geo-confirm { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; font-size: 0.82rem; }
 .jv-geo-confirm li { display: grid; gap: 0.2rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
 .jv-geo-confirm li:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -945,6 +1065,9 @@ circle.jv-geo-c { stroke: #fff; stroke-width: 0.6; }
 .jv-geo-clicks h4 { margin: 0.6rem 0 0.3rem; font: 600 0.72rem ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
 .jv-geo-clicks td:nth-child(n+2), .jv-geo-clicks th:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .jv-geo-play { flex-basis: 100%; } .jv-geo-when { white-space: normal; } }
+/* Short fill blend: continuous Play paints ~12×/s with lerped values (#3710). */
+.jv-geo-wrap.is-playing .jv-geo-c { transition-duration: 0.1s; }
+@media (prefers-reduced-motion: reduce) { .jv-geo-wrap.is-playing .jv-geo-c { transition-duration: 0.25s; } }
 /* Map cost and return (#3283) */
 .jv-cost-scale > i { background: linear-gradient(90deg, #3dffa8, #ffb547, #ff4d8d); }
 .jv-cost-scale.is-up > i { background: linear-gradient(90deg, #ff4d8d, #ffb547, #3dffa8); }

@@ -381,7 +381,7 @@ private fun CampaignSheet(r: JsonObject, s: UiState, vm: JarvisViewModel, ask: (
 @Composable
 private fun GeoFlowDiagram(flow: JsonObject?, cc: String?, name: String?, channel: String) {
     val scope = GeoFlow.CHANNELS.firstOrNull { it.key == channel }?.label
-    Panel("Channel flow" + (name?.let { " · $it" } ?: "") + (scope?.let { " · $it" } ?: ""), key = "geo-flow", id = "geo-flow") {
+    Panel("Channel flow" + (name?.let { " · $it" } ?: "") + (scope?.let { " · $it" } ?: ""), key = "geo-flow", id = "geo-flow", plate = true) {
         if (flow == null) { Muted("The geo source has no flow yet; it comes with the next refresh."); return@Panel }
         val m = remember(flow, cc, channel) { GeoFlow.model(flow, cc, channel) }
         if (m.shown.isEmpty()) Muted("No channel has numbers" + (name?.let { " for $it" } ?: "") + " yet.") else FlowChart(m.shown)
@@ -397,12 +397,14 @@ private fun GeoFlowDiagram(flow: JsonObject?, cc: String?, name: String?, channe
 @Composable
 private fun FlowChart(shown: List<GeoFlow.Link>) {
     val density = LocalDensity.current
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val w = with(density) { maxWidth.toPx() }
-        val narrow = maxWidth < 560.dp
+    // 3×1 / 3×2 plate (#3978): twice as wide in a pan strip, and taller, so the labels and bands have room on a phone.
+    val scale = Layouts.plateScale(LocalPanelStretch.current)
+    Enlarged(scale) { drawn ->
+        val w = with(density) { drawn.toPx() }
+        val narrow = drawn < 560.dp
         val top = with(density) { 36.dp.toPx() }
         val lay = remember(shown, w) {
-            with(density) { GeoFlow.layout(shown, w, 240.dp.toPx(), if (narrow) 46.dp.toPx() else minOf(120.dp.toPx(), w * 0.2f), 8.dp.toPx(), 10.dp.toPx(), 2.dp.toPx()) }
+            with(density) { GeoFlow.layout(shown, w, (if (scale > 1) 340.dp else 240.dp).toPx(), if (narrow) 46.dp.toPx() else minOf(120.dp.toPx(), w * 0.2f), 8.dp.toPx(), 10.dp.toPx(), 2.dp.toPx()) }
         }
         val heightDp = with(density) { (top + lay.h).toDp() } + 8.dp
         Canvas(Modifier.fillMaxWidth().height(heightDp).background(Color(0xFF0A141B), RoundedCornerShape(10.dp))) {

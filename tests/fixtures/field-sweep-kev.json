@@ -1,0 +1,28 @@
+{
+  "title": "CISA Catalog of Known Exploited Vulnerabilities",
+  "catalogVersion": "2026.11.18",
+  "dateReleased": "2026-11-18T19:17:41.0354Z",
+  "count": 2,
+  "vulnerabilities": [
+    {
+      "cveID": "CVE-2024-10441",
+      "vendorProject": "Synology",
+      "product": "DiskStation Manager (DSM)",
+      "vulnerabilityName": "Synology DSM improper encoding vulnerability",
+      "dateAdded": "2026-10-22",
+      "shortDescription": "Remote attackers could execute arbitrary code via unspecified vectors.",
+      "requiredAction": "Apply mitigations per vendor instructions.",
+      "knownRansomwareCampaignUse": "Unknown"
+    },
+    {
+      "cveID": "CVE-2023-99999",
+      "vendorProject": "ExampleCo",
+      "product": "Web Gateway",
+      "vulnerabilityName": "ExampleCo Web Gateway authentication bypass",
+      "dateAdded": "2026-10-20",
+      "shortDescription": "An authentication bypass allows remote code execution.",
+      "requiredAction": "Upgrade immediately.",
+      "knownRansomwareCampaignUse": "Known"
+    }
+  ]
+}

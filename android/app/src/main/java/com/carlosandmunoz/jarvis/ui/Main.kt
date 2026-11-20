@@ -30,6 +30,8 @@ import com.carlosandmunoz.jarvis.home.MarketingWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PipelineWidgetReceiver
 import com.carlosandmunoz.jarvis.home.TrafficWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PickWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MapKind
+import com.carlosandmunoz.jarvis.home.mapReceiver
 import com.carlosandmunoz.jarvis.PickConfigActivity
 import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.Home
@@ -317,7 +319,13 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         val saved = Layouts.read(s.snapshot, layoutTab)
                         LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
                         val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
-                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved, LocalChartPrefs provides chartPrefs) {
+                        CompositionLocalProvider(
+                            LocalLayoutTab provides layoutTab,
+                            LocalLayout provides saved,
+                            LocalChartPrefs provides chartPrefs,
+                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) },
+                            LocalCycleStretch provides { id, current, max -> vm.cycleChartStretch(layoutTab, id, current, max) }
+                        ) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
                                     Tab.Overview -> OverviewScreen(s, vm, open)
@@ -714,6 +722,14 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     ActionButton("Marketing", false) { Home.pin(context, MarketingWidgetReceiver::class.java) }
                     ActionButton("Traffic", false) { Home.pin(context, TrafficWidgetReceiver::class.java) }
                     ActionButton("Pick a number", false) { Home.pin(context, PickWidgetReceiver::class.java, Intent(context, PickConfigActivity::class.java)) }
+                }
+                if (pinnable) {
+                    Text("Maps: tap a widget's chip to change its range or metric; every one resizes.", color = J.muted, fontSize = 12.sp)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MapKind.entries.forEach { k -> listOf("2x2", "4x2", "4x3", "4x4").forEach { size ->
+                            ActionButton(k.title.substringBefore(' ').substringBefore('-') + " " + size.replace('x', '×'), false) { Home.pin(context, mapReceiver(k, size)) }
+                        } }
+                    }
                 }
                 if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
                 Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."

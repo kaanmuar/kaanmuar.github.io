@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-e+e6eZwE56uNbrhSxMY1Z0ZiH5Dwie/rib1LydnauiQ=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://challenges.cloudflare.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-IWvLYW4hccYg1B5qVIY8qB7ZFYc8H0v98neqty3i0/c=' 'sha256-e+e6eZwE56uNbrhSxMY1Z0ZiH5Dwie/rib1LydnauiQ=' 'sha256-jineBDmjBt81WPjXTP3GlHJ740C7ojpcHhfp2/uAlHw=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://challenges.cloudflare.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>QA-lab URL Review : SEO, GEO et cas de test depuis une URL</title>
     <meta name="description" content="Une page https notée en SEO, GEO, analytics, sécurité, accessibilité et vitesse, contrôlée contre phishing, malware, listes de blocage et piratage, avec cas de test et corrections.">
@@ -86,7 +86,9 @@
                     "SPF, DMARC et DKIM en détail, plus MTA-STS, TLS-RPT et BIMI",
                     "Fichiers exposés comme .env, .git et sauvegardes, pour les propriétaires qui ont prouvé que le site est le leur",
                     "Carbone estimé par visite",
-                    "Sites protégés contre les robots analysés dans Chrome headless",
+                    "Sites protégés contre les robots ou refusant la connexion analysés dans Chrome headless",
+                    "Gardez le site propre : cas de veille, repères de régression après correction et workflow GitHub Actions exécutable",
+                    "Aperçu des rapports partagés : note globale, six domaines et constat principal lisibles ; le reste flouté jusqu’au déblocage",
                     "Connexion par e-mail ou avec un compte que vous avez déjà : Google, Microsoft, GitHub, Yahoo ou X",
                     "Scores publics publiés chaque jour sous forme de Live Reports",
                     "Carte interactive des pages analysées",
@@ -293,6 +295,7 @@
                             "description": "HSTS, CSP, protection contre l'encadrement, nosniff et politiques referrer et permissions réglés sur votre hébergeur ou CDN, testés sur chaque page.",
                             "price": "99",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -308,6 +311,7 @@
                             "description": "SPF, DKIM et DMARC configurés et passés en application, plus CAA, MTA-STS, TLS-RPT et security.txt.",
                             "price": "89",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -323,6 +327,7 @@
                             "description": "Une chaîne de certificats valide, une seule redirection propre vers https et des liens internes qui arrivent sans détour.",
                             "price": "69",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -338,6 +343,7 @@
                             "description": "Textes alternatifs, libellés, contraste, titres, langue, ordre du focus et zones tactiles corrigés dans vos gabarits.",
                             "price": "169",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -353,6 +359,7 @@
                             "description": "Scripts bloquants différés, images dimensionnées, compressées et chargées à la demande, cache réglé, mesuré à nouveau sur mobile.",
                             "price": "199",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -368,6 +375,7 @@
                             "description": "Titres, descriptions, canoniques, cartes sociales, sitemap et schema.org rédigés pour chaque page que la revue a vue.",
                             "price": "119",
                             "priceCurrency": "USD",
+                            "priceValidUntil": "2026-12-10",
                             "availability": "https://schema.org/InStock",
                             "url": "https://carlosandmunoz.com/qa-review-fr.html",
                             "deliveryLeadTime": {
@@ -477,7 +485,7 @@
                         "name": "Une analyse cherche-t-elle le phishing, les malwares et le piratage ?",
                         "acceptedAnswer": {
                             "@type": "Answer",
-                            "text": "Chaque analyse cherche aussi les problèmes qu’un visiteur ne verrait pas. Elle vérifie l’adresse avec Google Safe Browsing via Web Risk et avec Cloudflare URL Scanner, qui réutilise un scan de la veille ou en soumet un qui devient public sur Cloudflare Radar. Chaque hôte externe dont la page charge des scripts, des cadres ou des formulaires, ou vers lequel elle renvoie, est aussi vérifié avec Web Risk ; un hôte de scripts listé est un constat critique. Elle cherche les signes d’un site piraté : du spam injecté dans les résultats de recherche, des pages qui montrent autre chose à Googlebot et des liens de spam cachés. Elle liste les domaines sosies enregistrés pour imiter le vôtre qui ont un site ou un serveur de messagerie, vérifie le domaine et ses serveurs de messagerie et web dans des listes de blocage de spam gratuites comme SpamCop, Mailspike et NordSpam, et examine SPF, DMARC et DKIM en détail. Une fois que vous prouvez que le site est à vous, elle cherche aussi les fichiers laissés à découvert, comme .env, .git et les sauvegardes."
+                            "text": "Chaque analyse cherche aussi les problèmes qu’un visiteur ne verrait pas. Elle vérifie l’adresse avec Google Safe Browsing via Web Risk et avec Cloudflare URL Scanner, qui réutilise un scan de la veille ou en soumet un marqué comme non répertorié sur Cloudflare Radar. Chaque hôte externe dont la page charge des scripts, des cadres ou des formulaires, ou vers lequel elle renvoie, est aussi vérifié avec Web Risk ; un hôte de scripts listé est un constat critique. Elle cherche les signes d’un site piraté : du spam injecté dans les résultats de recherche, des pages qui montrent autre chose à Googlebot et des liens de spam cachés. Elle liste les domaines sosies enregistrés pour imiter le vôtre qui ont un site ou un serveur de messagerie, vérifie le domaine et ses serveurs de messagerie et web dans des listes de blocage de spam gratuites comme SpamCop, Mailspike et NordSpam, et examine SPF, DMARC et DKIM en détail. Une fois que vous prouvez que le site est à vous, elle cherche aussi les fichiers laissés à découvert, comme .env, .git et les sauvegardes."
                         }
                     },
                     {
@@ -516,18 +524,20 @@
     <link rel="preload" href="css/site-look.css?v=20261104a" as="style">
     <link rel="stylesheet" href="css/site-look.css?v=20261104a" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/site-look.css?v=20261104a"></noscript>
-    <link rel="preload" href="css/qa-review-folds.css?v=20261027a" as="style">
-    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a" media="print" data-async-css>
-    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261027a"></noscript>
+    <link rel="preload" href="css/qa-review-folds.css?v=20261120-3826" as="style">
+    <link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-folds.css?v=20261120-3826"></noscript>
     <link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-watch.css?v=20261110-3391"></noscript>
     <style data-critical="css/qa-review-live.css?v=20261104b">.live{--lv-bg:#071116;--lv-text:#e8f3f4;--lv-muted:#9fb3b8;--lv-line:rgba(159, 214, 220, .16);--lv-cyan:#7ef6fb;--lv-teal:#4db3bb;--lv-gold:#e2c48a;--lv-green:#6fe3b1;--lv-coral:#f39a8b;--lv-violet:#b9a8ff;--cw:300px;--ch:440px;position:relative;color:var(--lv-text);overflow-x:clip;scroll-margin-top:56px;padding:64px 0 56px;border-top:1px solid var(--lv-line);background:radial-gradient(1100px 520px at 12% 0%, rgba(77, 179, 187, .22), transparent 62%), radial-gradient(900px 480px at 92% 8%, rgba(226, 196, 138, .14), transparent 58%), radial-gradient(1200px 420px at 50% 100%, rgba(77, 179, 187, .12), transparent 70%), var(--lv-bg);isolation:isolate}.live > .fx{position:absolute;inset:0;z-index:-2;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}.live::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg, rgba(7, 17, 22, .72) 0%, rgba(7, 17, 22, .38) 40%, rgba(7, 17, 22, .12) 100%)}.live-inner{max-width:1480px;margin:0 auto;padding:0 20px}.live-main{min-width:0}.live-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.live .eyebrow{color:var(--lv-gold)}.live-title{font-family:"Instrument Serif", "Source Serif 4", Georgia, serif;font-weight:400;font-size:clamp(2.2rem, 4.6vw, 3.9rem);line-height:.95;letter-spacing:-0.035em;margin:0 0 14px;color:#f4fafb}.live-title em{display:block;color:var(--lv-cyan)}.live-lede{color:var(--lv-muted);max-width:70ch;margin:0 0 22px;line-height:1.55;font-size:15.5px}.live-lede + .live-follow{margin-top:-12px}.live-follow{color:var(--lv-muted);margin:0 0 22px;font-size:14px;line-height:1.5}.live-follow a{color:var(--lv-cyan);font-weight:600;text-underline-offset:3px}.live :focus-visible{outline:2px solid var(--lv-gold, #e2c48a);outline-offset:2px}.live-jump{display:inline-flex;align-items:center;gap:8px;margin-top:18px;font-size:13px;font-weight:700;color:var(--cyan);text-decoration:none}.live-jump:hover{text-decoration:underline}body.live-viewing{overflow:hidden}@media (max-width: 760px){.live{padding:44px 0 40px;--cw:268px;--ch:430px}.live-inner{padding:0 14px}}@media (max-width: 380px){.live{--cw:250px;--ch:430px}}@media (min-width: 1100px){.live{padding:44px 0 36px}.live-inner{display:grid;grid-template-columns:minmax(340px, 430px) minmax(0, 1fr);gap:36px;align-items:center}.live-title{font-size:clamp(2.2rem, 3.3vw, 3.2rem)}.live-lede{font-size:14.5px;margin-bottom:18px}.live-follow{font-size:13.5px;margin-bottom:18px}}</style>
     <link rel="preload" href="css/qa-review-live.css?v=20261104b" as="style">
     <link rel="stylesheet" href="css/qa-review-live.css?v=20261104b" media="print" data-async-css>
     <noscript><link rel="stylesheet" href="css/qa-review-live.css?v=20261104b"></noscript>
-    <style data-critical="css/qa-review-progress.css?v=20261023a">#run-panel{--rp-cyan:#7ef6fb;--rp-teal:#4db3bb;--rp-mint:#6fe3b1;--rp-gold:#e2c48a;--rp-coral:#f39a8b;--rp-text:#e8f3f4;--rp-muted:#9fb3b8;--rp-line:rgba(159, 214, 220, .16)}</style>
     <link rel="preload" href="css/qa-review-progress.css?v=20261023a" as="style">
     <link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a" media="print" data-async-css>
+    <link rel="preload" href="css/qa-review-arena.css?v=20261118a" as="style">
+    <link rel="stylesheet" href="css/qa-review-arena.css?v=20261118a" media="print" data-async-css>
+    <noscript><link rel="stylesheet" href="css/qa-review-arena.css?v=20261118a"></noscript>
     <noscript><link rel="stylesheet" href="css/qa-review-progress.css?v=20261023a"></noscript>
     <style data-critical="css/qa-review-ask.css?v=20261024c">.ask-panel{--ask-edge:var(--look-edge, var(--line));--ask-card:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));position:fixed;top:12px;right:12px;bottom:12px;z-index:90;width:min(440px, calc(100vw - 24px));box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:18px;background:var(--look-card, color-mix(in srgb, var(--card) 92%, transparent));color:var(--text);border:1px solid var(--ask-edge);border-radius:var(--look-radius, 22px);box-shadow:0 24px 70px rgba(8, 14, 18, .35);-webkit-backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35);backdrop-filter:blur(var(--look-blur, 28px)) saturate(1.35)}.ask-panel[hidden],.ask-panel [hidden]{display:none!important}.ask-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--ask-edge)}.ask-head > div{min-height:36px;padding-left:46px;background:url("../assets/qa-review-mark.svg?v=20261027a") left center / 36px 36px no-repeat}.ask-head .eyebrow{margin-bottom:2px}.ask-head h2{margin:0;font-size:1.15rem}.ask-note{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}.ask-log{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:10px;padding-right:2px}.ask-chips{display:flex;flex-wrap:wrap;gap:6px}.ask-form{display:flex;gap:8px}.ask-form input,.ask-repo input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--ask-edge);border-radius:10px;padding:10px 12px;background:color-mix(in srgb, var(--panel) 70%, transparent);color:var(--text);font:inherit;font-size:14px}.ask-form input:focus,.ask-repo input:focus{outline:2px solid var(--cyan);outline-offset:1px}.ask-repo{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.ask-repo input{padding:7px 10px;font-size:13px}.ask-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}@media (max-width: 560px){.ask-panel{inset:0;width:100vw;padding:14px;border:0;border-radius:0;box-shadow:none}.ask-form input,.ask-repo input{font-size:16px}}</style>
     <link rel="preload" href="css/qa-review-ask.css?v=20261024c" as="style">
@@ -925,6 +935,26 @@
         .check-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel); font-size: 13px; }
         .check-tile b { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .check-tile.pass b { color: var(--green); } .check-tile.risk b { color: var(--amber); } .check-tile.fail b { color: var(--red); } .check-tile.unknown b { color: var(--muted); }
+        .targeted-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .targeted-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--line); }
+        .targeted-badge.is-clear { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, var(--line)); background: color-mix(in srgb, var(--green) 10%, transparent); }
+        .targeted-badge.is-info { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); background: color-mix(in srgb, var(--cyan) 10%, transparent); }
+        .targeted-badge.is-watch { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 45%, var(--line)); background: color-mix(in srgb, var(--amber) 12%, transparent); }
+        .targeted-badge.is-high, .targeted-badge.is-critical { color: var(--red); border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 12%, transparent); }
+        .targeted-badge.is-critical { font-weight: 800; border-width: 1.5px; }
+        .targeted-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+        .targeted-meta strong { color: var(--text); font-weight: 600; }
+        .targeted-list { display: grid; gap: 10px; margin: 0 0 12px; }
+        .targeted-item { border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); overflow-wrap: anywhere; }
+        .targeted-item.lvl-critical, .targeted-item.lvl-high { border-left-color: var(--red); }
+        .targeted-item.lvl-watch { border-left-color: var(--amber); }
+        .targeted-item.lvl-info { border-left-color: var(--cyan); }
+        .targeted-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .targeted-owner-offer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+        .targeted-owner-btn { justify-self: start; }
+        .targeted-item h3 { margin: 0 0 4px; font-size: 15px; }
+        .targeted-item p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; }
+        .targeted-foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: grid; gap: 4px; }
         .shots { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 12px; align-items: start; margin: 12px 0; }
         .shots figure { margin: 0; }
         .shots img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
@@ -980,10 +1010,13 @@
             color: var(--text); color-scheme: dark;
             background: radial-gradient(42% 70% at 76% 48%, rgba(77, 179, 187, .32), transparent 70%), radial-gradient(30% 45% at 90% 14%, rgba(185, 168, 255, .18), transparent 70%), radial-gradient(46% 36% at 72% 100%, rgba(226, 196, 138, .14), transparent 70%), #071116;
         }
-        .stage > .fx { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
-        .stage.fx-on > .fx { opacity: 1; }
+        .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+        .stage.fx-on > .fx, .stage.stage-hero-on > .stage-hero, .stage.stage-hero-still-on > .stage-hero-still { opacity: 1; }
+        .stage > .stage-hero canvas { display: block; width: 100% !important; height: 100% !important; }
+        .stage-hero-still { margin: 0; object-fit: cover; object-position: 72% center; filter: saturate(1.05); }
+        .stage-hero-still[hidden] { display: none; }
         .stage::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(7, 17, 22, .92) 0%, rgba(7, 17, 22, .78) max(300px, 30%), rgba(7, 17, 22, 0) max(640px, 58%)); }
-        .stage.fx-fallback::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
+        .stage.fx-fallback:not(.stage-hero-still-on)::after { content: ""; position: absolute; z-index: -1; top: 50%; right: max(48px, calc((100% - 1440px) / 2 + 96px)); width: min(320px, 28vw); aspect-ratio: 1; transform: translateY(-50%); background: url("assets/qa-review-mark-full.svg?v=20261027a") center / contain no-repeat; filter: drop-shadow(0 30px 60px rgba(0, 0, 0, .5)); }
         .stage-copy { position: relative; max-width: 640px; }
         .stage .display { color: #f4fafb; }
         .wire { overflow: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, var(--cyan)); }
@@ -1123,6 +1156,9 @@
         @keyframes alarm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
         .row-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
         .status { min-height: 1.2em; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+        /* Soft-preview Turnstile stays in layout (never display:none while minting) so Siteverify can pass (#3745). */
+        #soft-turnstile { margin: 8px 0 0; min-height: 0; }
+        #soft-turnstile.is-visible { min-height: 65px; margin-bottom: 4px; }
         .status.bad { color: var(--red); }
         html[data-look] #run-panel.log-card,
         .log-card { position: sticky; top: 74px; min-height: calc(100vh - 110px); display: flex; flex-direction: column; background: linear-gradient(180deg, #18222c 0%, #10161d 42%) !important; color: #e8eef2; border-color: #2c3a46 !important; box-shadow: 0 24px 50px rgba(8, 14, 18, .22); }
@@ -1376,6 +1412,22 @@
             backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); }
         #review-form { display: grid; gap: 10px; margin-top: 14px; perspective: 1000px; }
         #review-form .row-actions { margin-top: 2px; }
+        .url-mode { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+        .url-mode button { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 8px 14px; font: inherit; cursor: pointer; }
+        .url-mode button.is-on, .url-mode button[aria-pressed="true"] { border-color: var(--cyan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 20%, transparent); font-weight: 600; }
+        #url-mode-many textarea { width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 10px 12px; font: inherit; resize: vertical; }
+        #batch-preview, #batch-panel-rows { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+        #batch-preview li, #batch-panel-rows li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .06); border-left: 3px solid rgba(255, 255, 255, .25); }
+        #batch-preview li.is-lead, #batch-panel-rows li.is-lead { border-left-color: var(--cyan); background: color-mix(in srgb, var(--cyan) 12%, transparent); }
+        .batch-lead-tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--cyan); }
+        .batch-host { font-weight: 600; }
+        .batch-check { flex-basis: 100%; margin: 0; }
+
+        .batch-file-clear { font: inherit; font-size: 13px; font-weight: 600; color: var(--cyan); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+        #batch-text:disabled, #batch-file:disabled { opacity: .55; cursor: not-allowed; }
+        .batch-url, .batch-state, .batch-score { font-size: 13px; opacity: .85; }
+        #batch-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+        #batch-panel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         .req-group:hover { transform: translateY(-1px); }
         .req-group[open]:hover { transform: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
         .req-group.done .tg-count { font-size: 12px; }
@@ -1433,8 +1485,9 @@
             h1, #gate-title { font-size: 1.65rem; }
             .lede { font-size: 15px; margin-bottom: 12px; }
             .stage { display: block; min-height: 0; padding: 236px 14px 20px; }
-            .stage > .fx { height: 420px; bottom: auto; }
-            .stage.fx-fallback::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
+            .stage > .fx, .stage > .stage-hero, .stage > .stage-hero-still { height: 420px; bottom: auto; }
+            .stage-hero-still { object-position: center 28%; }
+            .stage.fx-fallback:not(.stage-hero-still-on)::after { top: 28px; right: auto; left: 50%; width: 180px; transform: translateX(-50%); }
             .stage::before { background: linear-gradient(180deg, rgba(7, 17, 22, 0) 150px, rgba(7, 17, 22, .82) 270px, #071116 420px); }
             .facts { gap: 10px; }
             .facts li { flex: 1 1 28%; min-width: 0; }
@@ -1558,7 +1611,7 @@
                     <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span class="tg-text"><b class="tg-title" data-tg="review" lang="fr" translate="no">Ce que fait l’analyse</b><span class="tg-gist" data-tg="review" lang="fr" translate="no">Pages publiques uniquement. Elle propose des cas de test et ne les exécute jamais.</span></span><span class="tg-count" aria-hidden="true"></span></summary>
                     <div class="tg-body">
                         <p class="lede" lang="fr" translate="no">Rien de ce que vous saisissez n’est envoyé pour analyse tant que vous n’avez pas accepté. Pour lancer une analyse, vous vous connectez sur cet appareil avec votre e-mail ou un compte que vous avez déjà (Google, Microsoft, GitHub, Yahoo ou X). L’analyse récupère des pages publiques, en ouvre jusqu’à trois dans un navigateur headless depuis une adresse de l’UE en Belgique et propose des cas de test. Dans ce navigateur, elle clique une fois sur le bouton de refus d’un bandeau de cookies, et rien d’autre. Google PageSpeed Insights note la page d’accueil et Google Web Risk la compare aux listes Safe Browsing : Google reçoit donc cette adresse, et le registre du domaine est interrogé via RDAP. Elle n’exécute pas les cas, ne se connecte pas à votre site, n’envoie pas de formulaires et ne génère pas de charge. Le choix de la langue se trouve sur cet écran.</p>
-                        <label class="check" lang="fr" translate="no"><input type="checkbox" name="t2"> Ce service récupérera des pages publiques, décrira ce qu’il trouve et proposera des cas de test. Il n’exécutera pas ces cas.</label>
+                        <label class="check" lang="fr" translate="no"><input type="checkbox" name="t2"> Ce service récupérera des pages publiques, décrira ce qu’il trouve et proposera des cas de test. Il n’exécutera pas ces cas. Il compare aussi le site à des listes publiques d’attaques et d’exploits. Seuls le domaine (pour résoudre son adresse et vers le journal de certificats de CertSpotter), les noms et versions des bibliothèques (vers OSV.dev) et les numéros CVE (vers FIRST) quittent alors ce service ; vous pouvez désactiver ces contrôles avant chaque analyse.</label>
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t3"> Je soumettrai une adresse https publique. Je ne soumettrai pas d’adresse privée, link-local ou de métadonnées.</label>
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t4"> Le rapport est un instantané et une proposition. Ce n’est pas une certification que le site est sûr, rapide ou conforme.</label>
                     </div>
@@ -1569,7 +1622,7 @@
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t1"> J’ai au moins 18 ans. Si je n’accepte pas ces avertissements, je ne peux pas saisir d’URL.</label>
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t5"> Je donne mon nom, mon e-mail et mon motif pour garder une trace de qui a demandé. Je peux demander une copie ou une suppression à qa@carlosandmunoz.com.</label>
                         <label class="check" lang="fr" translate="no"><input type="checkbox" name="t9"> Si je dis avoir un identifiant et un mot de passe, je suis autorisé à utiliser cet accès sur le site que je soumets. Cette page ne demande pas le mot de passe. Une exécution connectée est payée avant de commencer, et le mot de passe n’est pas conservé dans l’enregistrement de l’analyse. L’analyse publique ne se connecte toujours pas au site. Les signaux du rapport sont ce que la réponse publique a montré. Ce ne sont pas des preuves d’intrusion. La fin de chaque signal reste floutée jusqu’au paiement de cette section.</label>
-                        <p class="records-note" id="records-note" lang="fr" translate="no">Les enregistrements conservent votre nom, votre e-mail, votre motif, l’URL, les frameworks choisis, le journal de l’analyse, si vous l’avez arrêtée, l’heure, l’adresse IP, le navigateur, l’identifiant de l’appareil et la langue, ainsi que le pays, la région et la ville lorsque le serveur les fournit. Les enregistrements d’analyse sont conservés 12 mois à partir de l’exécution ; les journaux des analyses échouées ou arrêtées, et leurs relances, 90 jours. Ouvrir une page d’analyse enregistre l’adresse IP, le navigateur, la ville approximative, le fuseau horaire, les langues et le site d’origine, pour compter les visites ; ces lignes, les notes, les liens d’arrêt et les e-mails sont conservés 12 mois. Après la connexion, les pages de revue ouvertes et le temps pendant lequel elles restent visibles sont enregistrés sur le compte, pour savoir qui revient ; ils sont conservés 12 mois. Le texte de la page n’est pas envoyé à un fournisseur de modèles. Aucun mot de passe n’est demandé ni conservé. Un lien de rapport ne s’ouvre en entier que pour le compte qui l’a lancé ; toute autre personne voit un aperçu flouté. Les ouvertures par un autre compte connecté sont comptées avec la première et la dernière heure, jamais qui a ouvert, et le titulaire reçoit un e-mail la première fois. Les notes de suivi n’arrivent que si vous les demandez dans la demande : trois par semaine au plus, et une réponse « stop » les arrête à tout moment. Les scores et les constats des pages publiques peuvent être publiés sous forme de Live Report, sur GitHub et sur les réseaux sociaux, sauf si vous cochez « Ne pas publier cette analyse » ; votre nom, votre e-mail, votre motif, votre adresse IP et votre navigateur ne sont jamais publiés. Si une analyse échoue pour une raison qui tient à ce service, le nom d’hôte, l’heure, l’erreur et les dernières lignes du journal, sans votre nom, votre e-mail ni la requête de l’URL, sont publiés dans une issue GitHub publique. La connexion conserve votre e-mail, la façon dont vous vous êtes connecté, l’identifiant utilisateur chez le fournisseur et l’heure de la première et de la dernière connexion ; une connexion sur cet appareil dure 30 jours. Une connexion via un fournisseur conserve aussi le nom, le prénom et le nom de famille, la photo, la langue et le domaine Workspace qu’il partage. Une connexion Google conserve aussi les autres adresses e-mail, la date de naissance, les numéros de téléphone, les adresses, le genre et les informations professionnelles que Google partage ; ils sont conservés pour une future offre payante et ne sont pas encore utilisés. Le compte est conservé 12 mois après la dernière connexion. Se connecter par e-mail ne partage que votre adresse. Copies, corrections et suppression : qa@carlosandmunoz.com. La liste complète figure dans les avertissements. Version 2026-10-24.</p>
+                        <p class="records-note" id="records-note" lang="fr" translate="no">Les enregistrements conservent votre nom, votre e-mail, votre motif, l’URL, les frameworks choisis, le journal de l’analyse, si vous l’avez arrêtée, l’heure, l’adresse IP, le navigateur, l’identifiant de l’appareil et la langue, ainsi que le pays, la région et la ville lorsque le serveur les fournit. Les enregistrements d’analyse sont conservés 12 mois à partir de l’exécution ; les journaux des analyses échouées ou arrêtées, et leurs relances, 90 jours. Ouvrir une page d’analyse enregistre l’adresse IP, le navigateur, la ville approximative, le fuseau horaire, les langues et le site d’origine, pour compter les visites ; ces lignes, les notes, les liens d’arrêt et les e-mails sont conservés 12 mois. Après la connexion, les pages de revue ouvertes et le temps pendant lequel elles restent visibles sont enregistrés sur le compte, pour savoir qui revient ; ils sont conservés 12 mois. Le texte de la page n’est pas envoyé à un fournisseur de modèles. Aucun mot de passe n’est demandé ni conservé. Un lien de rapport ne s’ouvre en entier que pour le compte qui l’a lancé ; toute autre personne voit un aperçu flouté. Les ouvertures par un autre compte connecté sont comptées avec la première et la dernière heure, jamais qui a ouvert, et le titulaire reçoit un e-mail la première fois. Les notes de suivi n’arrivent que si vous les demandez dans la demande : trois par semaine au plus, et le lien d’arrêt dans chaque note les arrête à tout moment. Les scores et les constats des pages publiques peuvent être publiés sous forme de Live Report, sur GitHub et sur les réseaux sociaux, sauf si vous cochez « Ne pas publier cette analyse » ; votre nom, votre e-mail, votre motif, votre adresse IP et votre navigateur ne sont jamais publiés. Si une analyse échoue pour une raison qui tient à ce service, le nom d’hôte, l’heure, l’erreur et les dernières lignes du journal, sans votre nom, votre e-mail ni la requête de l’URL, sont publiés dans une issue GitHub publique. La connexion conserve votre e-mail, la façon dont vous vous êtes connecté, l’identifiant utilisateur chez le fournisseur et l’heure de la première et de la dernière connexion ; une connexion sur cet appareil dure 30 jours. Une connexion via un fournisseur conserve aussi le nom, le prénom et le nom de famille, la photo, la langue et le domaine Workspace qu’il partage. Une connexion Google conserve aussi les autres adresses e-mail, la date de naissance, les numéros de téléphone, les adresses, le genre et les informations professionnelles que Google partage ; ils sont conservés pour une future offre payante et ne sont pas encore utilisés. Le compte est conservé 12 mois après la dernière connexion. Se connecter par e-mail ne partage que votre adresse. Copies, corrections et suppression : qa@carlosandmunoz.com. La liste complète figure dans les avertissements. Version 2026-10-24.</p>
                     </div>
                 </details>
                 <details class="term-group" style="--i: 2">
@@ -1599,9 +1652,13 @@
     <div class="wire-row" data-dir="ltr"><div class="wire-track"></div></div>
     <div class="wire-row" data-dir="rtl"><div class="wire-track"></div></div>
 </section>
-<section class="stage" data-fx data-fx-mode="0" data-fx-place="hero" aria-labelledby="studio-title">
-        <canvas class="fx" aria-hidden="true"></canvas>
-        <div class="stage-copy" data-fx-copy>
+<section class="stage" aria-labelledby="studio-title">
+        <picture id="review-hero-still" class="stage-hero-still" hidden>
+            <source srcset="assets/url-review-hero/hero-3d-en-safe.webp?v=3429a" type="image/webp">
+            <img src="assets/url-review-hero/hero-3d-en-safe.png?v=3429a" alt="" width="1920" height="1080" decoding="async" fetchpriority="low">
+        </picture>
+        <div id="review-hero-3d" class="stage-hero" aria-hidden="true"></div>
+        <div class="stage-copy">
             <p class="eyebrow" translate="no">QA-lab URL Review</p>
             <h1 id="studio-title" class="display" lang="fr" translate="no">
                 <span>Trouvez les fuites,</span>
@@ -1609,7 +1666,7 @@
                 <span>avant vos clients</span>
                 <span>ou un régulateur.</span>
             </h1>
-            <p class="lede" lang="fr" translate="no">QA-lab URL Review vous dit si votre site est sûr et va plus loin que la plupart des outils de contrôle : listes de phishing et de malware, signes d’un site piraté, domaines sosies et chaque hôte que vos pages chargent ou lient. S’il faut corriger quelque chose, nous le corrigeons à prix fixe dès 69 US$, puis nous refaisons l’analyse gratuitement. Et vous avez toujours une réponse : si la première analyse ne peut pas aboutir, nous continuons d’essayer et vous envoyons le rapport par e-mail, en général sous 48 heures, avec 20 % de remise sur votre prochaine analyse si cela prend plus de temps.</p>
+            <p class="lede" lang="fr" translate="no">QA-lab URL Review vous dit si votre site est sûr et va plus loin que la plupart des outils de contrôle : listes de phishing et de malware, signes d’un site piraté, domaines sosies et chaque hôte que vos pages chargent ou lient. S’il faut corriger quelque chose, nous le corrigeons à prix fixe, puis nous refaisons l’analyse gratuitement. Et vous avez toujours une réponse : si la première analyse ne peut pas aboutir, nous continuons d’essayer et vous envoyons le rapport par e-mail, en général sous 48 heures, avec 20 % de remise sur votre prochaine analyse si cela prend plus de temps.</p>
             <form class="stage-start" id="stage-start" novalidate>
                 <label class="stage-start-label" for="stage-url" lang="fr" translate="no">Commencez par l’adresse d’une page publique</label>
                 <div class="stage-start-row">
@@ -1630,6 +1687,8 @@
                 <a class="live-jump" href="#live-reports" lang="fr" translate="no">Voir les rapports en direct de vrais sites ↓</a>
                 <button class="stage-link" id="stage-sample-open" type="button" lang="fr" translate="no">Voir un exemple de rapport</button>
                 <a class="stage-link" id="stage-guide" href="qa-review-guide.html" lang="fr" translate="no">Suivez la visite de cinq minutes</a>
+                <a class="stage-link" id="stage-explorer" href="qa-review-explorer.html">Explore checks in 3D</a>
+                <a class="stage-link" id="stage-cybermap" href="cyber-attacks.html" lang="fr" translate="no">Carte des cyberattaques</a>
                 <a class="stage-link" id="stage-book" href="book.html?type=intro&amp;lang=fr&amp;utm_source=qa-review&amp;utm_campaign=review-hero" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Review hero" lang="fr" translate="no">Réserver un appel de 15 min</a>
             </div>
         </div>
@@ -1642,13 +1701,13 @@
                 <div>
                     <p class="eyebrow" data-live-eyebrow lang="fr" translate="no">Rapports en direct</p>
                     <h2 id="live-title" class="live-title" data-live-title lang="fr" translate="no">De vrais sites. De vraies analyses. <em>Ouvrez le rapport de votre choix.</em></h2>
-                    <p class="live-lede" data-live-lede lang="fr" translate="no"><b>3691 sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Les sites inscrits sur une liste de phishing ou de malware ne sont jamais publiés. Consultation et partage uniquement.</p>
+                    <p class="live-lede" data-live-lede lang="fr" translate="no"><b>4171 sites publics</b>, analysés par le même outil que chacun peut lancer : portails publics, rédactions, banques, universités, projets open source et réseaux de transport. Parcourez le carrousel, filtrez par secteur ou pays, puis ouvrez un rapport. Les analyses demandées par les visiteurs s’ajoutent chaque jour, par lot. Les sites inscrits sur une liste de phishing ou de malware ne sont jamais publiés. Consultation et partage uniquement.</p>
                     <p class="live-follow" data-live-follow lang="fr" translate="no">De nouveaux rapports chaque jour sur <a href="https://t.me/qalab_live" rel="noopener" target="_blank">Telegram</a> et <a href="https://www.reddit.com/r/QALabLiveReports/" rel="noopener" target="_blank">Reddit</a>.</p>
                 </div>
             </header>
             <div class="live-filters-slot" data-live-filters></div>
         </div>
-        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="fr" translate="no">Les Live Reports ont besoin de JavaScript pour s’ouvrir. Au 16 novembre 2026, la série compte 3691 sites publics dans 27 secteurs, analysés depuis le 19 octobre 2026 par la même analyse que chacun peut lancer ; les nouvelles analyses s’ajoutent par lot chaque jour. Le score global moyen est de 64 sur 100 : SEO 67, GEO 85, analytics 67, sécurité 45, accessibilité 58 et performance 66. Les meilleurs scores globaux sont sevielectro.com 96, MDN Web Docs 95, CA.gov 92 et GOV.UK 92. La série couvre des portails publics comme GOV.UK, GOV.CO et l’Alcaldía de Bogotá ; des gouvernements régionaux comme CA.gov, la Generalitat de Catalunya et la Gobernación del Valle del Cauca ; des rédactions comme la BBC, The Guardian et El País ; des banques comme Bancolombia et Davivienda ; des universités comme le MIT, Stanford et l’Universidad de los Andes ; des projets open source comme Python.org, Node.js et Kubernetes ; et des réseaux de transport comme TransMilenio et le Metro de Medellín. Chaque rapport est une analyse automatisée de pages publiques, un point de départ et non un verdict.</p></noscript></div>
+        <div class="live-main" data-live-app><noscript><p class="live-lede" lang="fr" translate="no">Les Live Reports ont besoin de JavaScript pour s’ouvrir. Au 20 novembre 2026, la série compte 4171 sites publics dans 27 secteurs, analysés depuis le 19 octobre 2026 par la même analyse que chacun peut lancer ; les nouvelles analyses s’ajoutent par lot chaque jour. Le score global moyen est de 64 sur 100 : SEO 67, GEO 85, analytics 67, sécurité 44, accessibilité 58 et performance 66. Les meilleurs scores globaux sont sevielectro.com 96, MDN Web Docs 95, CA.gov 92 et GOV.UK 92. La série couvre des portails publics comme GOV.UK, GOV.CO et l’Alcaldía de Bogotá ; des gouvernements régionaux comme CA.gov, la Generalitat de Catalunya et la Gobernación del Valle del Cauca ; des rédactions comme la BBC, The Guardian et El País ; des banques comme Bancolombia et Davivienda ; des universités comme le MIT, Stanford et l’Universidad de los Andes ; des projets open source comme Python.org, Node.js et Kubernetes ; et des réseaux de transport comme TransMilenio et le Metro de Medellín. Chaque rapport est une analyse automatisée de pages publiques, un point de départ et non un verdict.</p></noscript></div>
     </div>
 </section>
 <main id="review-app" tabindex="-1">
@@ -1670,7 +1729,7 @@
             <dt lang="fr" translate="no">Ce que le rapport note</dt>
             <dd lang="fr" translate="no">Six domaines de 0 à 100 : SEO, GEO (si la recherche IA et les moteurs de réponse peuvent lire et citer le site), analytics, sécurité, accessibilité et performance. Le GEO mesure si le site peut être lu et cité, pas si ChatGPT, Perplexity ou le mode IA de Google le citent aujourd’hui. Chaque contrôle est marqué en échec, à risque, réussi ou à confier à une personne, avec la preuve, une correction et une estimation de l’effort. Vous voyez aussi l’aspect du site dans un résultat Google et dans un lien partagé, les robots d’IA que son robots.txt laisse entrer, une carte des pages analysées et ce qu’il faut corriger en premier. Un navigateur headless charge jusqu’à trois pages depuis une adresse de l’UE en Belgique : il relève le suivi avant et après un choix de cookies, lance axe-core, compare le texte HTML à la page rendue, vérifie les largeurs téléphone et tablette et garde trois captures d’écran. Il contrôle aussi les widgets de chat et les chatbots IA (consentement, poids et accès au clavier), la déclaration d’accessibilité, les mentions légales et les pages de confidentialité, les bibliothèques front-end obsolètes, Google Safe Browsing via Web Risk, l’expiration et le verrou de transfert du domaine via RDAP, ainsi que MTA-STS, TLS-RPT et BIMI pour l’e-mail, et il estime le carbone d’une visite. Un site dont la protection anti-bots refuse la requête simple est analysé dans Chrome headless.</dd>
             <dt lang="fr" translate="no">Contrôles de sécurité</dt>
-            <dd lang="fr" translate="no">Chaque analyse cherche aussi les problèmes qu’un visiteur ne verrait pas. Elle vérifie l’adresse avec Google Safe Browsing via Web Risk et avec Cloudflare URL Scanner, qui réutilise un scan de la veille ou en soumet un qui devient public sur Cloudflare Radar. Chaque hôte externe dont la page charge des scripts, des cadres ou des formulaires, ou vers lequel elle renvoie, est aussi vérifié avec Web Risk ; un hôte de scripts listé est un constat critique. Elle cherche les signes d’un site piraté : du spam injecté dans les résultats de recherche, des pages qui montrent autre chose à Googlebot et des liens de spam cachés. Elle liste les domaines sosies enregistrés pour imiter le vôtre qui ont un site ou un serveur de messagerie, vérifie le domaine et ses serveurs de messagerie et web dans des listes de blocage de spam gratuites comme SpamCop, Mailspike et NordSpam, et examine SPF, DMARC et DKIM en détail. Une fois que vous prouvez que le site est à vous, elle cherche aussi les fichiers laissés à découvert, comme .env, .git et les sauvegardes.</dd>
+            <dd lang="fr" translate="no">Chaque analyse cherche aussi les problèmes qu’un visiteur ne verrait pas. Elle vérifie l’adresse avec Google Safe Browsing via Web Risk et avec Cloudflare URL Scanner, qui réutilise un scan de la veille ou en soumet un marqué comme non répertorié sur Cloudflare Radar. Chaque hôte externe dont la page charge des scripts, des cadres ou des formulaires, ou vers lequel elle renvoie, est aussi vérifié avec Web Risk ; un hôte de scripts listé est un constat critique. Elle cherche les signes d’un site piraté : du spam injecté dans les résultats de recherche, des pages qui montrent autre chose à Googlebot et des liens de spam cachés. Elle liste les domaines sosies enregistrés pour imiter le vôtre qui ont un site ou un serveur de messagerie, vérifie le domaine et ses serveurs de messagerie et web dans des listes de blocage de spam gratuites comme SpamCop, Mailspike et NordSpam, et examine SPF, DMARC et DKIM en détail. Une fois que vous prouvez que le site est à vous, elle cherche aussi les fichiers laissés à découvert, comme .env, .git et les sauvegardes.</dd>
             <dt lang="fr" translate="no">Si une analyse ne peut pas aboutir</dt>
             <dd lang="fr" translate="no">Il arrive qu’une analyse s’arrête pour une raison de notre côté, par exemple un site qui refuse les serveurs cloud. Nous gardons votre e-mail, la relançons autrement et vous envoyons le rapport complet dès qu’il est prêt, en général sous <span data-promise-hours>48</span> heures. Pour le dérangement, vous recevez un code de 20 % de réduction sur votre prochaine analyse, valable 90 jours. Si le rapport n’est toujours pas prêt après <span data-promise-hours>48</span> heures, nous vous écrivons pour vous prévenir et continuons d’essayer : s’il aboutit dans les 14 jours, il vous parvient quand même, et le code reste valable.</dd>
             <dt lang="fr" translate="no">Après le rapport</dt>
@@ -1703,12 +1762,43 @@
             <details class="term-group req-group" id="req-page" data-step="page" open style="--i: 0">
                 <summary><svg class="tg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span class="tg-text"><b class="tg-title" lang="fr" translate="no">La page</b><span class="tg-gist" lang="fr" translate="no">L’adresse https publique à analyser.</span></span><span class="tg-count" aria-hidden="true">1</span></summary>
                 <div class="rg-body">
-                    <label for="url" lang="fr" translate="no">Page publique</label>
-                    <div class="url-row notranslate" id="url-field">
-                        <span>https://</span>
-                        <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                    <div class="url-mode" id="url-mode" role="group" aria-label="URL mode">
+                        <button type="button" data-url-mode="one" aria-pressed="true" class="is-on" data-batch-copy="modeOne">One URL</button>
+                        <button type="button" data-url-mode="many" aria-pressed="false" data-batch-copy="modeMany">Many URLs</button>
                     </div>
-                    <p class="field-error" id="url-error"></p>
+                    <div id="url-mode-one">
+                        <label for="url" data-batch-copy="publicPage" lang="fr" translate="no">Page publique</label>
+                        <div class="url-row notranslate" id="url-field">
+                            <span>https://</span>
+                            <input id="url" name="url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com/path" required disabled>
+                        </div>
+                        <p class="field-error" id="url-error"></p>
+                    </div>
+                    <div id="url-mode-many" hidden>
+                        <label for="batch-text" data-batch-copy="listLabel">Addresses to review</label>
+                        <p class="muted" data-batch-copy="listHint">One https address per line, or load a .txt / .csv with a url column. Up to 6. The first is the lead.</p>
+                        <textarea id="batch-text" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com&#10;other.example.com" disabled></textarea>
+                        <label class="check" for="batch-file"><span data-batch-copy="fileLabel">Load a file</span>
+                            <input id="batch-file" type="file" accept=".txt,.csv,text/plain,text/csv" disabled>
+                        </label>
+                        <button type="button" class="batch-file-clear" id="batch-file-clear" data-batch-copy="fileRemove" hidden>Remove the file</button>
+                        <p class="muted" id="batch-source-note"></p>
+                        <label class="check"><input id="batch-lead-report" type="checkbox" disabled> <span data-batch-copy="leadReport">Use the open report’s URL as the lead</span></label>
+                        <p class="muted" id="batch-lead-note"></p>
+                        <p class="muted" data-batch-copy="previewTitle">Ready to run</p>
+                        <ul id="batch-preview"></ul>
+                        <p class="field-error" id="batch-error"></p>
+                        <div id="batch-panel" hidden>
+                            <h3 id="batch-panel-title" data-batch-copy="panelTitle">Bulk review</h3>
+                            <p id="batch-panel-status" role="status"></p>
+                            <ol id="batch-panel-rows"></ol>
+                            <div id="batch-panel-actions">
+                                <button class="btn btn-ghost" id="batch-stop" type="button" hidden data-batch-copy="stop">Stop batch</button>
+                                <button class="btn btn-ghost" id="batch-save-compare" type="button" hidden data-batch-copy="saveCompare">Save comparison</button>
+                            </div>
+                            <p class="muted" data-batch-copy="saveCompareHint">Save the finished reports side by side.</p>
+                        </div>
+                    </div>
                 </div>
             </details>
             <details class="term-group req-group" id="req-you" data-step="you" open style="--i: 1">
@@ -1749,7 +1839,7 @@
                     <label for="name" lang="fr" translate="no">Nom</label>
                     <input id="name" name="name" type="text" autocomplete="name" required disabled>
                     <p class="field-error" id="name-error"></p>
-                    <label class="check" hidden lang="fr" translate="no"><input id="follow-up" name="followUp" type="checkbox" disabled> Me prévenir quand il vaut la peine d’analyser à nouveau cette page. Pas plus de trois courtes notes par semaine, dans ma langue, jusqu’à 30 jours après ma dernière analyse. Le lien d’arrêt dans chaque note, ou une réponse « stop », les arrête à tout moment.</label>
+                    <label class="check" lang="fr" translate="no"><input id="follow-up" name="followUp" type="checkbox"> Envoyez-moi l’offre de lancement et de courts rappels pour analyser à nouveau cette page. Pas plus de trois courtes notes par semaine, dans ma langue, jusqu’à 30 jours après ma dernière analyse. Le lien d’arrêt dans chaque note les arrête à tout moment. Laisser cette case vide ne change pas mon analyse.</label>
                     <label class="check" lang="fr" translate="no"><input id="no-publish" name="unlisted" type="checkbox" disabled> Ne pas publier cette analyse comme Live Report ni sur les réseaux sociaux.</label>
                 </div>
             </details>
@@ -1831,6 +1921,8 @@
                     </fieldset>
                     <label class="check" id="section-row" lang="fr" translate="no"><input id="stay-section" name="section" type="checkbox" disabled> Rester dans cette section</label>
                     <p class="scope-note muted" id="section-note">Ajoutez un chemin, comme example.com/docs, pour garder les pages suivantes dans cette section. Avec l’hôte seul, tout le site est analysé.</p>
+                    <label class="check" id="cyber-row" lang="fr" translate="no"><input id="cyber-sources" name="cyberSources" type="checkbox" checked disabled> Inclure les contrôles des sources d’attaques et d’exploits</label>
+                    <p class="scope-note muted" id="cyber-note" lang="fr" translate="no">Compare le site à des listes publiques d’attaques et d’exploits. Le résultat figure dans votre propre rapport, jamais dans un Live Report.</p>
                     <p class="field-error" id="scope-error"></p>
                 </div>
             </details>
@@ -1839,6 +1931,7 @@
                 <input id="hp-note" name="hp_note" type="text" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <p class="status" id="form-status" role="status"></p>
+            <div id="soft-turnstile" class="no-print" hidden aria-hidden="true"></div>
             <p class="review-needs" id="review-needs" hidden></p>
             <div class="row-actions">
                 <button class="btn btn-primary" id="review-btn" type="submit" disabled lang="fr" translate="no">Analyser</button>
@@ -1913,9 +2006,9 @@
             <p class="report-index-label" id="report-index-label" data-report-copy="indexLabel" lang="fr" translate="no">Dans ce rapport</p>
             <ol class="report-index-list" id="report-index-list"></ol>
         </nav>
-        <h2 data-insight data-index-group="summary" data-report-copy="execTitle" lang="fr" translate="no">Résumé sur une page</h2>
+        <h2 data-face="summary" data-insight data-index-group="summary" data-report-copy="execTitle" lang="fr" translate="no">Résumé sur une page</h2>
         <article class="card" data-insight id="exec"></article>
-        <h2 data-insight data-index-group="summary" data-report-copy="compareTitle" lang="fr" translate="no">Face à un concurrent</h2>
+        <h2 data-face="compare" data-insight data-index-group="summary" data-report-copy="compareTitle" lang="fr" translate="no">Face à un concurrent</h2>
         <article class="card" data-insight id="compare">
             <div id="rivals" hidden></div>
             <div class="no-print" id="compare-ask">
@@ -1965,44 +2058,46 @@
             </div>
             <div id="compare-result" hidden></div>
         </article>
-        <h2 data-insight data-index-group="summary" data-report-copy="healthTitle" lang="fr" translate="no">Score de santé</h2>
+        <h2 data-face="health" data-insight data-index-group="summary" data-report-copy="healthTitle" lang="fr" translate="no">Score de santé</h2>
         <div data-insight id="health"></div>
-        <h2 data-insight data-index-group="summary" data-report-copy="fixTitle" lang="fr" translate="no">À corriger d’abord</h2>
+        <h2 data-face="fixfirst" data-insight data-index-group="summary" data-report-copy="fixTitle" lang="fr" translate="no">À corriger d’abord</h2>
         <article class="card" data-insight id="fix-first"></article>
-        <h2 data-insight data-index-group="browser" data-report-copy="browserTitle" lang="fr" translate="no">Dans un vrai navigateur</h2>
+        <h2 data-face="browser" data-insight data-index-group="browser" data-report-copy="browserTitle" lang="fr" translate="no">Dans un vrai navigateur</h2>
         <div data-insight id="browser-pass"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="fr" translate="no">L’aspect dans Google et lors d’un partage</h2>
+        <h2 data-face="preview" data-insight data-index-group="browser" data-report-copy="snippetTitle" lang="fr" translate="no">L’aspect dans Google et lors d’un partage</h2>
         <div class="previews" data-insight id="previews"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="aiTitle" lang="fr" translate="no">Ce que voit l’IA</h2>
+        <h2 data-face="ai" data-insight data-index-group="browser" data-report-copy="aiTitle" lang="fr" translate="no">Ce que voit l’IA</h2>
         <div data-insight id="geo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="fr" translate="no">Analytics et consentement</h2>
+        <h2 data-face="analytics" data-insight data-index-group="browser" data-report-copy="analyticsTitle" lang="fr" translate="no">Analytics et consentement</h2>
         <div data-insight id="analytics"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="searchTitle" lang="fr" translate="no">Visibilité dans la recherche</h2>
+        <h2 data-face="seo" data-insight data-index-group="browser" data-report-copy="searchTitle" lang="fr" translate="no">Visibilité dans la recherche</h2>
         <div data-insight id="seo"></div>
-        <h2 data-insight data-index-group="browser" data-report-copy="mapTitle" lang="fr" translate="no">Carte des pages analysées</h2>
+        <h2 data-face="sitemap" data-insight data-index-group="browser" data-report-copy="mapTitle" lang="fr" translate="no">Carte des pages analysées</h2>
         <article class="card" data-insight id="site-graph"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="securityTitle" lang="fr" translate="no">Sécurité et e-mail</h2>
+        <h2 data-face="sec" data-insight data-index-group="checks" data-report-copy="securityTitle" lang="fr" translate="no">Sécurité et e-mail</h2>
         <article class="card" data-insight id="security"></article>
-        <h2 data-insight data-index-group="checks" data-report-copy="checksTitle" lang="fr" translate="no">Chaque contrôle, avec son verdict</h2>
+        <h2 id="targeted-head" data-line="targeted" data-index-group="checks" data-report-copy="targetedTitle" hidden lang="fr" translate="no">Ce site a-t-il été ciblé ?</h2>
+        <article class="card" id="targeted" hidden></article>
+        <h2 data-face="verdicts" data-insight data-index-group="checks" data-report-copy="checksTitle" lang="fr" translate="no">Chaque contrôle, avec son verdict</h2>
         <div data-insight>
             <div class="filters" id="finding-filters"></div>
             <article class="card" id="findings"></article>
         </div>
-        <h2 data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="fr" translate="no">Kit de correction</h2>
+        <h2 data-face="fixkit" data-insight data-index-group="checks" data-report-copy="fixKitTitle" lang="fr" translate="no">Kit de correction</h2>
         <article class="card" data-insight id="fixkit"></article>
         <div class="visuals" id="report-visuals"></div>
         <div class="split">
             <article class="card">
-                <h2 data-index-group="glance" lang="fr" translate="no">Cas proposés par couche</h2>
+                <h2 data-face="cases" data-index-group="glance" lang="fr" translate="no">Cas proposés par couche</h2>
                 <div id="layers"></div>
             </article>
             <article class="card">
-                <h2 data-index-group="glance" lang="fr" translate="no">Technologies repérées</h2>
+                <h2 data-face="tech" data-index-group="glance" lang="fr" translate="no">Technologies repérées</h2>
                 <div class="pills" id="tech"></div>
             </article>
         </div>
         <section id="tool-block" hidden>
-            <h2 data-index-group="glance" lang="fr" translate="no">Outils qui s’appliquent</h2>
+            <h2 data-face="tools" data-index-group="glance" lang="fr" translate="no">Outils qui s’appliquent</h2>
             <p class="muted" id="tool-note" lang="fr" translate="no">Chaque outil coché ajoute 5 USD au rapport complet, comme un framework supplémentaire. axe-core a déjà tourné dans le navigateur headless de l’analyse. Le cocher ajoute ses contrôles à vos scripts. Les autres outils ne sont pas lancés.</p>
             <ol class="tool-list" id="tools"></ol>
         </section>
@@ -2011,7 +2106,7 @@
                 <span class="alarm-lamp" aria-hidden="true"></span>
                 <div>
                     <p class="eyebrow" lang="fr" translate="no">Alarme</p>
-                    <h2 data-index-group="exposure" lang="fr" translate="no">Ce que la réponse publique a laissé à découvert</h2>
+                    <h2 data-face="exposed" data-index-group="exposure" lang="fr" translate="no">Ce que la réponse publique a laissé à découvert</h2>
                 </div>
                 <button class="btn btn-primary" id="alarm-open" type="button" lang="fr" translate="no">Ouvrir la suite</button>
             </div>
@@ -2020,27 +2115,27 @@
         </section>
         <section class="credential-run" id="credential-run" hidden>
             <p class="eyebrow" lang="fr" translate="no">Analyse connectée</p>
-            <h2 data-index-group="exposure" lang="fr" translate="no">Un identifiant que vous avez le droit d’utiliser</h2>
+            <h2 data-face="login" data-index-group="exposure" lang="fr" translate="no">Un identifiant que vous avez le droit d’utiliser</h2>
             <p id="credential-run-copy">Cette page ne demande pas le mot de passe. L’analyse connectée attend d’être payée.</p>
             <button class="btn btn-primary" id="credential-open" type="button" lang="fr" translate="no">Organiser l’analyse connectée</button>
         </section>
         <section class="credential-run" id="report-call" hidden>
             <p class="eyebrow" data-report-copy="callEyebrow" lang="fr" translate="no">Visite guidée</p>
-            <h2 data-report-copy="callTitle" lang="fr" translate="no">Parcourez ce rapport avec Carlos</h2>
+            <h2 data-face="call" data-report-copy="callTitle" lang="fr" translate="no">Parcourez ce rapport avec Carlos</h2>
             <p data-report-copy="callCopy" lang="fr" translate="no">Un appel vidéo de 30 minutes sur ce que les constats signifient pour votre site et ce qu’il faut corriger en premier.</p>
             <a class="btn btn-primary" id="report-call-link" href="book.html?type=walkthrough" data-report-copy="callButton" data-analytics-event="open_booking" data-analytics-category="Navigation" data-analytics-label="Report" lang="fr" translate="no">Réserver une visite de 30 min</a>
         </section>
         <section class="mentions" id="mentions-block">
-            <h2 data-index-group="exposure" lang="fr" translate="no">Articles publics</h2>
+            <h2 data-face="writeups" data-index-group="exposure" lang="fr" translate="no">Articles publics</h2>
             <ol id="mentions"></ol>
         </section>
-        <h2 data-index-group="evidence" lang="fr" translate="no">Ce que la réponse a montré</h2>
+        <h2 data-face="response" data-index-group="evidence" lang="fr" translate="no">Ce que la réponse a montré</h2>
         <article class="card" id="observed"></article>
-        <h2 data-index-group="evidence" lang="fr" translate="no">Pages analysées</h2>
+        <h2 data-face="pages" data-index-group="evidence" lang="fr" translate="no">Pages analysées</h2>
         <article class="card"><p class="muted" id="pages-found" hidden></p><table class="page-table"><thead><tr><th lang="fr" translate="no">Chemin</th><th lang="fr" translate="no">Statut</th><th>ms</th><th lang="fr" translate="no">Titre</th></tr></thead><tbody id="pages"></tbody></table></article>
-        <h2 data-index-group="evidence" lang="fr" translate="no">Journal de la revue</h2>
+        <h2 data-face="log" data-index-group="evidence" lang="fr" translate="no">Journal de la revue</h2>
         <article class="card"><ol class="log" id="report-log"></ol></article>
-        <h2 data-index-group="cases" lang="fr" translate="no">Cas qui pourraient être exécutés</h2>
+        <h2 data-face="cases" data-index-group="cases" lang="fr" translate="no">Cas qui pourraient être exécutés</h2>
         <p class="muted case-note" id="case-note"></p>
         <p class="muted" id="specialist-tools" hidden></p>
         <div class="filters" id="layer-filters"></div>
@@ -2054,7 +2149,7 @@
         <div class="ask-head">
             <div>
                 <p class="eyebrow" data-ask-text="open">Interroger le rapport</p>
-                <h2 id="ask-title" data-ask-text="title">Réponses tirées de ce rapport uniquement</h2>
+                <h2 data-face="ask" id="ask-title" data-ask-text="title">Réponses tirées de ce rapport uniquement</h2>
             </div>
             <button class="btn btn-ghost" id="ask-close" type="button" data-ask-text="close">Fermer</button>
         </div>
@@ -2073,7 +2168,7 @@
     <div class="case-sheet" role="dialog" aria-modal="true" aria-labelledby="case-export-title">
         <img class="logo" src="assets/qa-review-mark.svg?v=20261027a" alt="" width="36" height="36">
         <p class="eyebrow" lang="fr" translate="no">Cas de test</p>
-        <h2 id="case-export-title" lang="fr" translate="no">Emportez cette liste</h2>
+        <h2 data-face="export" id="case-export-title" lang="fr" translate="no">Emportez cette liste</h2>
         <p id="case-export-copy" lang="fr" translate="no">Ces cas peuvent partir en fichier pour Jira, Xray, Zephyr, TestRail, Azure Test Plans, Mantis, Excel, JSON ou texte, et être imprimés. Chaque cas contient un script de départ pour les frameworks choisis, et un ZIP contient une suite par framework. Choisissez les types voulus dans le fichier. Le rapport complet ouvre tous les types.</p>
         <label class="select-all" lang="fr" translate="no"><input type="checkbox" id="case-select-all" checked> Tout sélectionner</label>
         <p id="case-export-count"></p>
@@ -2140,7 +2235,6 @@
         </div>
     </div>
 </div>
-<div id="soft-turnstile" class="no-print" hidden aria-hidden="true"></div>
 <div id="soft-quota" class="gate no-print" hidden>
     <div class="pay-card" role="dialog" aria-modal="true" aria-labelledby="soft-quota-title" tabindex="-1">
         <h2 id="soft-quota-title">You've used today's free previews</h2>
@@ -2176,23 +2270,38 @@
 <script>try{localStorage.setItem("cv-preferred-lang","fr")}catch(e){}</script>
 <script src="js/site-i18n.js?v=20261104a" defer></script>
 <script src="js/site-glossary.js?v=20261102a" defer></script>
-<script src="js/site-tour.js?v=20261110-3332" defer></script>
+<script src="js/site-tour.js?v=20261120-3974" defer></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "/vendor/three/build/three.module.js",
+    "three/addons/": "/vendor/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="js/url-review-hero/landing-boot.js?v=3429a"></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 <script src="js/qa-review-scripts.js?v=20261110a" defer></script>
 <script src="js/qa-review-deal.js?v=20261109-3079" defer></script>
 <script src="js/qa-review-auth.js?v=20261108a" defer></script>
 <script src="js/qa-review-trial.js?v=20261109-3136" defer></script>
-<script src="js/qa-review-ask.js?v=20261109b" defer></script>
+<script src="js/qa-review-ask.js?v=20261119-3818" defer></script>
 <script src="js/qa-review-fix.js?v=20261110-3393" defer></script>
-<script src="js/qa-review-progress.js?v=20261024a" defer></script>
+<script src="js/qa-review-progress.js?v=20261119b" defer></script>
+<script src="js/qa-review-arena-facts.js?v=20261119b-3862" defer></script>
+<script src="js/qa-review-arena-atlas.js?v=20261118a" defer></script>
+<script src="js/qa-review-arena-motion.js?v=20261118a" defer></script>
+<script src="js/qa-review-arena.js?v=20261118a" defer></script>
 <script src="js/qa-review-compare-copy.js?v=20261110-3350" defer></script>
-<script src="js/qa-review-report-copy.js?v=20261110-3424" defer></script>
-<script src="js/qa-review-findings-copy.fr.js?v=20261110-3409" defer></script>
-<script src="js/qa-review-watch.js?v=20261110-3409" defer></script>
-<script src="js/qa-review.js?v=20261110-3332-3327-3326-3391" defer></script>
+<script src="js/qa-review-batch-copy.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-batch.js?v=20261120-3999" defer></script>
+<script src="js/qa-review-report-copy.js?v=20261119i-3946" defer></script>
+<script src="js/qa-review-findings-copy.fr.js?v=20261118-3779" defer></script>
+<script src="js/qa-review-watch.js?v=20261119-3850" defer></script>
+<script src="js/qa-review.js?v=20261120-3826" defer></script>
 <script src="js/qa-review-benchmark.js?v=20261128b" defer></script>
-<script src="js/qa-review-multi.js?v=20261102q" defer></script>
-<script src="js/url-suggest.js?v=20261109b" defer></script>
+<script src="js/qa-review-multi.js?v=20261120-3826" defer></script>
+<script src="js/url-suggest.js?v=20261120-3988" defer></script>
 <script src="js/qa-review-live.js?v=20261110d" defer></script>
 </body>
 </html>

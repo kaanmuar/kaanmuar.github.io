@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import androidx.compose.ui.graphics.asAndroidPath
 import kotlin.math.max
 
 /** Widgets cannot draw, so the reactor, sparklines and glow bars are painted into bitmaps in the app's palette. */
@@ -81,6 +82,35 @@ object Art {
         p.maskFilter = null; p.color = color; p.strokeWidth = max(2f, h * 0.05f); c.drawPath(line, p)
         val (lx, ly) = pts.last()
         c.drawCircle(lx - h * 0.04f, ly, h * 0.07f, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color })
+        return bmp
+    }
+
+    /** The world map (assets/world.json) for a map widget (#3977): [fills] colours countries by their ARGB, the rest take [base];
+     *  [pins] mark countries with a cyan dot. The map is fitted and centred in w x h, 2:1 as drawn by the app's own Map tab. */
+    fun worldMap(world: com.carlosandmunoz.jarvis.ui.Geo.World, w: Int, h: Int, fills: Map<String, Int>, pins: Set<String>, base: Int): Bitmap {
+        val bmp = Bitmap.createBitmap(max(1, w), max(1, h), Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        val round = h.coerceAtMost(w) * 0.06f
+        c.drawRoundRect(RectF(0f, 0f, w.toFloat(), h.toFloat()), round, round, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF0A141B.toInt() })
+        val k = minOf(w / world.w, h / world.h)
+        c.translate((w - world.w * k) / 2, (h - world.h * k) / 2)
+        c.scale(k, k)
+        val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+        val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeJoin = Paint.Join.ROUND; color = 0xFF0A141B.toInt(); strokeWidth = max(0.35f, 0.7f / k) }
+        world.shapes.forEach { (cc, shape) ->
+            val path = shape.asAndroidPath()
+            fill.color = fills[cc] ?: base
+            c.drawPath(path, fill)
+            c.drawPath(path, line)
+        }
+        val dot = Paint(Paint.ANTI_ALIAS_FLAG)
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = 0xFFFFFFFF.toInt(); strokeWidth = max(1f, 1.2f / k) }
+        val r = max(5f, 3f / k)
+        world.dots.forEach { (cc, at) ->
+            if (cc in world.shapes || cc !in fills) return@forEach
+            dot.color = fills.getValue(cc); c.drawCircle(at.x, at.y, r, dot); c.drawCircle(at.x, at.y, r, ring)
+        }
+        pins.forEach { cc -> world.dots[cc]?.let { at -> dot.color = CYAN; c.drawCircle(at.x, at.y, r * 1.2f, dot); c.drawCircle(at.x, at.y, r * 1.2f, ring) } }
         return bmp
     }
 

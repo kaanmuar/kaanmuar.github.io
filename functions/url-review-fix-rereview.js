@@ -44,7 +44,8 @@ function target(original) {
       pages: row.pages || undefined,
       depth: row.depth || undefined,
       pageLang: row.pageLang || "",
-      section: row.section === true
+      section: row.section === true,
+      targeted: row.targeted !== false
     }
   };
 }

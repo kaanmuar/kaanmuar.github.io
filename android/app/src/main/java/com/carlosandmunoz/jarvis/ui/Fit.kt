@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -70,8 +71,13 @@ fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable ()
         val width = constraints.maxWidth
         val colW = width / columns.coerceAtLeast(1)
         val heights = IntArray(columns.coerceAtLeast(1))
+        val panelId = { m: Measurable -> (m.parentData as? PanelSlot)?.id }
         val placed = arranged(items, tab, saved).map { m ->
-            if (m.layoutId == WIDE) {
+            val id = panelId(m)
+            val sizeW = id?.let { saved?.size?.get(it)?.w } ?: 1f
+            // Full-bleed when w is wide (#3611); mid widths grow inside the slot via Panel's continuous w (#3709).
+            val asWide = m.layoutId == WIDE || Layouts.isWideSize(sizeW, m.layoutId == WIDE)
+            if (asWide) {
                 val top = heights.max()
                 val p = m.measure(Constraints(maxWidth = width))
                 heights.fill(top + p.height)

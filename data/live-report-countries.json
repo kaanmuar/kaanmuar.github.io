@@ -115,6 +115,16 @@
    ],
    "at": "2026-11-15"
   },
+  "6998930499f3d.site123.me": {
+   "country": "ME",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "750g.com": {
    "country": "FR",
    "scope": "country",
@@ -268,6 +278,32 @@
    ],
    "at": "2026-11-09"
   },
+  "adbrains.digital": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "RUC (Peru) printed",
+    "RUC (Peru) printed (legal/contact page)",
+    "phone +51 987746570",
+    "phone +51 987 746 570 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
+  "adeeg.com": {
+   "country": "SO",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "phone +252 61 4777710",
+    "phone +252 61 4777710 (legal/contact page)",
+    "Google Maps link in SO (legal/contact page)",
+    "address names SO (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
   "admission.coeportal.edu.gh": {
    "country": "GH",
    "scope": "country",
@@ -314,6 +350,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "aeroregional.net": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +593 99 829 2124",
+    "phone +593 99 829 2124 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "affection.org": {
    "country": "FR",
@@ -484,6 +533,16 @@
    ],
    "at": "2026-11-15"
   },
+  "airesi.myshopify.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "airesoesteclimatizacion.com": {
    "country": "AR",
    "scope": "country",
@@ -584,6 +643,19 @@
    ],
    "at": "2026-11-09"
   },
+  "albertomiranda.org": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51997917798",
+    "phone +51997917798 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
   "alexshop.me": {
    "country": "ME",
    "scope": "country",
@@ -596,6 +668,19 @@
     "phone +382 67 009 800 (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "alfabusiness.app": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593 987 267 904",
+    "phone +593 987 267 904 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "alfred-library.com": {
    "country": "SY",
@@ -690,6 +775,16 @@
    ],
    "at": "2026-11-09"
   },
+  "allservicecyc.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "almacenestropigas.com.gt": {
    "country": "GT",
    "scope": "country",
@@ -716,6 +811,16 @@
    ],
    "at": "2026-11-10"
   },
+  "almeshkah.net": {
+   "country": "DZ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "alodontologo.com": {
    "country": "ES",
    "scope": "country",
@@ -736,6 +841,19 @@
    ],
    "at": "2026-11-15"
   },
+  "alomaquinarias.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "phone +51998253515",
+    "Google Maps link in PE",
+    "address names PE",
+    "locale es-PE"
+   ],
+   "at": "2026-11-17"
+  },
   "alote.com.mm": {
    "country": "MM",
    "scope": "country",
@@ -748,6 +866,19 @@
     "address names MM (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "alpaca111.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +51 923 062 514",
+    "phone +51 923 062 514 (legal/contact page)",
+    "RDAP registrant in PE",
+    "prices in S/"
+   ],
+   "at": "2026-11-17"
   },
   "alpenverein.li": {
    "country": "LI",
@@ -775,6 +906,19 @@
    ],
    "at": "2026-11-15"
   },
+  "altamira-tours.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +58-414-931.58.91",
+    "RDAP registrant in VE",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "althompson.com": {
    "country": "KY",
    "scope": "country",
@@ -787,6 +931,18 @@
     "hosted in KY (Cable & Wireless (Cayman Islan)"
    ],
    "at": "2026-11-09"
+  },
+  "amablesbus.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
   },
   "amentum.com": {
    "country": "US",
@@ -892,6 +1048,18 @@
    ],
    "at": "2026-11-13"
   },
+  "antechelectric.com": {
+   "country": "CA",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CA",
+    "prices in CAD",
+    "written in en, spoken in CA"
+   ],
+   "at": "2026-11-19"
+  },
   "antonioferraoelectric.com": {
    "country": "US",
    "scope": "country",
@@ -971,6 +1139,16 @@
     "locale pt-PT"
    ],
    "at": "2026-11-09"
+  },
+  "apkmody.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "apollonyc.com": {
    "country": "US",
@@ -1066,6 +1244,19 @@
     "phone +(57)7956840 (legal/contact page)"
    ],
    "at": "2026-11-10"
+  },
+  "arizona.edu": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    ".edu is a US-only ending",
+    "phone +1-520-621-2211",
+    "written in en, spoken in US"
+   ],
+   "at": "2026-11-19"
   },
   "armanihotels.com": {
    "country": "",
@@ -1358,6 +1549,19 @@
    ],
    "at": "2026-11-09"
   },
+  "autocars44.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584127115313",
+    "phone +58414-3246701 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
+  },
   "autoscout24.com": {
    "country": "",
    "scope": "worldwide",
@@ -1367,6 +1571,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "autosmediterraneo.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "phone +34 964 22 00 54",
+    "phone +34 964 22 00 54 (legal/contact page)",
+    "address names ES (legal/contact page)",
+    "RDAP registrant in ES"
+   ],
+   "at": "2026-11-20"
   },
   "avelectriciangta.com": {
    "country": "CA",
@@ -1403,6 +1620,29 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "b2bve.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +584143969184",
+    "phone +584143969184 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
+  "baddiehub.com": {
+   "country": "BZ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "baglietto.com": {
    "country": "IT",
@@ -1446,6 +1686,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "banco-solidario.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +593990765765",
+    "phone +593990765765 (legal/contact page)",
+    "RDAP registrant in EC",
+    "in the CrUX top sites of EC only"
+   ],
+   "at": "2026-11-19"
   },
   "bancoppel.com": {
    "country": "MX",
@@ -1526,6 +1779,18 @@
    ],
    "at": "2026-11-15"
   },
+  "barrazueta.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone + 593 959879039",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "bazukapr.com": {
    "country": "PR",
    "scope": "country",
@@ -1557,6 +1822,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-16"
+  },
+  "be-salon.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +51995921336",
+    "phone +51995921336 (legal/contact page)",
+    "address names PE (legal/contact page)",
+    "RDAP registrant in PE"
+   ],
+   "at": "2026-11-19"
   },
   "be10x.com": {
    "country": "IN",
@@ -1914,6 +2192,16 @@
    ],
    "at": "2026-11-09"
   },
+  "brandlyit.com": {
+   "country": "AG",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "branhamtabernacle.org": {
    "country": "US",
    "scope": "country",
@@ -2062,6 +2350,18 @@
    ],
    "at": "2026-11-15"
   },
+  "burbanolex.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593999919535",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "businessinsider.com": {
    "country": "US",
    "scope": "country",
@@ -2113,6 +2413,17 @@
     "written in en, spoken in AU"
    ],
    "at": "2026-11-16"
+  },
+  "cabrerautos.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "calderasgaspromin.com": {
    "country": "ES",
@@ -2259,6 +2570,19 @@
    ],
    "at": "2026-11-12"
   },
+  "cardenasllerena.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593961300035",
+    "address names EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "careeronestop.org": {
    "country": "US",
    "scope": "country",
@@ -2304,6 +2628,29 @@
     "hosted in IE (Maxer Host Ltd AS30900 Sternfo)"
    ],
    "at": "2026-11-09"
+  },
+  "carsearchdirect.com": {
+   "country": "GW",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "carzoneecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593 98 847 1265",
+    "phone +593988471265 (legal/contact page)",
+    "address names EC"
+   ],
+   "at": "2026-11-19"
   },
   "casacourses.com": {
    "country": "MA",
@@ -2620,6 +2967,16 @@
    ],
    "at": "2026-11-10"
   },
+  "chariow.com": {
+   "country": "BF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "chaseveritt.co.za": {
    "country": "ZA",
    "scope": "country",
@@ -2791,6 +3148,19 @@
    ],
    "at": "2026-11-10"
   },
+  "cimaru.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593994993430",
+    "address names EC",
+    "locale es-EC"
+   ],
+   "at": "2026-11-19"
+  },
   "cimeqh.org": {
    "country": "HN",
    "scope": "country",
@@ -2936,6 +3306,16 @@
     "RDAP registrant in CR"
    ],
    "at": "2026-11-09"
+  },
+  "climaires.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "climartex.com": {
    "country": "AR",
@@ -3347,6 +3727,19 @@
    ],
    "at": "2026-11-09"
   },
+  "construyendo.ueniweb.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51927788028",
+    "phone +51927788028 (legal/contact page)",
+    "Google Maps link in PE"
+   ],
+   "at": "2026-11-17"
+  },
   "contactossex.com": {
    "country": "AR",
    "scope": "country",
@@ -3699,6 +4092,29 @@
    ],
    "at": "2026-11-15"
   },
+  "cuty.io": {
+   "country": "IO",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "cvecabogados.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593983977892",
+    "phone +593983977892 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "cyprusbarassociation.org": {
    "country": "CY",
    "scope": "country",
@@ -3868,6 +4284,19 @@
    ],
    "at": "2026-11-09"
   },
+  "darwincd.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584125447114",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "dat.com": {
    "country": "US",
    "scope": "country",
@@ -3963,6 +4392,19 @@
     "address names IE (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "ddsn.com": {
+   "country": "AU",
+   "scope": "country",
+   "confidence": 1,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry AU",
+    "ABN printed",
+    "schema.org addressCountry AU (legal/contact page)",
+    "ABN printed (legal/contact page)"
+   ],
+   "at": "2026-11-17"
   },
   "debian.org": {
    "country": "",
@@ -4586,6 +5028,19 @@
    ],
    "at": "2026-11-16"
   },
+  "dinmoecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593958882555",
+    "phone +593958882555 (legal/contact page)",
+    "address names EC"
+   ],
+   "at": "2026-11-19"
+  },
   "diraire.com": {
    "country": "VE",
    "scope": "country",
@@ -4906,6 +5361,19 @@
    ],
    "at": "2026-11-09"
   },
+  "dsinternacional.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58 424 161 7308",
+    "locale es-VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "dst.dk": {
    "country": "DK",
    "scope": "country",
@@ -5074,6 +5542,32 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "ecuacentair.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593 2281 8404",
+    "phone +59322818404 (legal/contact page)",
+    "address names EC"
+   ],
+   "at": "2026-11-19"
+  },
+  "ecusfitness.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593991680666",
+    "phone +593991680666 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "ed.ai": {
    "country": "US",
@@ -5314,6 +5808,16 @@
    ],
    "at": "2026-11-09"
   },
+  "electricistas-matriculados.com": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "electricistascr.com": {
    "country": "CR",
    "scope": "country",
@@ -5424,6 +5928,19 @@
     "written in fr, spoken in BE"
    ],
    "at": "2026-11-09"
+  },
+  "electronicaore.oresystems.online": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51994201399",
+    "phone +51994201399 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
   },
   "elektronotdienst.berlin": {
    "country": "DE",
@@ -5924,6 +6441,26 @@
    ],
    "at": "2026-11-09"
   },
+  "espace-medicodentaire.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "espacioapk.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "especialistadental.com": {
    "country": "GT",
    "scope": "country",
@@ -5960,6 +6497,32 @@
    ],
    "at": "2026-11-09"
   },
+  "essentialdayspaquito.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593999661493",
+    "phone +593999661493 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
+  "estoydeshopping.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +593 (02) 22 54 570 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)",
+    "RDAP registrant in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "estudiokohon.com": {
    "country": "AR",
    "scope": "country",
@@ -5972,6 +6535,19 @@
     "locale es-AR"
    ],
    "at": "2026-11-12"
+  },
+  "estudiougaz.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51 980 956 576",
+    "phone +51 980 956 576 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
   },
   "eta.gov.eg": {
    "country": "EG",
@@ -6044,6 +6620,16 @@
    ],
    "at": "2026-11-12"
   },
+  "everydaycash.com": {
+   "country": "BI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "evvelcevap.com": {
    "country": "TR",
    "scope": "country",
@@ -6076,6 +6662,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-16"
+  },
+  "expecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "address names EC",
+    "locale es-EC",
+    "hreflang only for EC"
+   ],
+   "at": "2026-11-19"
   },
   "expeditions.com": {
    "country": "US",
@@ -6188,6 +6787,29 @@
    ],
    "at": "2026-11-09"
   },
+  "fapnado.com": {
+   "country": "GQ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "faroluxurygourmet.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "RUC (Peru) printed",
+    "RUC (Peru) printed (legal/contact page)",
+    "phone +51 996 604 785 (legal/contact page)",
+    "address names PE"
+   ],
+   "at": "2026-11-17"
+  },
   "farsonsdirect.com": {
    "country": "MT",
    "scope": "country",
@@ -6248,6 +6870,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "featuredsavings.com": {
+   "country": "AS",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "feedinco.com": {
    "country": "",
@@ -6318,6 +6950,19 @@
    ],
    "at": "2026-11-09"
   },
+  "financoop.net": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "phone +593-2-2564-175",
+    "phone +593-2-2564175 (legal/contact page)",
+    "address names EC (legal/contact page)",
+    "RDAP registrant in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "firstclasselectricnj.com": {
    "country": "US",
    "scope": "country",
@@ -6328,6 +6973,29 @@
     "written in en, spoken in US"
    ],
    "at": "2026-11-09"
+  },
+  "fisagrp.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +5932237393",
+    "phone +5932237393 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
+  "fixidentperu.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "flip-mobile.com": {
    "country": "GP",
@@ -6485,6 +7153,19 @@
    ],
    "at": "2026-11-09"
   },
+  "foodfairperu.net": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51 938 637 558",
+    "address names PE",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
+  },
   "footballpredictions.ai": {
    "country": "",
    "scope": "worldwide",
@@ -6520,6 +7201,16 @@
     "address names FR (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "forceturfvip.net": {
+   "country": "BF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "fotoscaserasx.com": {
    "country": "",
@@ -6619,6 +7310,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "french-stream.net": {
+   "country": "BI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "friendsweek.com": {
    "country": "",
@@ -6737,6 +7438,39 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "fullxcinema.com": {
+   "country": "FJ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "funaitools.com": {
+   "country": "AF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "fundacionpolinalecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +59322555188",
+    "phone +59322555188 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "fundednext.com": {
    "country": "",
@@ -6944,6 +7678,16 @@
    ],
    "at": "2026-11-09"
   },
+  "get-moment.com": {
+   "country": "AS",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "getezone.com": {
    "country": "",
    "scope": "worldwide",
@@ -6953,6 +7697,26 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "getintopc.com": {
+   "country": "BI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "getmeru.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "ghlhoteles.com": {
    "country": "CO",
@@ -6973,6 +7737,18 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "gilead.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "phone +1 (650) 574-3000",
+    "phone +1 (650) 574 3000 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
   },
   "gimytw.cc": {
    "country": "TW",
@@ -6996,6 +7772,19 @@
     "in the CrUX top sites of LT only"
    ],
    "at": "2026-11-09"
+  },
+  "giuliaridesign.net": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +584142762037",
+    "phone +584142762037 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "givamblog.com": {
    "country": "BR",
@@ -7438,6 +8227,19 @@
    ],
    "at": "2026-11-09"
   },
+  "gymplus.crosshero.site": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51971066830",
+    "locale es-PE",
+    "prices in PEN"
+   ],
+   "at": "2026-11-17"
+  },
   "hadawebshop.hu": {
    "country": "HU",
    "scope": "country",
@@ -7513,6 +8315,19 @@
    ],
    "at": "2026-11-10"
   },
+  "hauserecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +593962076487",
+    "phone +593962076487 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "hbelectrics.com": {
    "country": "CO",
    "scope": "country",
@@ -7587,6 +8402,19 @@
    ],
    "at": "2026-11-09"
   },
+  "heavenlyspalima.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +51(1)201-5000",
+    "phone +51(1) 201-5000 (legal/contact page)",
+    "address names PE",
+    "address names PE (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
   "heavy-r.com": {
    "country": "",
    "scope": "worldwide",
@@ -7609,6 +8437,16 @@
     "phone +493091611242 (legal/contact page)"
    ],
    "at": "2026-11-10"
+  },
+  "herreriarua.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "herreroperiodontics.com": {
    "country": "PR",
@@ -7642,6 +8480,19 @@
     "Google Maps link in ES (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "hgcontadoresecu.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593995813670",
+    "phone +593995813670 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "hhoteldubai.com": {
    "country": "AE",
@@ -7750,6 +8601,16 @@
    ],
    "at": "2026-11-15"
   },
+  "holdgently.com": {
+   "country": "GA",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "homemart.bg": {
    "country": "BG",
    "scope": "country",
@@ -7832,6 +8693,18 @@
    ],
    "at": "2026-11-15"
   },
+  "hotelgrandgalaxie.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58 424 233 0508",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
+  },
   "hotelmiramarperu.com": {
    "country": "PE",
    "scope": "country",
@@ -7878,6 +8751,16 @@
    ],
    "at": "2026-11-09"
   },
+  "howknowseek.com": {
+   "country": "BI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "hptu.org": {
    "country": "CO",
    "scope": "country",
@@ -7890,6 +8773,16 @@
     "locale es-CO"
    ],
    "at": "2026-11-09"
+  },
+  "hseletrica.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "hubspot.com": {
    "country": "",
@@ -7945,6 +8838,19 @@
     "written in es, spoken in DO"
    ],
    "at": "2026-11-09"
+  },
+  "hvdes.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593979208000",
+    "Google Maps link in EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-20"
   },
   "hymnary.org": {
    "country": "US",
@@ -8126,6 +9032,19 @@
    ],
    "at": "2026-11-11"
   },
+  "imodaquito.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "address names EC",
+    "address names EC (legal/contact page)",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "impactpool.org": {
    "country": "SE",
    "scope": "country",
@@ -8138,6 +9057,16 @@
     "phone +46812147820"
    ],
    "at": "2026-11-09"
+  },
+  "implantesdenicaragua.com": {
+   "country": "NI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "impulseelectricalenterprise.com": {
    "country": "AU",
@@ -8173,6 +9102,19 @@
     "written in es, spoken in PA"
    ],
    "at": "2026-11-09"
+  },
+  "inboundgroupca.com": {
+   "country": "CN",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +86-四川省成都市成华区人民路507号",
+    "RDAP registrant in CN",
+    "locale zh-CN",
+    "locale zh-CN (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "index-education.com": {
    "country": "FR",
@@ -8366,6 +9308,19 @@
    ],
    "at": "2026-11-13"
   },
+  "inverpropiedad.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584122273127",
+    "phone +584122273127 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
+  },
   "invoice4u.co.il": {
    "country": "IL",
    "scope": "country",
@@ -8425,6 +9380,18 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "iqlatam.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593998520270",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "ironhack.com": {
    "country": "",
@@ -8508,6 +9475,19 @@
    ],
    "at": "2026-11-09"
   },
+  "itemis.com": {
+   "country": "DE",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry DE",
+    "schema.org addressCountry DE (legal/contact page)",
+    "Handelsregister printed (legal/contact page)",
+    "phone +49 231 58693252"
+   ],
+   "at": "2026-11-17"
+  },
   "itsmanual.com": {
    "country": "GB",
    "scope": "country",
@@ -8574,6 +9554,16 @@
    ],
    "at": "2026-11-15"
   },
+  "javday.app": {
+   "country": "CN",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "javmyanmar.com": {
    "country": "MM",
    "scope": "country",
@@ -8627,6 +9617,19 @@
    ],
    "at": "2026-11-09"
   },
+  "jirehgourmet.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593992979120",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "jll.com": {
    "country": "US",
    "scope": "country",
@@ -8636,6 +9639,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "jlservicesa.blogspot.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "jn.fo": {
    "country": "FO",
@@ -8728,6 +9741,19 @@
     "hreflang only for BR"
    ],
    "at": "2026-11-09"
+  },
+  "jpbtoursperu.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +51 956 946 179",
+    "address names PE",
+    "locale es-PE",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
   },
   "jpost.com": {
    "country": "IL",
@@ -9080,6 +10106,29 @@
    ],
    "at": "2026-11-09"
   },
+  "kooralivr.info": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "koozai.com": {
+   "country": "GB",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry GB",
+    "schema.org addressCountry GB (legal/contact page)",
+    "phone +443303530300",
+    "phone +443303530300 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
   "kosovajob.com": {
    "country": "XK",
    "scope": "country",
@@ -9173,6 +10222,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "labodegaiberica.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "Google Maps link in PE (legal/contact page)",
+    "prices in S/"
+   ],
+   "at": "2026-11-17"
   },
   "lacasadelaire.com.pa": {
    "country": "PA",
@@ -9314,6 +10376,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "lemuxa.com": {
+   "country": "CV",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "lenovo.com": {
    "country": "",
@@ -9475,6 +10547,19 @@
    ],
    "at": "2026-11-11"
   },
+  "liriaspa.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51 900 298 221",
+    "locale es-PE",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
+  },
   "lisbonsmile.com": {
    "country": "PT",
    "scope": "country",
@@ -9564,6 +10649,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "logiciel-ec.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +59324511515",
+    "phone +59324511515 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "login.gov": {
    "country": "US",
@@ -9808,6 +10906,18 @@
    ],
    "at": "2026-11-09"
   },
+  "marca.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry ES",
+    "phone +34 910 501 629",
+    "written in es, spoken in ES"
+   ],
+   "at": "2026-11-19"
+  },
   "marinaestrella.com": {
    "country": "ES",
    "scope": "country",
@@ -9878,6 +10988,17 @@
     "phone +54 9 11 2329 3842 (legal/contact page)"
    ],
    "at": "2026-11-12"
+  },
+  "maviautos.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "mawdoo3.com": {
    "country": "JO",
@@ -10145,6 +11266,26 @@
    ],
    "at": "2026-11-09"
   },
+  "mestredosreparos.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "meta00s.com": {
+   "country": "FJ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "meteo-paris.com": {
    "country": "FR",
    "scope": "country",
@@ -10260,6 +11401,28 @@
    ],
    "at": "2026-11-09"
   },
+  "minacliffside.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "address names EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
+  "mindluster.com": {
+   "country": "AF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "minfin.am": {
    "country": "AM",
    "scope": "country",
@@ -10292,6 +11455,29 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "mioterik.com": {
+   "country": "ID",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "mirandaanalitica.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593963984737",
+    "phone +593963984737 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "mis.edu.gm": {
    "country": "GM",
@@ -10864,6 +12050,16 @@
    ],
    "at": "2026-11-09"
   },
+  "myfunmax.com": {
+   "country": "KM",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "mymovieboxproapp.com": {
    "country": "IS",
    "scope": "country",
@@ -11130,6 +12326,19 @@
    ],
    "at": "2026-11-09"
   },
+  "nexuslabsus.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51998173390",
+    "phone +51998173390 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
+  },
   "ng-berlin.com": {
    "country": "DE",
    "scope": "country",
@@ -11233,6 +12442,16 @@
    ],
    "at": "2026-11-09"
   },
+  "nogginbank.com": {
+   "country": "GM",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "noshorts.com": {
    "country": "US",
    "scope": "country",
@@ -11282,6 +12501,19 @@
     "in the CrUX top sites of CR only"
    ],
    "at": "2026-11-09"
+  },
+  "novumideas.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +58 (0212) 9518337 (legal/contact page)",
+    "address names VE",
+    "address names VE (legal/contact page)",
+    "RDAP registrant in VE"
+   ],
+   "at": "2026-11-20"
   },
   "nr1.md": {
    "country": "MD",
@@ -11510,6 +12742,16 @@
    ],
    "at": "2026-11-09"
   },
+  "odontologia247.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "odontologia3.com": {
    "country": "PY",
    "scope": "country",
@@ -11557,6 +12799,16 @@
     "address names SV (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "odontosaludec.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "odontosmile.be": {
    "country": "BE",
@@ -11639,6 +12891,19 @@
     "address names LT (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "ondasdemarzo.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "schema.org addressCountry PE (legal/contact page)",
+    "phone +51 980 457 585",
+    "phone +51 980 457 585 (legal/contact page)"
+   ],
+   "at": "2026-11-17"
   },
   "one15marina.com": {
    "country": "SG",
@@ -11840,6 +13105,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "overqvyc.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "CIF/NIF printed",
+    "CIF/NIF printed (legal/contact page)",
+    "phone +34 614 896 730",
+    "phone +34 614 896 730 (legal/contact page)"
+   ],
+   "at": "2026-11-20"
   },
   "ozap.com": {
    "country": "FR",
@@ -12115,6 +13393,16 @@
    ],
    "at": "2026-11-15"
   },
+  "peppaquiz.com": {
+   "country": "CF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "pepper.pl": {
    "country": "PL",
    "scope": "country",
@@ -12149,6 +13437,18 @@
     "written in es, spoken in NI"
    ],
    "at": "2026-11-09"
+  },
+  "periodicolasocial.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51 999 705 580 (legal/contact page)",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
   },
   "peritoselectricistas.org": {
    "country": "PR",
@@ -12487,6 +13787,16 @@
     "address names GT"
    ],
    "at": "2026-11-09"
+  },
+  "plomeriaheroes24siete.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "plomerianarvarte.com": {
    "country": "MX",
@@ -12855,6 +14165,19 @@
    ],
    "at": "2026-11-13"
   },
+  "portafolio.co": {
+   "country": "CO",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "NIT printed",
+    "NIT printed (legal/contact page)",
+    "phone +57(1)4266000",
+    "address names CO (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "portaventuraworld.com": {
    "country": "ES",
    "scope": "country",
@@ -13094,6 +14417,16 @@
    ],
    "at": "2026-11-09"
   },
+  "proman.services": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "pronosoft.com": {
    "country": "FR",
    "scope": "country",
@@ -13106,6 +14439,16 @@
     "in the CrUX top sites of FR only (and 5 more)"
    ],
    "at": "2026-11-09"
+  },
+  "pronoverite.com": {
+   "country": "BF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "propertyfinder.bh": {
    "country": "BH",
@@ -13286,6 +14629,26 @@
    ],
    "at": "2026-11-09"
   },
+  "questionfix.com": {
+   "country": "KY",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "questionsconnect.com": {
+   "country": "KY",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "quicklaunch.io": {
    "country": "US",
    "scope": "country",
@@ -13298,6 +14661,30 @@
     "phone +1 844-752-8624 (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "quintavillarustica.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593993983066"
+   ],
+   "at": "2026-11-19"
+  },
+  "quito-japaneseheadspa.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593 96 286 2003",
+    "phone +593 962862003 (legal/contact page)",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "qwickbirr.com": {
    "country": "ET",
@@ -13394,6 +14781,16 @@
    ],
    "at": "2026-11-09"
   },
+  "rapirescate.com": {
+   "country": "CR",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "rawson.co.za": {
    "country": "ZA",
    "scope": "country",
@@ -13439,6 +14836,19 @@
     "Hand-checked card with no single country (React)"
    ],
    "at": "2026-11-09"
+  },
+  "realaudiencia.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.91,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "phone +593 99 802 2005",
+    "phone +593 99 802 2005 (legal/contact page)"
+   ],
+   "at": "2026-11-19"
   },
   "reale-gourmet.com": {
    "country": "AR",
@@ -13551,6 +14961,19 @@
    ],
    "at": "2026-11-15"
   },
+  "relevium-medical.com": {
+   "country": "IE",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "address names IE",
+    "address names IE (legal/contact page)",
+    "RDAP registrant in IE",
+    "locale en-IE"
+   ],
+   "at": "2026-11-19"
+  },
   "remax-diamondrealty-guam.com": {
    "country": "GU",
    "scope": "country",
@@ -13576,6 +14999,19 @@
     "written in en, spoken in ZA"
    ],
    "at": "2026-11-09"
+  },
+  "remaxhabitat.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +582129597008",
+    "phone +582129597008 (legal/contact page)",
+    "address names VE"
+   ],
+   "at": "2026-11-20"
   },
   "remidental.com": {
    "country": "BE",
@@ -13757,6 +15193,16 @@
    ],
    "at": "2026-11-09"
   },
+  "riorise.com": {
+   "country": "BR",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "rippling.com": {
    "country": "US",
    "scope": "country",
@@ -13841,6 +15287,18 @@
     "locale sl-SI"
    ],
    "at": "2026-11-09"
+  },
+  "roche.com": {
+   "country": "CH",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CH",
+    "phone +41 61 688 11 11",
+    "prices in CHF"
+   ],
+   "at": "2026-11-17"
   },
   "rockauto.com": {
    "country": "US",
@@ -14235,6 +15693,16 @@
    ],
    "at": "2026-11-09"
   },
+  "sanitariabuceo.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "sanitariaexpress.com": {
    "country": "UY",
    "scope": "country",
@@ -14382,6 +15850,19 @@
    ],
    "at": "2026-11-10"
   },
+  "secretgardenecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +593 991980027",
+    "phone + (593) 99-1980027 (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "secrethostess.com": {
    "country": "",
    "scope": "worldwide",
@@ -14401,6 +15882,17 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "segurosalianza.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "selectric.com.pa": {
    "country": "PA",
@@ -14439,6 +15931,19 @@
     "written in es, spoken in CL"
    ],
    "at": "2026-11-09"
+  },
+  "seobility.net": {
+   "country": "DE",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry DE",
+    "schema.org addressCountry DE (legal/contact page)",
+    "Handelsregister printed (legal/contact page)",
+    "phone +4991123756261"
+   ],
+   "at": "2026-11-19"
   },
   "seolocalarg.com": {
    "country": "AR",
@@ -14751,6 +16256,16 @@
    ],
    "at": "2026-11-09"
   },
+  "shot90.com": {
+   "country": "DZ",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "shrmha.com": {
    "country": "AR",
    "scope": "country",
@@ -14892,8 +16407,28 @@
    ],
    "at": "2026-11-09"
   },
+  "skydropx.com": {
+   "country": "MX",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "skynewsarabia.com": {
    "country": "AE",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "sliwn.com": {
+   "country": "CF",
    "scope": "country",
    "confidence": 1,
    "by": "carlos",
@@ -15321,6 +16856,16 @@
    ],
    "at": "2026-11-09"
   },
+  "sossolucioneselectricas.wordpress.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "sot.com.al": {
    "country": "AL",
    "scope": "country",
@@ -15416,6 +16961,18 @@
     "address names AR"
    ],
    "at": "2026-11-13"
+  },
+  "spahappiness.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593983445094",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
   },
   "sparkasse.mk": {
    "country": "MK",
@@ -15765,6 +17322,16 @@
    ],
    "at": "2026-11-15"
   },
+  "summervgame.com": {
+   "country": "BF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "summitracing.com": {
    "country": "US",
    "scope": "country",
@@ -15820,6 +17387,16 @@
     "locale es-DO (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "superpsx.com": {
+   "country": "CU",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "support.google.com": {
    "country": "",
@@ -15956,6 +17533,19 @@
    ],
    "at": "2026-11-09"
   },
+  "symcontadores.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51965346358",
+    "phone +51 965 346 358 (legal/contact page)",
+    "written in es, spoken in PE"
+   ],
+   "at": "2026-11-17"
+  },
   "syria-scores.com": {
    "country": "SY",
    "scope": "country",
@@ -16014,6 +17604,16 @@
     "in the CrUX top sites of TJ only"
    ],
    "at": "2026-11-09"
+  },
+  "taknai.com": {
+   "country": "TH",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "talabat.com": {
    "country": "AE",
@@ -16283,6 +17883,19 @@
    ],
    "at": "2026-11-09"
   },
+  "termacold.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51 901 434 251",
+    "phone +51 901 434 251 (legal/contact page)",
+    "locale es-PE"
+   ],
+   "at": "2026-11-17"
+  },
   "tes.com": {
    "country": "GB",
    "scope": "country",
@@ -16307,6 +17920,16 @@
    ],
    "at": "2026-11-09"
   },
+  "texaswaiter.com": {
+   "country": "ID",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "tgramsearch.com": {
    "country": "RU",
    "scope": "country",
@@ -16329,6 +17952,19 @@
     "written in th"
    ],
    "at": "2026-11-09"
+  },
+  "thebridge.tech": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.85,
+   "by": "signals",
+   "evidence": [
+    "phone +34919017257",
+    "phone +34919017257 (legal/contact page)",
+    "RDAP registrant in ES",
+    "written in es, spoken in ES"
+   ],
+   "at": "2026-11-17"
   },
   "theconversation.com": {
    "country": "",
@@ -16471,6 +18107,16 @@
     "written in en, spoken in CA"
    ],
    "at": "2026-11-09"
+  },
+  "thirteen.muzyet.com": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "thistleelectrical.ie": {
    "country": "IE",
@@ -16892,6 +18538,19 @@
    ],
    "at": "2026-11-15"
   },
+  "transportes-ecuador.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "Google Maps link in EC",
+    "Google Maps link in EC (legal/contact page)",
+    "address names EC",
+    "address names EC (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "transportstyrelsen.se": {
    "country": "SE",
    "scope": "country",
@@ -17154,6 +18813,19 @@
    ],
    "at": "2026-11-09"
   },
+  "tuwebcaracas.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.91,
+   "by": "signals",
+   "evidence": [
+    "phone +58 (0212) 326.84.28 (legal/contact page)",
+    "Google Maps link in VE (legal/contact page)",
+    "address names VE",
+    "address names VE (legal/contact page)"
+   ],
+   "at": "2026-11-20"
+  },
   "tv4.se": {
    "country": "SE",
    "scope": "country",
@@ -17176,6 +18848,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "twinsfun.com": {
+   "country": "HU",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "typedeal.com": {
    "country": "GB",
@@ -17560,6 +19242,19 @@
    ],
    "at": "2026-11-09"
   },
+  "us.oritorepublik.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.88,
+   "by": "signals",
+   "evidence": [
+    "us.oritorepublik.com is the US version of the site",
+    "address names US",
+    "hreflang only for US",
+    "written in en, spoken in US"
+   ],
+   "at": "2026-11-19"
+  },
   "usccb.org": {
    "country": "US",
    "scope": "country",
@@ -17592,6 +19287,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "usehelios.ai": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "usg.edu": {
    "country": "US",
@@ -17697,6 +19402,16 @@
    ],
    "at": "2026-11-09"
   },
+  "vdl.np-downloader.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "vegasinsider.com": {
    "country": "US",
    "scope": "country",
@@ -17791,6 +19506,18 @@
    ],
    "at": "2026-11-15"
   },
+  "vidyaspa.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "phone +593 99 168 1628",
+    "written in es, spoken in EC"
+   ],
+   "at": "2026-11-19"
+  },
   "vigaire.com": {
    "country": "DO",
    "scope": "country",
@@ -17859,6 +19586,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "vipgameshub.com": {
+   "country": "CF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "viralesenred.com": {
    "country": "CU",
@@ -17944,6 +19681,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "vitalimaspa.com": {
+   "country": "PE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PE",
+    "phone +51907308415",
+    "locale es-PE",
+    "hreflang only for PE"
+   ],
+   "at": "2026-11-17"
   },
   "vitibet.com": {
    "country": "CZ",
@@ -18042,6 +19792,16 @@
    ],
    "at": "2026-11-09"
   },
+  "voyeusesur.com": {
+   "country": "BF",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "vuejs.org": {
    "country": "",
    "scope": "worldwide",
@@ -18075,6 +19835,29 @@
    ],
    "at": "2026-11-09"
   },
+  "wahedsex.com": {
+   "country": "SC",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
+  "wanqara.com": {
+   "country": "EC",
+   "scope": "country",
+   "confidence": 1,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry EC",
+    "schema.org addressCountry EC (legal/contact page)",
+    "RUC (Ecuador) printed",
+    "RUC (Ecuador) printed (legal/contact page)"
+   ],
+   "at": "2026-11-19"
+  },
   "wanuncios.com": {
    "country": "ES",
    "scope": "country",
@@ -18094,6 +19877,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "warairamar.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +58-424-280-8446",
+    "address names VE",
+    "written in es, spoken in VE"
+   ],
+   "at": "2026-11-20"
   },
   "waterhouse.nyc": {
    "country": "US",
@@ -18271,6 +20067,16 @@
    ],
    "at": "2026-11-09"
   },
+  "wholebodieswholeminds.com": {
+   "country": "BY",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
+  },
   "wikidex.net": {
    "country": "ES",
    "scope": "country",
@@ -18280,6 +20086,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-13"
+  },
+  "wildshare.net": {
+   "country": "BW",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "wimpolestreetdental.clinic": {
    "country": "GB",
@@ -18362,6 +20178,16 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "x365.ai": {
+   "country": "CI",
+   "scope": "country",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "xda-developers.com": {
    "country": "CA",
@@ -18627,6 +20453,16 @@
     "locale en-US"
    ],
    "at": "2026-11-10"
+  },
+  "zebzob.net": {
+   "country": "",
+   "scope": "worldwide",
+   "confidence": 1,
+   "by": "carlos",
+   "evidence": [
+    "Confirmed by Carlos in Jarvis"
+   ],
+   "at": "2026-11-16"
   },
   "zervix.net": {
    "country": "DO",

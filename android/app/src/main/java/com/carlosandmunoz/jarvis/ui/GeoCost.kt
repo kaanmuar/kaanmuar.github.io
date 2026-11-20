@@ -163,7 +163,6 @@ object GeoCost {
         return "Cost and return over the ${basisText(g, mode, span, label)}: ${show(t.num("cost"), "cost")} spent" +
             (if (unspread > 0) ", ${show(unspread, "cost")} not spread (no country had the activity it is spread by)" else "") + ". Revenue is paid unlocks from short links."
     }
-
     /** The toast after Suggest costs: how many to confirm, then what each source could not give. */
     fun suggestToast(n: Int, note: String?) = (if (n == 0) "Nothing to suggest." else "$n suggestion${if (n == 1) "" else "s"} to confirm under Outreach costs.") + (note?.takeIf { it.isNotBlank() }?.let { " $it" } ?: "")
 
@@ -205,7 +204,7 @@ fun GeoCostLegend(g: JsonObject, tv: GeoTime.View, key: String) {
         }
         Muted(line)
     } else if (key == "cost") Muted("Brighter is more, up to ${GeoCost.show(tv.rows.maxOfOrNull { GeoCost.value(it, key) ?: 0.0 }, key)}.")
-    Text(GeoCost.note(g, tv.mode, tv.span, tv.week, tv.label), color = if (GeoCost.hasItems(g)) J.muted else J.amber, fontSize = 13.sp)
+    Text(GeoCost.note(g, tv.mode, tv.span, tv.week?.toInt(), tv.label), color = if (GeoCost.hasItems(g)) J.muted else J.amber, fontSize = 13.sp)
 }
 
 /** The Cost and return panel: totals, the channels, and the best and worst countries for the picked cost metric. */
@@ -213,7 +212,7 @@ fun GeoCostLegend(g: JsonObject, tv: GeoTime.View, key: String) {
 fun GeoCostPanel(g: JsonObject, tv: GeoTime.View, key: String, channel: String, pick: (String) -> Unit) {
     if (!(channel == "all" || channel == GeoCost.CHANNEL.first || key in GeoCost.KEYS)) return
     if (!GeoCost.hasItems(g)) { Panel("Cost and return", id = "geo-cost") { Text(GeoCost.NEEDS, color = J.amber, fontSize = 13.sp) }; return }
-    val v = GeoCost.viewFor(g, tv.mode, tv.span, tv.week)
+    val v = GeoCost.viewFor(g, tv.mode, tv.span, tv.week?.toInt())
     val t = v.obj("totals")
     Panel("Cost and return · ${GeoCost.basisText(g, tv.mode, tv.span, tv.label).substringBefore(",")}", id = "geo-cost") {
         if (t == null) { Muted("No cost basis yet: the daily run records the history, or a campaign has to start."); return@Panel }

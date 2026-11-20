@@ -111,7 +111,7 @@ const NOT_A_NAME = /^(home|homepage|home page|start|welcome|index|inicio|bienven
 // A site's name from its og:site_name: the part before a tagline separator, and only when it is short enough
 // to be a name. "" when it is just the host, or reads like a marketing line.
 function siteName(raw, host) {
-  const name = String(raw || "").replace(/\s+/g, " ").trim().split(/\s+[—–|·:-]\s+|\s*[|·]\s*/)[0].trim();
+  const name = String(raw || "").replace(/\s+/g, " ").trim().split(/ [—–|·:-] | ?[|·] ?/)[0].trim();
   const bare = (value) => String(value || "").toLowerCase().replace(/^www\./, "");
   if (!name || name.length > NAME_MAX || name.split(" ").length > NAME_WORDS || NOT_A_NAME.test(name)) return "";
   return bare(name) === bare(host) ? "" : name;

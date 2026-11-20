@@ -57,6 +57,8 @@ const RERUN_PER_RUN = 4;
 
 const WEAK = 70;
 const LOOSE_PER_RUN = 4;
+/** Niche/problem searches handed to the Mac when named Live Report queries are not enough (#3613). */
+const LOOSE_MAC_BUDGET = 2;
 const LOOSE_WORTH = 0.75;
 const LOOSE = ["problem", "niche"];
 // Weak areas in the order people complain about them in public; the first one is searched.
@@ -206,6 +208,15 @@ function looseQueries(list) {
   return problems.concat(niches).filter((l) => !seen.has(l.q) && seen.add(l.q)).slice(0, LOOSE_PER_RUN);
 }
 
+/** A rotating subset of looseQueries for engagement-mac-sites (#3613). */
+function looseForMac(loose, now) {
+  const list = loose || [];
+  if (!list.length) return [];
+  const slot = Math.floor((now || Date.now()) / (30 * 60 * 1000));
+  const n = Math.min(LOOSE_MAC_BUDGET, list.length);
+  return Array.from({ length: n }, (_, i) => list[(slot * n + i) % list.length]);
+}
+
 /** The site a post fits by a loose search, the one that found it first, as { target, match, problem } or null. */
 function looseOf(post, loose) {
   const hay = norm([post.title, post.text, (post.tags || []).join(" ")].join("\n"));
@@ -238,7 +249,7 @@ function prompt(items) {
     "For each post, return one JSON object in a JSON array, same order, with exactly these keys:",
     '{"id": same id, "aboutSite": true only when the post is really about this website or the organisation behind it, not something else with the same name, "fits": for match "problem" and "niche" only (false otherwise), see the strict check below, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "worth": 0 to 1, how welcome a short note about the site\'s report would be under this post, "why": at most 15 English words, "reply": the invite, or "" when the post is political, angry, an argument or about a tragedy, when worth is under 0.6, for match "domain" or "name" when aboutSite is false, and for match "problem" or "niche" when fits is false or worth is under 0.75}',
     "Strict check for match \"problem\" and \"niche\"; when in doubt, fits is false. Problem: fits only when the post is about this very website or app (aboutSite true) and the complaint is about using it in a way site.problem covers (Performance: slow, down, not loading; Accessibility: hard to use, confusing, screen readers; Security: hacked, unsafe, certificate; SEO: broken links, cannot find pages; GEO: AI search; Analytics: cookies, tracking). Niche: fits only when the post is about websites or online services of the site's kind and someone who builds, runs, studies or relies on such sites would welcome an example review. Never fits: news about the organisation or the field that is not about a website, a personal account, order, payment, delivery or customer-service issue, a joke, a job post, an ad, a giveaway, or a post by the organisation itself.",
-    "Reply rules: write in the post's language (en, es, pt, de, fr or it; otherwise reply \"\"). Speak as a helpful practitioner, first person plural, warm and specific, in one or two short sentences. Open on what the post says, then say we ran a free review of the site and invite them to look at it. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number, never call the site bad, slow, broken or unsafe, and say instead that the report has a few findings worth a look on site.weakest. For match \"problem\", acknowledge what they ran into without confirming, diagnosing or blaming, and say the free review of the site has findings on site.problem. For match \"niche\", never suggest the author mentioned or uses the site: offer it by name as one site of that kind we reviewed, as an example of what such a review finds. End with {link} exactly once, where the link goes. " + REGISTER,
+    "Reply rules: write in the post's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Speak as a helpful practitioner, first person plural, warm and specific, in one or two short sentences. Open on what the post says, then say we ran a free review of the site and invite them to look at it. When site.score is a number you may name it as score/100; when it is null never name a score, grade or number, never call the site bad, slow, broken or unsafe, and say instead that the report has a few findings worth a look on site.weakest. For match \"problem\", acknowledge what they ran into without confirming, diagnosing or blaming, and say the free review of the site has findings on site.problem. For match \"niche\", never suggest the author mentioned or uses the site: offer it by name as one site of that kind we reviewed, as an example of what such a review finds. End with {link} exactly once, where the link goes. " + REGISTER,
     "Never: any link or address other than {link} (naming the site is fine), hashtags, more than one emoji, em dashes, flattery like \"Great post!\", made-up numbers, pressure or sales talk, or anything about the author's person. Stay under maxReply characters, {link} not counted.",
     "Posts:",
     JSON.stringify(list)
@@ -257,7 +268,7 @@ function parse(text, items) {
   rows.forEach((r) => {
     const p = r && byKey[r.id];
     if (!p) return;
-    let reply = String(r.reply || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
+    let reply = String(r.reply || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
     let once = false;
     reply = reply.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/\s{2,}/g, " ").trim();
     if (reply && !once) reply += " {link}";
@@ -277,8 +288,14 @@ function fill(reply, link, network) {
   const limit = (E.NETWORKS[network] || {}).limit || 300;
   let [before, after = ""] = reply.split("{link}");
   const room = limit - link.length - after.length;
-  if (before.length > room) before = before.slice(0, Math.max(0, room - 2)).replace(/\s+\S*$/, "") + "… ";
+  if (before.length > room) before = before.slice(0, Math.max(0, room - 2)).replace(/(?<!\s)\s+\S*$/, "") + "… ";
   return (before + link + after).replace(/\s{2,}/g, " ").trim();
+}
+
+/** The reply with one hashtag (#3814) where a tag in a reply is normal; ctx.trends: the tags rising in this run, when known. */
+function tagged(draft, post, ctx) {
+  const tag = E.Trends.pickTag(post, (ctx && ctx.trends) || [], E.relevance);
+  return E.Trends.withTag(draft, tag, (E.NETWORKS[post.network] || {}).limit || 300);
 }
 
 /**
@@ -301,7 +318,7 @@ function decide(post, ai, target, conf, used, now, ctx) {
   const flag = ai.political ? "political" : ai.argument ? "argument" : ai.sentiment === "angry" ? "angry" : "";
   if (flag) return no(flag);
   const lang = ai.lang || lang2(post.lang);
-  if (!E.LANGS.includes(lang)) return no("lang");
+  if (!lang) return no("lang");
   if (!ai.reply || ai.worth < (loose ? Math.max(conf.worth, LOOSE_WORTH) : conf.worth)) return { verdict: "watch", skip: "", actions: {} };
   if (ctx.replied.has(E.threadKey(post))) return { verdict: "watch", skip: "", actions: { reply: { status: "replied", error: "We already replied in this conversation." } } };
   if (conf.paused) return { verdict: "watch", skip: "", actions: { reply: { status: "paused" } } };
@@ -313,7 +330,7 @@ function decide(post, ai, target, conf, used, now, ctx) {
   const link = (ctx.links && ctx.links[post.key]) || linkFor(target, post.network, lang, post.key);
   return {
     verdict: "engage", skip: "",
-    actions: { reply: { status: "waiting", kind: CAMPAIGN, draft: fill(ai.reply, link, post.network), lang, expiresAt: new Date(now + E.REPLY_TTL).toISOString() } }
+    actions: { reply: Object.assign({ status: "waiting", kind: CAMPAIGN, draft: tagged(fill(ai.reply, link, post.network), post, ctx), lang, expiresAt: new Date(now + E.REPLY_TTL).toISOString() }) }
   };
 }
 
@@ -494,7 +511,7 @@ function resultsIssue(r, social) {
 }
 
 module.exports = {
-  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_WORTH, PARENT,
+  CAMPAIGN, ANSWERED, CODES, CARD_NETS, SHOW_SCORE, SITE_GAP, PER_RUN, LONG_LINK, MAX_AGE_HOURS, WEAK, LOOSE, LOOSE_PER_RUN, LOOSE_MAC_BUDGET, LOOSE_WORTH, looseForMac, PARENT,
   RERUN_MIN, BACK_DAYS, RERUN_PER_RUN, RERUN_COPY, REGISTER,
   targets, pick, queries, matchOf, siteOf, looseQueries, looseOf, shortOf, nicheOf, shown, linkFor, prompt, parse, fill, decide, doc, rollup, bare, answeredHosts, resultsIssue,
   toldScore, moved, reruns, replyId, rerunText, rerunDoc

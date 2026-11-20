@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Faces for every check · QA-lab URL Review</title>
+    <link rel="icon" href="../../assets/qa-review-mark.svg?v=20261013c" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap">
+    <link rel="stylesheet" href="../3d/look.css">
+    <link rel="stylesheet" href="faces.css">
+    <script type="importmap">{"imports":{"three":"../../vendor/three/build/three.module.js","three/addons/":"../../vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+<header class="bar">
+    <a class="brand" href="../../qa-review.html"><img src="../../assets/qa-review-mark.svg?v=20261013c" alt="" width="34" height="34"><span>QA-lab<small>URL REVIEW</small></span></a>
+    <nav class="switch" aria-label="Directions"><a href="#crystal">Crystal relic</a><a href="#line">Line light</a><a href="#badge">Frosted badge</a><a href="#stills">Stills and clips</a></nav>
+</header>
+<main class="wrap">
+    <p class="eyebrow">Design proposals · #3826 · round one</p>
+    <h1 class="display"><span>Every check,</span><span><em>its own face.</em></span></h1>
+    <p class="lede">Today every check, section and plan shares one mark. These are three directions for giving each its own face, tried on six items: three checks, two from the new cyber-attack side and one feature. Each face is one symbol drawn two ways: an animated glass SVG that stays readable at 16&nbsp;px in a report row, and a live 3D tile built from the same shape in the hero's glass. Move the pointer over a tile; it tilts. Coral and red appear only on the high and critical threat levels.</p>
+    <div class="palette" aria-label="Palette">
+        <span style="--c:#071116">#071116 night</span><span style="--c:#0d6e76">#0d6e76 deep</span><span style="--c:#7ef6fb">#7ef6fb cyan</span><span style="--c:#e2c48a">#e2c48a gold</span><span style="--c:#6fe3b1">#6fe3b1 mint</span><span style="--c:#b9a8ff">#b9a8ff violet</span><span style="--c:#f39a8b">#f39a8b coral · high</span><span style="--c:#ff6b5e">#ff6b5e red · critical</span>
+    </div>
+    <div id="dirs"></div>
+    <section class="dir" id="stills">
+        <p class="eyebrow">Other formats</p>
+        <h2 class="display-2">Stills and clips</h2>
+        <p class="lede">Concept stills from an image model and one generated motion clip, for covers, share cards and the paid report. They are references: the shipped faces stay code (SVG and WebGL), so they keep our exact colours and shapes in six languages.</p>
+        <div class="stills" id="stills-grid"></div>
+    </section>
+    <p class="foot"><span>The SVG faces are self-contained files (their own CSS, no scripts) and play inside an &lt;img&gt;. The 3D tiles use the vendored three.js already behind the hero, one shared renderer for every tile. With reduced motion turned on, both show a still frame.</span></p>
+</main>
+<script type="module" src="gallery.js"></script>
+<script type="module" src="stills.js"></script>
+</body>
+</html>

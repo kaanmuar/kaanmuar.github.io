@@ -39,7 +39,7 @@ const BY_NAME = new Map(LIBS.map((lib) => [lib.name, lib]));
 
 function cleanVersion(raw) {
   let value = String(raw || "").trim();
-  for (let i = 0; i < 3; i += 1) value = value.replace(/[._-](min|js|slim|prod|production)$/i, "").replace(/[._-]+$/, "");
+  for (let i = 0; i < 3; i += 1) value = value.replace(/[._-](min|js|slim|prod|production)$/i, "").replace(/(?<![._-])[._-]+$/, "");
   return value.length <= 24 && /^\d[\w.-]*$/.test(value) ? value : "";
 }
 

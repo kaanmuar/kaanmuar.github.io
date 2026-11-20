@@ -1,0 +1,11 @@
+{
+	"debpalash/VoiceStudio|LICENSE": "AGPL-3.0 pilot #3774, internal use only; the arsenal row says so",
+	"documenso/documenso|LICENSE": "AGPL-3.0, deferred; the arsenal row says so",
+	"k2-fsa/OmniVoice|MISMATCH": "The CC-BY-NC in that row is the model weights (test only); the repo code is Apache-2.0",
+	"certsocietegenerale/IRM|STALE": "Playbook text, not code: it does not go stale the way a library does",
+	"typosquatter/ail-typo-squatting|STALE": "The arsenal row says: pin the last release, pattern source only (#3856)",
+	"sapics/ip-location-db|UNVERIFIED": "No LICENSE file; the README grants PDDL per dataset and the arsenal row lists only those (#3856)",
+	"deepseek-ai/dsh-superagent-prototype|INFO": "Rejected as a prototype, not for its license",
+	"storytold/craft-anything|INFO": "Rejected for the publisher's other product, not for its license",
+	"micmro/PerfCascade|STALE": "Skipped in Wave 6 (#3899): @cloudflare/waterfall covers it; no push since 2023 is expected"
+}

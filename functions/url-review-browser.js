@@ -15,6 +15,7 @@ const net = require("net");
 const { ipBlocked } = require("./url-review-ip");
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const chatTalk = require("./url-review-chat-talk");
+const har = require("./url-review-har");
 const { registrable: siteOf } = require("./url-review-suffix");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
@@ -270,18 +271,40 @@ function words(text) {
   return (String(text || "").match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || []).length;
 }
 
+// The second branch of each block regex takes an unclosed start tag and the rest of the text and keeps it as it is,
+// so later starts do not each rescan to the end (#3965).
+const blankBlock = (block, open) => (open ? block : " ");
+
 function htmlText(html) {
   return String(html || "")
-    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
-    .replace(/<template\b[\s\S]*?<\/template>/gi, " ")
-    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<script\b[\s\S]*?<\/script>|(<script\b)[\s\S]*/gi, blankBlock)
+    .replace(/<style\b[\s\S]*?<\/style>|(<style\b)[\s\S]*/gi, blankBlock)
+    .replace(/<template\b[\s\S]*?<\/template>|(<template\b)[\s\S]*/gi, blankBlock)
+    .replace(/<noscript\b[\s\S]*?<\/noscript>|(<noscript\b)[\s\S]*/gi, blankBlock)
+    .replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, blankBlock)
+    .replace(/<[^>]+>|(<[^>]*$)/g, blankBlock)
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&[a-z#0-9]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Same result as text.replace(/^.*?requested an insecure \w+ '([^']+)'.*$/i, "$1") as a scan (#3965): the first such
+// phrase on the first line whose quoted value is not empty and whose closing quote has no line break after it.
+function insecureTarget(text) {
+  const s = String(text);
+  const firstBreak = s.search(/[\n\r\u2028\u2029]/);
+  const lineEnd = firstBreak < 0 ? s.length : firstBreak;
+  let lastBreak = -1;
+  for (let i = s.length - 1; i >= 0 && lastBreak < 0; i -= 1) if ("\n\r\u2028\u2029".includes(s[i])) lastBreak = i;
+  const phrase = /requested an insecure \w+ '/gi;
+  let m;
+  while ((m = phrase.exec(s)) && m.index < lineEnd) {
+    const close = s.indexOf("'", phrase.lastIndex);
+    if (close < 0) break;
+    if (close > phrase.lastIndex && close > lastBreak) return s.slice(phrase.lastIndex, close);
+  }
+  return s;
 }
 
 function normal(text) {
@@ -383,7 +406,7 @@ function recorder(pageHttps, readLibraries) {
     },
     console(message) {
       const text = message.text();
-      if (/Mixed Content/i.test(text) && state.mixed.length < 6) state.mixed.push(trim(text.replace(/^.*?requested an insecure \w+ '([^']+)'.*$/i, "$1"), 120));
+      if (/Mixed Content/i.test(text) && state.mixed.length < 6) state.mixed.push(trim(insecureTarget(text), 120));
       if (message.type() !== "error") return;
       if (/Failed to load resource/i.test(text)) return;
       const plain = text.replace(/%[cdsoOif]/g, "").replace(/\b(font-size|color|background)\s*:[^;]*;?/gi, "").replace(/\bNaN\b/g, "").trim();
@@ -553,7 +576,7 @@ function canaryOf() {
   const token = "qa" + crypto.randomBytes(5).toString("hex");
   const email = token + "@example.com";
   const hash = (kind) => crypto.createHash(kind).update(email).digest("hex");
-  return { email, forms: [["as typed", token], ["as a SHA-256 hash", hash("sha256")], ["as an MD5 hash", hash("md5")], ["as a SHA-1 hash", hash("sha1")], ["in Base64", Buffer.from(email).toString("base64").replace(/=+$/, "")]] };
+  return { email, forms: [["as typed", token], ["as a SHA-256 hash", hash("sha256")], ["as an MD5 hash", hash("md5")], ["as a SHA-1 hash", hash("sha1")], ["in Base64", Buffer.from(email).toString("base64").replace(/(?<!=)=+$/, "")]] };
 }
 
 // Types a test address into one contact field without submitting, then blurs it. Requests carrying it are blocked in prepare().
@@ -1623,7 +1646,7 @@ async function browse(job, log, onStart) {
     say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies." + (passive ? " This is a competitor run: nothing is typed into the site and its chat is not opened." : ""));
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
-    let coldContext, rec, page, first, images;
+    let coldContext, rec, page, first, images, waterfall;
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
       rec = recorder(true, true);
@@ -1633,6 +1656,12 @@ async function browse(job, log, onStart) {
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
         cdp.on("Network.loadingFinished", (event) => rec.done(event.requestId, event.encodedDataLength));
         images = imageLog(cdp);
+        // The same load's network events become the waterfall rows (#3830); nothing more is requested.
+        waterfall = har.createLog();
+        cdp.on("Network.requestWillBeSent", (event) => waterfall.request(event));
+        cdp.on("Network.responseReceived", (event) => waterfall.response(event));
+        cdp.on("Network.loadingFinished", (event) => waterfall.finished(event));
+        cdp.on("Network.loadingFailed", (event) => waterfall.failed(event));
         await cdp.send("Network.enable");
       } catch (error) { /* chat and page bytes stay at zero */ }
       await page.evaluateOnNewDocument(VITALS);
@@ -1689,6 +1718,7 @@ async function browse(job, log, onStart) {
       thirdParty: { scripts: [...rec.state.thirdParty.scripts], frames: [...rec.state.thirdParty.frames] },
       dom
     };
+    try { result.start.waterfall = waterfall ? waterfall.entries() : []; } catch (error) { result.start.waterfall = []; }
     try { result.start.images = imageRows(await page.evaluate(imageProbe), images, vitals.lcpUrl); } catch (error) { /* the image checks stay unscored */ }
     // The crawl of a start page that is an empty shell waits for these links, not for axe-core and the phone.
     if (typeof onStart === "function") {
@@ -1814,7 +1844,7 @@ async function browse(job, log, onStart) {
     if (left() > 15000) {
       say("Loading " + pathOf(start) + " on a 390×844 phone (Android, touch).");
       const phoneContext = await browser.createBrowserContext();
-      const phoneUa = ua.replace(/\([^)]*\)/, "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
+      const phoneUa = ua.replace(/\([^)]*\)|(\([^)]*$)/, (group, open) => open || "(Linux; Android 14; Pixel 8)").replace(/Safari\//, "Mobile Safari/");
       const phone = await prepare(phoneContext, phoneUa, null, { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, acceptLanguage);
       const phoneVisit = async () => {
         await open(phone, start);
@@ -1938,4 +1968,4 @@ async function browse(job, log, onStart) {
   }
 }
 
-module.exports = { browse, backForward, imageRows, open, steady, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, words, siteOf, watchFrom, watchCalls, canaryOf };
+module.exports = { browse, backForward, imageRows, open, steady, tagCut, talk, printPdf, submitBrave, BRAVE_BATCH, stopForRefusal, withinBudget, BUDGET_MAX_MS, passiveJob, typeProbe, openChat, launcherFacts, cookiesOf, CHATS, CHAT_LAUNCHER, ownLauncher, ownPane, notAChat, OWN_CHAT, findBanner, bannerSay, REJECT_TEXT, blockedHost, publicAddress, privateAddress, guard, proxyArgs, vendorOf, chatOf, chatsFrom, coveredBy, htmlText, insecureTarget, words, siteOf, watchFrom, watchCalls, canaryOf };

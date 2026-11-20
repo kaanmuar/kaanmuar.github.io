@@ -38,7 +38,7 @@ module.exports = {
         night: "A radar sweep finding phishing, lookalike and blocklist signals",
         editorial: "A 3D stack of fix package cards with their fixed prices"
       },
-      why: "You get this one launch note because you ran a review at carlosandmunoz.com with this address.",
+      why: "You get this one launch note because you ran a review at carlosandmunoz.com with this address and asked for follow-up notes.",
       stop: "Unsubscribe"
     },
     O: {
@@ -120,7 +120,7 @@ module.exports = {
         night: "Un barrido de radar que detecta señales de phishing, dominios parecidos y listas negras",
         editorial: "Una pila 3D de tarjetas de paquetes de arreglos con sus precios fijos"
       },
-      why: "Recibes esta única nota del lanzamiento porque hiciste una revisión en carlosandmunoz.com con esta dirección.",
+      why: "Recibes esta única nota del lanzamiento porque hiciste una revisión en carlosandmunoz.com con esta dirección y pediste notas de seguimiento.",
       stop: "Darse de baja"
     },
     O: {
@@ -202,7 +202,7 @@ module.exports = {
         night: "Uma varredura de radar encontrando sinais de phishing, domínios parecidos e listas de bloqueio",
         editorial: "Uma pilha 3D de cartões de pacotes de correção com seus preços fixos"
       },
-      why: "Você recebe esta única nota do lançamento porque fez uma revisão em carlosandmunoz.com com este endereço.",
+      why: "Você recebe esta única nota do lançamento porque fez uma revisão em carlosandmunoz.com com este endereço e pediu notas de acompanhamento.",
       stop: "Cancelar inscrição"
     },
     O: {
@@ -284,7 +284,7 @@ module.exports = {
         night: "Ein Radarschwenk, der Phishing-, Doppelgänger- und Blocklisten-Signale findet",
         editorial: "Ein 3D-Stapel von Korrekturpaket-Karten mit ihren Festpreisen"
       },
-      why: "Sie erhalten diese einmalige Nachricht zum Start, weil Sie mit dieser Adresse eine Prüfung auf carlosandmunoz.com durchgeführt haben.",
+      why: "Sie erhalten diese einmalige Nachricht zum Start, weil Sie mit dieser Adresse eine Prüfung auf carlosandmunoz.com durchgeführt und Folgenachrichten gewünscht haben.",
       stop: "Abmelden"
     },
     O: {
@@ -366,7 +366,7 @@ module.exports = {
         night: "Un balayage radar qui repère des signaux de phishing, de domaines sosies et de listes noires",
         editorial: "Une pile 3D de cartes de forfaits de correction avec leurs prix fixes"
       },
-      why: "Vous recevez ce message de lancement unique parce que vous avez lancé une revue sur carlosandmunoz.com avec cette adresse.",
+      why: "Vous recevez ce message de lancement unique parce que vous avez lancé une revue sur carlosandmunoz.com avec cette adresse et demandé des messages de suivi.",
       stop: "Se désinscrire"
     },
     O: {
@@ -448,7 +448,7 @@ module.exports = {
         night: "Una scansione radar che trova segnali di phishing, domini sosia e blocklist",
         editorial: "Una pila 3D di schede dei pacchetti di correzione con i loro prezzi fissi"
       },
-      why: "Ricevi questa unica nota di lancio perché hai eseguito una revisione su carlosandmunoz.com con questo indirizzo.",
+      why: "Ricevi questa unica nota di lancio perché hai eseguito una revisione su carlosandmunoz.com con questo indirizzo e hai chiesto note di follow-up.",
       stop: "Annulla l'iscrizione"
     },
     O: {

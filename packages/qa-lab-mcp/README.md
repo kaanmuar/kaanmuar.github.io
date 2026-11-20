@@ -6,8 +6,8 @@ Cursor stdio MCP for QA-lab URL Review: soft preview + report read. No npm publi
 
 | Tool | Calls | Notes |
 |------|--------|--------|
-| `preview_url` | `POST {reviewRun}/review/preview` | Soft scores + top finding; same soft quota as the web gate |
-| `get_report` | `POST {reviewUrl}/review/open` | Frosted without session; full report when `QA_LAB_SESSION` owns it |
+| `preview_url` | `POST {reviewRun}/review/preview` | Soft scores + top finding; same soft quota as the web gate. Does not run attack/exploit source checks (KEV, OSV, EPSS, DROP, Feodo, Tor, GDELT, CertSpotter). CertSpotter and the site news match run only in the paid Deep check. |
+| `get_report` | `POST {reviewUrl}/review/open` | Frosted without session (attack-source findings stripped). Full report with paid “Was it targeted?” when `QA_LAB_SESSION` owns it. |
 
 ## Install (Cursor)
 
@@ -33,7 +33,7 @@ Add to Cursor MCP settings (`.cursor/mcp.json` or Cursor Settings → MCP):
 }
 ```
 
-Local soft-preview (no Turnstile): start `node scripts/url-review-server.js`, then set both bases to `http://127.0.0.1:8768`.
+Local soft-preview (no Turnstile): start `node scripts/url-review-server.js`, then set both bases to `http://127.0.0.1:8768`. The server needs `FIREBASE_WEB_KEY` (the Firebase Web API key) in `functions/.secret.local` or the environment; it exits at startup without it.
 
 ## Env
 

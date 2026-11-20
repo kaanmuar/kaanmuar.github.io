@@ -15,11 +15,11 @@ const stamp = /^\d{4}-\d\d-\d\dT[\d:.]+Z\s?/;
 function causeOf(log) {
   const lines = String(log || "").split("\n").map((l) => l.replace(stamp, "").replace(/\x1b\[[0-9;]*m/g, "").trimEnd());
   const find = (re) => lines.find((l) => re.test(l));
-  const refused = find(/access token is invalid|bad credentials|token (has )?expired|invalid[_ ]?token|\b401\b[^\n]*(token|credential|unauthori[sz]ed)/i);
+  const refused = find(/access token is invalid|bad credentials|token (has )?expired|invalid[_ ]?token|(?:^|\n)(?:(?!\b401\b)[^\n])*\b401\b[^\n]*(token|credential|unauthori[sz]ed)/i);
   if (refused) return "a token was refused (" + clip(refused, 140) + "): renew that secret in GitHub Settings > Secrets and variables > Actions";
   const broken = lines.filter((l) => /^broken: \S+ -> \S+/.test(l));
   if (broken.length) return broken.length + " links point to pages that do not exist (" + clip(broken[0].slice(8), 140) + "): build the missing pages, or drop the links, then run it again on main";
-  const memory = find(/memory limit|heap out of memory|ENOMEM|killed.*signal 9/i);
+  const memory = find(/memory limit|heap out of memory|ENOMEM|(?:^|[\n\r\u2028\u2029])(?:(?!killed).)*killed.*signal 9/i);
   if (memory) return "ran out of memory (" + clip(memory, 120) + "): raise the job's memory or read less at once";
   const limited = find(/\b429\b|rate limit|quota exceeded/i);
   if (limited) return "hit a rate limit (" + clip(limited, 120) + "): it should pass on the next run; if not, slow it down";
@@ -78,7 +78,9 @@ async function run({ fetch, token, now }) {
 
   const runs = await get("/actions/runs?branch=main&status=completed&per_page=100");
   const newest = new Map();
-  (runs.workflow_runs || []).forEach((r) => { if (!["cancelled", "skipped"].includes(r.conclusion) && !newest.has(r.name)) newest.set(r.name, r); });
+  // Dependabot's update runs (event "dynamic") each carry their own name, so no later run ever replaces a failed one;
+  // its alert counts below stand for them.
+  (runs.workflow_runs || []).forEach((r) => { if (r.event !== "dynamic" && !["cancelled", "skipped"].includes(r.conclusion) && !newest.has(r.name)) newest.set(r.name, r); });
   const failing = Array.from(newest.values()).filter((r) => ["failure", "timed_out"].includes(r.conclusion) && now - Date.parse(r.updated_at) < 2 * DAY);
   for (const r of failing.slice(0, MAX_LOGS)) {
     let cause = "failed";

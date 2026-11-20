@@ -29,7 +29,7 @@ const KIND_RANK = { visitor: 0, rival: 1, sweep: 2 };
 
 const emailOf = (value) => {
   const e = String(value || "").trim().toLowerCase();
-  return /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(e) && e.length <= 200 ? e : "";
+  return /^[^\s@/]+@[^\s@/][^\s@/.]*\.[^\s@/]+$/.test(e) && e.length <= 200 ? e : "";
 };
 const domainOf = (email) => email.slice(email.indexOf("@") + 1);
 const hashOf = (email) => crypto.createHash("sha256").update(emailOf(email)).digest("hex").slice(0, 40);

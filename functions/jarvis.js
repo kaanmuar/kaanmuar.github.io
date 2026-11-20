@@ -508,6 +508,7 @@ async function ga4(fetchImpl, { days }) {
     countries: geoGa4.top(countries.countryRows),
     countryRows: countries.countryRows,
     keyEvents: countries.keyEvents,
+    keyEventFallback: countries.keyEventFallback || "",
     sources: Object.entries(split(sources)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
     daily: daily.map((row) => ({ date: row.dims[0].replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: row.mets[0], users: row.mets[1] }))
   };
@@ -743,7 +744,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
 function speakable(text) {
   return String(text || "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)(?:\]\(([^)]*)(\))?)?/g, (link, label, target, close) => (target && close ? label : link))
     .replace(/^[\s>*#-]+/gm, "")
     .replace(/[*_`#]/g, "")
     .replace(/\s+/g, " ")
@@ -1086,5 +1087,14 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+// Pending URL Review CSAT quotes (#3557): list and approve/dismiss for CV + Social hub publish.
+async function listCsatTestimonials(db, { limit } = {}) {
+  return { items: await require("./url-review-csat-testimonials").listPending(db, limit) };
+}
+
+async function decideCsatTestimonial(db, body, operator) {
+  return require("./url-review-csat-testimonials").decide(db, Object.assign({}, body, { operator }));
+}
+
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, listCsatTestimonials, decideCsatTestimonial, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };
