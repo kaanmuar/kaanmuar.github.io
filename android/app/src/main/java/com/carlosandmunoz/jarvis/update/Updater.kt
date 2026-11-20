@@ -91,6 +91,7 @@ object Updater {
             val rel = latest() ?: return@withContext "Couldn't reach GitHub. Try again later."
             prefs.edit { putLong("checkedAt", now) }
             if (rel.code <= BuildConfig.VERSION_CODE) return@withContext "Jarvis ${BuildConfig.VERSION_NAME} is the latest version."
+            refusal(rel)?.let { return@withContext it }
             install(context, download(context, rel), rel)
             "Installing Jarvis ${rel.name}."
         } catch (e: Exception) {
@@ -99,6 +100,10 @@ object Updater {
             busy.set(false)
         }
     }
+
+    /** A release without a SHA-256 digest can't be verified, so it is never downloaded or installed (#4021). */
+    internal fun refusal(rel: Release): String? =
+        if (rel.sha256 == null) "The update failed: the release has no checksum, so it was not installed" else null
 
     private fun latest(): Release? {
         val req = Request.Builder().url(RELEASES).header("Accept", "application/vnd.github+json").build()
