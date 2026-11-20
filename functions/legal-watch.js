@@ -18,13 +18,55 @@ const sha = (text) => crypto.createHash("sha256").update(String(text), "utf8").d
 
 const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
 
+const SKIP = ["script", "style", "noscript", "template", "svg", "head"];
+const isLetter = (code) => (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+
+// The text of a page with its comments, scripts, styles and tags cut out, by one left-to-right scan (no backtracking regex on
+// untrusted pages): each cut leaves one space.
+function strip(html) {
+  const lower = html.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  const out = [];
+  let at = 0;
+  while (at < html.length) {
+    const lt = html.indexOf("<", at);
+    if (lt === -1) {
+      out.push(html.slice(at));
+      break;
+    }
+    out.push(html.slice(at, lt));
+    if (html.startsWith("<!--", lt)) {
+      const end = html.indexOf("-->", lt + 4);
+      at = end === -1 ? html.length : end + 3;
+      out.push(" ");
+      continue;
+    }
+    const closing = html[lt + 1] === "/";
+    let end = lt + (closing ? 2 : 1);
+    while (end < html.length && isLetter(lower.charCodeAt(end))) end++;
+    const name = lower.slice(lt + (closing ? 2 : 1), end);
+    const code = lower.charCodeAt(lt + 1);
+    if (!name && !closing && code !== 33 && code !== 63) {
+      out.push("<");
+      at = lt + 1;
+      continue;
+    }
+    if (name && !closing && SKIP.includes(name)) {
+      const close = lower.indexOf("</" + name, end);
+      const gt = close === -1 ? -1 : html.indexOf(">", close);
+      at = gt === -1 ? html.length : gt + 1;
+    } else {
+      const gt = html.indexOf(">", lt);
+      at = gt === -1 ? html.length : gt + 1;
+    }
+    out.push(" ");
+  }
+  return out.join("");
+}
+
 // The words of a page: scripts, styles, comments and markup gone, entities decoded, whitespace collapsed. A page whose only
 // change is its markup, a nonce or a cookie banner script hashes the same.
 function normalize(html) {
-  return String(html || "")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1\s*>/gi, " ")
-    .replace(/<[^>]*>/g, " ")
+  return strip(String(html || ""))
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, name) => {
       const lower = name.toLowerCase();
       if (lower[0] === "#") {
