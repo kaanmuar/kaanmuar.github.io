@@ -15,6 +15,7 @@ const net = require("net");
 const { ipBlocked } = require("./url-review-ip");
 const { legalLinks, LEGAL_ANY } = require("./url-review-legal");
 const chatTalk = require("./url-review-chat-talk");
+const har = require("./url-review-har");
 const { registrable: siteOf } = require("./url-review-suffix");
 const { fromUrl: libraryFromUrl, fromContent: libraryFromContent, fromGlobals: libraryFromGlobals, PROBE: LIBRARY_PROBE } = require("./url-review-libraries");
 
@@ -1623,7 +1624,7 @@ async function browse(job, log, onStart) {
     say(result.engine + " is up. Loading " + pathOf(start) + " at 1280×800 with no stored cookies." + (passive ? " This is a competitor run: nothing is typed into the site and its chat is not opened." : ""));
 
     // Cold visit on a desktop width: no stored choice, nothing clicked.
-    let coldContext, rec, page, first, images;
+    let coldContext, rec, page, first, images, waterfall;
     const visit = async () => {
       coldContext = await browser.createBrowserContext();
       rec = recorder(true, true);
@@ -1633,6 +1634,12 @@ async function browse(job, log, onStart) {
         cdp.on("Network.requestWillBeSent", (event) => rec.wire(event.requestId, event.request.url));
         cdp.on("Network.loadingFinished", (event) => rec.done(event.requestId, event.encodedDataLength));
         images = imageLog(cdp);
+        // The same load's network events become the waterfall rows (#3830); nothing more is requested.
+        waterfall = har.createLog();
+        cdp.on("Network.requestWillBeSent", (event) => waterfall.request(event));
+        cdp.on("Network.responseReceived", (event) => waterfall.response(event));
+        cdp.on("Network.loadingFinished", (event) => waterfall.finished(event));
+        cdp.on("Network.loadingFailed", (event) => waterfall.failed(event));
         await cdp.send("Network.enable");
       } catch (error) { /* chat and page bytes stay at zero */ }
       await page.evaluateOnNewDocument(VITALS);
@@ -1689,6 +1696,7 @@ async function browse(job, log, onStart) {
       thirdParty: { scripts: [...rec.state.thirdParty.scripts], frames: [...rec.state.thirdParty.frames] },
       dom
     };
+    try { result.start.waterfall = waterfall ? waterfall.entries() : []; } catch (error) { result.start.waterfall = []; }
     try { result.start.images = imageRows(await page.evaluate(imageProbe), images, vitals.lcpUrl); } catch (error) { /* the image checks stay unscored */ }
     // The crawl of a start page that is an empty shell waits for these links, not for axe-core and the phone.
     if (typeof onStart === "function") {

@@ -15,6 +15,10 @@ const lookalikes = require("./url-review-lookalikes");
 const hackSigns = require("./url-review-hack-signs");
 const targeted = require("./url-review-targeted");
 const geoAgent = require("./url-review-geo-agent");
+const carbonModel = require("./url-review-carbon");
+const headOrder = require("./url-review-head-order");
+const waterfall = require("./url-review-har");
+const pageGraph = require("./url-review-page-graph");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -807,16 +811,8 @@ function domainChecks(extras, dnsInfo, dnsRead, add) {
   }
 }
 
-// Sustainable Web Design model v4: 0.3 kWh per GB across data centres, networks and devices, at the 494 g/kWh global grid average.
-const CARBON_KWH_PER_GB = 0.3;
-const CARBON_GRID_G_PER_KWH = 494;
-const CARBON_RATINGS = [["A+", 0.04], ["A", 0.079], ["B", 0.145], ["C", 0.209], ["D", 0.278], ["E", 0.359]];
-
-function carbonEstimate(bytes, source) {
-  if (!(bytes > 0)) return null;
-  const grams = (bytes / 1e9) * CARBON_KWH_PER_GB * CARBON_GRID_G_PER_KWH;
-  return { bytes: Math.round(bytes), grams: Math.round(grams * 1000) / 1000, rating: (CARBON_RATINGS.find(([, max]) => grams <= max) || ["F"])[0], source };
-}
+// Sustainable Web Design model v4 (url-review-carbon.js).
+const carbonEstimate = carbonModel.estimate;
 
 function speedChecks(psi, add) {
   const field = psi.field;
@@ -1830,6 +1826,16 @@ function analyze(input) {
   if (browsed) browserChecks(browsed, add, { findings, tags, consentTools, face, renderedCrawl: !!home.renderedLinks });
 
   // Rank and score.
+  const pageBytes = browsed && browsed.start && browsed.start.bytes;
+  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
+  carbonModel.findings(carbon, add);
+  const headReport = headOrder.findings(face.headOrder, add);
+  const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);
+  const graphRows = read.map((page) => {
+    const row = indexability.find((item) => item.path === (page.path || pathOf(page.url)));
+    return { key: normal(page.url), path: page.path || pathOf(page.url), links: (page.inspect.links || []).map(normal), sig: page.inspect.minhash || "", indexable: !row || row.indexable };
+  }).filter((row) => row.indexable);
+  const graphReport = pageGraph.findings(graphRows, add);
   const actionable = findings.filter((item) => item.verdict === "fail" || item.verdict === "risk");
   actionable.forEach((item) => {
     const reach = 1 + Math.log2((item.count || item.pages.length || 1) + 1) * 0.3;
@@ -1905,8 +1911,6 @@ function analyze(input) {
     schemaTypes: [...schemaTypes].slice(0, 20)
   };
   const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || "unknown";
-  const pageBytes = browsed && browsed.start && browsed.start.bytes;
-  const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
   const security = {
     headers: [
       { label: "HTTPS redirect", state: httpCheck ? ({ pass: "pass", risk: "risk" }[(findings.find((item) => item.key === "sec-http") || {}).verdict] || "fail") : "unknown" },
@@ -1968,6 +1972,9 @@ function analyze(input) {
     security,
     chat,
     carbon,
+    headOrder: headReport,
+    waterfall: waterfallReport,
+    pageGraph: graphReport,
     graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
     fixkit: fixKit({ home, face, read, indexable, origin, host, input, extras, tags, dnsInfo, entity, socialLinks, findings, browsed, chat })
   };
