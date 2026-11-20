@@ -93,7 +93,8 @@ test('a changed page files ONE issue naming the url, its clauses and the dates, 
 	assert.equal(out.tally.changed, 2);
 	assert.equal(issues.length, 1, 'one issue per run, not per page');
 	assert.match(issues[0].title, /^Legal watch: 2 cited sources changed \(2026-11-23\)$/);
-	assert.ok(issues[0].body.includes(A) && issues[0].body.includes(B));
+	const lines = issues[0].body.split('\n');
+	assert.ok(lines.includes('- ' + A + ' (Law A)') && lines.includes('- ' + B + ' (Law B)'));
 	assert.match(issues[0].body, /`one` \(lastChecked 2026-10-25, counsel-approved\), `two`/);
 	assert.match(issues[0].body, /changed between 2026-11-16 and 2026-11-23/);
 	assert.match(issues[0].body, /never touches legal\/clauses\.json, legal\/signoff\.json or the legal page/);
