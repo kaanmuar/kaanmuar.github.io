@@ -91,6 +91,17 @@ function tagEnd(source, from) {
   return -1;
 }
 
+// The text of the first <title> inside an <svg>, found with indexOf (no pattern to backtrack).
+function svgTitle(svg) {
+  const lower = svg.toLowerCase();
+  const open = lower.indexOf("<title");
+  if (open === -1 || NAME_CHAR.test(lower.charAt(open + 6))) return "";
+  const start = tagEnd(svg, open);
+  if (start === -1) return "";
+  const end = lower.indexOf("<", start + 1);
+  return end === -1 ? svg.slice(start + 1) : svg.slice(start + 1, end);
+}
+
 // What a link's inner HTML offers a screen reader: its text, plus the alt of any image inside it.
 function innerName(inner) {
   const lower = inner.toLowerCase();
@@ -110,8 +121,8 @@ function innerName(inner) {
     else if (/^<svg[\s/>]/i.test(tag)) {
       const end = lower.indexOf("</svg", close);
       if (end === -1) break;
-      const title = /<title[^>]*>([^<]*)</i.exec(inner.slice(close, end));
-      if (title) out += " " + title[1] + " ";
+      const title = svgTitle(inner.slice(close, end));
+      if (title) out += " " + title + " ";
       pos = end;
       const next = tagEnd(inner, end);
       if (next === -1) break;
