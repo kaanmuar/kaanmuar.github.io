@@ -8,6 +8,7 @@
 .fold-panel[hidden] { display: none !important; }
 .fold-face { display: inline-flex; margin-right: 10px; vertical-align: -4px; }
 .face { flex: none; }
+.face-line { vertical-align: -3px; margin-right: 5px; }
 .badge .face { margin-right: 5px; vertical-align: -2px; }
 html.dark-mode .face-light, html:not(.dark-mode) .face-dark { display: none; }
 .list-more { all: unset; cursor: pointer; color: var(--cyan); font-weight: 600; white-space: nowrap; }
