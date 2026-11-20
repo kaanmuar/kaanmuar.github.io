@@ -78,9 +78,13 @@ async function track(job, run) {
   };
   const secs = () => Math.round((Date.now() - Date.parse(startedAt)) / 1000) + " s";
   try {
-    const note = await run();
-    await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" });
-    if (job !== "jarvisLogPoll") await jarvisLog.log(null, { source: "function", level: "info", ref: "job:" + job, text: job + " ok in " + secs() + (typeof note === "string" && note ? ": " + note : "") });
+    const result = await run();
+    // A job that ran but could not do its work returns { note, warn: true }: ok stays true, the row shows a warning, and
+    // warnSince keeps the first run of the streak so opsWatchdog raises it after a day (#3811).
+    const { note, warn } = ops.outcome(result);
+    const warning = warn ? { warn: true, warnSince: await warnSince(ref, startedAt) } : {};
+    await ref.set(Object.assign({ job, startedAt, endedAt: new Date().toISOString(), ok: true, note: typeof note === "string" ? note : "", error: "" }, warning));
+    if (job !== "jarvisLogPoll") await jarvisLog.log(null, { source: "function", level: warn ? "warn" : "info", ref: "job:" + job, text: job + (warn ? " warning in " : " ok in ") + secs() + (typeof note === "string" && note ? ": " + note : "") });
     await finish(true, typeof note === "string" ? note : "");
   } catch (error) {
     await ref.set({ job, startedAt, endedAt: new Date().toISOString(), ok: false, note: "", error: String((error && error.message) || error).slice(0, 300) })
@@ -90,6 +94,12 @@ async function track(job, run) {
     throw error;
   }
   return null;
+}
+
+// When this job's run of consecutive warnings began: the earlier row's warnSince while it was still a warning, else now.
+async function warnSince(ref, now) {
+  const before = await ref.get().then((snap) => (snap.exists ? snap.data() : null)).catch(() => null);
+  return (before && before.warn && before.warnSince) || now;
 }
 
 // A v1 schedule from the ops table, on Bogotá time, tracked in ops_runs.
@@ -3084,6 +3094,7 @@ exports.wordfenceFeed = require("firebase-functions/v2/scheduler").onSchedule({
   secrets: SECRETS.wordfenceFeed
 }, () => track("wordfenceFeed", async () => {
   const out = await require("./url-review-wordpress").refreshFeed({ key: process.env.WORDFENCE_KEY });
+  if (out.skipped === "rate limited" || out.skipped === "backoff") return { warn: true, note: "skipped: " + (out.skipped === "backoff" ? "rate limited, backing off until " + out.until : "rate limited") };
   return out.skipped ? "skipped: " + out.skipped : out.count + " records, " + out.slugs + " slugs stored";
 }));
 
@@ -7697,7 +7708,7 @@ function jarvisAutoOps(settings, now, th) {
     failedJobs: async () => Object.values(await jarvisOpsRuns())
       .filter((r) => r.ok === false && scheduler.has(r.job) && now - Date.parse(r.endedAt || "") < 26 * 3600000)
       .map((r) => ({ job: r.job, endedAt: r.endedAt, error: r.error || "" })),
-    overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^failed/.test(o.why)),
+    overdueJobs: async () => ops.overdue(await jarvisOpsRuns(), now).filter((o) => !/^(failed|warning)/.test(o.why)),
     failedCi: async () => jarvis.failedRuns(fetch, await gh(), { now }),
     rerunRun: async (id) => jarvis.rerunRun(fetch, await gh(), id),
     rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),

@@ -145,8 +145,11 @@ function rating(score) {
 }
 
 // The vulnerabilities the index lists for one component at one version, the worst CVSS, and the version that fixes all.
+// A slug is a key, not a property name: "constructor" or "toString" must not read the object's own methods (#3810).
+const own = (map, key) => (map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : undefined);
+
 function match(index, type, slug, version) {
-  const entry = index && index[type] && index[type][slug];
+  const entry = own(index && own(index, type), slug);
   if (!entry || !plausible(version)) return null;
   const hits = entry.v.filter((row) => row[0].some((range) => inRange(version, range)));
   if (!hits.length) return { name: entry.n, vulns: 0 };
@@ -321,7 +324,8 @@ function ranges(affected) {
 // The slug index the review reads: per type and slug the software name and one row per vulnerability,
 // [ranges, patched versions, CVSS score, CVE, Wordfence id, title].
 function indexer() {
-  const index = { plugin: {}, theme: {}, core: {} };
+  // Maps without a prototype: a plugin whose slug is "constructor" or "__proto__" is a plain key (#3810).
+  const index = { plugin: Object.create(null), theme: Object.create(null), core: Object.create(null) };
   let count = 0;
   const add = (record) => {
     if (!record || typeof record !== "object" || record.informational || !Array.isArray(record.software)) return;
@@ -333,7 +337,7 @@ function indexer() {
       if (TYPES.indexOf(type) < 0 || !slug) return;
       const span = ranges(soft.affected_versions);
       if (!span.length) return;
-      const entry = index[type][slug] || (index[type][slug] = { n: trim(soft.name || slug, 80), v: [] });
+      const entry = own(index[type], slug) || (index[type][slug] = { n: trim(soft.name || slug, 80), v: [] });
       entry.v.push([span, (soft.patched_versions || []).map(String).filter(plausible), score, String(record.cve || ""), String(record.id || ""), trim(record.title, 140)]);
     });
   };

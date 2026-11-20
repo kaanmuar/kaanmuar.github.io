@@ -233,6 +233,8 @@ function wordfenceState(run) {
   if (!at) return { stored: false, state: "quiet", detail: "never ran", at: "" };
   const note = String(r.note || "");
   if (r.ok === false) return { stored: false, state: "down", detail: String(r.error || "failed").slice(0, 160), at };
+  // A skipped run because Wordfence answered 429 is a warning (amber), not "off" (#3811).
+  if (r.warn) return { stored: false, state: "quiet", detail: note.slice(0, 160), at, warn: true, warnSince: String(r.warnSince || "") };
   if (/^skipped/i.test(note)) return { stored: false, state: "off", detail: note.slice(0, 160), at };
   if (/stored/.test(note)) return { stored: true, state: "ok", detail: note.slice(0, 160), at };
   return { stored: false, state: r.endedAt ? "quiet" : "running", detail: note.slice(0, 160) || "no result yet", at };
