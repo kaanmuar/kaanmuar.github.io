@@ -17,7 +17,9 @@ const DEFAULT_TIMEOUT_MS = 3000;
 export function failUrlFor(url) {
   try {
     const u = new URL(url);
-    u.pathname = u.pathname.replace(/\/+$/, "") + "/fail";
+    let path = u.pathname;
+    while (path.endsWith("/")) path = path.slice(0, -1);
+    u.pathname = path + "/fail";
     return u.toString();
   } catch {
     return "";
