@@ -17,7 +17,66 @@
 	};
 	const FILTERS = { en: 'Filters', es: 'Filtros', pt: 'Filtros', de: 'Filter', fr: 'Filtres', it: 'Filtri' };
 
-	const tg = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Telegram.WebApp : null;
+	// Telegram's Mini App bridge is tma.js (self-hosted, assets/vendor/tma-sdk-*.iife.js, global tmajs.sdk; #3841) instead of
+	// telegram.org/js/telegram-web-app.js, so script-src needs no third party. This adapter keeps the small WebApp-shaped
+	// surface the code below uses; every bridge call is guarded, as outside Telegram there is nobody to receive it.
+	function telegramApp() {
+		const sdk = window.tmajs && window.tmajs.sdk;
+		if (!sdk) return null;
+		let launch;
+		try {
+			if (!sdk.retrieveRawInitData()) return null;
+			launch = sdk.retrieveLaunchParams();
+		} catch (error) {
+			return null;
+		}
+		const data = launch.tgWebAppData || {};
+		const version = String(launch.tgWebAppVersion || '6.0');
+		const isVersionAtLeast = (v) => {
+			const a = version.split('.').map(Number);
+			const b = v.split('.').map(Number);
+			for (let i = 0; i < Math.max(a.length, b.length); i++) {
+				if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+			}
+			return true;
+		};
+		const post = (method, params) => {
+			try {
+				sdk.postEvent(method, params);
+			} catch (error) {
+				/* a client that lacks the method */
+			}
+		};
+		return {
+			initDataUnsafe: {
+				user: data.user && { language_code: data.user.language_code },
+				start_param: data.start_param || launch.tgWebAppStartParam || '',
+			},
+			isVersionAtLeast,
+			ready: () => post('web_app_ready'),
+			expand: () => post('web_app_expand'),
+			// A hex header colour needs Telegram 6.9; older clients only know the theme's colour keys.
+			setHeaderColor: (color) => isVersionAtLeast('6.9') && post('web_app_set_header_color', { color }),
+			setBackgroundColor: (color) => post('web_app_set_background_color', { color }),
+			setBottomBarColor: (color) => post('web_app_set_bottom_bar_color', { color }),
+			disableVerticalSwipes: () => post('web_app_setup_swipe_behavior', { allow_vertical_swipe: false }),
+			openLink: (url) => post('web_app_open_link', { url }),
+			openTelegramLink: (url) => {
+				try {
+					const u = new URL(url);
+					post('web_app_open_tg_link', { path_full: u.pathname + u.search });
+				} catch (error) {
+					/* not a t.me link */
+				}
+			},
+			BackButton: {
+				show: () => post('web_app_setup_back_button', { is_visible: true }),
+				hide: () => post('web_app_setup_back_button', { is_visible: false }),
+				onClick: (fn) => sdk.on('back_button_pressed', fn),
+			},
+		};
+	}
+	const tg = telegramApp();
 	let framed = false;
 	try {
 		framed = window.self !== window.top;
