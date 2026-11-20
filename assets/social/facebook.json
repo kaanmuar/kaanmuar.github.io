@@ -1018,8 +1018,9 @@
     "profile": "Facebook Page",
     "id": "1852774192417596",
     "at": "2026-11-19T23:12:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-17T22:07:37.289Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1852774192417596",
+    "checked": "2026-11-20T00:06:16.048Z"
    }
   ],
   "auto-2026-11-17/25-u-7diasdesabor-com": [
@@ -1131,8 +1132,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122111933727532027",
     "at": "2026-11-19T23:12:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-19T23:03:11.526Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1829852665009950/",
+    "checked": "2026-11-20T00:06:16.048Z"
    }
   ],
   "auto-2026-11-18/24-u-agilex-com-co": [
@@ -1204,6 +1206,136 @@
     "at": "2026-11-22T21:36:00.000Z",
     "result": "queued",
     "checked": "2026-11-19T23:03:11.529Z"
+   }
+  ],
+  "auto-2026-11-19/01-u-almazangourmet-cl": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2052847922042158",
+    "at": "2026-11-24T20:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:06:26.087Z"
+   }
+  ],
+  "auto-2026-11-19/05-u-marca-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2165142667453835",
+    "at": "2026-11-23T21:29:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:06:35.307Z"
+   }
+  ],
+  "auto-2026-11-19/11-u-all-accor-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "974318155396320",
+    "at": "2026-11-23T22:53:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:06:44.871Z"
+   }
+  ],
+  "auto-2026-11-19/17-u-allservicecyc-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1175387781579106",
+    "at": "2026-11-24T23:13:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:06:53.286Z"
+   }
+  ],
+  "auto-2026-11-19/23-u-alodontologo-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2679534562516672",
+    "at": "2026-11-25T18:55:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:02.063Z"
+   }
+  ],
+  "auto-2026-11-19/29-u-altoga-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "29839370459004175",
+    "at": "2026-11-26T19:02:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:10.625Z"
+   }
+  ],
+  "auto-2026-11-19/35-u-amforaproperty-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1694681385519076",
+    "at": "2026-11-26T20:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:21.652Z"
+   }
+  ],
+  "auto-2026-11-19/41-u-ancasta-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "29162079066780555",
+    "at": "2026-11-28T22:20:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:30.389Z"
+   }
+  ],
+  "auto-2026-11-19/47-u-anson-ch": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "2741371849651810",
+    "at": "2026-11-28T23:45:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:38.782Z"
+   }
+  ],
+  "auto-2026-11-19/53-u-ap-lk": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1004357026058980",
+    "at": "2026-11-29T23:20:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:47.513Z"
+   }
+  ],
+  "auto-2026-11-19/59-u-appacademy-io": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "3957687431040009",
+    "at": "2026-11-29T17:44:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:07:56.608Z"
+   }
+  ],
+  "auto-2026-11-19/65-u-arconstrucciones-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1043360158784013",
+    "at": "2026-12-01T19:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:08:04.891Z"
+   }
+  ],
+  "auto-2026-11-19/71-u-armultiservicios-com-sv": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1169579676020667",
+    "at": "2026-12-01T20:51:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-20T00:08:14.055Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -1663,8 +1795,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122095176417532027",
     "at": "2026-11-19T23:12:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-19T23:03:11.532Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122095176417532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-20T00:06:16.048Z"
    }
   ],
   "promo-social-hub-2026-10/32-copy-caption-fr": [
