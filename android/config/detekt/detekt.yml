@@ -1,0 +1,4 @@
+# Only the Jarvis custom rules (#3836); the default Detekt rule sets stay off until the code is cleaned up.
+jarvis:
+  UnstableSort:
+    active: true

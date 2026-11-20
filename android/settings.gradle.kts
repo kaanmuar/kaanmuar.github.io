@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Jarvis"
-include(":app", ":wear")
+include(":app", ":wear", ":detekt-rules")
