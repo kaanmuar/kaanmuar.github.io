@@ -77,7 +77,7 @@ const REFUSAL = /(can(?:not|'t|\u2019t)|unable|not able|won't|won\u2019t|not all
 const LEAK = /(system prompt\s*:|my (system )?instructions (are|say)|you are an? [\p{L} ,'-]{0,60}(assistant|bot|agent|chatbot)\b|\brole\s*:\s*system\b|<\/?system>|###\s*instructions|instrucciones del sistema\s*:|eres un asistente|você é um assistente|du bist ein assistent|tu es un assistant|sei un assistente)/iu;
 const NOISE = /^(just now|now|ahora|agora|jetzt|maintenant|adesso|seen|read|delivered|sent|typing|is typing|escribiendo|digitando|schreibt|écrit|sta scrivendo|\d{1,2}:\d{2}(\s?[ap]m)?|\d+\s?(s|sec|min|m|h)( ago)?|bot|ai|you|tú|você|sie|vous|tu|me|yo|eu|ich|moi|io)\.?$/i;
 
-const PRICE = /(?:US\$|R\$|[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF)\b)\s?(\d[\d.,\s]*\d|\d)|(\d[\d.,\s]*\d|\d)\s?(?:[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF|euros?|dollars?|d[oó]lares|reais|pesos|franken)\b)/gi;
+const PRICE = /(?:US\$|R\$|[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF)\b)\s?(\d[\d.,\s]*\d|\d)|(?=\d)(?<!\d[.,\s]*)(\d+(?:[.,\s]+\d+)*)\s?(?:[$€£¥]|\b(?:USD|EUR|GBP|COP|MXN|BRL|ARS|CLP|CHF|euros?|dollars?|d[oó]lares|reais|pesos|franken)\b)/gi;
 const TERM = /\b(\d{1,3})\s?(days?|d[ií]as?|tagen?|jours?|giorni|giorno|weeks?|semanas?|wochen?|semaines?|settimane?|settimana|months?|meses|mês|mes|monaten?|monate|mois|mesi|mese|years?|años?|anos?|jahren?|jahre|ans?|anni|anno)\b/gi;
 const PERCENT = /\b(\d{1,3})\s?%/g;
 const UNIT = [[/^(days?|d[ií]as?|tag|tage|tagen|jours?|giorni|giorno)$/i, "day"], [/^(weeks?|semanas?|wochen?|semaines?|settimane?|settimana)$/i, "week"], [/^(months?|meses|mês|mes|monaten?|monate|mois|mesi|mese)$/i, "month"], [/^(years?|años?|anos?|jahren?|jahre|ans?|anni|anno)$/i, "year"]];

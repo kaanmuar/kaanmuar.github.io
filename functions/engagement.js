@@ -381,7 +381,7 @@ function chainPrompt(items) {
   ].join("\n");
 }
 
-const URLS = /\bhttps?:\/\/\S+|\b(?:www\.)?[a-z0-9-]+\.(?:com|net|org|io|dev|app|co)\b\S*/gi;
+const URLS = /\bhttps?:\/\/\S+|\b(?<![a-z0-9]-{0,62})(?:www\.)?[a-z0-9-]+\.(?:com|net|org|io|dev|app|co)\b\S*/gi;
 
 /** Gemini's answer as rows by id; a reply loses links unless the post asked for a tool, and is cut to the network's limit. */
 function parseAi(text, items) {
@@ -774,7 +774,7 @@ function replyPush(doc) {
 // A GIF goes with a reply only when Carlos's edit asks for one: "[gif: applause]" anywhere in it (#2710). The marker
 // never goes out; only GIF_NETS keep the ask.
 const GIF_NETS = ["threads"];
-const GIF_ASK = /\s*\[gif:\s*([^\]\n]{1,40}?)\s*\]\s*/i;
+const GIF_ASK = /(?<!\s)\s*\[gif:\s*([^\]\n\s][^\]\n]{0,39}?)\s*\]\s*/i;
 function gifAsk(text) {
   const t = String(text || "");
   const m = GIF_ASK.exec(t);

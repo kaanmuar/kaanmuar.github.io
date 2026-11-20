@@ -38,13 +38,13 @@ const STOP = /unsubscribe|remove (me|us)|do not (contact|email|write)|stop (send
 const REDIRECT = /forward|redirect|instead|reenv[ií]|remit|redirig|dir[ií]j|dirigir|escrib(a|ir|an) a|nuev[oa] (responsable|encargad|contacto)|responsable|encargad|contact(e|ar|o) (a|con)|weiterleit|zust[äa]ndig|wenden sie sich|transf[ée]r|adress(ez|er)|inoltr|rivolger|responsabile|encaminh|respons[áa]vel/i;
 const INTERESTED = /thank|gracias|interes|cotiza|precio|\bprice|quote|how much|cu[áa]nto|propuesta|reuni[óo]n|meeting|llamad|danke|merci|grazie|obrigad|angebot|devis|preventivo|or[çc]amento/i;
 
-const FORWARD = /-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}|^[ \t]*(begin forwarded message|inicio del mensaje reenviado|d[ée]but du message r[ée]exp[ée]di[ée]|anfang der weitergeleiteten nachricht|inizio messaggio inoltrato|in[íi]cio da mensagem (re)?encaminhada)\s?:/im;
+const FORWARD = /(?<!-)-{4,}\s*(forwarded message|mensaje reenviado|message transf[ée]r[ée]|weitergeleitete nachricht|messaggio inoltrato|mensagem encaminhada)\s*-{4,}|^[ \t]*(begin forwarded message|inicio del mensaje reenviado|d[ée]but du message r[ée]exp[ée]di[ée]|anfang der weitergeleiteten nachricht|inizio messaggio inoltrato|in[íi]cio da mensagem (re)?encaminhada)\s?:/im;
 const FROM_KEYS = ["from", "de", "von", "da"];
 const SUBJECT_KEYS = ["subject", "asunto", "betreff", "objet", "oggetto", "assunto"];
 const OTHER_KEYS = ["sent", "date", "to", "cc", "reply-to", "enviado", "enviada", "fecha", "para", "gesendet", "datum", "an", "envoyé", "à", "a", "inviato", "data"];
-const HEADER_LINE = /^[\s*]*([^:*]{1,12}?)[\s*]*:[\s*]*(.*?)[\s*]*$/;
-const QUOTE_START = /^\s*(on .+wrote:|el .+escribi[óo]:|le .+a [ée]crit\s?:|am .+schrieb.*:|il giorno .+ha scritto:|em .+escreveu:|-{3,}\s*(original message|mensaje original|message d'origine|urspr[üu]ngliche nachricht|messaggio originale|mensagem original)\s*-{3,}|\**(from|de|von|da):\**\s.+@.+|_{8,})/im;
-const EMAIL = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+const HEADER_LINE = /^[\s*]*([^:*\s][^:*]{0,11}?)[\s*]*:[\s*]*(?![\s*])((?:.*[^\s*])?)[\s*]*$/;
+const QUOTE_START = /^(?<!^[^\S\r\n\u2028\u2029]*[\r\n\u2028\u2029])\s*(on .+wrote:|el .+escribi[óo]:|le .+a [ée]crit\s?:|am .(?:(?!schrieb).)*schrieb.*:|il giorno .+ha scritto:|em .+escreveu:|-{3,}\s*(original message|mensaje original|message d'origine|urspr[üu]ngliche nachricht|messaggio originale|mensagem original)\s*-{3,}|\**(from|de|von|da):\**\s.+@.+|_{8,})/im;
+const EMAIL = /(?<![a-z0-9._%+-])[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 
 // Who an address reaches, from its local part: a general or web inbox first, jobs and suppliers last (#1095).
 const ROLE_FIRST = /^(contact[a-z]*|kontakt|info[a-z]*|general|hello|hola|hallo|commercial|comercial|sales|ventas|vendas|vertrieb|communications?|comunicaci[a-z]*|comunicacoes|kommunikation|press|prensa|presse|imprensa|stampa|media|medios|web|webmaster|www|marketing|digital|office|oficina|atencion[a-z]*)$/;
