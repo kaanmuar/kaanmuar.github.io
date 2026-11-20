@@ -33,3 +33,14 @@ test('shipped faces are self-contained: no scripts, no outside references, reduc
 		assert.match(svg, /prefers-reduced-motion:reduce/, f);
 	}
 });
+
+test('every comparison section that wears a face names one that exists in both themes', () => {
+	const js = fs.readFileSync(path.join(root, 'js/qa-review-multi.js'), 'utf8');
+	const map = js.match(/const SECTION_FACE = (\{[^}]+\})/)[1];
+	const ids = [...map.matchAll(/: "([a-z0-9-]+)"/g)].map((m) => m[1]);
+	assert.ok(ids.length >= 15, 'the comparison report tags its sections');
+	for (const id of new Set(ids)) {
+		assert.ok(fs.existsSync(face(id)), `${id}.svg`);
+		assert.ok(fs.existsSync(face(id, '-light')), `${id}-light.svg`);
+	}
+});

@@ -1574,7 +1574,8 @@ test('one toggle per section folds it for every site together, the boxes of a ro
 	const download = page.waitForEvent('download');
 	await box.getByRole('button', { name: 'Download PDF' }).click();
 	await download;
-	expect(seen.pdf[0]).toContain('<h2 translate="no"><span>Health score</span></h2>');
+	// The section's face (#3826) may sit in front of the title inside the same span.
+	expect(seen.pdf[0]).toMatch(/<h2 translate="no"><span>(?:<span class="fold-face"[\s\S]*?<\/span>)?Health score<\/span><\/h2>/);
 	expect(seen.pdf[0]).not.toMatch(/<div class="multi-row fold-panel"[^>]*\shidden/);
 	await box.getByRole('button', { name: 'Expand all' }).click();
 	await expect(box.locator('.multi-sec .fold-toggle[aria-expanded="false"]')).toHaveCount(0);
