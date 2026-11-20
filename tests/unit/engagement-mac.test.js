@@ -410,10 +410,17 @@ function reportFetch() {
 			{ id: 'banco', name: 'Bancolombia', host: 'www.bancolombia.com', overall: 84, areas: { SEO: 90, Security: 77 } },
 		],
 	};
+	const hostOf = (u) => {
+		try {
+			return new URL(u).hostname;
+		} catch {
+			return '';
+		}
+	};
 	return async (url, opts) => {
 		const json = (body) => ({ ok: true, status: 200, json: async () => body });
 		if (url.includes('live-reports/index.json')) return json(index);
-		if (url.includes('tinyurl.com')) return { ok: false, status: 503, text: async () => '' };
+		if (hostOf(url) === 'tinyurl.com') return { ok: false, status: 503, text: async () => '' };
 		const items = JSON.parse(JSON.parse(opts.body).contents[0].parts[0].text.split('\n').pop());
 		return json({
 			candidates: [

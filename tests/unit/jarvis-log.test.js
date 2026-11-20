@@ -380,7 +380,7 @@ test('the poller seeds on its first pass, then logs what is new, uses ETags and 
 	});
 	const fetch = async (url, opts) => {
 		calls.push([url.replace(/\?.*$/, ''), (opts.headers || {})['If-None-Match'] || '']);
-		if (url.includes('logging.googleapis.com')) return res(200, { entries: gh.logs || [] });
+		if (new URL(url).hostname === 'logging.googleapis.com') return res(200, { entries: gh.logs || [] });
 		if (url.endsWith('/graphql'))
 			return res(200, { data: { nodes: [{ id: 'MOVE', previousStatus: 'Next', status: 'Dev' }] } });
 		const repo = url.split('/repos/')[1].split('/').slice(0, 2).join('/');
