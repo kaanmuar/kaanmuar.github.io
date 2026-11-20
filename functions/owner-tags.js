@@ -149,7 +149,7 @@ function profileOf(a) {
   }[a.network] || "";
 }
 
-const SOCIAL = /https?:\/\/(?:www\.|m\.)?(?:x\.com|twitter\.com|instagram\.com|threads\.(?:net|com)|tiktok\.com|bsky\.app|youtube\.com|facebook\.com|linkedin\.com|[a-z0-9-]*(?:mastodon|mstdn)[a-z0-9.-]*|social\.[a-z0-9.-]+|toot\.[a-z0-9.-]+)\/[^\s"'<>\\)]+/gi;
+const SOCIAL = /https?:\/\/(?:www\.|m\.)?(?:x\.com|twitter\.com|instagram\.com|threads\.(?:net|com)|tiktok\.com|bsky\.app|youtube\.com|facebook\.com|linkedin\.com|(?=[a-z0-9-]*(?:mastodon|mstdn))[a-z0-9.-]+|social\.[a-z0-9.-]+|toot\.[a-z0-9.-]+)\/[^\s"'<>\\)]+/gi;
 
 /** The profile links a home page names (links and schema.org sameAs alike), as { network, handle }, one per account. */
 function socialLinksOf(html) {

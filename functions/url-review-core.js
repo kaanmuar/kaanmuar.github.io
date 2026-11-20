@@ -1861,7 +1861,7 @@ function ownMarkup(html, pageUrl) {
     }
   };
   const prose = /\s(alt|title|aria-label|placeholder|value|content)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
-  const quoted = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
+  const quoted = /(?<!\\)"(?:[^"\\\n]|\\.)*"|(?<!\\)'(?:[^'\\\n]|\\.)*'|(?<!\\)`(?:[^`\\]|\\.)*`/g;
   const tag = (raw) => {
     if (/^<script\b/i.test(raw)) {
       const open = raw.match(/^<script\b[^>]*>/i)[0];
@@ -1929,7 +1929,7 @@ function textLanguage(text) {
 
 function outline(html) {
   const heads = [];
-  const re = /<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const re = /<h([1-3])\b[^<>]*>((?:[^<]|<(?!h[1-3]\b|\/h\1>))*)<\/h\1>/gi;
   let match;
   while ((match = re.exec(String(html || ""))) && heads.length < 30) {
     const text = decode(match[2].replace(/<[^>]+>/g, " "));
@@ -1997,7 +1997,7 @@ const CONSENT_TOOLS = [
 // A gtag consent default with no region applies everywhere; one with a region list applies only there and wins in those regions.
 function consentModeOf(body) {
   const blocks = [];
-  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([\s\S]{0,1200}?)\}/g;
+  const re = /gtag\(\s*['"]consent['"]\s*,\s*['"]default['"]\s*,\s*\{([^{}]{0,1200})\}/g;
   let match;
   while ((match = re.exec(body)) && blocks.length < 8) {
     const list = (match[1].match(/region['"]?\s*:\s*\[([^\]]*)\]/) || [])[1] || "";
@@ -2097,7 +2097,7 @@ function inspect(html, headers, pageUrl) {
   const images = collect(markup, "img");
   const missingAlt = images.filter((tag) => !hasAttr(tag, "alt")).length;
   const forms = collect(markup, "form").length;
-  const password = /<input\b[^>]*type\s*=\s*["']?password/i.test(markup);
+  const password = /<input\b[^<>]*type\s*=\s*["']?password/i.test(markup);
   const buttons = (markup.match(/<button\b/gi) || []).length;
   const labelFor = new Set(collect(markup, "label").map((tag) => attr(tag, "for")).filter(Boolean));
   const unlabeled = (markup.replace(/<label\b[\s\S]*?<\/label>/gi, " ").match(/<(?:input|select|textarea)\b[^>]*>/gi) || []).filter((tag) => {
@@ -2878,9 +2878,9 @@ function pagesFound(pages, links, sitemap, startUrl, prefix) {
 
 function sitemapLocs(xml) {
   const locs = [];
-  const re = /<loc>\s*([\s\S]*?)\s*<\/loc>/gi;
+  const re = /<loc>((?:[^<]|<(?!\/?loc>))*)<\/loc>/gi;
   let match;
-  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].replace(/<!\[CDATA\[|\]\]>/g, "")));
+  while ((match = re.exec(String(xml || ""))) && locs.length < 5000) locs.push(decode(match[1].trim().replace(/<!\[CDATA\[|\]\]>/g, "")));
   return locs;
 }
 
