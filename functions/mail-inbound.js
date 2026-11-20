@@ -10,6 +10,7 @@
 
    A confirm link is only taken from a checked sender, so a forged mail cannot push a phishing link. */
 const crypto = require("crypto");
+const mailBounce = require("./mail-bounce");
 
 const KEEP_MS = 24 * 3600 * 1000;
 
@@ -241,6 +242,12 @@ function replyMail(payload) {
   };
 }
 
+/** Bounce class of one webhook payload (#3837): "hard 5.1.1", "soft 4.2.2", "auto-reply", "complaint" or "". No text, no address. */
+function bounceLabel(payload) {
+  const p = payload || {};
+  return mailBounce.label(mailBounce.classify({ from: p.from, subject: p.subject, text: String(p.text || "") || htmlText(p.html), headers: p.headers }));
+}
+
 /** SPF and DKIM results from the Authentication-Results ImprovMX adds, in the form SendGrid's fields use. */
 function replyAuth(headers) {
   const auth = header(headers, "Authentication-Results");
@@ -254,4 +261,4 @@ function replyAuth(headers) {
 /** Our own mail (alerts, owner-reply notices) also reaches qa@; it is never an owner's reply. */
 const fromUs = (email) => /(^|\.)carlosandmunoz\.com$/.test(domainOf(String(email || "").replace(/^.*</, "")));
 
-module.exports = { KEEP_MS, SERVICES, passedDomains, htmlText, read, codeOf, docId, message, rows, replyMail, replyAuth, fromUs };
+module.exports = { KEEP_MS, SERVICES, passedDomains, htmlText, read, codeOf, docId, message, rows, replyMail, replyAuth, fromUs, bounceLabel };
