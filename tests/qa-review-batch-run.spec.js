@@ -211,6 +211,23 @@ test('a form field the server refuses stops the batch after one try (#3975)', as
 	await page.locator('#accept').click();
 	await expect(page.locator('#review-btn')).toBeEnabled({ timeout: 15000 });
 	await expect(page.locator('#reason-error')).not.toHaveText('');
+	await expect(page.locator('#batch-panel-status')).toContainText('Pick a reason.');
+	await expect(page.locator('#run-log')).toContainText('Pick a reason.');
+	await expect(page.locator('#form-status')).toContainText('Pick a reason.');
 	expect(calls.filter((c) => c[1].endsWith('/review')).length).toBe(1);
 	expect(calls.some((c) => c[1].endsWith('/account/batch/stop'))).toBe(true);
+});
+
+test('"The site is mine" with a mail on another domain names the hosts and starts nothing (#3979)', async ({ page }) => {
+	const calls = await open(page);
+	await page.locator('[data-url-mode="many"]').click();
+	await page.locator('#batch-text').fill('https://a.example/\nhttps://shop.other.test/\nhttps://www.example.com/');
+	await page.locator('#name').fill('Ana');
+	await page.locator('input[name="reasonCode"][value="own"]').check({ force: true });
+	await page.locator('#review-btn').click();
+	await expect(page.locator('#batch-error')).toContainText('a.example, shop.other.test');
+	await expect(page.locator('#batch-error')).not.toContainText('www.example.com');
+	await expect(page.locator('#email-error')).not.toHaveText('');
+	await expect(page.locator('#gate')).toBeHidden();
+	expect(calls.filter((c) => /batch|review$/.test(c[1]))).toEqual([]);
 });

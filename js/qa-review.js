@@ -1168,18 +1168,19 @@
 				errors.push({ field: 'clientEmail', message: say('clientEmailNeeded') });
 			if (!clientHost || /\s/.test(clientHost)) errors.push({ field: 'clientUrl', message: say('clientUrlNeeded') });
 		}
-		if (code === 'own' && email.indexOf('@') !== -1 && host) {
-			const mailHost = email.split('@')[1].replace(/^www\./, '');
-			const siteHost = host.replace(/^www\./, '').split('/')[0];
-			const mailRoot = mailHost.split('.').slice(-2).join('.');
-			const siteRoot = siteHost.split('.').slice(-2).join('.');
-			if (mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase()) {
-				errors.push({ field: 'email', message: say('ownMailDomain') });
-			}
-		}
+		if (code === 'own' && ownMailMismatch(email, host)) errors.push({ field: 'email', message: say('ownMailDomain') });
 		if (!host || /\s/.test(host)) errors.push({ field: 'url', message: say('urlNeeded') });
 		if (!selectedFrameworks().length) errors.push({ field: 'frameworks', message: say('frameworksNeeded') });
 		return errors.map((item) => Object.assign(item, { local: true }));
+	}
+
+	function ownMailMismatch(email, host) {
+		if (email.indexOf('@') === -1 || !host) return false;
+		const mailHost = email.split('@')[1].replace(/^www\./, '');
+		const siteHost = host.replace(/^www\./, '').split('/')[0];
+		const mailRoot = mailHost.split('.').slice(-2).join('.');
+		const siteRoot = siteHost.split('.').slice(-2).join('.');
+		return !!(mailRoot && siteRoot && mailRoot.toLowerCase() !== siteRoot.toLowerCase());
 	}
 
 	function fwLogo(name) {
@@ -3724,13 +3725,25 @@
 		}
 		// Every row's run is checked against these fields; one missing would fail all of them (#3975).
 		const fieldErrors = clientErrors().filter((item) => item.field !== 'url' && item.field !== 'email');
+		// "The site is mine" is checked per row against the mail domain, so check every host here (#3979).
+		const email = document.getElementById('email').value.trim();
+		const foreign =
+			reasonCode() === 'own' ? parsed.urls.filter((row) => ownMailMismatch(email, row.host)).map((row) => row.host) : [];
+		if (foreign.length) {
+			fieldErrors.push({
+				field: 'email',
+				message: window.QAReviewReportCopy.word('fieldError', 'ownMailDomain') + ' ' + foreign.join(', '),
+			});
+		}
+		markFields(fieldErrors);
 		if (fieldErrors.length) {
-			markFields(fieldErrors);
 			setStatus(fieldErrors[0].message, true);
+			document.getElementById('batch-error').textContent = fieldErrors[0].message;
 			const first = document.getElementById(fieldErrors[0].field + '-error');
 			if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
 			return;
 		}
+		document.getElementById('batch-error').textContent = '';
 		if (!standing) await loadStanding();
 		// A free-runs address runs every review free, so its batch needs no pass (#3972).
 		const free = !!(standing && standing.free);
@@ -3833,7 +3846,8 @@
 					if (formError(error)) {
 						if (window.ReviewProgress) ReviewProgress.reset();
 						markFields(error.fields.filter((item) => item.field !== 'url'));
-						setStatus(error.message, true);
+						pool.refused = error.message;
+						appendLog(error.message);
 						try {
 							pool.batch = await batchPost('/account/batch/stop', { id: pool.batch.id });
 						} catch (stopError) {
@@ -3854,7 +3868,11 @@
 			loadStanding();
 			if (bc) bc.paintPanel(pool.batch);
 			const finalStatus = document.getElementById('batch-panel-status');
-			if (finalStatus && pool.batch.status !== 'running') setStatus(finalStatus.textContent, false);
+			if (pool.refused) {
+				// "Stopped" alone reads as a hang; say why next to the rows (#3979).
+				if (finalStatus) finalStatus.textContent += ' ' + pool.refused;
+				setStatus(pool.refused, true);
+			} else if (finalStatus && pool.batch.status !== 'running') setStatus(finalStatus.textContent, false);
 			if (pool.leadPayload && !pool.stopping) {
 				layer = 'All';
 				render(pool.leadPayload);
