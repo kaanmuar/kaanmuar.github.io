@@ -891,7 +891,10 @@ async function check(input, options) {
   const libs = Array.isArray(input && input.libraries) ? input.libraries : [];
   const wp = (input && input.wordpress) || (input && input.extras && input.extras.wordpress) || null;
   const cert = (input && input.cert) || null;
-  const certspotterKey = opts.certspotterKey || (opts.env && opts.env.CERTSPOTTER_KEY) || "";
+  // The certificate-transparency read (CertSpotter) and the breach-news match for this host belong to the paid Deep
+  // check (#3946, url-review-deep.js); the plain read does neither, unless a caller says `deep: true`.
+  const deep = opts.deep === true;
+  const certspotterKey = deep ? (opts.certspotterKey || (opts.env && opts.env.CERTSPOTTER_KEY) || "") : "";
 
   const work = (async () => {
     const [geo, feeds, osvHits, certCheck] = await Promise.all([
@@ -953,7 +956,7 @@ async function check(input, options) {
     const feodoHit = ips.map((ip) => feeds && feeds.feodo && feeds.feodo.ips ? feeds.feodo.ips[ip] : null).find(Boolean) || null;
     const torSet = feeds && feeds.tor && Array.isArray(feeds.tor.ips) ? new Set(feeds.tor.ips) : null;
     const torHit = torSet ? (ips.find((ip) => torSet.has(ip)) || "") : "";
-    const breachNews = matchBreachNews(host, feeds && feeds.gdelt);
+    const breachNews = deep ? matchBreachNews(host, feeds && feeds.gdelt) : [];
 
     const sourcesRead = [];
     const sourcesSkipped = [];
@@ -966,7 +969,9 @@ async function check(input, options) {
     if (feeds && feeds.tor && feeds.tor.count) sourcesRead.push("Tor Exit List");
     if (feeds && feeds.gdelt && feeds.gdelt.mentions) sourcesRead.push("GDELT Project");
     if (certCheck.ctChecked) sourcesRead.push("CertSpotter CT");
+    else if (!deep) sourcesSkipped.push("CertSpotter CT (Deep check)");
     else if (!certspotterKey) sourcesSkipped.push("CertSpotter CT (no key)");
+    if (!deep) sourcesSkipped.push("News match for this site (Deep check)");
 
     const items = unifySiteItems(input, {
       now,
