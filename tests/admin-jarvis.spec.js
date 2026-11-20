@@ -4448,6 +4448,14 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('10 university');
 		await expect(mk.locator('[data-panel-id="marketing-jobs"]')).toContainText('W1 leads ready');
 		await expect(mk.locator('[data-panel-id="marketing-kpis"]')).toContainText('setup week');
+		// The marketing view re-renders whole (view.innerHTML) whenever a load lands, so a fill can hit the old, detached
+		// field and leave the new one empty (#4005). Fill until the live field holds the text; typing keeps it in
+		// S.mkForm / S.mkDrafts across later renders.
+		const fillLive = (field, text) =>
+			expect(async () => {
+				await field.fill(text);
+				await expect(field).toHaveValue(text, { timeout: 500 });
+			}).toPass();
 		const cmds = () =>
 			calls.filter((c) => c.op === 'marketing-command').map(({ body: { op, days, device, ...rest } }) => rest);
 
@@ -4487,7 +4495,7 @@ test.describe('admin statistics (Jarvis)', () => {
 
 		const draft = mk.locator('[data-mk-draft="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]');
 		await expect(draft).toHaveValue('Hola, gracias');
-		await draft.fill('Hola Dean, ¿le sirve el martes?');
+		await fillLive(draft, 'Hola Dean, ¿le sirve el martes?');
 		await mk.locator('[data-act="mk-reload"]').click();
 		await expect(draft).toHaveValue('Hola Dean, ¿le sirve el martes?');
 		page.once('dialog', (dialog) => {
@@ -4501,9 +4509,11 @@ test.describe('admin statistics (Jarvis)', () => {
 				{ action: 'reply', id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', text: 'Hola Dean, ¿le sirve el martes?' },
 			]);
 
-		await mk.locator('[data-mk-dnc] input[name="addr"]').fill('stop@uni.edu.co');
+		// Enter submits through the same form submit event and cannot miss a button that a render replaced (#4005).
+		const dnc = mk.locator('[data-mk-dnc] input[name="addr"]');
+		await fillLive(dnc, 'stop@uni.edu.co');
 		page.once('dialog', (dialog) => dialog.accept());
-		await mk.locator('[data-mk-dnc] button').click();
+		await dnc.press('Enter');
 		await expect
 			.poll(() =>
 				cmds()
