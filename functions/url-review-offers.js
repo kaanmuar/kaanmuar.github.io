@@ -439,7 +439,7 @@ function reportPayment(run, payment) {
 }
 
 // Bought on a report that already exists; none of them pays for a run.
-const ADDONS = ["fixlist", "cases", "alerts", "credentials"];
+const ADDONS = ["fixlist", "deep", "cases", "alerts", "credentials"];
 
 function paidPurpose(value) {
   const purpose = String(value || "");

@@ -44,6 +44,8 @@ const PRICE_PER_FRAMEWORK = 19;
 const PRICE_USD = PRICE_PER_FRAMEWORK;
 const EXTRA_FRAMEWORK_USD = 5;
 const FIXLIST_CENTS = 500;
+// The Deep attack-source check is a flat one-off add-on on one paid report (#3946); never a credit or a discount.
+const DEEP_CENTS = 1900;
 const CREDENTIALS_CENTS = 3900;
 // A comparison is a flat 9 USD for each competitor run, with no return discount; the report holds five competitors.
 const COMPARE_CENTS = 900;
@@ -141,7 +143,7 @@ function priceMatches(usd) {
   PAGE_CHOICES.forEach((pages) => {
     DEPTH_CHOICES.forEach((depth) => scopes.push(PAGE_CENTS[pages] + DEPTH_CENTS[depth]));
   });
-  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS) return true;
+  if (scopes.indexOf(cents) !== -1 || cents === FIXLIST_CENTS || cents === DEEP_CENTS) return true;
   if (fixOffers.chargeableUsd().some((usd) => usd * 100 === cents)) return true;
   if (cents % COMPARE_CENTS === 0 && cents / COMPARE_CENTS <= MAX_COMPETITORS) return true;
   if (Object.keys(PASS_CENTS).some((id) => PASS_CENTS[id] === cents)) return true;
@@ -728,6 +730,10 @@ function priceForFixList() {
   return { usd: FIXLIST_CENTS / 100, cents: FIXLIST_CENTS, count: 1, frameworks: [], layers: [] };
 }
 
+function priceForDeep() {
+  return { usd: DEEP_CENTS / 100, cents: DEEP_CENTS, count: 1, frameworks: [], layers: [] };
+}
+
 function priceForFix(packageId, host) {
   const pkg = fixOffers.packageById(packageId);
   if (!pkg) {
@@ -992,6 +998,8 @@ function chargedUsd(options) {
       ? priceForPassExtras(options.passPlan, options)
     : purpose === "fixlist"
     ? priceForFixList()
+    : purpose === "deep"
+    ? priceForDeep()
     : purpose === "fix"
     ? priceForFix(options.fixPackage, options.fixHost)
     : purpose === "cases"
@@ -1016,7 +1024,7 @@ function chargedUsd(options) {
   }
   const cents = Math.round(usd * 100);
   if (cents === priced.cents) return priced;
-  const floor = purpose === "fixlist" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
+  const floor = purpose === "fixlist" || purpose === "deep" || purpose === "fix" || priced.billing === "compare" || priced.billing === "pass" ? priced.cents : floorCents(priced.cents);
   if (!(cents < priced.cents && cents >= floor)) {
     const error = new Error("The discount on this charge is out of range. No charge was made.");
     error.status = 400;
@@ -4499,6 +4507,7 @@ function productName(purpose, frameworks, scope) {
   if (purpose === "new-run" && scope && scope.billing === "pass") return "QA-lab URL Review run · options over the pass · " + scope.pages + " pages, " + scope.depth + " links deep";
   if (purpose === "credentials") return "QA-lab signed-in run";
   if (purpose === "fixlist") return "QA-lab URL Review fix list";
+  if (purpose === "deep") return "QA-lab URL Review Deep attack-source check";
   if (purpose === "fix") {
     const pkg = fixOffers.packageById(scope && scope.package);
     return "QA-lab URL Review fix · " + (pkg ? pkg.name.en : "package") + (scope && scope.host ? " · " + scope.host : "");
@@ -4683,7 +4692,7 @@ async function startMercadoPago(options, purpose) {
 
 async function startCheckout(options) {
   const provider = paymentProvider(options && options.provider);
-  const purpose = ["report", "fixlist", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
+  const purpose = ["report", "fixlist", "deep", "fix", "cases", "credentials", "alerts", "new-run", "pass"].indexOf(options && options.purpose) === -1 ? "new-run" : options.purpose;
   if (provider !== "paypal") {
     const error = new Error("PayPal is the payment method for this review. No charge was made.");
     error.status = 400;
@@ -5294,6 +5303,8 @@ module.exports = {
   PRICE_PER_FRAMEWORK,
   EXTRA_FRAMEWORK_USD,
   FIXLIST_CENTS,
+  DEEP_CENTS,
+  priceForDeep,
   COMPARE_CENTS,
   PASS_CENTS,
   FULL_STACK_CENTS,
