@@ -22,14 +22,14 @@
 			sub_logs: 'Every line the review writes, as it happens.',
 			sub_alerts: 'Anything slow, risky or failed.',
 			sub_settings: 'How this monitor looks and refreshes. Saved on this device.',
-			update: 'Update', allSystems: 'All Systems', autoRefresh: 'Auto-refresh', fullscreen: 'Full screen', exitFull: 'Exit full screen',
+			update: 'Update', allSystems: 'All Systems', autoRefresh: 'Auto-refresh', fullscreen: 'Full screen', exitFull: 'Exit full screen', enlarge: 'Tap to enlarge',
 			paused: 'Paused. Press Update to catch up.', updated: 'Updated {t}', systemLabel: 'System filter',
 			sysStatus: 'SYSTEM STATUS', target: 'Target', pagesLbl: 'Pages', elapsed: 'Elapsed', phase: 'Phase', state: 'State',
 			pageOf: '{n} of {m}', pageN: '{n}',
 			run_running: 'RUNNING', run_ready: 'REPORT READY', run_stopped: 'STOPPED', run_stopping: 'STOPPING', run_failed: 'ENDED EARLY', run_idle: 'WAITING',
 			s_running: 'RUNNING', s_done: 'DONE', s_queued: 'QUEUED', s_risk: 'RISK', s_error: 'ERROR', s_skipped: 'SKIPPED',
 			nominal: 'All systems nominal', attention: '{n} need a look', finished: 'Report ready. All checks finished', stoppedNote: 'Stopped. The pages already saved are kept',
-			lanesTitle: 'REVIEW LANES', lanesSub: 'URL review lanes running in parallel',
+			lanesTitle: 'CONCURRENT WORK ARCADE', lanesSub: 'URL review lanes running in parallel',
 			laneReview: 'Review', laneBackground: 'Background', laneWatchdog: 'Watchdog', steps: '{n} steps',
 			hzTimeout: 'Timeout', hzStop: 'Stop', hzRetry: 'Retry', hzSlow: 'Slow wait', hzFail: 'Fail',
 			procTitle: 'PROCESSES', procSub: 'Active processes and their current state', viewAll: 'View All Processes', back: 'Back to Processes',
@@ -71,14 +71,14 @@
 			sub_agents: 'El equipo que hace el trabajo y cómo le va a cada uno.', sub_workflows: 'Los siete pasos desde la solicitud hasta el informe firmado.',
 			sub_infrastructure: 'Las herramientas y fuentes públicas detrás de las comprobaciones.', sub_logs: 'Cada línea que escribe la revisión, en el momento.',
 			sub_alerts: 'Todo lo lento, arriesgado o fallido.', sub_settings: 'Cómo se ve y se actualiza este monitor. Se guarda en este dispositivo.',
-			update: 'Actualizar', allSystems: 'Todos los sistemas', autoRefresh: 'Actualización automática', fullscreen: 'Pantalla completa', exitFull: 'Salir de pantalla completa',
+			update: 'Actualizar', allSystems: 'Todos los sistemas', autoRefresh: 'Actualización automática', fullscreen: 'Pantalla completa', exitFull: 'Salir de pantalla completa', enlarge: 'Toca para ampliar',
 			paused: 'En pausa. Pulsa Actualizar para ponerte al día.', updated: 'Actualizado {t}', systemLabel: 'Filtro de sistema',
 			sysStatus: 'ESTADO DEL SISTEMA', target: 'Destino', pagesLbl: 'Páginas', elapsed: 'Transcurrido', phase: 'Fase', state: 'Estado',
 			pageOf: '{n} de {m}', pageN: '{n}',
 			run_running: 'EN CURSO', run_ready: 'INFORME LISTO', run_stopped: 'DETENIDO', run_stopping: 'DETENIENDO', run_failed: 'TERMINÓ ANTES', run_idle: 'EN ESPERA',
 			s_running: 'EN CURSO', s_done: 'LISTO', s_queued: 'EN COLA', s_risk: 'RIESGO', s_error: 'ERROR', s_skipped: 'OMITIDO',
 			nominal: 'Todos los sistemas en orden', attention: '{n} requieren atención', finished: 'Informe listo. Todas las comprobaciones terminaron', stoppedNote: 'Detenido. Se conservan las páginas ya guardadas',
-			lanesTitle: 'CARRILES DE REVISIÓN', lanesSub: 'Carriles de la revisión de URL en paralelo',
+			lanesTitle: 'ARCADE DE TRABAJO EN PARALELO', lanesSub: 'Carriles de la revisión de URL en paralelo',
 			laneReview: 'Revisión', laneBackground: 'Segundo plano', laneWatchdog: 'Vigilancia', steps: '{n} pasos',
 			hzTimeout: 'Tiempo agotado', hzStop: 'Detener', hzRetry: 'Reintento', hzSlow: 'Espera lenta', hzFail: 'Fallo',
 			procTitle: 'PROCESOS', procSub: 'Procesos activos y su estado actual', viewAll: 'Ver todos los procesos', back: 'Volver a Procesos',
@@ -264,6 +264,52 @@
 	IC.a11y = IC.axe;
 	function icon(name, cls) {
 		return h('span', { class: 'rc-i' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (IC[name] || IC.overview) + '</svg>' });
+	}
+
+	// ---------------------------------------------------------------- arcade sprites
+	// The glossy game pieces on the lanes: drawn as SVG (48 grid) so they stay sharp at any size.
+	// Fills point at gradients in the shared <defs> block (SPRITE_DEFS), mounted once in the shadow root.
+	const GT = 'url(#sp-t)', GS = 'url(#sp-s)', GA = 'url(#sp-a)', GR = 'url(#sp-r)', GD = '#0a222b', GE = '#7ef6fb';
+	const OL = ' stroke="#04141b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"';
+	const SPRITE_DEFS =
+		'<svg class="rc-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs>' +
+		'<linearGradient id="sp-t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6f6fa"/><stop offset=".5" stop-color="#37adbb"/><stop offset="1" stop-color="#15606c"/></linearGradient>' +
+		'<linearGradient id="sp-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f8fa"/><stop offset=".5" stop-color="#abbfc7"/><stop offset="1" stop-color="#5b6e78"/></linearGradient>' +
+		'<linearGradient id="sp-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6a3"/><stop offset=".5" stop-color="#f3a63c"/><stop offset="1" stop-color="#af5d1a"/></linearGradient>' +
+		'<linearGradient id="sp-r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa597"/><stop offset=".5" stop-color="#ff4e3e"/><stop offset="1" stop-color="#9e170e"/></linearGradient>' +
+		'</defs></svg>';
+	const SPRITES = {
+		form: '<path d="M11 5h19l9 9v29H11z" fill="' + GS + '"' + OL + '/><path d="M30 5v9h9z" fill="' + GT + '"' + OL + '/><path d="M17 22h16M17 28h16M17 34h10" stroke="' + GD + '" stroke-width="2.6" stroke-linecap="round"/>',
+		lock: '<path d="M15 22v-6a9 9 0 0 1 18 0v6" fill="none" stroke="#04141b" stroke-width="8" stroke-linecap="round"/><path d="M15 22v-6a9 9 0 0 1 18 0v6" fill="none" stroke="' + GS + '" stroke-width="4.4" stroke-linecap="round"/><rect x="9" y="21" width="30" height="22" rx="5" fill="' + GT + '"' + OL + '/><circle cx="24" cy="30.5" r="3.6" fill="' + GD + '"/><path d="M22.4 32.5h3.2l1.2 6h-5.6z" fill="' + GD + '"/>',
+		dns: '<path d="M24 15v8M24 23 12 33M24 23l12 10" stroke="#04141b" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M24 15v8M24 23 12 33M24 23l12 10" stroke="' + GE + '" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="24" cy="10" r="6.5" fill="' + GT + '"' + OL + '/><circle cx="11" cy="36" r="6" fill="' + GS + '"' + OL + '/><circle cx="37" cy="36" r="6" fill="' + GS + '"' + OL + '/>',
+		robots: '<path d="M24 14V7" stroke="#04141b" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="6" r="3.2" fill="' + GA + '"' + OL + '/><rect x="5" y="22" width="5" height="10" rx="2" fill="' + GT + '"' + OL + '/><rect x="38" y="22" width="5" height="10" rx="2" fill="' + GT + '"' + OL + '/><rect x="9" y="14" width="30" height="26" rx="8" fill="' + GS + '"' + OL + '/><rect x="13.5" y="21" width="21" height="11" rx="5.5" fill="' + GD + '"/><circle cx="20" cy="26.5" r="2.6" fill="' + GE + '"/><circle cx="28" cy="26.5" r="2.6" fill="' + GE + '"/><path d="M19 36h10" stroke="#04141b" stroke-width="2" stroke-linecap="round"/>',
+		gear: '<g fill="' + GT + '"' + OL + '><rect x="20.5" y="3" width="7" height="42" rx="2.5"/><rect x="20.5" y="3" width="7" height="42" rx="2.5" transform="rotate(45 24 24)"/><rect x="20.5" y="3" width="7" height="42" rx="2.5" transform="rotate(90 24 24)"/><rect x="20.5" y="3" width="7" height="42" rx="2.5" transform="rotate(135 24 24)"/></g><circle cx="24" cy="24" r="14.5" fill="' + GT + '"' + OL + '/><circle cx="24" cy="24" r="6.5" fill="' + GD + '"' + OL + '/><circle cx="24" cy="24" r="2.4" fill="' + GE + '"/>',
+		globe: '<circle cx="24" cy="24" r="18" fill="' + GT + '"' + OL + '/><ellipse cx="24" cy="24" rx="8" ry="18" fill="none" stroke="#04141b" stroke-width="1.8"/><path d="M6 24h36M9 15h30M9 33h30" stroke="#04141b" stroke-width="1.8" fill="none"/><path d="M13 12c4-4 10-5 15-3" stroke="#fff" stroke-opacity=".5" stroke-width="2.4" stroke-linecap="round" fill="none"/>',
+		mallet: '<g transform="rotate(-38 24 24)"><rect x="20.5" y="14" width="7" height="31" rx="3.2" fill="' + GA + '"' + OL + '/><rect x="7" y="4" width="34" height="16" rx="5" fill="' + GS + '"' + OL + '/><path d="M13 9h22" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/></g>',
+		target: '<circle cx="24" cy="24" r="19" fill="' + GS + '"' + OL + '/><circle cx="24" cy="24" r="13" fill="' + GD + '"' + OL + '/><circle cx="24" cy="24" r="8" fill="' + GT + '"' + OL + '/><circle cx="24" cy="24" r="3.2" fill="' + GA + '"/><path d="M24 1v8M24 39v8M1 24h8M39 24h8" stroke="#04141b" stroke-width="2" stroke-linecap="round"/>',
+		mail: '<rect x="5" y="11" width="38" height="26" rx="5" fill="' + GS + '"' + OL + '/><path d="m6.5 14 17.5 13 17.5-13" fill="none" stroke="#04141b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="38" cy="36" r="8" fill="' + GA + '"' + OL + '/><path d="M35 36h6M38 33v6" stroke="' + GD + '" stroke-width="2" stroke-linecap="round" transform="rotate(45 38 36)"/>',
+		wp: '<circle cx="24" cy="24" r="19" fill="' + GS + '"' + OL + '/><circle cx="24" cy="24" r="14.5" fill="none" stroke="' + GT + '" stroke-width="3"/><path d="m13 17 6.5 16 4.5-11.5L28.5 33 35 17" fill="none" stroke="#04141b" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>',
+		mailbox: '<path d="M7 22a11 11 0 0 1 11-11h12a11 11 0 0 1 11 11v14H7z" fill="' + GT + '"' + OL + '/><rect x="14" y="21" width="18" height="4" rx="2" fill="' + GD + '"/><path d="M33 11V3h9v6h-9" fill="' + GA + '"' + OL + '/><rect x="21" y="36" width="6" height="9" fill="' + GS + '"' + OL + '/>',
+		meter: '<path d="M5 33a19 19 0 0 1 38 0z" fill="' + GS + '"' + OL + '/><path d="M10 33a14 14 0 0 1 28 0z" fill="' + GD + '"/><path d="M24 33 33 18" stroke="#04141b" stroke-width="6" stroke-linecap="round"/><path d="M24 33 33 18" stroke="' + GA + '" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="33" r="4.2" fill="' + GT + '"' + OL + '/><path d="M12 26l2.5 1.5M24 18v3M36 26l-2.5 1.5" stroke="' + GE + '" stroke-width="2" stroke-linecap="round"/>',
+		cube: '<path d="M24 5 41 14 24 23 7 14z" fill="' + GS + '"' + OL + '/><path d="M7 14 24 23V43L7 34z" fill="' + GT + '"' + OL + '/><path d="M41 14 24 23V43L41 34z" fill="' + GT + '" fill-opacity=".62"' + OL + '/><path d="M14 11.5 24 17" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>',
+		rocket: '<path d="M17 24 8 33l9 1z" fill="' + GA + '"' + OL + '/><path d="M31 24 40 33l-9 1z" fill="' + GA + '"' + OL + '/><path d="M20 33h8l-4 12z" fill="' + GA + '"' + OL + '/><path d="M24 3c8 5 10 14 9 28H15C14 17 16 8 24 3z" fill="' + GS + '"' + OL + '/><circle cx="24" cy="17" r="5" fill="' + GD + '"' + OL + '/><circle cx="22.5" cy="15.5" r="1.6" fill="' + GE + '"/><path d="M17 27h14" stroke="#04141b" stroke-width="2"/>',
+		pen: '<g transform="rotate(42 24 24)"><rect x="18.5" y="3" width="11" height="31" rx="2.5" fill="' + GA + '"' + OL + '/><rect x="18.5" y="3" width="11" height="7" rx="2.5" fill="' + GT + '"' + OL + '/><path d="M18.5 34h11L24 45z" fill="' + GS + '"' + OL + '/><path d="M24 40.5v4" stroke="#04141b" stroke-width="2.4" stroke-linecap="round"/></g>',
+		send: '<path d="M44 5 5 21l14 6 6 15z" fill="' + GS + '"' + OL + '/><path d="M19 27 44 5" stroke="#04141b" stroke-width="2" stroke-linecap="round"/><path d="m19 27 3 9 3-3z" fill="' + GT + '"' + OL + '/>',
+		clock: '<circle cx="24" cy="24" r="19" fill="' + GS + '"' + OL + '/><circle cx="24" cy="24" r="14" fill="' + GD + '"/><path d="M24 14v10l7 4" fill="none" stroke="' + GA + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
+		stop: '<path d="M16 4h16l12 12v16L32 44H16L4 32V16z" fill="' + GR + '"' + OL + '/><path d="M14 24h20" stroke="#fff" stroke-width="5" stroke-linecap="round"/>',
+		spark: '<path d="m24 2 5.5 13L44 17l-11 9 3.5 15L24 33l-12.5 8L15 26 4 17l14.5-2z" fill="' + GA + '"' + OL + '/><path d="m24 12 2.5 6 6.5.8-5 4.2 1.5 6.5L24 26l-5.5 3.5L20 23l-5-4.2 6.5-.8z" fill="#fff" fill-opacity=".7"/>',
+		hourglass: '<path d="M10 4h28M10 44h28" stroke="#04141b" stroke-width="5" stroke-linecap="round"/><path d="M13 4c0 12 9 14 11 20-2 6-11 8-11 20h22c0-12-9-14-11-20 2-6 11-8 11-20z" fill="' + GS + '"' + OL + '/><path d="M17 10h14c-1 6-5 8-7 10-2-2-6-4-7-10z" fill="' + GA + '"/><path d="M24 30c3 3 6 5 6.5 10h-13c.5-5 3.5-7 6.5-10z" fill="' + GA + '"/>',
+		bolt: '<path d="M28 2 11 27h11l-4 19 19-27H26z" fill="' + GA + '"' + OL + '/>'
+	};
+	// which game piece each station and each watchdog pod wears
+	const SPRITE_OF = {
+		fields: 'form', https: 'lock', dns: 'dns', robots: 'robots', crawl: 'gear', browser: 'globe', axe: 'mallet', webrisk: 'target',
+		lookalike: 'mail', wordpress: 'wp', mail: 'mailbox', lighthouse: 'meter', cases: 'cube', score: 'rocket', sign: 'pen', save: 'send',
+		timeout: 'clock', stop: 'stop', fail: 'spark', slow: 'hourglass', retry: 'bolt',
+		open: 'globe', pages: 'gear', a11y: 'mallet', security: 'target', malware: 'target', blocklist: 'stop', 'psi-ask': 'meter'
+	};
+	function sprite(id, cls) {
+		return h('span', { class: 'sp' + (cls ? ' ' + cls : ''), 'aria-hidden': 'true', html: '<svg viewBox="0 0 48 48">' + (SPRITES[SPRITE_OF[id]] || SPRITES.form) + '</svg>' });
 	}
 
 	// ---------------------------------------------------------------- characters
@@ -532,7 +578,12 @@
 		E.foot.appendChild(E.legend);
 		E.foot.appendChild(h('span', { class: 'rc-footnote' }, [E.footText, E.footPulse]));
 		const main = h('div', { class: 'rc-main' }, [top, E.paused, E.body, E.foot]);
-		root.appendChild(h('div', { class: 'rc-app' }, [side, main]));
+		root.appendChild(h('span', { class: 'rc-defswrap', 'aria-hidden': 'true', html: SPRITE_DEFS }));
+		E.app = h('div', { class: 'rc-app' }, [side, main]);
+		root.appendChild(E.app);
+		E.cover = h('button', { class: 'rc-cover', type: 'button', hidden: true, text: L.enlarge });
+		E.cover.addEventListener('click', toggleFull);
+		root.appendChild(E.cover);
 		// The console lives in a shadow root: the page's own styles cannot reach it, and it cannot reach the page.
 		const host = h('div', { class: 'rc-host' });
 		host.style.display = 'block';
@@ -563,7 +614,7 @@
 		// ---- node of a station on a lane
 		function stationNode(def, lane) {
 			const n = h('div', { class: 'ln s-idle', 'data-id': def.id }, [
-				h('span', { class: 'ln-ring' }), icon(def.id, 'ln-ico'), h('span', { class: 'ln-mark' }), h('span', { class: 'ln-lbl', text: stationName(def.id) })
+				h('span', { class: 'ln-ring' }), sprite(def.id, 'ln-ico'), h('span', { class: 'ln-mark' }), h('span', { class: 'ln-lbl', text: stationName(def.id) })
 			]);
 			n._st = 'idle';
 			n._lane = lane;
@@ -605,7 +656,7 @@
 			HAZARDS.forEach((hz) => {
 				const f = face(hz, 'sm');
 				const count = h('b', { class: 'pod-n', text: '0' });
-				const pod = h('div', { class: 'pod', 'data-id': hz.id }, [f, h('span', { class: 'pod-lbl', text: L[hz.key] }), count]);
+				const pod = h('div', { class: 'pod', 'data-id': hz.id }, [f, h('span', { class: 'pod-lbl', text: L[hz.key] }), sprite(hz.id, 'pod-sp'), count]);
 				E.pods[hz.id] = { pod, f, count };
 				pods.appendChild(pod);
 			});
@@ -736,7 +787,7 @@
 			const rows = {};
 			stages.forEach((s, order) => {
 				const tr = h('tr', { class: 'pt-row s-queued', 'data-id': s.id }, [
-					h('td', { class: 'pt-order' }, [h('span', { class: 'pt-name' }, [icon(s.id), h('b', { text: stageLabel[s.id] })])]),
+					h('td', { class: 'pt-order' }, [h('span', { class: 'pt-name' }, [sprite(s.id, 'pt-sp'), h('b', { text: stageLabel[s.id] })])]),
 					h('td', { class: 'pt-type', text: L['g_' + groupOf[s.id]] || '' }),
 					h('td', { class: 'pt-lane' }),
 					h('td', { class: 'pt-status' }, [h('span', { class: 'pill' }, [h('i', { class: 'rc-dotc' }), h('span')])]),
@@ -881,7 +932,7 @@
 			E.ovStripDots = {};
 			const board = api.model().ents.filter((e) => e.lane === 0);
 			board.forEach((e) => {
-				const d = h('span', { class: 's-idle strip-dot', title: stationName(e.def.id) }, [icon(e.def.id)]);
+				const d = h('span', { class: 's-idle strip-dot', title: stationName(e.def.id) }, [sprite(e.def.id)]);
 				E.ovStripDots[e.i] = d;
 				E.ovStrip.appendChild(d);
 			});
@@ -973,7 +1024,7 @@
 				const pill = h('span', { class: 'pill' }, [h('i', { class: 'rc-dotc' }), h('span')]);
 				const bar = h('i', { class: 'bar-fill' });
 				const el = h('section', { class: 'panel sys', 'data-g': g.id }, [
-					h('div', { class: 'sys-top' }, [icon(g.icon, 'sys-ico'), h('div', {}, [h('h4', { text: L['g_' + g.id] }), h('p', { text: L['gs_' + g.id] })]), pill]),
+					h('div', { class: 'sys-top' }, [sprite(g.icon, 'sys-ico'), h('div', {}, [h('h4', { text: L['g_' + g.id] }), h('p', { text: L['gs_' + g.id] })]), pill]),
 					h('div', { class: 'bar' }, [bar]),
 					list
 				]);
@@ -1023,7 +1074,7 @@
 				const mood = h('span', { class: 'ag-mood' });
 				const task = h('p', { class: 'ag-task' });
 				const stats = h('p', { class: 'ag-stats' });
-				const chips = h('div', { class: 'ag-chips' }, a.stages.map((id) => h('span', { class: 'ag-chip s-idle', 'data-id': id, title: stageLabel[id] }, [icon(id)])));
+				const chips = h('div', { class: 'ag-chips' }, a.stages.map((id) => h('span', { class: 'ag-chip s-idle', 'data-id': id, title: stageLabel[id] }, [sprite(id)])));
 				const el = h('section', { class: 'panel ag', 'data-who': a.id }, [
 					h('div', { class: 'ag-top' }, [poke, h('div', { class: 'ag-id' }, [h('h4', { text: L['a_' + a.id] }), h('p', { text: L['ar_' + a.id] }), mood])]),
 					task, stats, chips
@@ -1068,7 +1119,7 @@
 			E.wfSteps = [];
 			const track = h('ol', { class: 'wf' });
 			PHASES.forEach((ids, i) => {
-				const chips = h('div', { class: 'wf-chips' }, ids.map((id) => h('span', { class: 'wf-chip s-queued', 'data-id': id }, [icon(id), h('span', { text: stageLabel[id] })])));
+				const chips = h('div', { class: 'wf-chips' }, ids.map((id) => h('span', { class: 'wf-chip s-queued', 'data-id': id }, [sprite(id), h('span', { text: stageLabel[id] })])));
 				const badge = h('span', { class: 'wf-badge' }, [h('b', { text: String(i + 1) }), icon('check', 'wf-tick')]);
 				const pill = h('span', { class: 'pill' }, [h('i', { class: 'rc-dotc' }), h('span')]);
 				const li = h('li', { class: 'wf-step s-queued' }, [badge, h('div', { class: 'wf-card' }, [h('h4', { text: L['wf_' + (i + 1)] }), pill, chips])]);
@@ -1114,7 +1165,7 @@
 				const pill = h('span', { class: 'pill' }, [h('i', { class: 'rc-dotc' }), h('span')]);
 				const seen = h('small', { class: 'in-seen' });
 				const el = h('section', { class: 'panel in', 'data-id': t.id }, [
-					h('div', { class: 'in-top' }, [icon(t.icon, 'in-ico'), h('h4', { text: L['t_' + t.id] || t.id }), pill]),
+					h('div', { class: 'in-top' }, [sprite(t.icon, 'in-ico'), h('h4', { text: L['t_' + t.id] || t.id }), pill]),
 					h('p', { class: 'in-desc', text: L['td_' + t.id] || '' }), seen
 				]);
 				E.toolCards[t.id] = { el, pill, seen, cur: '' };
@@ -1458,6 +1509,7 @@
 			E.full.setAttribute('aria-label', on ? L.exitFull : L.fullscreen);
 			E.full.firstChild.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (on ? IC.exitfull : IC.full) + '</svg>';
 			root.classList.toggle('is-full', on);
+			fit();
 		}
 		const onFull = () => {
 			if (shadow.fullscreenElement !== root) {
@@ -1479,6 +1531,23 @@
 			if (prefs.auto && !document.hidden) render(false);
 		}, 1000);
 
+		// The scene is a fixed 16:9 game screen (1280 x 720 design pixels) scaled to the frame, like the arena always was.
+		// Full screen keeps the scale that fits and gives the extra room to the layout.
+		const BASE_W = 1280, BASE_H = 720;
+		function fit() {
+			if (R.destroyed) return;
+			const W = root.clientWidth, H = isFull() ? root.clientHeight : (W * BASE_H) / BASE_W;
+			if (!W || !H) return;
+			const k = isFull() ? Math.min(W / BASE_W, H / BASE_H) : W / BASE_W;
+			E.app.style.width = Math.max(BASE_W, W / k) + 'px';
+			E.app.style.height = Math.max(BASE_H, H / k) + 'px';
+			E.app.style.transform = 'scale(' + k + ')';
+			E.cover.hidden = isFull() || k > 0.58;
+		}
+		const ro = window.ResizeObserver ? new ResizeObserver(fit) : null;
+		if (ro) ro.observe(root);
+		fit();
+
 		applyPrefs();
 		go(R.view);
 		track();
@@ -1492,6 +1561,7 @@
 			},
 			destroy() {
 				R.destroyed = true;
+				if (ro) ro.disconnect();
 				clearInterval(R.tick);
 				clearTimeout(R.trailing);
 				document.removeEventListener('pointerdown', onDoc);

@@ -10,7 +10,7 @@
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
 	const VER = '?v=20261118a';
-	const CONSOLE_VER = '?v=20261120a';
+	const CONSOLE_VER = '?v=20261120b';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
