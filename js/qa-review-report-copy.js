@@ -175,6 +175,8 @@
       kitCsp_one: "A Report-Only policy built from the {n} host this review saw. Deploy it, watch reports, then enforce.", kitCsp_other: "A Report-Only policy built from the {n} hosts this review saw. Deploy it, watch reports, then enforce.",
       kitSchema: "Structured data", kitSchemaDraft: "An Organization and WebSite JSON-LD draft with the profiles the page links.", kitSchemaHas: "The site already publishes an entity. No draft needed.",
       kitLlmsDraft: "A draft listing the indexable pages with their descriptions.", kitLlmsHas: "The site already publishes llms.txt.",
+      trustTitle: "Customer trust grade", trustScore: "{n} points. A+ is the best grade, F the lowest.", trustCapped: "A planted backdoor caps the grade at F.", trustFixFirst: "Fix these first", trustNone: "No open finding costs points.",
+      trustPoints_one: "costs {n} point", trustPoints_other: "costs {n} points", trustHelmet: "Helmet setup for the missing headers (Node and Express):",
       kitSecDraft: "A draft with Contact, Expires, and Canonical. Replace the address with a real inbox.", kitSecHas: "The site already publishes security.txt.",
       kitDns: "DNS records", kitDnsAdd_one: "{n} record to add ({list}).", kitDnsAdd_other: "{n} records to add ({list}).", kitDnsNone: "No SPF, DMARC, CAA, MTA-STS, or TLS-RPT record is missing.",
       kitNotNeeded: "Not needed for this site.", kitNoLibs: "Nothing to upgrade.", kitLocked: "In the full report.", kitActionsBody: "A workflow that runs the chosen framework scripts on every push and once a day.", kitMta: "MTA-STS policy",
@@ -459,6 +461,9 @@
       kitCsp_one: "Una política Report-Only creada con el {n} host que vio esta revisión. Despliégala, revisa los reportes y luego aplícala.", kitCsp_other: "Una política Report-Only creada con los {n} hosts que vio esta revisión. Despliégala, revisa los reportes y luego aplícala.",
       kitSchema: "Datos estructurados", kitSchemaDraft: "Un borrador JSON-LD de Organization y WebSite con los perfiles que enlaza la página.", kitSchemaHas: "El sitio ya publica una entidad. No hace falta un borrador.",
       kitLlmsDraft: "Un borrador que lista las páginas indexables con sus descripciones.", kitLlmsHas: "El sitio ya publica llms.txt.",
+      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
+      trustTitle: "Nota de confianza del cliente", trustScore: "{n} puntos. A+ es la mejor nota y F la más baja.", trustCapped: "Una puerta trasera plantada limita la nota a F.", trustFixFirst: "Arregla esto primero", trustNone: "Ningún hallazgo abierto resta puntos.",
+      trustPoints_one: "resta {n} punto", trustPoints_other: "resta {n} puntos", trustHelmet: "Configuración de helmet para los encabezados que faltan (Node y Express):",
       kitSecDraft: "Un borrador con Contact, Expires y Canonical. Reemplaza la dirección por un buzón real.", kitSecHas: "El sitio ya publica security.txt.",
       kitDns: "Registros DNS", kitDnsAdd_one: "{n} registro por agregar ({list}).", kitDnsAdd_other: "{n} registros por agregar ({list}).", kitDnsNone: "No falta ningún registro SPF, DMARC, CAA, MTA-STS ni TLS-RPT.",
       kitNotNeeded: "No hace falta en este sitio.", kitNoLibs: "Nada que actualizar.", kitLocked: "En el informe completo.", kitActionsBody: "Un workflow que ejecuta los scripts del framework elegido en cada push y una vez al día.", kitMta: "Política MTA-STS",
@@ -744,6 +749,9 @@
       kitCsp_one: "Uma política Report-Only montada com o {n} host que esta revisão viu. Publique, acompanhe os relatórios e depois aplique.", kitCsp_other: "Uma política Report-Only montada com os {n} hosts que esta revisão viu. Publique, acompanhe os relatórios e depois aplique.",
       kitSchema: "Dados estruturados", kitSchemaDraft: "Um rascunho JSON-LD de Organization e WebSite com os perfis que a página linka.", kitSchemaHas: "O site já publica uma entidade. Não precisa de rascunho.",
       kitLlmsDraft: "Um rascunho que lista as páginas indexáveis com suas descrições.", kitLlmsHas: "O site já publica llms.txt.",
+      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
+      trustTitle: "Nota de confiança do cliente", trustScore: "{n} pontos. A+ é a melhor nota e F a mais baixa.", trustCapped: "Uma porta dos fundos plantada limita a nota a F.", trustFixFirst: "Corrija isto primeiro", trustNone: "Nenhum achado em aberto tira pontos.",
+      trustPoints_one: "tira {n} ponto", trustPoints_other: "tira {n} pontos", trustHelmet: "Configuração do helmet para os cabeçalhos em falta (Node e Express):",
       kitSecDraft: "Um rascunho com Contact, Expires e Canonical. Troque o endereço por uma caixa de entrada real.", kitSecHas: "O site já publica security.txt.",
       kitDns: "Registros DNS", kitDnsAdd_one: "{n} registro para adicionar ({list}).", kitDnsAdd_other: "{n} registros para adicionar ({list}).", kitDnsNone: "Nenhum registro SPF, DMARC, CAA, MTA-STS ou TLS-RPT está faltando.",
       kitNotNeeded: "Não é necessário neste site.", kitNoLibs: "Nada para atualizar.", kitLocked: "No relatório completo.", kitActionsBody: "Um workflow que roda os scripts do framework escolhido a cada push e uma vez por dia.", kitMta: "Política MTA-STS",
@@ -1029,6 +1037,9 @@
       kitCsp_one: "Eine Report-Only-Richtlinie aus dem {n} Host, den diese Prüfung gesehen hat. Ausrollen, Berichte beobachten, dann durchsetzen.", kitCsp_other: "Eine Report-Only-Richtlinie aus den {n} Hosts, die diese Prüfung gesehen hat. Ausrollen, Berichte beobachten, dann durchsetzen.",
       kitSchema: "Strukturierte Daten", kitSchemaDraft: "Ein JSON-LD-Entwurf für Organization und WebSite mit den Profilen, die die Seite verlinkt.", kitSchemaHas: "Die Website veröffentlicht bereits eine Entität. Kein Entwurf nötig.",
       kitLlmsDraft: "Ein Entwurf, der die indexierbaren Seiten mit ihren Beschreibungen auflistet.", kitLlmsHas: "Die Website veröffentlicht bereits llms.txt.",
+      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
+      trustTitle: "Vertrauensnote für Kunden", trustScore: "{n} Punkte. A+ ist die beste Note, F die schlechteste.", trustCapped: "Eine eingeschleuste Hintertür begrenzt die Note auf F.", trustFixFirst: "Das zuerst beheben", trustNone: "Kein offener Befund kostet Punkte.",
+      trustPoints_one: "kostet {n} Punkt", trustPoints_other: "kostet {n} Punkte", trustHelmet: "Helmet-Einrichtung für die fehlenden Header (Node und Express):",
       kitSecDraft: "Ein Entwurf mit Contact, Expires und Canonical. Ersetzen Sie die Adresse durch ein echtes Postfach.", kitSecHas: "Die Website veröffentlicht bereits security.txt.",
       kitDns: "DNS-Einträge", kitDnsAdd_one: "{n} Eintrag hinzuzufügen ({list}).", kitDnsAdd_other: "{n} Einträge hinzuzufügen ({list}).", kitDnsNone: "Es fehlt kein SPF-, DMARC-, CAA-, MTA-STS- oder TLS-RPT-Eintrag.",
       kitNotNeeded: "Für diese Website nicht nötig.", kitNoLibs: "Nichts zu aktualisieren.", kitLocked: "Im vollständigen Bericht.", kitActionsBody: "Ein Workflow, der die gewählten Framework-Skripte bei jedem Push und einmal täglich ausführt.", kitMta: "MTA-STS-Richtlinie",
@@ -1312,6 +1323,9 @@
       kitCsp_one: "Une politique Report-Only construite à partir du {n} hôte vu par cette analyse. Déployez-la, suivez les rapports, puis appliquez-la.", kitCsp_other: "Une politique Report-Only construite à partir des {n} hôtes vus par cette analyse. Déployez-la, suivez les rapports, puis appliquez-la.",
       kitSchema: "Données structurées", kitSchemaDraft: "Un brouillon JSON-LD Organization et WebSite avec les profils vers lesquels la page pointe.", kitSchemaHas: "Le site publie déjà une entité. Aucun brouillon nécessaire.",
       kitLlmsDraft: "Un brouillon qui liste les pages indexables avec leurs descriptions.", kitLlmsHas: "Le site publie déjà llms.txt.",
+      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
+      trustTitle: "Note de confiance client", trustScore: "{n} points. A+ est la meilleure note, F la plus basse.", trustCapped: "Une porte dérobée plantée plafonne la note à F.", trustFixFirst: "À corriger en premier", trustNone: "Aucun constat ouvert ne retire de points.",
+      trustPoints_one: "retire {n} point", trustPoints_other: "retire {n} points", trustHelmet: "Configuration de helmet pour les en-têtes manquants (Node et Express) :",
       kitSecDraft: "Un brouillon avec Contact, Expires et Canonical. Remplacez l’adresse par une vraie boîte de réception.", kitSecHas: "Le site publie déjà security.txt.",
       kitDns: "Enregistrements DNS", kitDnsAdd_one: "{n} enregistrement à ajouter ({list}).", kitDnsAdd_other: "{n} enregistrements à ajouter ({list}).", kitDnsNone: "Aucun enregistrement SPF, DMARC, CAA, MTA-STS ou TLS-RPT ne manque.",
       kitNotNeeded: "Inutile pour ce site.", kitNoLibs: "Rien à mettre à jour.", kitLocked: "Dans le rapport complet.", kitActionsBody: "Un workflow qui lance les scripts du framework choisi à chaque push et une fois par jour.", kitMta: "Politique MTA-STS",
@@ -1597,6 +1611,9 @@
       kitCsp_one: "Una policy Report-Only costruita dal {n} host visto da questa revisione. Pubblicala, osserva i report, poi applicala.", kitCsp_other: "Una policy Report-Only costruita dai {n} host visti da questa revisione. Pubblicala, osserva i report, poi applicala.",
       kitSchema: "Dati strutturati", kitSchemaDraft: "Una bozza JSON-LD di Organization e WebSite con i profili che la pagina collega.", kitSchemaHas: "Il sito pubblica già un’entità. Nessuna bozza necessaria.",
       kitLlmsDraft: "Una bozza che elenca le pagine indicizzabili con le loro descrizioni.", kitLlmsHas: "Il sito pubblica già llms.txt.",
+      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
+      trustTitle: "Voto di fiducia per i clienti", trustScore: "{n} punti. A+ è il voto migliore, F il più basso.", trustCapped: "Una backdoor piantata limita il voto a F.", trustFixFirst: "Correggi prima questi", trustNone: "Nessun risultato aperto toglie punti.",
+      trustPoints_one: "toglie {n} punto", trustPoints_other: "toglie {n} punti", trustHelmet: "Configurazione di helmet per le intestazioni mancanti (Node ed Express):",
       kitSecDraft: "Una bozza con Contact, Expires e Canonical. Sostituisci l’indirizzo con una casella reale.", kitSecHas: "Il sito pubblica già security.txt.",
       kitDns: "Record DNS", kitDnsAdd_one: "{n} record da aggiungere ({list}).", kitDnsAdd_other: "{n} record da aggiungere ({list}).", kitDnsNone: "Non manca nessun record SPF, DMARC, CAA, MTA-STS o TLS-RPT.",
       kitNotNeeded: "Non serve per questo sito.", kitNoLibs: "Niente da aggiornare.", kitLocked: "Nel report completo.", kitActionsBody: "Un workflow che esegue gli script del framework scelto a ogni push e una volta al giorno.", kitMta: "Policy MTA-STS",

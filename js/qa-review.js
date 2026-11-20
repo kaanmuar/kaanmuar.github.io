@@ -6347,6 +6347,58 @@
 		return 'SPF';
 	}
 
+	// The customer trust grade (#3958): the A+ to F letter, the rows that cost points (largest first) and the helmet setup.
+	function trustGradeCard(ins, kit, paid) {
+		const trust = ins.trust;
+		if (!trust || !trust.grade) return '';
+		const byKey = {};
+		(ins.findings || []).forEach((item) => {
+			if (!byKey[item.key]) byKey[item.key] = item;
+		});
+		const rows = (trust.rows || [])
+			.slice(0, 5)
+			.map((row) => {
+				const item = byKey[row.key];
+				if (!item) return '';
+				return (
+					'<li><strong>' +
+					esc(said(item, 'title')) +
+					'</strong> <span class="muted">' +
+					esc(rc.t('trustPoints', { n: row.points })) +
+					'</span></li>'
+				);
+			})
+			.filter(Boolean);
+		const good = /^A/.test(trust.grade);
+		return (
+			'<div class="fixkit-list" data-trust-grade="' +
+			esc(trust.grade) +
+			'"><article data-kit="trust-grade"><strong>' +
+			esc(rc.t('trustTitle')) +
+			'</strong><span class="trust-letter notranslate" translate="no" style="font-size:2.4em;line-height:1.1;font-weight:700;color:' +
+			(good ? '#1f8a5b' : '#b4561c') +
+			'">' +
+			esc(trust.grade) +
+			'</span><span class="muted">' +
+			esc(rc.t('trustScore', { n: trust.score })) +
+			(trust.capped ? ' ' + esc(rc.t('trustCapped')) : '') +
+			'</span></article><article data-kit="trust-fix"><strong>' +
+			esc(rc.t('trustFixFirst')) +
+			'</strong>' +
+			(rows.length
+				? '<ol class="trust-rows" style="margin:4px 0 0;padding-left:1.2em">' + rows.join('') + '</ol>'
+				: '<span class="muted">' + esc(rc.t('trustNone')) + '</span>') +
+			'</article></div>' +
+			(kit.helmet
+				? '<p class="muted" data-note>' +
+					esc(rc.t('trustHelmet')) +
+					'</p><div class="code-peek notranslate" translate="no" data-trust-helmet>' +
+					fadeText(kit.helmet, paid) +
+					'</div>'
+				: '')
+		);
+	}
+
 	function paintFixKit(ins, paid) {
 		const kit = ins.fixkit || {};
 		const missing = (kit.headers || []).filter((item) => item.missing);
@@ -6406,6 +6458,7 @@
 			['actions', 'GitHub Actions', rc.t('kitActionsBody')],
 		].filter(Boolean);
 		const peek = 'Content-Security-Policy-Report-Only: ' + (kit.csp || '');
+		const trustCard = slotRoot ? '' : trustGradeCard(ins, kit, paid);
 		const folderMark = '\u0000';
 		const hostingMark = '\u0001';
 		slot('fixkit').innerHTML =
@@ -6423,6 +6476,7 @@
 					)
 				: '') +
 			'</p>' +
+			trustCard +
 			'<div class="fixkit-list">' +
 			items
 				.map(
