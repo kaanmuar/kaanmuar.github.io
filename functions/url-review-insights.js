@@ -17,6 +17,7 @@ const targeted = require("./url-review-targeted");
 const geoAgent = require("./url-review-geo-agent");
 const carbonModel = require("./url-review-carbon");
 const headOrder = require("./url-review-head-order");
+const linkText = require("./url-review-link-text");
 const waterfall = require("./url-review-har");
 const pageGraph = require("./url-review-page-graph");
 const cyberPassive = require("./url-review-cyber-passive");
@@ -1834,6 +1835,7 @@ function analyze(input) {
   const carbon = pageBytes ? carbonEstimate(pageBytes, "browser") : carbonEstimate(input.pagespeed && input.pagespeed.bytes, "lighthouse");
   carbonModel.findings(carbon, add);
   const headReport = headOrder.findings(face.headOrder, add);
+  linkText.findings(face.linkText, add);
   const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);
   const graphRows = read.map((page) => {
     const row = indexability.find((item) => item.path === (page.path || pathOf(page.url)));
