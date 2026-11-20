@@ -321,7 +321,8 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                             LocalLayoutTab provides layoutTab,
                             LocalLayout provides saved,
                             LocalChartPrefs provides chartPrefs,
-                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) }
+                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) },
+                            LocalCycleStretch provides { id, current, max -> vm.cycleChartStretch(layoutTab, id, current, max) }
                         ) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {

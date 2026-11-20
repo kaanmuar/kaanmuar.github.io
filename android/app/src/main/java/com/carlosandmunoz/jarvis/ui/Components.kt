@@ -32,8 +32,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.foundation.horizontalScroll
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.shape.CircleShape
@@ -59,6 +61,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Alignment
@@ -127,7 +130,7 @@ fun FoldAllButton() {
 
 @Composable
 fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null, key: String = title, id: String = Layouts.slug(title),
-            charts: Boolean = false, onChartStretch: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+            charts: Boolean = false, onChartStretch: (() -> Unit)? = null, plate: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val context = LocalContext.current
     remember { Folds.load(context) }
     Folds.seen(key)
@@ -137,7 +140,14 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val tab = LocalLayoutTab.current
     val saved = LocalLayout.current
     val saveSize = LocalSavePanelSize.current
-    val stretch = if (charts) LocalLayout.current?.stretch?.get(id) ?: 1 else 1
+    // Stretch (#3569) sets chart height; on a plate (#3978) it is the 3×1 / 3×2 scale, 2 on a phone until the user picks 3×1.
+    val columns = LocalColumns.current
+    val stretch = LocalLayout.current?.stretch?.get(id)?.let { if (plate) Layouts.plateScale(it) else it }
+        ?: if (plate) Layouts.plateDefault(columns) else 1
+    val cycleAll = LocalCycleStretch.current
+    val chartSeen = remember { mutableStateOf(false) }
+    val markChart = remember { { chartSeen.value = true } }
+    val cycle = onChartStretch ?: cycleAll?.let { c -> { c(id, stretch, if (plate) Layouts.PLATE_MAX else 3) } }
     if (tab != null) Arrange.seen(tab, id, title)
     val stored = saved?.size?.get(id) ?: Layouts.Size()
     var live by remember(id, stored) { mutableStateOf(stored) }
@@ -154,7 +164,7 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val editing = Arrange.movable(tab, id)
     val canResize = !folded && !editing && saveSize != null
     Box(
-        Modifier.then(PanelIdElement(id)).then(modifier)
+        Modifier.then(PanelIdElement(id)).then(modifier).then(if (plate) Modifier.layoutId(WIDE) else Modifier)
             // #3709: continuous width on the card itself (east/west was a no-op when only scaleY ran).
             .then(
                 if (live.w == 1f) Modifier.fillMaxWidth()
@@ -225,13 +235,15 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                         modifier = Modifier.heightIn(min = 40.dp)
                     ) { Text("Done", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
                 }
-                if (charts && onChartStretch != null) {
-                    TextButton(onClick = onChartStretch, modifier = Modifier.heightIn(min = 40.dp)) { Text("↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
+                if ((plate || charts || chartSeen.value) && cycle != null) {
+                    TextButton(onClick = cycle, modifier = Modifier.heightIn(min = 40.dp).semantics { contentDescription = if (plate) "Panel size 3 by $stretch" else "Chart height $stretch of 3" }) {
+                        Text(if (plate) "3×$stretch" else "↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp)
+                    }
                 }
                 trailing?.let { Spacer(Modifier.width(8.dp)); it() }
             }
             if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
-            if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch) { content() }
+            if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch, LocalChartFlag provides markChart) { content() }
         }
         // Edge drag only while armed (#3673); otherwise scroll and dock taps win.
         if (canResize && armed) {
@@ -360,15 +372,45 @@ object ChartPrefs {
         return Prefs(grid, fill, height)
     }
 
-    fun baseHeight(p: Prefs, stretch: Int = 1): Int {
-        val base = when (p.height) { "s" -> 100; "l" -> 190; else -> 130 }
-        val mul = when (stretch) { 2 -> 1.45; 3 -> 2.0; else -> 1.0 }
-        return (base * mul).toInt()
-    }
+    fun baseHeight(p: Prefs, stretch: Int = 1): Int = scaled(when (p.height) { "s" -> 100; "l" -> 190; else -> 130 }, stretch)
+
+    /** [base] dp tall at stretch 1, 1.45 times at 2 and twice at 3 (#3978: also for charts that fix their own height). */
+    fun scaled(base: Int, stretch: Int = 1): Int = (base * when (stretch) { 2 -> 1.45; 3 -> 2.0; else -> 1.0 }).toInt()
+    fun plot(p: Prefs, height: Int?, stretch: Int = 1): Int = if (height != null) scaled(height, stretch) else baseHeight(p, stretch)
 }
 
 val LocalChartPrefs = compositionLocalOf { ChartPrefs.Prefs() }
 val LocalPanelStretch = compositionLocalOf { 1 }
+/** Cycles a panel's stretch: (panel id, what it shows now, highest value). Set inside a tab (#3978); every chart panel then gets its ↕ button. */
+val LocalCycleStretch = compositionLocalOf<((String, Int, Int) -> Unit)?> { null }
+/** A chart calls this so its panel shows the ↕ button without each panel saying `charts = true` (#3978). */
+val LocalChartFlag = compositionLocalOf<() -> Unit> { {} }
+
+@Composable
+internal fun ChartSeen() {
+    val flag = LocalChartFlag.current
+    androidx.compose.runtime.SideEffect { flag() }
+}
+
+/**
+ * The 3×1 / 3×2 plate's pan strip (#3978): [content] gets the width to draw at, [scale] times the panel's. At 1 it is the plain panel
+ * width; at 2 it is twice as wide in a strip that pans sideways, starting centred, so a map's or grid's small print grows with it.
+ */
+@Composable
+fun Enlarged(scale: Int, scroll: androidx.compose.foundation.ScrollState = androidx.compose.foundation.rememberScrollState(), content: @Composable (androidx.compose.ui.unit.Dp) -> Unit) {
+    val s = Layouts.plateScale(scale)
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val view = maxWidth
+        val px = with(androidx.compose.ui.platform.LocalDensity.current) { view.toPx() }
+        LaunchedEffect(s, px) { scroll.scrollTo(if (s > 1) (px * (s - 1) / 2).roundToInt() else 0) }
+        Box(if (s > 1) Modifier.horizontalScroll(scroll) else Modifier) { Box(Modifier.width(view * s)) { content(view * s) } }
+    }
+}
+
+object PlateMath {
+    /** The tap's x as a fraction of the visible strip, from its x in the drawn width, the scroll and the scale. */
+    fun viewFraction(x: Float, scrollPx: Int, drawnW: Float, scale: Int): Float = ((x - scrollPx) / (drawnW / Layouts.plateScale(scale))).coerceIn(0f, 1f)
+}
 
 internal fun DrawScope.chartMicroGrid(grid: String) {
     if (grid == "off") return
@@ -464,7 +506,8 @@ fun BarChart(values: List<Double>, labels: List<String> = emptyList(), color: Co
     if (values.isEmpty()) { Muted("No data in this range."); return }
     val prefs = LocalChartPrefs.current
     val stretch = LocalPanelStretch.current
-    val plotH = height ?: ChartPrefs.baseHeight(prefs, stretch)
+    val plotH = ChartPrefs.plot(prefs, height, stretch)
+    ChartSeen()
     val max = (values.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
     if (title != null || yLabel != null || unit != null || legend != null) { FramedBars(values, labels, color, plotH, max, title, yLabel, unit, legend, prefs.grid); return }
     Column {
@@ -560,10 +603,11 @@ fun Sparkline(values: List<Double>, color: Color = J.cyan, modifier: Modifier = 
 private fun FramedSpark(values: List<Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List<String>, legend: String?, prefs: ChartPrefs.Prefs) {
     var sel by remember(values) { mutableStateOf<Int?>(null) }
     val max = (values.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
+    ChartSeen()
     Column(modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         title?.let { ChartTitle(it, color) }
         ChartTip(sel?.let { Charts.tip(labels.getOrNull(it), values[it], unit) }, "0–${Charts.withUnit(max, unit)} · tap for a day's value")
-        Canvas(Modifier.fillMaxWidth().height(48.dp).pointerInput(values) { detectTapGestures { o -> sel = Charts.indexAt(o.x, size.width.toFloat(), values.size, false) } }) {
+        Canvas(Modifier.fillMaxWidth().height(ChartPrefs.scaled(48, LocalPanelStretch.current).dp).pointerInput(values) { detectTapGestures { o -> sel = Charts.indexAt(o.x, size.width.toFloat(), values.size, false) } }) {
             if (values.size < 2) return@Canvas
             chartMicroGrid(prefs.grid)
             val step = size.width / (values.size - 1)
@@ -695,12 +739,17 @@ fun Heatmap(grid: List<List<Double>>, peak: String?, title: String = "When peopl
     if (grid.isEmpty()) return
     val max = grid.flatten().maxOrNull()?.coerceAtLeast(1.0) ?: 1.0
     val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    Panel(title, id = id) {
-        grid.forEachIndexed { d, row ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(days.getOrElse(d) { "" }, fontFamily = Mono, fontSize = 9.sp, color = J.dim, modifier = Modifier.width(30.dp))
-                row.forEach { v ->
-                    Box(Modifier.weight(1f).height(13.dp).padding(1.dp).clip(RoundedCornerShape(2.dp)).background(J.cyan.copy(alpha = (0.06 + 0.94 * v / max).toFloat())))
+    Panel(title, id = id, plate = true) {
+        val scale = Layouts.plateScale(LocalPanelStretch.current)
+        Enlarged(scale) {
+            Column {
+                grid.forEachIndexed { d, row ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(days.getOrElse(d) { "" }, fontFamily = Mono, fontSize = if (scale > 1) 11.sp else 9.sp, color = J.dim, modifier = Modifier.width(if (scale > 1) 38.dp else 30.dp))
+                        row.forEach { v ->
+                            Box(Modifier.weight(1f).height(13.dp * scale).padding(1.dp).clip(RoundedCornerShape(2.dp)).background(J.cyan.copy(alpha = (0.06 + 0.94 * v / max).toFloat())))
+                        }
+                    }
                 }
             }
         }
