@@ -28,8 +28,8 @@ const banned = [
 	[/#\d{3,4}\b/, 'an internal ticket number'],
 	[/\bTODO\b|lorem ipsum/i, 'placeholder text'],
 ];
-// the text a visitor sees: drop tags and the speaker-notes attributes are kept (they are read aloud too)
-const visible = html.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '');
+// the whole file, styles and scripts included: a banned word anywhere in the output is still a problem
+const visible = html;
 for (const [re, why] of banned) {
 	const m = visible.match(re);
 	if (m) problems.push(`found "${m[0]}": ${why}`);
