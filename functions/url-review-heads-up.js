@@ -51,14 +51,15 @@ const PLAIN = {
 };
 
 // Anything that looks like a credential, token, key or address is removed from the evidence before it is quoted.
+// Each pattern is linear: no nested or overlapping quantifiers, so hostile page text cannot make the scrub slow.
 const SECRET_PATTERNS = [
-	/AKIA[0-9A-Z]{12,}/g,
-	/eyJ[A-Za-z0-9_-]{4,}(\.[A-Za-z0-9_-]*)*/g,
-	/\b(sk|pk|rk|ghp|gho|xox[bpas])[_-][A-Za-z0-9_-]{8,}/g,
-	/\b[A-Za-z0-9_-]*(key|token|secret|pass(word)?)=\S+/gi,
-	/[A-Za-z0-9+/_-]{24,}={0,2}/g,
-	/[a-f0-9]{32,}/gi,
-	/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}/gi,
+	/AKIA[0-9A-Z]{12,64}/g,
+	/eyJ[A-Za-z0-9_.-]{4,400}/g,
+	/\b(?:sk|pk|rk|ghp|gho|xox[bpas])[_-][A-Za-z0-9_-]{8,200}/g,
+	/(?:key|token|secret|pass(?:word)?)=[^\s&]{1,200}/gi,
+	/[A-Za-z0-9+/_-]{24,200}={0,2}/g,
+	/[a-f0-9]{32,200}/gi,
+	/[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63})+/gi,
 ];
 
 function scrub(value) {

@@ -173,7 +173,7 @@ test('draft is factual, single-send, has a sender identity and an opt-out', () =
 	assert.match(mail.text, /Hidden casino links in footer/);
 	assert.match(mail.text, /Example postal address/);
 	assert.match(mail.text, /This message contains no login links/);
-	assert.doesNotMatch(mail.text, /<script>/);
+	assert.equal(mail.text.includes('<'), false, 'no markup survives in plain text');
 });
 
 test('draft never sells: no price, discount, plan, urgency or upsell words', () => {
