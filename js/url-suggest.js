@@ -213,10 +213,88 @@
 		return /^([a-z0-9-]+\.)+([a-z]{2,}|xn--[a-z0-9-]+)$/.test(host);
 	}
 
+	async function verdict(host) {
+		if (!looksComplete(host)) return null;
+		const [state, pool] = await Promise.all([resolve(host), shardFor(keyOf(host))]);
+		const known = pool.some((candidate) => keyOf(candidate) === keyOf(host));
+		if (state === 'found' && known) return { state: 'ok', key: 'top', host };
+		const fix = await nearest(host);
+		if (state === 'found') return { state: fix ? 'warn' : 'ok', key: 'online', host, fix };
+		if (state === 'missing') return { state: 'bad', key: fix ? 'missing' : 'spell', host, fix };
+		if (state === 'no-address') return { state: 'bad', key: 'bare', host, fix };
+		return null;
+	}
+
+	function words(template, key, node) {
+		const at = template.indexOf('{' + key + '}');
+		return [template.slice(0, at), node, template.slice(at + key.length + 2)].filter(Boolean);
+	}
+
+	function paint(hint, found, onFix) {
+		hint.className = hint.className.replace(/\s*\b(ok|warn|bad)\b/g, '') + (found ? ' ' + found.state : '');
+		hint.replaceChildren();
+		if (!found) return;
+		if (book !== T.en) {
+			hint.lang = code;
+			hint.setAttribute('translate', 'no');
+		}
+		const name = document.createElement('b');
+		name.className = 'notranslate';
+		// A browser translating the page trims the text after the host, so the space stays with the host.
+		const spaced = book[found.key].indexOf('{host} ') !== -1;
+		name.textContent = found.host + (spaced ? ' ' : '');
+		hint.append(...words(spaced ? book[found.key].replace('{host} ', '{host}') : book[found.key], 'host', name));
+		if (found.fix) {
+			const button = document.createElement(onFix ? 'button' : 'b');
+			button.className = (onFix ? 'url-fix' : '') + ' notranslate';
+			button.textContent = found.fix;
+			if (onFix) {
+				button.type = 'button';
+				// Keeping focus keeps the box's list open, so the layout does not jump between press and release.
+				button.addEventListener('mousedown', (event) => event.preventDefault());
+				button.addEventListener('click', () => onFix(found.fix));
+			}
+			hint.append(' ', ...words(book.mean, 'fix', button));
+		}
+	}
+
+	// A textarea holds one address per line; predictions and the check follow the line under the caret.
+	function lineBox(input) {
+		if (input.tagName !== 'TEXTAREA') {
+			return {
+				get: () => input.value,
+				set: (value) => {
+					input.value = value;
+				},
+				at: () => 0,
+			};
+		}
+		const span = () => {
+			const value = input.value;
+			const caret = input.selectionStart == null ? value.length : input.selectionStart;
+			const start = value.lastIndexOf('\n', caret - 1) + 1;
+			const end = value.indexOf('\n', caret);
+			return { start, end: end === -1 ? value.length : end };
+		};
+		return {
+			get: () => {
+				const s = span();
+				return input.value.slice(s.start, s.end);
+			},
+			set: (value) => {
+				const s = span();
+				input.value = input.value.slice(0, s.start) + value + input.value.slice(s.end);
+				input.setSelectionRange(s.start + value.length, s.start + value.length);
+			},
+			at: () => span().start,
+		};
+	}
+
 	function attach(inputId, fieldId, track) {
 		const input = document.getElementById(inputId);
 		const field = document.getElementById(fieldId);
 		if (!input || !field) return;
+		const box = lineBox(input);
 
 		let seq = 0;
 		let timer = 0;
@@ -279,7 +357,7 @@
 
 		function fill(value, how) {
 			picking = true;
-			input.value = value;
+			box.set(value);
 			input.dispatchEvent(new Event('input', { bubbles: true }));
 			picking = false;
 			close();
@@ -289,41 +367,16 @@
 		}
 
 		function pick(host, how) {
-			fill(host + input.value.trim().slice(hostPart(input.value).length), how);
+			fill(host + box.get().trim().slice(hostPart(box.get()).length), how);
 		}
 
 		function pickPath(path) {
-			fill(input.value.trim().match(/^(https?:\/\/)?[^/?#]*/i)[0] + path, 'path');
+			fill(box.get().trim().match(/^(https?:\/\/)?[^/?#]*/i)[0] + path, 'path');
 		}
 
 		function choose(index) {
 			if (mode === 'path') pickPath(options[index]);
 			else pick(options[index], 'list');
-		}
-
-		function words(template, key, node) {
-			const at = template.indexOf('{' + key + '}');
-			return [template.slice(0, at), node, template.slice(at + key.length + 2)].filter(Boolean);
-		}
-
-		function say(state, key, host, fix) {
-			hint.className = 'url-hint' + (state ? ' ' + state : '');
-			hint.replaceChildren();
-			if (!key) return;
-			const name = document.createElement('b');
-			name.className = 'notranslate';
-			// A browser translating the page trims the text after the host, so the space stays with the host.
-			const spaced = book[key].indexOf('{host} ') !== -1;
-			name.textContent = host + (spaced ? ' ' : '');
-			hint.append(...words(spaced ? book[key].replace('{host} ', '{host}') : book[key], 'host', name));
-			if (fix) {
-				const button = document.createElement('button');
-				button.type = 'button';
-				button.className = 'url-fix notranslate';
-				button.textContent = fix;
-				button.addEventListener('click', () => pick(fix, 'did-you-mean'));
-				hint.append(' ', ...words(book.mean, 'fix', button));
-			}
 		}
 
 		async function suggestPaths(mine, host, typed) {
@@ -349,7 +402,7 @@
 
 		async function suggest() {
 			const mine = ++seq;
-			const value = input.value;
+			const value = box.get();
 			const typed = value.trim().replace(/^https?:\/\//i, '');
 			const slash = typed.indexOf('/');
 			if (slash > 0 && !/[?#]/.test(typed))
@@ -371,27 +424,38 @@
 		}
 
 		async function check() {
-			const host = hostPart(input.value);
-			if (!looksComplete(host)) return say('', '');
-			const [state, pool] = await Promise.all([resolve(host), shardFor(keyOf(host))]);
-			if (host !== hostPart(input.value)) return;
-			const known = pool.some((candidate) => keyOf(candidate) === keyOf(host));
-			if (state === 'found' && known) return say('ok', 'top', host);
-			const fix = await nearest(host);
-			if (host !== hostPart(input.value)) return;
-			if (state === 'found') return say(fix ? 'warn' : 'ok', 'online', host, fix);
-			if (state === 'missing') return say('bad', fix ? 'missing' : 'spell', host, fix);
-			if (state === 'no-address') return say('bad', 'bare', host, fix);
-			say('', '');
+			const host = hostPart(box.get());
+			if (!looksComplete(host)) return paint(hint, null);
+			const found = await verdict(host);
+			if (host !== hostPart(box.get())) return;
+			paint(hint, found, (fix) => pick(fix, 'did-you-mean'));
 		}
 
 		input.addEventListener('input', () => {
 			if (picking) return;
 			suggest();
 			clearTimeout(timer);
-			say('', '');
+			paint(hint, null);
 			timer = setTimeout(check, 500);
 		});
+
+		if (input.tagName === 'TEXTAREA') {
+			// Moving to another line (click or arrows) checks that line instead.
+			let line = -1;
+			const moved = () => {
+				if (box.at() === line) return;
+				line = box.at();
+				close();
+				check();
+			};
+			input.addEventListener('click', moved);
+			input.addEventListener('keyup', (event) => {
+				if (list.hidden && /^(Arrow|Home|End|Page)/.test(event.key)) moved();
+			});
+			input.addEventListener('input', () => {
+				line = box.at();
+			});
+		}
 
 		input.addEventListener('keydown', (event) => {
 			if (list.hidden) return;
@@ -414,7 +478,10 @@
 		input.addEventListener('focus', suggest);
 	}
 
+	window.UrlSuggest = { verdict, paint, hostPart };
+
 	attach('url', 'url-field', '');
+	attach('batch-text', 'batch-text', 'bulk-');
 	attach('stage-url', 'stage-url-field', 'hero-');
 	attach('compare-url', 'compare-url-field', 'compare-');
 	[2, 3, 4, 5].forEach((n) => attach('compare-url-' + n, 'compare-url-' + n + '-field', 'compare-'));
