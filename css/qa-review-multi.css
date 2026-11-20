@@ -560,10 +560,15 @@ body:not(.printing-multi) .multi-cell .print-more { display: none !important; }
   body.printing-multi .multi-row > .multi-cell:nth-child(4) { --c: 4; }
   body.printing-multi .multi-row > .multi-cell:nth-child(5) { --c: 5; }
   body.printing-multi .multi-row > .multi-cell:nth-child(6) { --c: 6; }
-  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"]) .multi-cell:not(.is-empty, .is-note), body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"]) .multi-cell:not(.is-empty, .is-note) :is([data-slot], .card:not([data-part], [data-card]), .health, .health > div:not(.ring), .areas, .exec-cols, .visuals, .split, .fixkit-list) { display: contents; }
-  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"]) .multi-cell:is(.is-empty, .is-note) { display: flex; flex-direction: column; grid-template-rows: none; grid-column: var(--c); grid-row: 1 / -1; }
+  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"], [data-sec="previews"]) .multi-cell:not(.is-empty, .is-note), body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"], [data-sec="previews"]) .multi-cell:not(.is-empty, .is-note) :is([data-slot], .card:not([data-part], [data-card]), .health, .health > div:not(.ring), .areas, .exec-cols, .visuals, .split, .fixkit-list) { display: contents; }
+  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"], [data-sec="previews"]) .multi-cell:is(.is-empty, .is-note) { display: flex; flex-direction: column; grid-template-rows: none; grid-column: var(--c); grid-row: 1 / -1; }
   body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"]) .multi-cell:is(.is-empty, .is-note) { grid-row: 1 / span 12; }
-  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"]) .multi-cell:not(.is-empty, .is-note)::before { grid-column: var(--c); grid-row: 1; }
+  body.printing-multi .multi-modal .multi-sec:is([data-sec="exec"], [data-sec="health"], [data-sec="security"], [data-sec="glance"], [data-sec="geo"], [data-sec="fixkit"], [data-sec="cases"], [data-sec="previews"]) .multi-cell:not(.is-empty, .is-note)::before { grid-column: var(--c); grid-row: 1; }
+  /* Previews: the Google result, then the share card. */
+  body.printing-multi .multi-modal .multi-sec[data-sec="previews"] .multi-row { grid-template-rows: repeat(3, auto); row-gap: 8px; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="previews"] .previews > div { grid-column: var(--c); }
+  body.printing-multi .multi-modal .multi-sec[data-sec="previews"] .previews > div:nth-child(1) { grid-row: 2; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="previews"] .previews > div:nth-child(2) { grid-row: 3; }
   /* One summary: host line, history, headline, its note, then the three lists. */
   body.printing-multi .multi-modal .multi-sec[data-sec="exec"] .multi-row { grid-template-rows: repeat(7, auto); }
   body.printing-multi .multi-modal .multi-sec[data-sec="exec"] .card > :is(.history, .exec-head, .meta-line, .exec-cols > *) { grid-column: var(--c); }
@@ -662,6 +667,17 @@ body:not(.printing-multi) .multi-cell .print-more { display: none !important; }
   body.printing-multi .multi-modal .multi-sec[data-sec="cover"] .kpi b { font-size: 12.5pt; }
   body.printing-multi .multi-modal .multi-sec[data-sec="cover"] .kpi span { font-size: 6.5pt; }
   body.printing-multi .multi-modal .multi-sec[data-sec="health"] .health-summary, body.printing-multi .multi-modal .multi-sec[data-sec="exec"] .exec-head > p { font-size: 8.5pt; line-height: 1.35; }
+  /* The start-page text keeps to a few lines in its row. A taller box overran its row where the row broke across
+     pages and printed over the headings under it, so the whole box now moves to the next page instead. */
+  body.printing-multi .multi-modal .multi-sec[data-sec="geo"] .ai-view { height: auto; max-height: 11em; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="geo"] [data-part="excerpt"] { break-inside: avoid; }
+  /* The Google and share previews stay whole, and the share image is a strip, so a section of previews fits a page. */
+  body.printing-multi .multi-cell :is(.serp, .share) { break-inside: avoid; }
+  body.printing-multi .multi-cell .share-img { height: 56px; aspect-ratio: auto; }
+  /* A table in a narrow column fits the column and wraps its words, instead of running into the next site's column. */
+  body.printing-multi .multi-cell table:not(.page-table, .multi-stack) { width: 100%; max-width: 100%; table-layout: fixed; }
+  body.printing-multi .multi-cell table:not(.page-table, .multi-stack) :is(th, td) { padding: 3px 4px; overflow-wrap: anywhere; word-break: normal; font-size: 7.5pt; hyphens: none; }
+  body.printing-multi .multi-cell table:not(.page-table, .multi-stack) th { font-size: 5.5pt; letter-spacing: 0; }
   body.printing-multi .multi-summary h2 { break-after: avoid; }
 }
 @page multi {
