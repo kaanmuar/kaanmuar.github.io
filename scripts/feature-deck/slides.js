@@ -33,8 +33,21 @@ function changeSlides() {
 	const out = [];
 	for (const day of [...CHANGES].sort((a, b) => b.date.localeCompare(a.date))) {
 		const label = dayLabel(day.date);
+		// A day with a note puts three items on its first page (one row), so the note never covers a card.
+		// The rest are split evenly over pages of at most six.
 		const pages = [];
-		for (let i = 0; i < day.items.length; i += 6) pages.push(day.items.slice(i, i + 6));
+		let rest = day.items;
+		if (day.eg && rest.length > 3) {
+			pages.push(rest.slice(0, 3));
+			rest = rest.slice(3);
+		}
+		const count = Math.ceil(rest.length / 6);
+		let at = 0;
+		for (let p = 0; p < count; p++) {
+			const size = Math.ceil((rest.length - at) / (count - p));
+			pages.push(rest.slice(at, at + size));
+			at += size;
+		}
 		pages.forEach((items, k) => {
 			out.push({
 				layout: 'cards',
@@ -164,8 +177,7 @@ const slides = [
 			{ face: 'log', t: 'Your reviews shelf', d: 'Search your reviews, open several, download them, or delete one with a second click.' },
 			{ face: 'legal', t: 'Our terms', d: 'The terms and the privacy page say what is stored, for how long, and why.', like: 'Plain words on the page: qa-review-legal.html.' },
 		],
-		eg: 'The review runs on the device where you signed in.',
-		notes: 'A code or link opened on another device or browser starts nothing. This keeps the review in your hands.',
+		notes: 'A full review needs a sign-in. The free one-page preview does not. Sign-in codes and links are valid for 15 minutes.',
 	},
 	{
 		layout: 'video',
@@ -188,7 +200,7 @@ const slides = [
 			['1. Connecting', 'We check the address, create the review record and start the job on our servers.', 'Our servers (Firebase Cloud Functions)', 'The first log lines and the progress bar'],
 			['2. Analyzing pages', 'We read up to 20 pages the way a visitor’s browser would. Also robots.txt, the sitemap, headers, the certificate and DNS. Only public addresses are allowed.', 'Our page reader, DNS lookups, certificate check', '“Analyzing pages · page 5 of 20”'],
 			['3. Browser pass', 'A real Chrome with no window opens the start page and up to two linked pages, from Belgium. It records trackers, runs accessibility rules, checks phone and tablet widths and takes screenshots.', 'Headless Chromium, axe-core, tracking recorder, form guard', '“Browser pass”, then the screenshots in the report'],
-			['4. Writing cases', 'Builds test cases from what the review saw, ranks them P1, P2 and P3, and writes a starting script for each of 20 tools. No script is ever run.', 'Our case writer and ranking rules', '“Writing cases”, then the list under Cases to run'],
+			['4. Writing cases', 'Builds test cases from what the review saw, ranks them P1 (most urgent) to P4 (least), and writes a starting script for each of 20 tools. No script is ever run.', 'Our case writer and ranking rules', '“Writing cases”, then the list under Cases to run'],
 		],
 		notes: 'Stages 1 to 4. The browser pass is the heaviest step. It opens real pages in a real browser.',
 	},
@@ -244,7 +256,7 @@ const slides = [
 			{ icon: '💻', t: 'Real Chrome window', d: 'A minimized Chrome on a trusted operator computer, for sites that block data centres.' },
 		],
 		eg: 'Still stuck? We promise the full report by email, usually within 48 hours, and give a 20% code.',
-		notes: 'Rules and an AI model read the failure log and pick the next try. The AI is used only for this diagnosis, never for the report.',
+		notes: 'Rules and an AI model read the failure log and pick the next try. The AI is used only for this diagnosis and, when an owner turns it on, to reword an Ask answer. It never writes your findings or scores.',
 	},
 
 	// ================================================================ 4. the tools
@@ -286,7 +298,7 @@ const slides = [
 		weights: [1.25, 1.6, 2.2, 1.8, 1.0],
 		cols: T_TOOL,
 		rows: [
-			['PageSpeed Insights', 'Google’s speed test, built on the open Lighthouse tool.', 'Scores the start page on a phone: speed and quality.', 'Google receives the start address.', 'Browser and search, Performance'],
+			['PageSpeed Insights', 'Google’s speed test, built on the open Lighthouse tool.', 'Scores the start page on a phone, for speed only.', 'Google receives the start address.', 'Browser and search, Performance'],
 			['Chrome UX Report', 'Google’s anonymous data from real Chrome visitors.', 'Shows how real people experienced the site. Only when there is enough traffic.', 'Google receives the start address.', 'Performance'],
 			['Web Risk (Safe Browsing)', 'Google’s list of dangerous sites, scripts and downloads.', 'Checks the site and every script, frame, form and link host it uses. Up to 60 hosts, cached 24 hours.', 'Google receives the hostnames.', 'Checks and fixes, Security'],
 			['Places API (New)', 'Google’s business directory.', 'Only for a local business. Finds the profile that links to the site, and compares name, phone, address and hours.', 'Google receives the business name and area. We keep only the place ID; the report never quotes the profile.', 'Checks and fixes, SEO'],
@@ -300,7 +312,7 @@ const slides = [
 		weights: [1.25, 1.6, 2.2, 1.8, 1.0],
 		cols: T_TOOL,
 		rows: [
-			['Cloudflare URL Scanner', 'Cloudflare’s public scanner for suspicious websites.', 'Scans the address for phishing or malware. A scan from the last day is reused.', 'Cloudflare receives the address. The scan is public on Cloudflare Radar.', 'Checks and fixes, Security; Was it targeted?'],
+			['Cloudflare URL Scanner', 'Cloudflare’s public scanner for suspicious websites.', 'Scans the address for phishing or malware. A scan from the last day is reused.', 'Cloudflare receives the address. The scan is unlisted: only someone with its link can open it.', 'Checks and fixes, Security; Was it targeted?'],
 			['CISA KEV', 'US government list of bugs that attackers use now.', 'Matches the software the site runs against that list.', 'We download the list. Nothing is sent.', 'Was it targeted?'],
 			['OSV.dev', 'Open database of known bugs in open-source libraries.', 'Checks the library names and versions the site loads.', 'OSV receives library names and versions.', 'Was it targeted?'],
 			['FIRST EPSS', 'A score for how likely a known bug is to be used in an attack.', 'Adds that likelihood to each matched bug.', 'FIRST receives the bug IDs (CVE numbers).', 'Was it targeted?'],
@@ -329,8 +341,8 @@ const slides = [
 		cols: T_TOOL,
 		rows: [
 			['Tor exit list', 'The public list of Tor exit servers.', 'Flags a server address that is a Tor exit.', 'We download the list. Nothing is sent.', 'Was it targeted?'],
-			['GDELT news feed', 'A public news database, updated every 15 minutes.', 'Finds recent cyber-attack news that names the domain.', 'We read its public file. Nothing is sent.', 'Was it targeted?'],
-			['CertSpotter (optional)', 'A public log of every new certificate issued.', 'Spots certificates issued for the domain that look unexpected.', 'CertSpotter receives the domain name.', 'Was it targeted?'],
+			['GDELT news feed', 'A public news database, updated every 15 minutes.', 'Paid Deep check only: finds recent attack news that names the domain.', 'GDELT receives the domain name in a news search.', 'Was it targeted?'],
+			['CertSpotter (optional)', 'A public log of every new certificate issued.', 'Paid Deep check only, when a key is set: spots certificates issued for the domain that look unexpected.', 'CertSpotter receives the domain name.', 'Was it targeted?'],
 		],
 		eg: 'When the attack switch is off, none of these run.',
 		notes: 'These sources are read only for the attack checks. The detail is shown on paid reports only.',
@@ -344,7 +356,7 @@ const slides = [
 		rows: [
 			['Wordfence Intelligence', 'A vulnerability database for WordPress.', 'Matches the WordPress version against known holes. Plugin checks wait until their feed is stored.', 'We read the public feed. Nothing about your site is sent.', 'Checks and fixes, WordPress'],
 			['retire.js data', 'A database of old front-end libraries with known holes.', 'Finds old jQuery and similar libraries the page loads.', 'Stored in our code. Nothing is sent.', 'Checks and fixes, Security'],
-			['Brave Search (Tavily as a backup)', 'Two web search services.', 'Looks for spam pages injected into search results for the domain, and public write-ups about the site.', 'Brave receives a site: search for the domain.', 'Checks and fixes, hacked-site signs'],
+			['Brave Search (Tavily as a backup)', 'Two web search services.', 'Looks for spam pages injected into search results for the domain, and public write-ups about the site.', 'Brave receives search queries that name the domain.', 'Checks and fixes, hacked-site signs'],
 		],
 	},
 	{
@@ -354,8 +366,8 @@ const slides = [
 		weights: [1.25, 1.6, 2.2, 1.8, 1.0],
 		cols: T_TOOL,
 		rows: [
-			['DNS lookups', 'The internet’s address book, asked over a secure link.', 'Reads mail servers, SPF, DMARC, DKIM keys, MTA-STS, TLS-RPT, BIMI and other records.', 'Cloudflare DNS and Google DNS receive the domain names looked up.', 'Checks and fixes, Email'],
-			['Spam blocklists (SpamCop, Mailspike, NordSpam)', 'Free lists of addresses that send spam.', 'Checks the domain and its mail servers.', 'Receive DNS lookups for the domain and mail hosts.', 'Checks and fixes, Email'],
+			['DNS lookups', 'The internet’s address book, asked by our own server.', 'Reads mail servers, SPF, DMARC, DKIM keys, MTA-STS, TLS-RPT, BIMI and other records.', 'Cloudflare and Google receive names only for the look-alike check.', 'Checks and fixes, Email'],
+			['Spam blocklists (SpamCop, Barracuda, Mailspike, PSBL, 0spam, NordSpam)', 'Free lists of internet addresses that send spam.', 'Checks the web host’s and the mail servers’ addresses.', 'Receive DNS lookups of those addresses, not the domain name.', 'Checks and fixes, Email'],
 			['RDAP registry lookup', 'The official online lookup for domain registrations.', 'Reads the expiry date and the transfer lock.', 'The registry receives the domain name.', 'Checks and fixes, Domain'],
 		],
 		notes: 'A missing header is not proof of a break-in. The report says so next to every finding.',
@@ -369,11 +381,11 @@ const slides = [
 		rows: [
 			['Lookalike check', 'Looks for registered domains that copy the client’s name.', 'Flags the ones that have a website or a mail server.', 'DNS lookups. Client and sweep reviews only.', 'Checks and fixes, Lookalikes'],
 			['Competitor compare', 'The same passive checks on a rival site.', 'Puts six scores side by side, plus problems only one site has. 9 USD each.', 'The same receivers as a normal review, for the rival.', 'Compare page'],
-			['Ask the report', 'A question box on a paid report.', 'Answers only from that report. It uses no AI model.', 'Stays with our server. It checks the account.', 'Paid reports, side panel'],
+			['Ask the report', 'A question box on a paid report.', 'Answers from the report’s own findings. If the owner turns on AI phrasing, Gemini rewords the answer in plain words.', 'Our server checks the account. Gemini receives the answer text only when AI phrasing is on.', 'Paid reports, side panel'],
 			['Chatbot test', 'A short scripted chat with the site’s own chat bubble.', 'Asks about prices, a human, refunds, and tries two tricks. Owners only, at most 6 messages in 60 seconds.', 'Sent to the site’s chat widget, only after owner proof.', 'Owner section'],
-			['Gemini (failed reviews only)', 'Google’s AI model.', 'Reads the log of a failed review to name the cause and pick a retry.', 'Google receives the failure log.', 'Never in your report'],
+			['Gemini (failed reviews, and Ask answers when on)', 'Google’s AI model.', 'Reads the log of a failed review to name the cause and pick a retry. Rewords Ask answers when the owner turns that on.', 'Google receives the failure log, and may search the web for the cause.', 'Never in the findings or the score'],
 		],
-		notes: 'The AI model is never used to write your findings. It only helps us retry failed reviews.',
+		notes: 'The AI model never writes your findings or scores. It helps us retry failed reviews, and reword Ask answers when an owner turns that on.',
 	},
 
 	// ================================================================ 5. data
@@ -388,7 +400,7 @@ const slides = [
 			['Google PageSpeed and Chrome UX Report', 'The start address', 'Speed and real visitor data', 'Every review'],
 			['Google Web Risk', 'The start address and each linked host (up to 60)', 'Dangerous-site lists', 'Every review, cached 24 hours'],
 			['Google Places (local businesses only)', 'A business name and area', 'Checking the business profile', 'Only when the site describes a local business'],
-			['Cloudflare URL Scanner', 'The start address', 'Phishing and malware scan (public on Cloudflare Radar)', 'Reuses a scan from the last day'],
+			['Cloudflare URL Scanner', 'The start address', 'Phishing and malware scan (unlisted: only people with the link can open it)', 'Reuses a scan from the last day'],
 		],
 		eg: 'Not one of these receives your form answers or your password.',
 		notes: 'Google and Cloudflare receive only names, addresses and domains. The lists on the next two slides cover the rest.',
@@ -400,9 +412,10 @@ const slides = [
 		weights: [2.0, 2.8, 2.6, 2.1],
 		cols: ['Service', 'What they receive', 'Why', 'When'],
 		rows: [
-			['Brave Search (Tavily as backup)', 'A site: search for the domain', 'Spam in results, public write-ups', 'Every review'],
-			['Cloudflare DNS and Google DNS', 'Domain names to look up', 'Mail, DNS and certificate facts', 'Every review'],
-			['DNS blocklists (SpamCop, Mailspike, NordSpam)', 'Lookups for the domain and its mail hosts', 'Is the domain sending spam?', 'Every review'],
+			['Brave Search (Tavily as backup)', 'Search queries that name the domain', 'Spam in results, public write-ups', 'Every review'],
+			['Cloudflare DNS and Google DNS', 'Names to look up (look-alike check only)', 'Finding look-alike domains', 'Only for the look-alike check'],
+			['DNS blocklists (SpamCop, Barracuda, Mailspike, PSBL, 0spam, NordSpam)', 'Lookups of the web host’s and mail servers’ addresses', 'Is the server sending spam?', 'Every review'],
+			['URLhaus and PhishStats', 'The site’s host name', 'Known phishing and malware hosts', 'Every review'],
 			['Domain registry (RDAP)', 'The domain name', 'Expiry date and transfer lock', 'Every review'],
 		],
 		notes: 'Downloaded lists are stored on our side. Only the names of services above receive anything.',
@@ -414,10 +427,10 @@ const slides = [
 		weights: [2.0, 2.8, 2.6, 2.1],
 		cols: ['Service', 'What they receive', 'Why', 'When'],
 		rows: [
-			['CertSpotter (optional)', 'The domain name', 'Unexpected certificates', 'Only when the attack switch is on'],
+			['CertSpotter and GDELT (optional)', 'The domain name', 'Unexpected certificates and attack news', 'Only in the paid Deep check ($19)'],
 			['OSV.dev', 'Library names and versions the site loads', 'Known bugs in those libraries', 'Only when the attack switch is on'],
 			['FIRST (EPSS)', 'Bug IDs (CVE numbers)', 'How likely each bug is to be used', 'Only when the attack switch is on'],
-			['CISA KEV, Feodo, Spamhaus DROP, Tor list, GDELT', 'Nothing: we download these lists', 'Matching the site against them', 'Only when the attack switch is on'],
+			['CISA KEV, Feodo, Spamhaus DROP, Tor list', 'Nothing: we download these lists', 'Matching the site against them', 'Only when the attack switch is on'],
 		],
 		eg: 'When the attack switch is off, the attack-source rows do not happen.',
 		notes: 'This table is the list the form points to when you switch the attack checks on or off.',
@@ -432,7 +445,7 @@ const slides = [
 			{ icon: '👤', t: 'Account', d: '12 months after your last sign-in.' },
 			{ icon: '🔑', t: 'Sign-in session', d: '30 days.' },
 			{ icon: '🪵', t: 'Logs of failed or stopped reviews', d: '90 days.' },
-			{ icon: '💳', t: 'Payment record', d: '5 years, without the report itself.' },
+			{ icon: '💳', t: 'Payment record', d: 'Kept for tax rules, until 1 January of the sixth year after payment. Without the report.' },
 			{ icon: '🧹', t: 'Unpaid fix requests', d: '12 months after the last change. Paid ones are kept.' },
 		],
 		eg: 'You can download all your data, or delete it, from your account.',
@@ -529,7 +542,7 @@ const slides = [
 		img: 'sample-exposure',
 		bullets: [
 			'Files such as .env, .git or backups are checked only after the owner proves the site is theirs.',
-			'Proof is a DNS record or a meta tag on the homepage.',
+			'Proof is a DNS record, a meta tag on the homepage, or a mailbox on the site’s own domain.',
 			'Anyone else sees a plain “owner only” note.',
 		],
 		eg: 'Verify a site you own on the account page.',
@@ -568,6 +581,7 @@ const slides = [
 		layout: 'cards',
 		kicker: 'Cases in plain words',
 		title: 'What the test cases include',
+		dense: true,
 		cols: 3,
 		cards: [
 			{ face: 'cases', t: 'A case', d: 'One small check that someone repeats step by step.' },
@@ -603,31 +617,51 @@ const slides = [
 		layout: 'cards',
 		kicker: 'What it costs',
 		title: 'The first review is free',
+		dense: true,
 		cols: 3,
 		cards: [
 			{ icon: '🎁', t: 'First review: free', d: '20 pages, 2 links deep, included.' },
 			{ icon: '📝', t: 'Fix list: $5', d: 'Scores, every finding, and the top 10 fixes in plain words.' },
-			{ icon: '📚', t: 'Full report: $19', d: 'Every case, signal, export and script, for one tool. +$5 per extra tool.' },
+			{ icon: '📚', t: 'Full report: $19', d: 'Every case, signal, export and script, for one framework. +$5 per extra framework.' },
 			{ icon: '🔍', t: 'Wider or deeper: $4 to $25', d: 'The extra cost is shown before you pay.' },
-			{ icon: '👥', t: 'Signed-in run: $39', d: 'A full report on a signed-in account.' },
+			{ icon: '👥', t: 'Review with a login: $39', d: 'Checks behind a login you are allowed to use. This page does not take your password.' },
 			{ icon: '⚖️', t: 'Competitor compare: $9 each', d: 'The same checks on a rival, side by side.' },
 		],
-		eg: 'Coming back within 30 days: 10% off, then 15%, then 20%. Students can use a code for 50% off.',
+		eg: 'Coming back within 30 days: 10% off, then 15%, then 20%. A price never goes below half of list.',
 		notes: 'Prices are in US dollars. A price never goes below half of list price.',
 	},
 	{
-		layout: 'prices',
+		layout: 'tools',
+		kicker: 'What it costs · passes and bundles',
+		title: 'Passes for 30 days, and bundles per run',
+		weights: [2.4, 1.9, 6.2],
+		cols: ['Pass or bundle', 'Price', 'What you get'],
+		rows: [
+			['Freelancer pass', '$29', '30 days: 10 runs, 20 pages, depth 2, 3 frameworks. No specialist tools.'],
+			['Team pass', '$79', '30 days: 25 runs, 100 pages, depth 5, 8 frameworks.'],
+			['Pro pass', '$189', '30 days: 60 runs, 100 pages, depth 5, all 20 frameworks and the specialist tools.'],
+			['Starter bundle', '$29 per run', 'Playwright, k6, axe-core and Lighthouse.'],
+			['Complete bundle', '$99 per run', 'All 20 frameworks and all 7 specialist tools.'],
+			['One review', '$19', 'The first framework. $5 more for each extra framework.'],
+		],
+		eg: 'Passes run for 30 days. Bundles and single reviews are paid per run.',
+		notes: 'Prices are in US dollars. The pay page always shows the current list.',
+	},
+	{
+		layout: 'tools',
 		kicker: 'Fix it for us',
 		title: 'Fixed-price packages',
-		cards: [
-			{ icon: '🔒', t: 'Security headers', p: '$99', d: '3 working days' },
-			{ icon: '✉️', t: 'Email and DNS', p: '$89', d: '3 working days' },
-			{ icon: '🔐', t: 'TLS and redirects', p: '$69', d: '2 working days' },
-			{ icon: '♿', t: 'Accessibility', p: '$169', d: '5 working days' },
-			{ icon: '⚡', t: 'Performance', p: '$199', d: '5 working days' },
-			{ icon: '🔎', t: 'SEO basics', p: '$119', d: '4 working days' },
+		weights: [3.2, 2.2, 2.2, 2.2],
+		cols: ['Package', 'Launch price', 'List price after 10 Dec 2026', 'Time'],
+		rows: [
+			['Security headers', '$99', '$139', '3 working days'],
+			['Email and DNS', '$89', '$129', '3 working days'],
+			['TLS and redirects', '$69', '$99', '2 working days'],
+			['Accessibility quick fixes', '$169', '$239', '5 working days'],
+			['Performance basics', '$199', '$289', '5 working days'],
+			['SEO meta and structured data', '$119', '$169', '4 working days'],
 		],
-		note: 'Launch prices until 10 Dec 2026, about 30% below the normal price. Codes do not apply to packages. Paid with PayPal.',
+		eg: 'Launch prices run until 10 Dec 2026, about 30% below list. Paid with PayPal.',
 		notes: 'After 10 December the list prices apply: 139, 129, 99, 239, 289 and 169 USD.',
 	},
 	{
@@ -742,7 +776,7 @@ const slides = [
 			['RDAP', 'The official online lookup for domain registrations.'],
 			['CrUX', 'Google’s anonymous data from real Chrome visitors.'],
 			['Test case', 'One small check someone repeats step by step.'],
-			['P1, P2, P3', 'Priority: do it first, next, later.'],
+			['P1 to P4', 'Priority: P1 is the most urgent, P4 the least.'],
 			['Exposed file', 'A file that should never be public, such as .env.'],
 		],
 		notes: 'If a word is missing, ask in the room. We will add it.',

@@ -70,14 +70,27 @@ async function layout() {
 			act.querySelectorAll('.card').forEach((card) => {
 				if (card.scrollHeight > card.clientHeight + 2) clipped.push(card.textContent.trim().slice(0, 40));
 			});
+			// the note bar (.eg) must not sit on top of a card or a table cell
+			const overlaps = [];
+			const note = act.querySelector('.eg');
+			if (note) {
+				const nb = note.getBoundingClientRect();
+				act.querySelectorAll('.card, .tc, .th').forEach((el) => {
+					if (el.closest('.eg')) return;
+					const b = el.getBoundingClientRect();
+					if (b.width && b.height && b.top < nb.bottom - 2 && b.bottom > nb.top + 2 && b.left < nb.right && b.right > nb.left)
+						overlaps.push((el.textContent || '').trim().slice(0, 40));
+				});
+			}
 			act.querySelectorAll('*').forEach((el) => {
 				if (el.closest('.controls,.hud,.help,.sayit,.orbit')) return;
 				const b = el.getBoundingClientRect();
 				if (b.width && b.height) bottom = Math.max(bottom, b.bottom - stage.top);
 			});
-			return { title: act.getAttribute('aria-label'), bottom: Math.round(bottom), clipped };
+			return { title: act.getAttribute('aria-label'), bottom: Math.round(bottom), clipped, overlaps };
 		});
 		for (const c of r.clipped) problems.push(`slide ${i + 1} "${r.title.replace(/^\d+\.\s*/, '')}": text cut off in the card "${c}..."`);
+		for (const o of r.overlaps) problems.push(`slide ${i + 1} "${r.title.replace(/^\d+\.\s*/, '')}": the note covers "${o}..."`);
 		if (r.bottom > LIMIT) {
 			problems.push(`slide ${i + 1} "${r.title.replace(/^\d+\.\s*/, '')}" runs to ${r.bottom}px (limit ${LIMIT})`);
 			await page.screenshot({ path: path.join(shotDir, `slide-${String(i + 1).padStart(2, '0')}.png`) });
