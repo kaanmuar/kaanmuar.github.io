@@ -9105,19 +9105,24 @@ export function mountJarvis({
             ${panel(
 							'review-trend',
 							'Opens and reviews per day',
-							area(r.series.labels, [
-								{ name: 'Opens', values: r.series.values, color: COLORS.cyan },
-								{ name: 'Reviews', values: r.reviewSeries.values, color: COLORS.green },
-							]),
+							area(
+								r.series.labels,
+								[
+									{ name: 'Opens', values: r.series.values, color: COLORS.cyan },
+									{ name: 'Reviews by people', values: r.reviewSeries.values, color: COLORS.green },
+								].concat(r.oursSeries ? [{ name: 'Our runs', values: r.oursSeries.values, color: COLORS.amber }] : [])
+							),
 							{
 								wide: true,
 								data: r.series.labels.map((d, k) => ({
 									day: d,
 									opens: r.series.values[k],
 									reviews: r.reviewSeries.values[k],
+									ours: r.oursSeries ? r.oursSeries.values[k] : 0,
 								})),
 							}
 						)}
+            ${listPanel('review', 'our-runs', 'Our runs, not counted as reviews', r.lists.ourRuns, { color: COLORS.amber, empty: 'No sweeps, Jarvis runs or tests in range.' })}
             ${csatPanel(r.csat)}
             ${csatTestimonialsPanel()}
             ${panel('review-heat', 'When they open it', heat(r.heatmap, r.peak), { wide: true })}
@@ -9159,6 +9164,7 @@ export function mountJarvis({
 									['Report', (x) => esc((x.period || '') + ' ' + (x.label || ''))],
 									['Opens', (x) => fmt(x.opens || 0)],
 									['Reviews', (x) => fmt(x.reviews || 0)],
+									['Ours', (x) => fmt(x.ours || 0)],
 									['Paid', (x) => fmt(x.paidUsd || 0) + ' USD'],
 								],
 								S.reports,
@@ -9170,6 +9176,7 @@ export function mountJarvis({
 									label: x.label,
 									opens: x.opens,
 									reviews: x.reviews,
+									ours: x.ours,
 									paidUsd: x.paidUsd,
 								})),
 							}
