@@ -51,7 +51,7 @@ test("IR playbooks follow the findings, carry the CC BY attribution and read in 
   assert.ok(!en.includes("Information leakage"));
   assert.ok(en.includes("CERT Société Générale"));
   assert.ok(en.includes("CC BY 3.0"));
-  assert.ok(en.includes("https://github.com/certsocietegenerale/IRM"));
+  assert.ok(en.includes("(" + books.SOURCE_URL + ")"));
   assert.match(evidencePdf.page(RECORD, { lang: "es" }).html, /Intrusión en el servidor/);
   assert.match(evidencePdf.page(RECORD, { lang: "fr" }).html, /Intrusion sur le serveur/);
   const de = evidencePdf.page(RECORD, { lang: "de" }).html;

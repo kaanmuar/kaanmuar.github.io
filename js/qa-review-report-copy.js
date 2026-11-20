@@ -1,5 +1,6 @@
 /* Hand-written copy for the report dashboard, so it is not left to machine translation, which only loads after analytics consent.
-   Elements marked data-report-copy="<key>" get the page language's text; templates hold {name} slots and never contain <, > or &. */
+   Elements marked data-report-copy="<key>" get the page language's text; templates hold {name} slots and never contain <, > or &.
+   The trust* strings (#3958) in the non-English blocks are machine-assisted and wait for native review in #3952. */
 (function () {
   "use strict";
 
@@ -461,7 +462,6 @@
       kitCsp_one: "Una política Report-Only creada con el {n} host que vio esta revisión. Despliégala, revisa los reportes y luego aplícala.", kitCsp_other: "Una política Report-Only creada con los {n} hosts que vio esta revisión. Despliégala, revisa los reportes y luego aplícala.",
       kitSchema: "Datos estructurados", kitSchemaDraft: "Un borrador JSON-LD de Organization y WebSite con los perfiles que enlaza la página.", kitSchemaHas: "El sitio ya publica una entidad. No hace falta un borrador.",
       kitLlmsDraft: "Un borrador que lista las páginas indexables con sus descripciones.", kitLlmsHas: "El sitio ya publica llms.txt.",
-      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
       trustTitle: "Nota de confianza del cliente", trustScore: "{n} puntos. A+ es la mejor nota y F la más baja.", trustCapped: "Una puerta trasera plantada limita la nota a F.", trustFixFirst: "Arregla esto primero", trustNone: "Ningún hallazgo abierto resta puntos.",
       trustPoints_one: "resta {n} punto", trustPoints_other: "resta {n} puntos", trustHelmet: "Configuración de helmet para los encabezados que faltan (Node y Express):",
       kitSecDraft: "Un borrador con Contact, Expires y Canonical. Reemplaza la dirección por un buzón real.", kitSecHas: "El sitio ya publica security.txt.",
@@ -749,7 +749,6 @@
       kitCsp_one: "Uma política Report-Only montada com o {n} host que esta revisão viu. Publique, acompanhe os relatórios e depois aplique.", kitCsp_other: "Uma política Report-Only montada com os {n} hosts que esta revisão viu. Publique, acompanhe os relatórios e depois aplique.",
       kitSchema: "Dados estruturados", kitSchemaDraft: "Um rascunho JSON-LD de Organization e WebSite com os perfis que a página linka.", kitSchemaHas: "O site já publica uma entidade. Não precisa de rascunho.",
       kitLlmsDraft: "Um rascunho que lista as páginas indexáveis com suas descrições.", kitLlmsHas: "O site já publica llms.txt.",
-      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
       trustTitle: "Nota de confiança do cliente", trustScore: "{n} pontos. A+ é a melhor nota e F a mais baixa.", trustCapped: "Uma porta dos fundos plantada limita a nota a F.", trustFixFirst: "Corrija isto primeiro", trustNone: "Nenhum achado em aberto tira pontos.",
       trustPoints_one: "tira {n} ponto", trustPoints_other: "tira {n} pontos", trustHelmet: "Configuração do helmet para os cabeçalhos em falta (Node e Express):",
       kitSecDraft: "Um rascunho com Contact, Expires e Canonical. Troque o endereço por uma caixa de entrada real.", kitSecHas: "O site já publica security.txt.",
@@ -1037,7 +1036,6 @@
       kitCsp_one: "Eine Report-Only-Richtlinie aus dem {n} Host, den diese Prüfung gesehen hat. Ausrollen, Berichte beobachten, dann durchsetzen.", kitCsp_other: "Eine Report-Only-Richtlinie aus den {n} Hosts, die diese Prüfung gesehen hat. Ausrollen, Berichte beobachten, dann durchsetzen.",
       kitSchema: "Strukturierte Daten", kitSchemaDraft: "Ein JSON-LD-Entwurf für Organization und WebSite mit den Profilen, die die Seite verlinkt.", kitSchemaHas: "Die Website veröffentlicht bereits eine Entität. Kein Entwurf nötig.",
       kitLlmsDraft: "Ein Entwurf, der die indexierbaren Seiten mit ihren Beschreibungen auflistet.", kitLlmsHas: "Die Website veröffentlicht bereits llms.txt.",
-      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
       trustTitle: "Vertrauensnote für Kunden", trustScore: "{n} Punkte. A+ ist die beste Note, F die schlechteste.", trustCapped: "Eine eingeschleuste Hintertür begrenzt die Note auf F.", trustFixFirst: "Das zuerst beheben", trustNone: "Kein offener Befund kostet Punkte.",
       trustPoints_one: "kostet {n} Punkt", trustPoints_other: "kostet {n} Punkte", trustHelmet: "Helmet-Einrichtung für die fehlenden Header (Node und Express):",
       kitSecDraft: "Ein Entwurf mit Contact, Expires und Canonical. Ersetzen Sie die Adresse durch ein echtes Postfach.", kitSecHas: "Die Website veröffentlicht bereits security.txt.",
@@ -1323,7 +1321,6 @@
       kitCsp_one: "Une politique Report-Only construite à partir du {n} hôte vu par cette analyse. Déployez-la, suivez les rapports, puis appliquez-la.", kitCsp_other: "Une politique Report-Only construite à partir des {n} hôtes vus par cette analyse. Déployez-la, suivez les rapports, puis appliquez-la.",
       kitSchema: "Données structurées", kitSchemaDraft: "Un brouillon JSON-LD Organization et WebSite avec les profils vers lesquels la page pointe.", kitSchemaHas: "Le site publie déjà une entité. Aucun brouillon nécessaire.",
       kitLlmsDraft: "Un brouillon qui liste les pages indexables avec leurs descriptions.", kitLlmsHas: "Le site publie déjà llms.txt.",
-      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
       trustTitle: "Note de confiance client", trustScore: "{n} points. A+ est la meilleure note, F la plus basse.", trustCapped: "Une porte dérobée plantée plafonne la note à F.", trustFixFirst: "À corriger en premier", trustNone: "Aucun constat ouvert ne retire de points.",
       trustPoints_one: "retire {n} point", trustPoints_other: "retire {n} points", trustHelmet: "Configuration de helmet pour les en-têtes manquants (Node et Express) :",
       kitSecDraft: "Un brouillon avec Contact, Expires et Canonical. Remplacez l’adresse par une vraie boîte de réception.", kitSecHas: "Le site publie déjà security.txt.",
@@ -1611,7 +1608,6 @@
       kitCsp_one: "Una policy Report-Only costruita dal {n} host visto da questa revisione. Pubblicala, osserva i report, poi applicala.", kitCsp_other: "Una policy Report-Only costruita dai {n} host visti da questa revisione. Pubblicala, osserva i report, poi applicala.",
       kitSchema: "Dati strutturati", kitSchemaDraft: "Una bozza JSON-LD di Organization e WebSite con i profili che la pagina collega.", kitSchemaHas: "Il sito pubblica già un’entità. Nessuna bozza necessaria.",
       kitLlmsDraft: "Una bozza che elenca le pagine indicizzabili con le loro descrizioni.", kitLlmsHas: "Il sito pubblica già llms.txt.",
-      // Non-English trust copy below: machine-assisted, native review tracked in #3952.
       trustTitle: "Voto di fiducia per i clienti", trustScore: "{n} punti. A+ è il voto migliore, F il più basso.", trustCapped: "Una backdoor piantata limita il voto a F.", trustFixFirst: "Correggi prima questi", trustNone: "Nessun risultato aperto toglie punti.",
       trustPoints_one: "toglie {n} punto", trustPoints_other: "toglie {n} punti", trustHelmet: "Configurazione di helmet per le intestazioni mancanti (Node ed Express):",
       kitSecDraft: "Una bozza con Contact, Expires e Canonical. Sostituisci l’indirizzo con una casella reale.", kitSecHas: "Il sito pubblica già security.txt.",
