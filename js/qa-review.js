@@ -3722,9 +3722,12 @@
 			document.getElementById('batch-error').textContent = msg;
 			return;
 		}
+		if (!standing) await loadStanding();
+		// A free-runs address runs every review free, so its batch needs no pass (#3972).
+		const free = !!(standing && standing.free);
 		const pass = passOn();
 		const left = pass && pass.runsLeft != null ? pass.runsLeft : 0;
-		if (!pass || left < parsed.urls.length) {
+		if (!free && (!pass || left < parsed.urls.length)) {
 			const msg =
 				left <= 0 ? batchCopy('needCreditsNone') : batchCopy('needCredits', { need: parsed.urls.length, left });
 			setStatus(msg, true);

@@ -4791,18 +4791,15 @@ async function reviewBatchRoutes(req, res, pathName, db, signedIn) {
     return;
   }
   if (pathName.endsWith("/account/batch/start")) {
-    if (await hasFreeRuns(email)) {
-      res.status(402).json({ error: "A pass with enough runs is needed for a bulk review. Add credits, then try again.", code: "needCredits" });
-      return;
-    }
     const parsed = reviewBatch.parseList(body.text, { leadUrl: body.leadUrl });
     if (parsed.error) {
       res.status(400).json(parsed);
       return;
     }
-    const passes = await passRowsFor(email);
-    const pass = reviewOffers.passView(reviewOffers.passFor(passes, email, Date.now()));
-    const credit = reviewBatch.creditProblem(pass && pass.runsLeft, parsed.urls.length);
+    // A free-runs address runs every review free (#3972), so its batch needs no pass; anyone else needs a run per URL.
+    const free = await hasFreeRuns(email);
+    const pass = free ? null : reviewOffers.passView(reviewOffers.passFor(await passRowsFor(email), email, Date.now()));
+    const credit = free ? null : reviewBatch.creditProblem(pass && pass.runsLeft, parsed.urls.length);
     if (credit) {
       res.status(402).json(credit);
       return;
