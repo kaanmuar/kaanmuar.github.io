@@ -152,3 +152,27 @@ test('the README status check reads a status line, not a passing mention (#3901)
 	assert.equal(flag('Unlike unmaintained forks, this one ships every week.'), false);
 	assert.equal(flag('Migrating from the deprecated `foo` package? See the guide.'), false);
 });
+
+test('repoCard states facts and flags, never a verdict (#4039)', () => {
+	const now = Date.parse('2026-11-20T12:00:00Z');
+	const meta = { created_at: '2026-11-19T00:00:00Z', pushed_at: '2026-11-19T06:00:00Z', stargazers_count: 3000, forks_count: 10, open_issues_count: 2, archived: false, license: { spdx_id: 'MIT' } };
+	const owner = { login: 'someone', created_at: '2026-10-01T00:00:00Z', public_repos: 4, followers: 12 };
+	const card = scout.repoCard('someone/tool', meta, owner, ['README asks for stars'], false, now);
+	assert.equal(card.slug, 'someone/tool');
+	assert.ok(card.lines.some((l) => l.startsWith('license: MIT (permissive)')));
+	assert.ok(card.lines.some((l) => l.includes('in the arsenal: no')));
+	assert.ok(card.flags.some((f) => /500\/day/.test(f)), 'fast star growth is flagged');
+	assert.ok(card.flags.some((f) => /six months/.test(f)), 'a young owner account is flagged');
+	assert.ok(card.flags.includes('README asks for stars'));
+	assert.ok(!card.flags.some((f) => /recommend|adopt|reject|verdict/i.test(f)), 'no verdict words');
+});
+
+test('repoCard reports a missing repo and a copyleft license plainly', () => {
+	const now = Date.parse('2026-11-20T12:00:00Z');
+	assert.match(scout.repoCard('no/such', { notFound: true }, null, [], false, now).lines[0], /not found/);
+	const meta = { created_at: '2020-01-01T00:00:00Z', pushed_at: '2020-02-01T00:00:00Z', stargazers_count: 10, forks_count: 0, open_issues_count: 0, archived: true, license: { spdx_id: 'AGPL-3.0' } };
+	const card = scout.repoCard('a/b', meta, null, [], true, now);
+	assert.ok(card.flags.some((f) => /archived/.test(f)));
+	assert.ok(card.flags.some((f) => /AGPL-3\.0 is not safe/.test(f)));
+	assert.ok(card.lines.some((l) => l.includes('in the arsenal: yes')));
+});

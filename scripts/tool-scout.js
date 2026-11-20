@@ -12,6 +12,7 @@
    node scripts/tool-scout.js audit            print the arsenal drift
    node scripts/tool-scout.js scout            print new candidates
    node scripts/tool-scout.js run [--date D]   both, write scripts/tool-scout/reports/D.md and update seen.json
+   node scripts/tool-scout.js repo owner/name  fact card for any repo (#4039): license, dates, star velocity, owner, flags
    Needs the gh CLI (GH_TOKEN in Actions). */
 
 const fs = require('fs');
@@ -307,6 +308,34 @@ function run(date) {
 	return { drift: real, candidates: fresh, body };
 }
 
+/** One fact card for any repo (#4039). It states facts and flags only; the verdict is a person's or an agent's. */
+function repoCard(slug, meta, owner, flags, inArsenal, now) {
+	if (meta.notFound) return { slug, lines: ['not found: renamed, moved, deleted or private'], flags: [] };
+	if (meta.error) return { slug, lines: ['unchecked: ' + meta.error], flags: [] };
+	const spdx = meta.license && meta.license.spdx_id;
+	const cls = classifyLicense(spdx);
+	const days = Math.max(1, (now - Date.parse(meta.created_at)) / DAY);
+	const perDay = meta.stargazers_count / days;
+	const out = [];
+	if (perDay > 500) out.push('star velocity above 500/day: check provenance before trusting popularity');
+	if (owner && owner.created_at && now - Date.parse(owner.created_at) < 180 * DAY) out.push('owner account younger than six months');
+	if (meta.pushed_at && now - Date.parse(meta.pushed_at) > 365 * DAY) out.push('no push for over a year');
+	if (meta.archived) out.push('archived');
+	if (cls === 'trap') out.push(spdx + ' is not safe for paid or customer code');
+	if (cls === 'unknown') out.push('license not named by GitHub: read the LICENSE file');
+	return {
+		slug,
+		lines: [
+			'license: ' + (spdx || 'none') + ' (' + cls + ')',
+			'created ' + String(meta.created_at).slice(0, 10) + ', last push ' + String(meta.pushed_at || '').slice(0, 10),
+			'stars ' + meta.stargazers_count + ' (' + perDay.toFixed(1) + ' a day), forks ' + meta.forks_count + ', open issues ' + meta.open_issues_count,
+			'owner ' + (owner && owner.login || '?') + ', account created ' + String(owner && owner.created_at || '?').slice(0, 10) + ', ' + (owner && owner.public_repos != null ? owner.public_repos : '?') + ' repos, ' + (owner && owner.followers != null ? owner.followers : '?') + ' followers',
+			'in the arsenal: ' + (inArsenal ? 'yes' : 'no'),
+		],
+		flags: [...out, ...flags],
+	};
+}
+
 function main() {
 	const [mode, ...args] = process.argv.slice(2);
 	const text = () => fs.readFileSync(ARSENAL, 'utf8');
@@ -315,16 +344,28 @@ function main() {
 		return console.log(rows.length ? rows.map((r) => `${r.level}\t${r.slug}\t${r.note}${r.head ? '  [' + r.head + ']' : ''}`).join('\n') : 'Every listed repo checks out.');
 	}
 	if (mode === 'scout') return console.log(report('now', [], scout(text(), readSeen(), Date.now())));
+	if (mode === 'repo') {
+		const slug = args[0] || '';
+		if (!/^[\w.-]+\/[\w.-]+$/.test(slug)) {
+			console.error('usage: node scripts/tool-scout.js repo owner/name');
+			process.exit(2);
+		}
+		const meta = gh(['repos/' + slug]);
+		const owner = meta.notFound || meta.error ? null : gh(['users/' + slug.split('/')[0]]);
+		const flags = meta.notFound || meta.error ? [] : readmeFlags(slug);
+		const card = repoCard(slug, meta, owner && !owner.notFound ? owner : null, flags, arsenalSlugs(text()).has(slug.toLowerCase()), Date.now());
+		return console.log([card.slug, ...card.lines.map((l) => '  ' + l), ...card.flags.map((f) => '  FLAG ' + f)].join('\n'));
+	}
 	if (mode === 'run') {
 		const i = args.indexOf('--date');
 		const date = i >= 0 ? args[i + 1] : new Date().toISOString().slice(0, 10);
 		const r = run(date);
 		return console.log(`Tool scout ${date}: ${r.drift} drift rows, ${r.candidates} new candidates.`);
 	}
-	console.error('usage: node scripts/tool-scout.js audit|scout|run [--date YYYY-MM-DD]');
+	console.error('usage: node scripts/tool-scout.js audit|scout|run [--date YYYY-MM-DD]|repo owner/name');
 	process.exit(2);
 }
 
 if (require.main === module) main();
 
-module.exports = { isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, rank, report, CORNERS };
+module.exports = { repoCard, isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, rank, report, CORNERS };
