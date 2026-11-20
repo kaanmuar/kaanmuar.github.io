@@ -19,10 +19,11 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -38,10 +39,11 @@
 			"cites": [
 				{
 					"name": "Regulation (EU) 2016/679",
-					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679"
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -57,10 +59,16 @@
 			"cites": [
 				{
 					"name": "UK GDPR and the Data Protection Act 2018",
-					"url": "https://www.legislation.gov.uk/ukpga/2018/12/contents"
+					"url": "https://www.legislation.gov.uk/ukpga/2018/12/contents",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "UK GDPR",
+					"url": "https://www.legislation.gov.uk/eur/2016/679/contents",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -76,10 +84,11 @@
 			"cites": [
 				{
 					"name": "There is no single federal privacy statute. California residents have the CCPA as amended by the CPRA.",
-					"url": "https://oag.ca.gov/privacy/ccpa"
+					"url": "https://oag.ca.gov/privacy/ccpa",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -95,10 +104,11 @@
 			"cites": [
 				{
 					"name": "Ley Federal de Protección de Datos Personales en Posesión de los Particulares (the 2025 law, published in the Diario Oficial on 20 March 2025, last reformed 14 November 2025)",
-					"url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf"
+					"url": "https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-19",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -114,10 +124,11 @@
 			"cites": [
 				{
 					"name": "Lei Geral de Proteção de Dados, Lei 13.709/2018",
-					"url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm"
+					"url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -133,10 +144,16 @@
 			"cites": [
 				{
 					"name": "Ley Orgánica 3/2018 and Regulation (EU) 2016/679",
-					"url": "https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673"
+					"url": "https://www.boe.es/buscar/act.php?id=BOE-A-2018-16673",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Regulation (EU) 2016/679",
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -152,10 +169,16 @@
 			"cites": [
 				{
 					"name": "Bundesdatenschutzgesetz and Regulation (EU) 2016/679",
-					"url": "https://www.gesetze-im-internet.de/bdsg_2018/"
+					"url": "https://www.gesetze-im-internet.de/bdsg_2018/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Regulation (EU) 2016/679",
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -171,10 +194,16 @@
 			"cites": [
 				{
 					"name": "Loi Informatique et Libertés and Regulation (EU) 2016/679",
-					"url": "https://www.cnil.fr/fr/la-loi-informatique-et-libertes"
+					"url": "https://www.cnil.fr/fr/la-loi-informatique-et-libertes",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Regulation (EU) 2016/679",
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -190,10 +219,11 @@
 			"cites": [
 				{
 					"name": "Ley 25.326 de Protección de los Datos Personales",
-					"url": "https://www.argentina.gob.ar/aaip/datospersonales"
+					"url": "https://www.argentina.gob.ar/aaip/datospersonales",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -209,10 +239,11 @@
 			"cites": [
 				{
 					"name": "Ley 19.628 sobre Protección de la Vida Privada",
-					"url": "https://www.bcn.cl/leychile/navegar?idNorma=141599"
+					"url": "https://www.bcn.cl/leychile/navegar?idNorma=141599",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -228,7 +259,8 @@
 			"cites": [
 				{
 					"name": "Ley 29733, Ley de Protección de Datos Personales",
-					"url": "https://www.gob.pe/anpd"
+					"url": "https://www.gob.pe/anpd",
+					"urlVerified": null
 				}
 			],
 			"lastChecked": "2026-10-25",
@@ -247,10 +279,11 @@
 			"cites": [
 				{
 					"name": "Personal Information Protection and Electronic Documents Act, and provincial statutes where they apply",
-					"url": "https://laws-lois.justice.gc.ca/eng/acts/P-8.6/"
+					"url": "https://laws-lois.justice.gc.ca/eng/acts/P-8.6/",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -266,10 +299,11 @@
 			"cites": [
 				{
 					"name": "Privacy Act 1988",
-					"url": "https://www.legislation.gov.au/Series/C2004A03712"
+					"url": "https://www.legislation.gov.au/Series/C2004A03712",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -285,10 +319,11 @@
 			"cites": [
 				{
 					"name": "Privacy Act 2020",
-					"url": "https://www.legislation.govt.nz/act/public/2020/0031/latest/LMS23223.html"
+					"url": "https://www.legislation.govt.nz/act/public/2020/0031/latest/LMS23223.html",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -304,10 +339,11 @@
 			"cites": [
 				{
 					"name": "Digital Personal Data Protection Act, 2023",
-					"url": "https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf"
+					"url": "https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -323,10 +359,11 @@
 			"cites": [
 				{
 					"name": "Act on the Protection of Personal Information",
-					"url": "https://www.ppc.go.jp/en/"
+					"url": "https://www.ppc.go.jp/en/",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -342,7 +379,8 @@
 			"cites": [
 				{
 					"name": "Protection of Personal Information Act 4 of 2013",
-					"url": "https://popia.co.za/"
+					"url": "https://popia.co.za/",
+					"urlVerified": null
 				}
 			],
 			"lastChecked": "2026-10-25",
@@ -359,10 +397,16 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -385,8 +429,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "A civil claim against the operator follows Ley 1564 de 2012, Código General del Proceso, artículo 28, numeral 1: in a contentious case the judge of the defendant's domicile is competent, unless another rule says otherwise. The code is at https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=48425.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1564 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=48425",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -397,8 +447,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Consumer complaints about this service still go to the Superintendencia de Industria y Comercio under Ley 1480 de 2011, which is national. The local section does not create a separate consumer statute for the operator's municipality.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -409,8 +465,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Colombian law is the law of the contract with the operator. Mandatory rules of the asker's residence are not waived. Ley 1480 de 2011, artículo 43, numerales 1 and 2, makes a clause ineffective if it limits the provider's legal duties or waives a consumer right the statute gives.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -433,8 +495,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Disclaimer. QA-lab URL Review fetches the public https address the asker submits, describes the response, and proposes test cases. It does not run those cases, sign in to the site, submit a form, or generate load. To ask for a review, the asker signs in on the device that runs it. A request to run a QA-lab verification is sent to qa@carlosandmunoz.com. Ley 1480 de 2011, artículos 23 and 24, require clear information about the service, including the price. The amount of a charge is shown on the payment page before the payer confirms. The statute is at https://www.cancilleria.gov.co/normograma/compilacion/docs/ley_1480_2011.htm.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -445,8 +513,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Disclaimer. A report is a snapshot and a proposal. It is not a certification that a site is safe, fast, accessible, or lawful. It is not an audit, and it is not a finding under a standard such as ISO/IEC 27001. Artículo 23 of the same statute makes the provider answerable for inadequate information. This sentence is that information.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -505,8 +579,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Disclaimer. The service requests the public URL the asker submits, over https, on port 443. It does not bypass a login, a paywall, or another technical control. By accepting the gate, the asker states a lawful reason to send that address and to receive the report. Ley 1273 de 2009 added Código Penal artículo 269A (acceso abusivo a un sistema informático), artículo 269B (obstaculización ilegítima), and artículo 269C (interceptación de datos informáticos). The text is at https://normativa.archivogeneral.gov.co/ley-1273-de-2009/. This service does not do those acts.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1273 de 2009",
+					"url": "https://normativa.archivogeneral.gov.co/ley-1273-de-2009/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Código Penal (Ley 599 de 2000)",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=6388",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -517,8 +602,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Disclaimer. If the asker says they have a username and password, they state they are allowed to use that login. This page does not ask for the password and does not store one. A run signed in to the site under review is a separate step, paid before it starts, and the password is still not collected here. Artículo 269A covers access without authorization or beyond what was agreed. This service does not take the credential that would make that access.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Código Penal (Ley 599 de 2000)",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=6388",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 1273 de 2009",
+					"url": "https://normativa.archivogeneral.gov.co/ley-1273-de-2009/",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -589,8 +685,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Constitutional basis. Constitución Política, artículo 15, is the right to intimacy, good name, and habeas data: to know, update, and rectify information collected in a database. Artículo 20 is the right to information. The Constitution is at https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=4125.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Constitución Política",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=4125",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -604,10 +706,21 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Decreto 1377 de 2013",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=53646",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Decreto 1074 de 2015",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=76608",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -633,10 +746,11 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-19",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -647,8 +761,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Purposes. Artículo 4 states the purpose principle. The purposes are: to perform the review the asker asked for; to keep who asked; to apply the one-completed-review limit, the stop limit, and the payment limit; to answer a request for access, update, or deletion; to tell a report's owner, once, that another signed-in account opened its link; to count visits to the review pages; to see which signed-in accounts come back to the review pages, how often, and for how long; to keep the log of a failed or stopped review, find the cause, and, once it clears, run the same address again and send that report at no charge; to keep the email and the inputs of a review that could not be concluded, so its report can be emailed later, or an apology sent; to quote, perform, and check a fix the asker orders from a report; and to publish the scores and findings for the public pages as a Live Report. A copy of the finished report is mailed to the asker's address, because the asker asked for that review; it is blurred unless the report is paid or the account is free. A follow-up note, including the single launch note that carries a 50% code until December 10, 2026, is a purpose only when the asker checks that box, and goes only to an address whose holder checked it. The box is not required to run a review. At most three notes go out in a week, never on a Sunday, and none after 30 days from the last review. The stop link in each message, or a reply that says stop, ends them.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -686,14 +806,16 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
 				},
 				{
 					"name": "Regulation (EU) 2016/679",
-					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679"
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-10",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -740,8 +862,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Retention. Records are deleted automatically when their period ends. Review records: 12 months from the run, even after the account expires on its own; deleting the account on the account page removes them at once. The account: 12 months after the last sign-in, together with its Firebase Authentication user. Sign-in sessions: 30 days. Sign-in codes: 1 hour. Provider sign-in states: 10 minutes. The record that lets a running review be stopped, with its email and a hash of the device key: 1 day. Logs of failed or stopped reviews, and their re-runs and rescue attempts: 90 days, including the email and inputs kept for an inconclusive review. The apology code of an inconclusive review: 12 months. Fix requests that were not paid, with their status history: deleted 12 months after their last change. A paid fix request is kept with its payment record for the tax period below; that part is not deleted automatically yet. A public scan on Cloudflare Radar is kept by Cloudflare under its own terms; this service cannot shorten it. Visit rows, the visits recorded on a signed-in account, follow-up notes, stop links, alerts, captures, mail, and the coupon sent with a follow-up note: 12 months; deleting the account on the account page removes its visits at once. A request to stop follow-up notes is kept until it is withdrawn, so the notes stay stopped. Owner notices, their links, and their send log: 12 months. A request to stop owner notices is kept until it is withdrawn, so the notices stay stopped. Payment records (report payments, credits, passes, and coupon redemptions): until January 1 of the sixth year after the payment, or later while the income-tax return the record supports is not final, as Colombian tax law requires (Estatuto Tributario, artículo 632, five years from January 1 of the following year, as Ley 962 de 2005, artículo 46 applies it). A merchant keeps its books and papers ten years (Ley 962 de 2005, artículo 28). A paid report itself goes after 12 months, like any review record; its payment record stays. The list of free-run addresses and the coupons the operator makes by hand are kept until the operator removes them, or the account is deleted on the account page.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Estatuto Tributario (Decreto Ley 624 de 1989)",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=6533",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 962 de 2005",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=17004",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -764,8 +897,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Sensitive data. Artículo 6 restricts sensitive data. This service does not ask for it. Do not send it. Birthday, phone number, address, and gender, taken from a Google sign-in, are personal data under artículo 3; they are not treated as sensitive data under artículo 5, and they are not used to infer anything that is.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -776,8 +915,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Financial habeas data. Ley 1266 de 2008 covers financial, credit, and commercial-services information. This request record is not that file. Artículo 26, parágrafo 2, of Ley 1581 says the transfer rule also covers data under Ley 1266. This service does not rely on Ley 1266 as the basis of the request record.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1266 de 2008",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=34488",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -788,8 +938,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Rights. Artículo 8 gives the holder the rights to know, update, rectify, and revoke. Signed in, the account page at https://carlosandmunoz.com/qa-review-account.html downloads a copy of everything kept under the address as a JSON file. It also deletes the account, its sign-in sessions, review records, notes, alerts, and Firebase Authentication user at once. Payment records stay for the tax period above, without the report, and a request to stop follow-up notes stays. A correction, or a request made without signing in, goes to qa@carlosandmunoz.com. Under artículos 14 and 15, a query is answered within 10 business days and a claim within 15 business days. A claim the operator does not resolve goes to the Superintendencia de Industria y Comercio at https://www.sic.gov.co/. A site owner can ask this service to stop and to delete a report.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -800,8 +956,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Children. The gate requires a statement that the asker is at least 18. Ley 1098 de 2006, Código de Infancia y Adolescencia, is the national statute on children. This service is not directed at children and does not knowingly keep a child's data. A record that is a child's is deleted when qa@carlosandmunoz.com is told so.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1098 de 2006",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=22106",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -971,10 +1133,11 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-10",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -985,8 +1148,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "The exception relied on is artículo 26, literal a): the holder gave express and unequivocal authorization for the transfer, at the gate. Literal e) also covers a transfer needed to perform a contract between the holder and the Responsable, or pre-contract steps, with the holder's authorization. Parágrafo 1 leaves other cases to a declaration of conformity by the Superintendencia. This service relies on literales a) and e), not on that declaration.",
-			"cites": [],
-			"lastChecked": "2026-11-10",
+			"cites": [
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -997,8 +1166,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Vendors that handle data for the operator (Google Cloud, SendGrid, Instantly, Cloudflare, and the mail and scheduling services above) act as processors, Encargados del Tratamiento, under the terms each one offers, which the operator treats as the contract that Decreto 1377 de 2013, artículo 25, requires. For a transmission from the operator to a processor that handles data on its behalf, artículo 24, numeral 2, of that decree does not require notice to the holder or its consent when such a contract is in place. The operator relies on that rule for people who never used the gate, such as the people it contacts first. A lawyer should confirm each vendor's terms meet artículo 25.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Decreto 1377 de 2013",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=53646",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1009,8 +1184,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "The checkers and vendors named under “Who receives data” are outside Colombia. They receive the address or the host under review, or a failure diagnosis, and not the asker's name or email; PayPal receives what the payer gives it. The same literales a) and e) are relied on.",
-			"cites": [],
-			"lastChecked": "2026-11-10",
+			"cites": [
+				{
+					"name": "Ley 1581 de 2012",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1033,8 +1214,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Price. Ley 1480 de 2011, artículo 24, numeral 2.2, requires the price. It is shown on the payment page before the payer confirms. PayPal collects the payment under PayPal's own user agreement. This service does not store a card number.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1045,8 +1232,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Retracto in Colombia. Artículo 47 gives five business days to withdraw from a distance contract, and requires the money back. Numeral 1 excepts a service whose performance has already begun with the consumer's agreement. Pressing Review, or confirming payment for a wider review, a later run, a signed-in arrangement, or a later view of a report, is that agreement, and the work starts then. Where numeral 1 applies, retracto does not. Where a mandatory rule of the asker's country keeps a withdrawal right, that right remains. Artículo 43, numerales 1 and 2, would make a sentence ineffective if it tried to cancel that right.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1057,8 +1250,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Fix packages and refunds. A fix package is paid in advance through PayPal. For a package, the work starts when the operator begins on the client's host, CDN, DNS, CMS, or code, not at payment. The price is refunded in full if the client asks before the work starts, or if the operator cannot deliver what the package covers, for example because the host or platform does not allow the change. Once the work has started with the client's agreement, artículo 47, numeral 1, applies as above, and a mandatory withdrawal right of the client's country still remains. To ask for a refund, write to qa@carlosandmunoz.com from the address that ordered the package, with the report link or the PayPal transaction id. The refund goes back through PayPal to the account that paid. A quote binds neither side until the client pays it.",
-			"cites": [],
-			"lastChecked": "2026-11-10",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1069,8 +1268,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Electronic acceptance. Ley 527 de 1999, artículo 5, gives legal effect to a data message. Artículo 14 covers formation of a contract by data message. Artículo 15 says a statement is not denied effect only because it was a data message. The gate is that acceptance. The statute is at https://www.mincit.gov.co/getattachment/feaa83a5-0f08-45b7-bbfb-7ad1eb937d6f/Ley-527-de-1999-Por-medio-de-la-cual-se-define-y-r.aspx.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 527 de 1999",
+					"url": "https://www.mincit.gov.co/getattachment/feaa83a5-0f08-45b7-bbfb-7ad1eb937d6f/Ley-527-de-1999-Por-medio-de-la-cual-se-define-y-r.aspx",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1081,8 +1286,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Liability. Código Civil, artículo 2341, is the general rule for damage from an illicit act. Artículo 1604 lets the parties adjust the degree of care in a contract. Artículo 1522 bars condoning future dolo. The Corte Suprema de Justicia, Sala de Casación Civil, has treated culpa grave like dolo for that limit, in judgments of 13 December 1962 and 6 March 1972. This page does not waive dolo or culpa grave. Ley 1480 de 2011, artículo 43, numerales 1, 2, 3, and 4, makes a clause ineffective if it limits legal duties, waives consumer rights, reverses the burden of proof, or shifts the provider's responsibility onto the consumer. Within those limits, a decision the asker makes from a public snapshot is the asker's. The code is at https://www.secretariasenado.gov.co/senado/basedoc/codigo_civil.html.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Código Civil (Ley 84 de 1873)",
+					"url": "https://normativa.colpensiones.gov.co/colpensiones/docs/codigo_civil.htm",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1105,8 +1321,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Disclaimer. The report may name a path, a status, a title, and a short description of the public response. It is not a license to copy the reviewed site. Ley 23 de 1982 protects the author's moral and economic rights. Decisión Andina 351 de 1993 is the Andean copyright regime in force in Colombia; the text is at http://www.sice.oas.org/trade/junac/decisiones/dec351s.asp. The asker will not use a shared report to republish the site's content. A report link opens in full only for the account that ran it. A shared link, or a preview opened without that account, shows the overall score, the score of each area, and one finding in full (its evidence and fix); every other finding is blurred.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Ley 23 de 1982",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=3431",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Decisión Andina 351 de 1993",
+					"url": "https://www.comunidadandina.org/StaticFiles/DocOf/DEC351.pdf",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1213,8 +1440,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Re-review. When the work is marked done, the site is reviewed again at no charge, and the client gets a before/after email that marks each finding fixed, still open, or needing a person. The legal guarantee of Ley 1480 de 2011, artículo 7, applies to the work.",
-			"cites": [],
-			"lastChecked": "2026-11-10",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1261,8 +1494,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "Conditions. Ley 1480 de 2011, artículo 33, requires a promotion to state its conditions. These are the conditions: a code has no cash value and cannot be exchanged for money; it is used once, by the address it was made for, unless it is a live show's shared code; it never applies to a fix package; it ends on the date shown; and a trial takes no payment details and renews nothing by itself. The operator may end a trial or refuse a code that is used to get around a limit, resold, or shared outside its show, and the paid limits then apply.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1408,14 +1647,46 @@
 			"cites": [
 				{
 					"name": "Ley 1581 de 2012",
-					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981",
+					"urlVerified": "2026-11-20"
 				},
 				{
 					"name": "Regulation (EU) 2016/679",
-					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679"
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Directive 2002/58/EC",
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Privacy and Electronic Communications (EC Directive) Regulations 2003, regulation 22",
+					"url": "https://www.legislation.gov.uk/uksi/2003/2426/regulation/22",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Canada's Anti-Spam Legislation, S.C. 2010, c. 23",
+					"url": "https://laws-lois.justice.gc.ca/eng/acts/E-1.6/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Spam Act 2003 (Cth)",
+					"url": "https://www.legislation.gov.au/C2004A01214/latest/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "CAN-SPAM Act, 15 U.S.C. § 7704",
+					"url": "https://uscode.house.gov/us/usc/119-142/t15/s7704/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 2300 de 2023",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=213990",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-19",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1426,8 +1697,14 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "How they are written to. Each message says why the person got it and how to stop. Messages go only within the hours of Ley 2300 de 2023, parágrafo 3 (see “Basis”), a campaign pauses on the public holidays of the country it is for, and each network has a daily cap. For the first period after launch each direct message, reply, and offer waits for the operator's approval; after it, messages may go on their own within the caps, unless the operator keeps approval on. A reply is read by the operator, with a model's draft (see “Automated and AI tools”).",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Ley 2300 de 2023",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=213990",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1654,8 +1931,19 @@
 			"language": "en",
 			"jurisdiction": "CO",
 			"text": "How long. The duty lasts while the work runs and for three years after it ends, and for a trade secret for as long as it stays one. Colombian law also protects a trade secret apart from any contract: Ley 256 de 1996, artículo 16, and Decisión Andina 486 de 2000, artículos 260 to 266.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Ley 256 de 1996",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=38871",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Decisión Andina 486 de 2000",
+					"url": "https://www.comunidadandina.org/StaticFiles/DocOf/DEC486.pdf",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1741,10 +2029,11 @@
 			"cites": [
 				{
 					"name": "Regulation (EU) 2016/679",
-					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679"
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-11-10",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1755,8 +2044,14 @@
 			"language": "en",
 			"jurisdiction": "EU",
 			"text": "Directive 2002/58/EC, Article 13, as each member state implements it, requires prior consent for unsolicited direct-marketing email to an individual, with a soft opt-in for an existing customer. The operator's rule for people in the Union is the same: no unsolicited marketing email to an individual without consent, and only to an organisation's published business address otherwise.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Directive 2002/58/EC",
+					"url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0058",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1770,10 +2065,26 @@
 			"cites": [
 				{
 					"name": "There is no single federal privacy statute. California residents have the CCPA as amended by the CPRA.",
-					"url": "https://oag.ca.gov/privacy/ccpa"
+					"url": "https://oag.ca.gov/privacy/ccpa",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Computer Fraud and Abuse Act, 18 U.S.C. § 1030",
+					"url": "https://uscode.house.gov/us/usc/119-142/t18/s1030/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Cal. Civ. Code § 1798.100",
+					"url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.100",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "CCPA CPI adjustment (Cal. Civ. Code § 1798.199.95)",
+					"url": "https://cppa.ca.gov/regulations/cpi_adjustment.html",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1784,8 +2095,14 @@
 			"language": "en",
 			"jurisdiction": "GB",
 			"text": "The United Kingdom implemented the distance-contract withdrawal rules in the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013: https://www.legislation.gov.uk/uksi/2013/3134. Regulation 29 is the right to cancel. Regulation 36(1) says the trader must not start a service during the cancellation period unless the consumer made an express request. Regulation 36(2) ends that right only once the service has been fully performed, and only if performance began after that request and with the consumer's acknowledgement. The gate checkbox is that request and that acknowledgement. If the consumer cancels before full performance, regulation 36(4) can require a proportionate payment. Regulation 36(6) can remove that charge if the required cancellation information was not given.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013",
+					"url": "https://www.legislation.gov.uk/uksi/2013/3134",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1796,8 +2113,14 @@
 			"language": "en",
 			"jurisdiction": "GB",
 			"text": "Direct marketing email to an individual is governed by regulation 22 of the Privacy and Electronic Communications (EC Directive) Regulations 2003: https://www.legislation.gov.uk/uksi/2003/2426/regulation/22. It needs the individual's prior consent, with the soft opt-in for an existing customer. Email to a corporate subscriber is not covered by that regulation, and the operator's rule for it is the same as for the rest of this page.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Privacy and Electronic Communications (EC Directive) Regulations 2003, regulation 22",
+					"url": "https://www.legislation.gov.uk/uksi/2003/2426/regulation/22",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1808,8 +2131,14 @@
 			"language": "en",
 			"jurisdiction": "CA",
 			"text": "Canada's Anti-Spam Legislation, S.C. 2010, c. 23, requires consent, express or implied, before a commercial electronic message is sent, and an unsubscribe mechanism in each message. The operator does not send unsolicited commercial email to a person in Canada without consent.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Canada's Anti-Spam Legislation, S.C. 2010, c. 23",
+					"url": "https://laws-lois.justice.gc.ca/eng/acts/E-1.6/",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1820,8 +2149,14 @@
 			"language": "en",
 			"jurisdiction": "AU",
 			"text": "The Spam Act 2003 (Cth) prohibits commercial electronic messages without consent, express or inferred, and requires a functional unsubscribe facility and sender identification. The operator does not send unsolicited commercial email to a person in Australia without consent.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Spam Act 2003 (Cth)",
+					"url": "https://www.legislation.gov.au/C2004A01214/latest/",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1832,8 +2167,14 @@
 			"language": "en",
 			"jurisdiction": "BR",
 			"text": "Lei Geral de Proteção de Dados, article 7, IX, allows processing on legitimate interest, subject to the holder's fundamental rights, and article 18 gives the holder rights of access, correction and objection. The operator gives notice and an opt-out in each message to a person in Brazil, and honours the opt-out at once.",
-			"cites": [],
-			"lastChecked": "2026-11-19",
+			"cites": [
+				{
+					"name": "Lei Geral de Proteção de Dados, Lei 13.709/2018",
+					"url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1844,8 +2185,19 @@
 			"language": "en",
 			"jurisdiction": "CL",
 			"text": "Ley 19.628 remains the private-life statute cited above. Ley 21.719, published in 2024, replaces much of that regime after a deferred start. Until that start, this page cites Ley 19.628. The courts remain the route named above for a private dispute.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 19.628 sobre Protección de la Vida Privada",
+					"url": "https://www.bcn.cl/leychile/navegar?idNorma=141599",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Ley 21.719",
+					"url": "https://www.bcn.cl/leychile/Navegar?idNorma=1209272",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1868,8 +2220,14 @@
 			"language": "en",
 			"jurisdiction": "international",
 			"text": "Disclaimer. Colombian law governs the contract with the operator. A mandatory consumer rule, or a mandatory data rule, of the asker's residence is not waived. Ley 1480 de 2011, artículo 43, numerales 1 and 2, would make such a waiver ineffective in Colombia as well.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Ley 1480 de 2011",
+					"url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1880,8 +2238,14 @@
 			"language": "en",
 			"jurisdiction": "EU",
 			"text": "European Union. Directive 2011/83/EU, Article 9, gives 14 days to withdraw from a distance contract. Article 16, for a paid service, removes that right only after the service has been fully performed, and only if performance began with the consumer's prior express consent and with the consumer's acknowledgement that the right is lost once the trader has fully performed. The gate checkbox is that request and that acknowledgement. Until the review is fully delivered, the Article 9 period can still apply, and Article 14 can require payment in proportion to what was provided if the consumer asked for performance to start during that period. The consolidated directive is at https://eur-lex.europa.eu/eli/dir/2011/83/2022-05-28/eng. The same service limits in the Colombia section apply: public fetch only, no password, no certification.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Directive 2011/83/EU",
+					"url": "https://eur-lex.europa.eu/eli/dir/2011/83/2022-05-28/eng",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1895,10 +2259,21 @@
 			"cites": [
 				{
 					"name": "UK GDPR and the Data Protection Act 2018",
-					"url": "https://www.legislation.gov.uk/ukpga/2018/12/contents"
+					"url": "https://www.legislation.gov.uk/ukpga/2018/12/contents",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "UK GDPR",
+					"url": "https://www.legislation.gov.uk/eur/2016/679/contents",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013, regulation 36",
+					"url": "https://www.legislation.gov.uk/uksi/2013/3134/regulation/36",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1909,8 +2284,24 @@
 			"language": "en",
 			"jurisdiction": "US",
 			"text": "United States. There is no single federal privacy statute for this request record. The Computer Fraud and Abuse Act, 18 U.S.C. § 1030, is cited in the United States country block below when that country is selected, and it applies to the analysis itself: the service requests the public URL and does not bypass a login. Copyright in a page hosted for a United States audience is 17 U.S.C. § 106. The report is not a license under that section. The Berne Convention, to which Colombia is a party, is the international copyright instrument: https://www.wipo.int/treaties/en/ip/berne/.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Computer Fraud and Abuse Act, 18 U.S.C. § 1030",
+					"url": "https://uscode.house.gov/us/usc/119-142/t18/s1030/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "17 U.S.C. § 106",
+					"url": "https://uscode.house.gov/us/usc/119-142/t17/s106/",
+					"urlVerified": "2026-11-20"
+				},
+				{
+					"name": "Berne Convention",
+					"url": "https://www.wipo.int/treaties/en/ip/berne/",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
@@ -1921,8 +2312,14 @@
 			"language": "en",
 			"jurisdiction": "international",
 			"text": "Cybercrime. Colombia acceded to the Convention on Cybercrime, ETS No. 185, the Budapest Convention, on 16 March 2020. Article 2 is illegal access. The public fetch described in the Colombia section is not that offence. The convention is at https://www.coe.int/en/web/cybercrime/the-budapest-convention. Council of Europe material listing the parties, current as of July 2026, includes Colombia: https://rm.coe.int/cyber-buda-benefits-1-julio-2026-es/48802c5c23.",
-			"cites": [],
-			"lastChecked": "2026-10-25",
+			"cites": [
+				{
+					"name": "Convention on Cybercrime, ETS No. 185",
+					"url": "https://www.coe.int/en/web/cybercrime/the-budapest-convention",
+					"urlVerified": "2026-11-20"
+				}
+			],
+			"lastChecked": "2026-11-20",
 			"status": "draft",
 			"counselReviewedOn": null
 		},
