@@ -7,6 +7,27 @@ const { say } = require("./url-review-findings-en");
 
 const looksHtmlBody = (text) => /^\s*<(!doctype\s+html|<html[\s>])/i.test(String(text || ""));
 
+// How many times /\[[^\]]+\]\([^)]+\)/g matches text, counting up to max, without rescanning from every "[".
+function markdownLinks(text, max = Infinity) {
+  let count = 0;
+  let from = 0;
+  while (count < max) {
+    const open = text.indexOf("[", from);
+    if (open < 0) break;
+    const close = text.indexOf("]", open + 1);
+    if (close < 0) break;
+    const end = close > open + 1 && text[close + 1] === "(" ? text.indexOf(")", close + 2) : -2;
+    if (end === -1) break;
+    if (end > close + 2) {
+      count += 1;
+      from = end + 1;
+    } else {
+      from = close + 1;
+    }
+  }
+  return count;
+}
+
 function parseLlmsTxt(body, meta) {
   const status = (meta && meta.status) || 0;
   const html = !!(meta && meta.html);
@@ -14,12 +35,13 @@ function parseLlmsTxt(body, meta) {
   const report = { status, ok: false, html, title: "", summary: "", sections: 0, links: 0, bareLinks: 0, full, gaps: [], complete: false };
   if (status !== 200 || html) return report;
   const text = String(body || "");
-  if (!/^\s*#\s+\S/m.test(text)) return report;
+  // A line start right after another line break in the same blank run is skipped: the first one there gives the same result.
+  if (!/^(?<![\n\r\u2028\u2029]\s*?[\n\r\u2028\u2029])\s*#\s+\S/m.test(text)) return report;
   report.ok = true;
-  report.title = ((text.match(/^\s*#\s+(.+)$/m) || [])[1] || "").slice(0, 120);
-  report.summary = ((text.match(/^\s*>\s*(.+)$/m) || [])[1] || "").slice(0, 240);
+  report.title = ((text.match(/^(?<![\n\r\u2028\u2029]\s*?[\n\r\u2028\u2029])\s*#\s+(.+)$/m) || [])[1] || "").slice(0, 120);
+  report.summary = ((text.match(/^(?<![\n\r\u2028\u2029]\s*?[\n\r\u2028\u2029])\s*>\s*(.+)$/m) || [])[1] || "").slice(0, 240);
   report.sections = (text.match(/^##\s+/gm) || []).length;
-  report.links = (text.match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
+  report.links = markdownLinks(text);
   report.bareLinks = (text.match(/(^|\s)https?:\/\/\S+/gm) || []).length;
   if (!report.summary) report.gaps.push("summary");
   if (!report.links && !report.bareLinks) report.gaps.push("links");
@@ -71,7 +93,7 @@ function classifyAgentMarkdown(res) {
   const html = !!(res && res.html) || /text\/html/i.test(contentType) || looksHtmlBody(body);
   const markdown = status >= 200 && status < 400 && !html && (
     /text\/markdown/i.test(contentType) ||
-    (body.length > 0 && !looksHtmlBody(body) && (/^#{1,6}\s/m.test(body) || /^>\s/m.test(body) || /\[[^\]]+\]\([^)]+\)/.test(body)))
+    (body.length > 0 && !looksHtmlBody(body) && (/^#{1,6}\s/m.test(body) || /^>\s/m.test(body) || markdownLinks(body, 1) > 0))
   );
   return { status, contentType, html, markdown, error: res && res.error ? String(res.error) : "" };
 }

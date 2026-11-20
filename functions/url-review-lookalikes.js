@@ -130,7 +130,7 @@ function linkedSites(html) {
 }
 
 function titleOf(html) {
-  const match = String(html || "").match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
+  const match = String(html || "").match(/<title\b(?<=^(?:(?!<title\b)[\s\S])*<title)[^>]*>([\s\S]*?)<\/title>/i);
   return match ? match[1].replace(/\s+/g, " ").trim().toLowerCase() : "";
 }
 

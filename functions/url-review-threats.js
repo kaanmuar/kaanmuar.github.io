@@ -46,9 +46,25 @@ const DAY_MS = 24 * 3600 * 1000;
 const LIVE_MS = 24 * 3600 * 1000;
 const RECENT_MS = 90 * DAY_MS;
 
+// text.replace(/<[^>]{0,120}>/g, " ") in one pass: a tag runs from the first "<" at most 121 characters before the next ">".
+function blankTags(text) {
+  let out = "";
+  let kept = 0;
+  for (let open = text.indexOf("<"); open >= 0; ) {
+    const close = text.indexOf(">", open + 1);
+    if (close < 0) break;
+    const start = close - open > 121 ? text.indexOf("<", close - 121) : open;
+    if (start >= 0 && start < close) {
+      out += text.slice(kept, start) + " ";
+      kept = close + 1;
+    }
+    open = text.indexOf("<", close + 1);
+  }
+  return out + text.slice(kept);
+}
+
 function clip(value, max) {
-  const text = String(value == null ? "" : value)
-    .replace(/<[^>]{0,120}>/g, " ")
+  const text = blankTags(String(value == null ? "" : value))
     .replace(/\s+/g, " ")
     .trim();
   if (!text) return "";

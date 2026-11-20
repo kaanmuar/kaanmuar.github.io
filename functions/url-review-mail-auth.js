@@ -33,7 +33,7 @@ function spfTerms(record) {
 function dmarcTags(record) {
   const tags = {};
   String(record || "").split(";").forEach((part) => {
-    const pair = part.match(/^\s*([a-z]+)\s*=\s*(.*?)\s*$/i);
+    const pair = part.match(/^\s*([a-z]+)\s*=\s*(?!\s)(\S*(?:[^\S\n\r\u2028\u2029]+\S+)*)\s*$/i);
     if (pair && !(pair[1].toLowerCase() in tags)) tags[pair[1].toLowerCase()] = pair[2];
   });
   return tags;

@@ -91,7 +91,7 @@ const COPY = {
 };
 
 const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 const slug = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const accountId = (network, handle) => network + ":" + String(handle).toLowerCase().replace(/\//g, "|");
 const docKey = (...parts) => "ot-" + crypto.createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24);
@@ -163,7 +163,7 @@ function socialLinksOf(html) {
   const seen = new Set();
   const out = [];
   for (const m of String(html || "").replace(/&amp;/g, "&").replace(/\\\//g, "/").matchAll(SOCIAL)) {
-    const h = handleOf(m[0].replace(/[.,;]+$/, ""));
+    const h = handleOf(m[0].replace(/(?<![.,;])[.,;]+$/, ""));
     if (!h || seen.has(accountId(h.network, h.handle))) continue;
     seen.add(accountId(h.network, h.handle));
     out.push(h);
@@ -196,7 +196,7 @@ function reportsOf(post, live) {
     return r ? [r] : [];
   }
   if (!["review", "compare"].includes(post.kind)) return [];
-  const hosts = [...new Set([...String(post.alt || "").matchAll(/\b((?:[a-z0-9-]+\.)+[a-z]{2,})\s+Score\s+\d/gi)].map((m) => bare(m[1])))];
+  const hosts = [...new Set([...String(post.alt || "").matchAll(/\b((?:[a-z0-9-]+\.)+[a-z]{2,})\s+Score\s+\d|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*/gi)].filter((m) => m[1]).map((m) => bare(m[1])))];
   return hosts.map((h) => byHost.get(h) || { id: "u-" + slug(h), host: h, name: h, country: "", city: "", sector: "" });
 }
 
@@ -293,7 +293,7 @@ function comments(network, lang, owners, related, link, room, many, host, first)
 function captionDraft(network, original, owners, related) {
   const limit = (E.NETWORKS[network] || {}).limit || 300;
   const cap = MENTIONS[network] || 0;
-  const base = String(original || "").replace(/\s+$/, "");
+  const base = String(original || "").replace(/(?<!\s)\s+$/, "");
   if (!base) return null;
   const picked = [];
   const bareMention = (m) => m.replace(/^@/, "").toLowerCase();
@@ -387,13 +387,13 @@ function parseHandles(text) {
 
 async function getJson(deps, url) {
   const res = await deps.fetch(url, { cache: "no-store", signal: AbortSignal.timeout(TIMEOUT) });
-  if (!res.ok) throw new Error(url.replace(/^https:\/\//, "").replace(/\?.*$/, "") + " answered " + res.status);
+  if (!res.ok) throw new Error(url.replace(/^https:\/\//, "").replace(/\?(?<!\?[^\n\r\u2028\u2029?]*\?).*$/, "") + " answered " + res.status);
   return res.json();
 }
 
 async function getText(deps, url) {
   const res = await deps.fetch(url, { redirect: "follow", headers: { "User-Agent": "Mozilla/5.0 (compatible; QAlabOwnerTags/1.0; +https://carlosandmunoz.com)" }, signal: AbortSignal.timeout(TIMEOUT) });
-  if (!res.ok) throw new Error(url.replace(/^https?:\/\//, "").replace(/\?.*$/, "") + " answered " + res.status);
+  if (!res.ok) throw new Error(url.replace(/^https?:\/\//, "").replace(/\?(?<!\?[^\n\r\u2028\u2029?]*\?).*$/, "") + " answered " + res.status);
   return (await res.text()).slice(0, HTML_MAX);
 }
 
@@ -517,14 +517,15 @@ async function latestPost(deps, a) {
     const acct = await getJson(deps, "https://" + host + "/api/v1/accounts/lookup?acct=" + encodeURIComponent(user));
     const list = await getJson(deps, "https://" + host + "/api/v1/accounts/" + encodeURIComponent(acct.id) + "/statuses?exclude_replies=true&exclude_reblogs=true&limit=5");
     const st = (Array.isArray(list) ? list : []).find((s) => s.visibility === "public" || !s.visibility);
-    return st && fresh(st.created_at) ? { id: st.url, url: st.url, text: clip(String(st.content || "").replace(/<[^>]+>/g, " "), 600), createdAt: st.created_at, author: { handle: "" } } : null;
+    return st && fresh(st.created_at) ? { id: st.url, url: st.url, text: clip(String(st.content || "").replace(/<[^>]+>|(<[^>]*$)/g, (m, open) => open || " "), 600), createdAt: st.created_at, author: { handle: "" } } : null;
   }
   if (a.network === "youtube") {
     let channel = a.handle.startsWith("channel/") ? a.handle.slice(8) : "";
     if (!channel) channel = ((await getText(deps, "https://www.youtube.com/@" + encodeURIComponent(a.handle))).match(/"(?:externalId|channelId)":"(UC[\w-]{22})"/) || [])[1] || "";
     if (!channel) return null;
     const xml = await getText(deps, "https://www.youtube.com/feeds/videos.xml?channel_id=" + channel);
-    const entry = (xml.match(/<entry>[\s\S]*?<\/entry>/) || [""])[0];
+    const head = xml.match(/<entry>[\s\S]*?<\/entry>|(<entry>)[\s\S]*/);
+    const entry = head && !head[1] ? head[0] : "";
     const id = (entry.match(/<yt:videoId>([\w-]{11})<\/yt:videoId>/) || [])[1];
     const at = (entry.match(/<published>([^<]+)<\/published>/) || [])[1];
     return id && fresh(at) ? { id, url: "https://www.youtube.com/watch?v=" + id, text: (entry.match(/<title>([^<]*)<\/title>/) || [])[1] || "", createdAt: at, author: { handle: a.handle, id: channel } } : null;
@@ -787,7 +788,7 @@ async function status(db, now) {
 // --- Jarvis on its own (jarvis-actions.js) ------------------------------------------------------------------------
 
 /** A handle without its network's dressing, so @metrodebogota, metrodebogota.bsky.social and metrodebogota@mastodon.social match. */
-const baseHandle = (a) => String(a.handle || "").toLowerCase().replace(/^@/, "").replace(/^channel\//, "").replace(/\.bsky\.social$/, "").replace(/@.*$/, "");
+const baseHandle = (a) => String(a.handle || "").toLowerCase().replace(/^@/, "").replace(/^channel\//, "").replace(/\.bsky\.social$/, "").replace(/@(?<!@[^\n\r\u2028\u2029@]*@).*$/, "");
 
 /** Suggested accounts Jarvis may approve alone: their handle resolved (verified), or an approved owner uses the same handle on another network. */
 async function autoApprovable(db) {

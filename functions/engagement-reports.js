@@ -268,7 +268,7 @@ function parse(text, items) {
   rows.forEach((r) => {
     const p = r && byKey[r.id];
     if (!p) return;
-    let reply = String(r.reply || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
+    let reply = String(r.reply || "").replace(/\bhttps?:\/\/\S+|\bwww\.\S+/gi, "").replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").replace(/\s{2,}/g, " ").trim();
     let once = false;
     reply = reply.replace(/\{link\}/g, () => (once ? "" : (once = true, "{link}"))).replace(/\s{2,}/g, " ").trim();
     if (reply && !once) reply += " {link}";
@@ -288,7 +288,7 @@ function fill(reply, link, network) {
   const limit = (E.NETWORKS[network] || {}).limit || 300;
   let [before, after = ""] = reply.split("{link}");
   const room = limit - link.length - after.length;
-  if (before.length > room) before = before.slice(0, Math.max(0, room - 2)).replace(/\s+\S*$/, "") + "… ";
+  if (before.length > room) before = before.slice(0, Math.max(0, room - 2)).replace(/(?<!\s)\s+\S*$/, "") + "… ";
   return (before + link + after).replace(/\s{2,}/g, " ").trim();
 }
 

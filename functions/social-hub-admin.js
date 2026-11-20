@@ -82,7 +82,8 @@
 				.replace(/[\u0300-\u036f]/g, '')
 				.toLowerCase()
 				.replace(/[^a-z0-9]+/g, '-')
-				.replace(/^-+|-+$/g, '')
+				.replace(/^-+/, '')
+				.replace(/(?<!-)-+$/, '')
 				.slice(0, 60) || 'item'
 		);
 	}
@@ -290,7 +291,7 @@
 		[...url.searchParams.keys()]
 			.filter((key) => /^(utm_\w+|ref|ref_src|fbclid|gclid|mc_cid|mc_eid)$/i.test(key))
 			.forEach((key) => url.searchParams.delete(key));
-		url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+		url.pathname = url.pathname.replace(/(?<!\/)\/+$/, '') || '/';
 		return url.toString();
 	}
 

@@ -76,9 +76,31 @@ function attr(tag, name) {
 
 const stripTags = (html) => decode(String(html || "").replace(/<[^>]+>/g, " "));
 
+const CLOSE = { script: /<\/script\s*>/gi, style: /<\/style\s*>/gi, noscript: /<\/noscript\s*>/gi, template: /<\/template\s*>/gi, svg: /<\/svg\s*>/gi, head: /<\/head\s*>/gi };
+const PAGE_BLOCKS = /<(script|style|noscript|template|svg|head)\b/gi;
+const SPAM_BLOCKS = /<(script|style|template|noscript)\b/gi;
+
+// html.replace(/<(names in open)\b[\s\S]*?<\/\1\s*>/gi, " "); a tag never closed is searched for once, not once per opening.
+function dropBlocks(html, open) {
+  const unclosed = new Set();
+  let out = "";
+  let from = 0;
+  let m;
+  open.lastIndex = 0;
+  while ((m = open.exec(html))) {
+    const name = m[1].toLowerCase();
+    if (unclosed.has(name)) continue;
+    const close = CLOSE[name];
+    close.lastIndex = open.lastIndex;
+    if (!close.exec(html)) { unclosed.add(name); continue; }
+    out += html.slice(from, m.index) + " ";
+    from = open.lastIndex = close.lastIndex;
+  }
+  return out + html.slice(from);
+}
+
 function visibleText(html) {
-  return stripTags(String(html || "")
-    .replace(/<(script|style|noscript|template|svg|head)\b[\s\S]*?<\/\1\s*>/gi, " ")
+  return stripTags(dropBlocks(String(html || ""), PAGE_BLOCKS)
     .replace(/<!--[\s\S]*?-->/g, " "));
 }
 
@@ -194,8 +216,8 @@ function knownPages(sitemap, links) {
 
 function readPage(html, pageUrl) {
   const body = String(html || "");
-  const titleMatch = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i);
-  const metas = body.match(/<meta\b[^>]*>/gi) || [];
+  const titleMatch = body.match(/<title\b(?<=^(?:(?!<title\b)[\s\S])*<title)[^>]*>([\s\S]*?)<\/title>/i);
+  const metas = body.match(/<meta\b(?<=(?:^|>)(?:(?!<meta\b)[^>])*<meta)[^>]*>/gi) || [];
   const robots = metas.filter((tag) => /^(?:robots|googlebot)$/i.test(attr(tag, "name"))).map((tag) => attr(tag, "content").toLowerCase()).join(",");
   const links = [];
   const re = /<a\b([^<>]*)>((?:[^<]|<(?!a\b|\/a\s*>))*)<\/a\s*>/gi;
@@ -260,7 +282,7 @@ const hiddenTag = (attrs) => HIDDEN_STYLE.test(attr(attrs, "style")) || /(?:^|\s
 // Links and text with spam phrases in a page's HTML, marked hidden when CSS or the hidden attribute keeps them
 // from visitors.
 function spamLinks(html, pageUrl, skip) {
-  const body = String(html || "").replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1\s*>/gi, " ").replace(/<!--[\s\S]*?-->/g, " ");
+  const body = dropBlocks(String(html || ""), SPAM_BLOCKS).replace(/<!--[\s\S]*?-->/g, " ");
   const rows = [];
   const seen = new Set();
   const push = (row) => {
@@ -421,4 +443,4 @@ function findings(signs, add) {
   else if ((signs.linksRead || []).length) add("Security", "pass", "info", "sec-spam-links", say("sec-spam-links.pass.title"), say("sec-spam-links.pass.evidence", { n: signs.linksRead.length }), "");
 }
 
-module.exports = { look, line, findings, compare, spamTerms, spamResults, spamLinks, siteTopics, siteScript, scriptOf, knownPages, spamQuery, readPage, GOOGLEBOT, BROWSER, BUDGET_MS };
+module.exports = { look, line, findings, compare, spamTerms, spamResults, spamLinks, siteTopics, siteScript, scriptOf, knownPages, spamQuery, readPage, GOOGLEBOT, BROWSER, BUDGET_MS, dropBlocks, PAGE_BLOCKS, SPAM_BLOCKS };

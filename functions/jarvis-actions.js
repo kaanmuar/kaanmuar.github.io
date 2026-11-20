@@ -186,7 +186,7 @@ function aiPrompt(alerts, catalog) {
 function parsePicks(raw, alerts) {
   const keys = new Set(alerts.map((a) => a.key));
   let list;
-  try { list = JSON.parse(String(raw || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim()); } catch (error) { throw new Error("The AI's answer was not JSON."); }
+  try { list = JSON.parse(String(raw || "").replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, "").trim()); } catch (error) { throw new Error("The AI's answer was not JSON."); }
   return (Array.isArray(list) ? list : []).filter((p) => p && keys.has(p.key)).slice(0, 6).map((p) => ({
     key: text(p.key, 140), action: text(p.action, 40), args: p.args && typeof p.args === "object" ? p.args : {},
     confidence: Math.max(0, Math.min(1, Number(p.confidence) || 0)), title: text(p.title, 120), why: text(p.why, 240)

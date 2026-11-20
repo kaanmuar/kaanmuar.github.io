@@ -67,7 +67,31 @@ function classify(name, attrs, body) {
 
 // The address without its query string, which can carry tokens, and cut short.
 function safeOpenTag(tag) {
-  return tag.replace(/((?:href|src)\s*=\s*["']?[^"'\s>?]*)\?[^"'\s>]*/gi, "$1").replace(/\s+/g, " ").slice(0, 140);
+  return dropQueries(tag).replace(/\s+/g, " ").slice(0, 140);
+}
+
+// tag.replace(/((?:href|src)\s*=\s*["']?[^"'\s>?]*)\?[^"'\s>]*/gi, "$1") without rescanning a value for each "src=" inside it.
+function dropQueries(tag) {
+  const attr = /(?:href|src)\s*=\s*["']?/gi;
+  const path = /[^"'\s>?]*/y;
+  const query = /[^"'\s>]*/y;
+  let out = "";
+  let kept = 0;
+  for (let m; (m = attr.exec(tag)); ) {
+    path.lastIndex = m.index + m[0].length;
+    const mark = path.lastIndex + path.exec(tag)[0].length;
+    if (tag[mark] === "?") {
+      query.lastIndex = mark + 1;
+      const end = query.lastIndex + query.exec(tag)[0].length;
+      out += tag.slice(kept, mark);
+      kept = end;
+      attr.lastIndex = end;
+    } else {
+      // An attribute name starting before mark - 5 has the same value, which has no "?"; nearer ones can reach past mark.
+      attr.lastIndex = Math.max(m.index + 1, mark - 5);
+    }
+  }
+  return out + tag.slice(kept);
 }
 
 // The index of the ">" that closes the tag opened at `from`, skipping any ">" inside a quoted value; -1 when it never closes.

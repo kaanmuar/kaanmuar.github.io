@@ -46,7 +46,7 @@ const DAY = 24 * 3600000;
 
 const emailOf = (value) => {
   const e = String(value || "").trim().toLowerCase();
-  return /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(e) && e.length <= 200 ? e : "";
+  return /^[^\s@/]+@[^\s@/][^\s@/.]*\.[^\s@/]+$/.test(e) && e.length <= 200 ? e : "";
 };
 const domainOf = (email) => email.slice(email.indexOf("@") + 1);
 const msOf = (value) => (value && typeof value.toDate === "function" ? value.toDate().getTime() : Date.parse(value || "") || 0);

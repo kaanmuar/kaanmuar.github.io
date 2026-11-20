@@ -36,13 +36,13 @@ function sqlProof(text) {
   if (looksHtml(text)) return "";
   const dump = text.match(/^-- (MySQL dump|MariaDB dump|PostgreSQL database dump|phpMyAdmin SQL Dump)/m);
   if (dump) return "-- " + dump[1];
-  const statement = text.match(/^\s*(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|DROP TABLE IF EXISTS)\s+([`"\w.]{1,64})/im);
+  const statement = text.match(/^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*(CREATE TABLE(?: IF NOT EXISTS)?|INSERT INTO|DROP TABLE IF EXISTS)\s+([`"\w.]{1,64})/im);
   return statement ? statement[1].toUpperCase() + " " + statement[2] + " …" : "";
 }
 
 const PROBES = [
   { path: "/.git/HEAD", kind: "git", proof: (r) => looksHtml(r.text) ? "" : clip((r.text.match(/^ref: refs\/heads\/[^\s]{1,60}\s*$|^[0-9a-f]{40}\s*$/) || [])[0], 80) },
-  { path: "/.git/config", kind: "git", proof: (r) => !looksHtml(r.text) && /^\s*\[core\]\s*$/m.test(r.text) && /repositoryformatversion|filemode\s*=|bare\s*=/i.test(r.text) ? "[core]" : "" },
+  { path: "/.git/config", kind: "git", proof: (r) => !looksHtml(r.text) && /^(?:(?<![\s\S])|(?<=\S[^\S\n\r\u2028\u2029]*[\n\r\u2028\u2029]))\s*\[core\]\s*$/m.test(r.text) && /repositoryformatversion|filemode\s*=|bare\s*=/i.test(r.text) ? "[core]" : "" },
   { path: "/.env", kind: "env", proof: (r) => envProof(r.text) },
   { path: "/.env.production", kind: "env", proof: (r) => envProof(r.text) },
   { path: "/.svn/entries", kind: "svn", proof: (r) => !looksHtml(r.text) && (/^\d{1,2}\s*$/.test(r.text) || /^\d{1,2}\n\ndir\n/.test(r.text) || /<wc-entries/.test(r.text)) ? say("sec-exposed.proof.svn") : "" },
@@ -57,7 +57,7 @@ const PROBES = [
   { path: "/.DS_Store", kind: "dsstore", proof: (r) => r.bytes.length >= 8 && r.bytes.subarray(0, 8).equals(Buffer.from([0, 0, 0, 1, 0x42, 0x75, 0x64, 0x31])) ? say("sec-exposed.proof.dsstore") : "" },
   { path: "/config.json", kind: "json", proof: (r) => {
     if (!/^\s*[{[]/.test(r.text)) return "";
-    const key = r.text.match(/"((?:db_?|database_?|smtp_?|mail_?|admin_?)?pass(?:word|wd)?|[\w-]*secret[\w-]*|private_?key|aws_secret_access_key|connection_?string)"\s*:\s*"[^"]{3,}"/i);
+    const key = r.text.match(/"((?:db_?|database_?|smtp_?|mail_?|admin_?)?pass(?:word|wd)?|(?=[\w-]*secret)[\w-]*|private_?key|aws_secret_access_key|connection_?string)"\s*:\s*"[^"]{3,}"/i);
     return key ? "\"" + key[1] + "\": \"" + HIDDEN + "\"" : "";
   } },
   { path: "/phpinfo.php", kind: "phpinfo", proof: (r) => clip((r.text.match(/PHP Version\s*[\d.]+/) || [])[0] || (/<title>\s*phpinfo\(\)\s*<\/title>/i.test(r.text) ? "phpinfo()" : ""), 40) },

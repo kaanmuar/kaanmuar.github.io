@@ -33,7 +33,7 @@ function pageKey(url) {
     const u = new URL(url);
     const host = u.hostname.replace(/^www\./, "");
     if (host !== DOMAIN) return "";
-    return u.pathname.replace(/\/index\.html$|\.html$/, "").replace(/\/+$/, "") || "/";
+    return u.pathname.replace(/\/index\.html$|\.html$/, "").replace(/(?<!\/)\/+$/, "") || "/";
   } catch (error) {
     return "";
   }

@@ -77,7 +77,7 @@ async function call(fetchImpl, url, opts) {
     const err = data.error;
     const why = (err && typeof err === "object" ? err.message || (err.errors && err.errors[0] && err.errors[0].reason) : err) || data.message || data.error_description || data.description || "";
     // A Telegram bot's token is part of its URL path.
-    const where = url.replace(/[?#].*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
+    const where = url.replace(/[?#](?<![?#][^\n\r\u2028\u2029?#]*[?#]).*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
     // A post with comments turned off answers 403 too, but only that post is refused.
     const postOnly = res.status === 403 && /commentsDisabled|disabled comments/i.test(JSON.stringify(err || "") + " " + why);
     throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), !postOnly && (res.status === 401 || res.status === 403 || res.status === 429));
@@ -89,7 +89,7 @@ async function call(fetchImpl, url, opts) {
 function linkFacets(text) {
   const out = [];
   for (const m of String(text).matchAll(/https?:\/\/[^\s]+/g)) {
-    const uri = m[0].replace(/[.,;:!?)\]"'»”]+$/, "");
+    const uri = m[0].replace(/(?<![.,;:!?)\]"'»”])[.,;:!?)\]"'»”]+$/, "");
     const start = Buffer.byteLength(text.slice(0, m.index));
     out.push({ index: { byteStart: start, byteEnd: start + Buffer.byteLength(uri) }, features: [{ $type: "app.bsky.richtext.facet#link", uri }] });
   }
@@ -113,7 +113,7 @@ function mentionFacets(text, dids) {
 // it; an upload that fails leaves the reply as text and says why in cardError.
 
 async function blueskyClient(cred, f, now) {
-  const service = String(cred.service || "https://bsky.social").replace(/\/+$/, "");
+  const service = String(cred.service || "https://bsky.social").replace(/(?<!\/)\/+$/, "");
   const s = await call(f, service + "/xrpc/com.atproto.server.createSession", { json: { identifier: cred.handle, password: cred.password } });
   const auth = { Authorization: "Bearer " + s.accessJwt };
   const at = new Date(now).toISOString();
@@ -203,7 +203,7 @@ async function blueskyClient(cred, f, now) {
 }
 
 async function mastodonClient(cred, f) {
-  const base = String(cred.base).replace(/\/+$/, "");
+  const base = String(cred.base).replace(/(?<!\/)\/+$/, "");
   const auth = { Authorization: "Bearer " + cred.token };
   // The scout reads posts from every server; ours finds its own copy (and the author's account id) by the post's URI.
   const found = new Map();
@@ -548,7 +548,7 @@ async function connectUrl(deps, network, redirect, keys) {
     return { url: url.toString() };
   }
   if (network === "mastodon") {
-    const base = String((deps.env || {}).MASTODON_URL || "https://mastodon.social").replace(/\/+$/, "");
+    const base = String((deps.env || {}).MASTODON_URL || "https://mastodon.social").replace(/(?<!\/)\/+$/, "");
     const app = await mastodonApp(deps, base, redirect);
     const url = new URL(base + "/oauth/authorize");
     Object.entries({ client_id: app.clientId, redirect_uri: redirect, response_type: "code", scope: MASTODON_SCOPES, state, force_login: "false" }).forEach(([k, v]) => url.searchParams.set(k, v));

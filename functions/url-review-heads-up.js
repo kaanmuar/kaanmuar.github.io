@@ -212,9 +212,26 @@ const COPY = {
 
 const LANGS = Object.keys(COPY);
 
+// Same result as text.replace(/<[^>]{0,120}>/g, ' ') (#3965): each "<" closes at the first ">" after it, and only when
+// no more than 120 characters lie between; the scan jumps straight to the first "<" that is close enough.
+function blankTags(text) {
+	let out = '';
+	let kept = 0;
+	for (let open = text.indexOf('<'); open >= 0; ) {
+		const close = text.indexOf('>', open + 1);
+		if (close < 0) break;
+		const start = close - open > 121 ? text.indexOf('<', close - 121) : open;
+		if (start >= 0 && start < close) {
+			out += text.slice(kept, start) + ' ';
+			kept = close + 1;
+		}
+		open = text.indexOf('<', close + 1);
+	}
+	return out + text.slice(kept);
+}
+
 function scrub(value) {
-	let text = String(value == null ? '' : value)
-		.replace(/<[^>]{0,120}>/g, ' ')
+	let text = blankTags(String(value == null ? '' : value))
 		.replace(/https?:\/\/\S+/gi, '[link removed]')
 		.replace(/\s+/g, ' ')
 		.trim();
@@ -338,6 +355,7 @@ function draft(threat, ctx) {
 }
 
 module.exports = {
+	blankTags,
 	SITE_KINDS,
 	LEVELS,
 	ROLES,

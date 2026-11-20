@@ -125,7 +125,7 @@ function htmlOf(page, report) {
 
 // Playwright allows a trailing " i" flag on attribute selectors; css-select does not.
 function cssSafe(selector) {
-  return String(selector || "").replace(/(\[[^\]]*?)\s+i\]/gi, "$1]");
+  return String(selector || "").replace(/(\[[^\][]*?)(?<!\s)\s+i\]/gi, "$1]");
 }
 
 function countSelector(html, selector) {

@@ -284,7 +284,7 @@ function relevance(text) {
   const byTopic = {};
   const words = [];
   Object.entries(TOPIC_RES).forEach(([topic, res]) => {
-    res.forEach(([w, re]) => { if (re.test(t)) { byTopic[topic] = (byTopic[topic] || 0) + 1; words.push(w.replace(/\\p\{L\}\*/g, "").replace(/\\\./g, ".").replace(/\[(.)[^\]]*\]/g, "$1").replace(/ ?\?|\\/g, (m) => (m === " ?" ? " " : ""))); } });
+    res.forEach(([w, re]) => { if (re.test(t)) { byTopic[topic] = (byTopic[topic] || 0) + 1; words.push(w.replace(/\\p\{L\}\*/g, "").replace(/\\\./g, ".").replace(/\[(.)[^\]]*\]|(\[.[^\]]*$)/g, "$1$2").replace(/ ?\?|\\/g, (m) => (m === " ?" ? " " : ""))); } });
   });
   const ranked = Object.entries(byTopic).sort((a, b) => b[1] - a[1]);
   return { hits: Math.min(6, words.length), topic: ranked.length ? ranked[0][0] : "", topics: ranked.map(([k]) => k), words: words.slice(0, 12) };
@@ -395,11 +395,11 @@ function parseAi(text, items) {
     if (!p) return;
     const ask = r.asksForTool === true;
     const ours = p.invite === "link";
-    const tidy = (t) => (ask ? t : t.replace(URLS, (u) => (ours && /^(https:\/\/)?carlosandmunoz\.com\b/i.test(u) ? u : "")).replace(/\s{2,}/g, " ")).trim().replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/\s*—\s*/g, ", ").trim();
+    const tidy = (t) => (ask ? t : t.replace(URLS, (u) => (ours && /^(https:\/\/)?carlosandmunoz\.com\b/i.test(u) ? u : "")).replace(/\s{2,}/g, " ")).trim().replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").trim();
     let reply = tidy(String(r.reply || ""));
     const lang = lang2(r.lang) || lang2(p.lang);
     const limit = (NETWORKS[p.network] || {}).limit || 300;
-    if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/\s+\S*$/, "") + "…";
+    if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/(?<!\s)\s+\S*$/, "") + "…";
     out[r.id] = {
       about: clip(r.about, 200), lang, sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
       political: r.political === true, argument: r.argument === true, drama: r.drama === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
