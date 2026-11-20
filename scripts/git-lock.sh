@@ -8,7 +8,10 @@
 set -uo pipefail
 lock=${1:?usage: scripts/git-lock.sh <lock-path> <command> [args...]}
 shift
-[ $# -gt 0 ] || { echo "git-lock: no command" >&2; exit 64; }
+[ $# -gt 0 ] || {
+	echo "git-lock: no command" >&2
+	exit 64
+}
 stale=${GIT_LOCK_STALE:-120}
 wait_for=${GIT_LOCK_WAIT:-60}
 
@@ -19,7 +22,16 @@ fi
 dir="$lock.d"
 age() { # seconds since the lock directory last changed
 	local m
-	m=$(stat -f %m "$dir" 2>/dev/null || stat -c %Y "$dir" 2>/dev/null) || { echo 0; return; }
+	# GNU stat first: on Linux `stat -f` prints filesystem info and exits 0, so it must not run first.
+	m=$(stat -c %Y "$dir" 2>/dev/null || stat -f %m "$dir" 2>/dev/null) || {
+		echo 0
+		return
+	}
+	case $m in '' | *[!0-9]*)
+		echo 0
+		return
+		;;
+	esac
 	echo $(($(date +%s) - m))
 }
 held=
