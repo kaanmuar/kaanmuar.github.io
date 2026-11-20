@@ -1,0 +1,254 @@
+/* Hallmark · genre: modern-minimal · posture: restrained · hero: the product named in words, no invented proof · nav: text links · footer: one row · surface: site paper */
+/* Critique: P4 H3 E4 S3 R4 V3 · weakest: S, the page has no app screenshot; the fix is a real capture of the menu bar battery and the Android quota bar */
+/* The CursorQuota page (#3795, pilot #3776). Tokens follow the site's light and dark palette (css/site-look.css, accessibility.html). */
+:root {
+	--paper: #eef2f4;
+	--surface: #ffffff;
+	--ink: #12181f;
+	--muted: #4a5560;
+	--line: #d5dce3;
+	--accent: #0d6e76;
+	--accent-hover: #0a565c;
+	--accent-ink: #ffffff;
+	--focus: #0d6e76;
+	--body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+	--display: "Instrument Serif", "Source Serif 4", Georgia, serif;
+	--mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+	--measure: 62ch;
+	--gutter: clamp(1.25rem, 4vw, 3rem);
+	--max: 68rem;
+	color-scheme: light;
+}
+:root[data-theme="dark"] {
+	--paper: #10161d;
+	--surface: #1a2430;
+	--ink: #e8eef2;
+	--muted: #9aa5b1;
+	--line: #2a3440;
+	--accent: #4db3bb;
+	--accent-hover: #7cc9cf;
+	--accent-ink: #10161d;
+	--focus: #7cc9cf;
+	color-scheme: dark;
+}
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+html,
+body {
+	overflow-x: clip;
+}
+body {
+	margin: 0;
+	background: var(--paper);
+	color: var(--ink);
+	font: 1rem/1.6 var(--body);
+}
+.wrap {
+	max-width: var(--max);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+a {
+	color: var(--accent);
+	text-underline-offset: 0.2em;
+}
+a:hover {
+	color: var(--accent-hover);
+}
+a:focus-visible,
+button:focus-visible {
+	outline: 3px solid var(--focus);
+	outline-offset: 3px;
+}
+.skip-link {
+	position: fixed;
+	top: 0.5rem;
+	left: 0.5rem;
+	z-index: 40;
+	padding: 0.6rem 1rem;
+	border-radius: 0.5rem;
+	background: var(--ink);
+	color: var(--paper);
+	font-weight: 600;
+	text-decoration: none;
+	transform: translateY(calc(-100% - 1rem));
+}
+.skip-link:focus {
+	transform: none;
+	color: var(--paper);
+}
+main[tabindex="-1"]:focus {
+	outline: none;
+}
+
+header,
+footer {
+	padding-block: 1.25rem;
+}
+header ul,
+footer ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.5rem;
+	align-items: baseline;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+header .brand {
+	margin-right: auto;
+	font: 400 1.5rem/1.2 var(--display);
+	color: var(--ink);
+	text-decoration: none;
+}
+header .brand:hover {
+	color: var(--accent);
+}
+
+.hero {
+	padding-block: clamp(3rem, 12vh, 8rem) clamp(3rem, 9vh, 6rem);
+}
+.hero h1 {
+	font: 400 clamp(2.75rem, 7vw, 5.25rem)/1.02 var(--display);
+	letter-spacing: -0.02em;
+	margin: 0 0 1.5rem;
+	max-width: 14ch;
+	min-width: 0;
+	overflow-wrap: break-word;
+	text-wrap: balance;
+}
+.hero p {
+	font-size: 1.25rem;
+	color: var(--muted);
+	max-width: 36ch;
+	margin: 0 0 2rem;
+}
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.5rem;
+	align-items: center;
+}
+.button {
+	display: inline-block;
+	padding: 0.85rem 1.4rem;
+	border-radius: 0.5rem;
+	background: var(--accent);
+	color: var(--accent-ink);
+	font-weight: 600;
+	text-decoration: none;
+	transition: background-color 150ms ease;
+}
+.button:hover {
+	background: var(--accent-hover);
+	color: var(--accent-ink);
+}
+.button:active {
+	background: var(--accent-hover);
+	transform: translateY(1px);
+}
+
+section {
+	padding-block: clamp(2.5rem, 7vh, 4.5rem);
+	border-top: 1px solid var(--line);
+}
+.split {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	gap: 1.5rem clamp(2rem, 6vw, 5rem);
+}
+.split > * {
+	min-width: 0;
+}
+section h2 {
+	font: 400 clamp(1.85rem, 3.5vw, 2.75rem)/1.1 var(--display);
+	letter-spacing: -0.01em;
+	margin: 0;
+	min-width: 0;
+	overflow-wrap: break-word;
+	text-wrap: balance;
+}
+section p {
+	max-width: var(--measure);
+	margin: 0 0 1rem;
+	font-size: 1.0625rem;
+}
+section p:last-child {
+	margin-bottom: 0;
+}
+.lead {
+	font-size: 1.25rem;
+}
+.apps {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+	margin: 0;
+	max-width: var(--measure);
+}
+.apps > div {
+	min-width: 0;
+	padding-block: 1rem;
+	border-top: 1px solid var(--line);
+}
+.apps > div:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+.apps dt {
+	font: 400 1.5rem/1.2 var(--display);
+	margin: 0 0 0.5rem;
+}
+.apps dd {
+	margin: 0;
+	color: var(--muted);
+}
+code {
+	font: 0.9em/1.5 var(--mono);
+	padding: 0.1em 0.35em;
+	border-radius: 0.25rem;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	overflow-wrap: anywhere;
+}
+.facts {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-width: var(--measure);
+}
+.facts li {
+	padding-block: 0.75rem;
+	border-top: 1px solid var(--line);
+}
+.facts li:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+footer {
+	border-top: 1px solid var(--line);
+	font-size: 0.9375rem;
+	color: var(--muted);
+}
+footer p {
+	max-width: var(--measure);
+	margin: 0.75rem 0 0;
+}
+
+@media (max-width: 52rem) {
+	.split {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.button {
+		transition: none;
+	}
+	.button:active {
+		transform: none;
+	}
+}

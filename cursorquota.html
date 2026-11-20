@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; form-action 'self';">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>CursorQuota, an unofficial quota battery for Cursor</title>
+    <meta name="description" content="CursorQuota is an unofficial companion app for Mac, Windows and Android that shows how much of your Cursor usage is left. It says plainly what it reads from your computer.">
+    <meta name="author" content="Carlos A. Muñoz Ardila">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="theme-color" content="#eef2f4">
+    <link rel="canonical" href="https://carlosandmunoz.com/cursorquota.html">
+    <link rel="sitemap" type="application/xml" href="https://carlosandmunoz.com/sitemap.xml">
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Carlos A. Muñoz — Interactive CV">
+    <meta property="og:url" content="https://carlosandmunoz.com/cursorquota.html">
+    <meta property="og:title" content="CursorQuota, an unofficial quota battery for Cursor">
+    <meta property="og:description" content="An unofficial battery for Mac, Windows and Android that shows your Cursor usage left, with a plain account of what it reads.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="CursorQuota, an unofficial quota battery for Cursor">
+    <meta name="twitter:description" content="An unofficial battery for Mac, Windows and Android that shows your Cursor usage left, with a plain account of what it reads.">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "@id": "https://carlosandmunoz.com/cursorquota.html#webpage",
+                "name": "CursorQuota, an unofficial quota battery for Cursor",
+                "url": "https://carlosandmunoz.com/cursorquota.html",
+                "inLanguage": "en",
+                "isPartOf": { "@type": "WebSite", "@id": "https://carlosandmunoz.com/#website", "name": "Carlos A. Muñoz — Interactive CV", "url": "https://carlosandmunoz.com/" },
+                "author": { "@type": "Person", "@id": "https://carlosandmunoz.com/#person", "name": "Carlos A. Muñoz Ardila", "url": "https://carlosandmunoz.com/" },
+                "datePublished": "2026-11-20",
+                "dateModified": "2026-11-20",
+                "description": "An unofficial battery for Mac, Windows and Android that shows your Cursor usage left, with a plain account of what it reads."
+            }
+        ]
+    }
+    </script>
+    <script src="js/site-theme.js"></script>
+    <script src="js/cursorquota-theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="css/cursorquota.css?v=3795a">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<header>
+    <div class="wrap">
+        <nav aria-label="CursorQuota">
+            <ul>
+                <li class="brand-item"><a class="brand" href="cursorquota.html">CursorQuota</a></li>
+                <li><a href="#reads">What it reads</a></li>
+                <li><a href="#install">Install</a></li>
+                <li><a href="#support">Support</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+<main id="main" tabindex="-1">
+    <div class="wrap hero">
+        <h1>Your Cursor quota, always in view.</h1>
+        <p>Unofficial battery for Mac, Windows and Android showing your Cursor usage left.</p>
+        <div class="actions">
+            <a class="button" href="https://github.com/kaanmuar/cursor-quota-releases/releases/latest" rel="noopener">Download</a>
+            <a href="#reads">What it reads</a>
+        </div>
+    </div>
+    <div class="wrap">
+        <section id="reads" aria-labelledby="reads-title">
+            <div class="split">
+                <h2 id="reads-title">What it reads</h2>
+                <div>
+                    <p class="lead">On the Mac, the app reads Cursor’s own sign-in from Cursor’s local storage: the state database in Cursor’s Application Support folder.</p>
+                    <p>It decrypts that with the “Cursor Safe Storage” item in your macOS Keychain, so macOS asks for Keychain access. It then sends that session to cursor.com to read your quota and usage.</p>
+                    <p>The pairing code carries your computer’s Cursor session to your phone.</p>
+                </div>
+            </div>
+        </section>
+        <section id="unofficial" aria-labelledby="unofficial-title">
+            <div class="split">
+                <h2 id="unofficial-title">Who makes it</h2>
+                <div>
+                    <p class="lead">These apps are unofficial. They are not made by or affiliated with Cursor (Anysphere).</p>
+                    <p>Cursor’s terms apply to your account. The source is private, and the apps have not had an independent security audit.</p>
+                </div>
+            </div>
+        </section>
+        <section id="apps" aria-labelledby="apps-title">
+            <div class="split">
+                <h2 id="apps-title">One battery, three places</h2>
+                <dl class="apps">
+                    <div>
+                        <dt>Mac</dt>
+                        <dd>A battery in the menu bar that opens at login. macOS 13 or later, Apple silicon or Intel.</dd>
+                    </div>
+                    <div>
+                        <dt>Windows</dt>
+                        <dd>A battery in the notification area. Windows 10 or 11, 64-bit, with Tailscale installed.</dd>
+                    </div>
+                    <div>
+                        <dt>Android</dt>
+                        <dd>Named “Cursor”. A quota bar on top, a home screen widget, and a background refresh you can allow. Android 8.0 or later.</dd>
+                    </div>
+                </dl>
+            </div>
+        </section>
+        <section id="phone" aria-labelledby="phone-title">
+            <div class="split">
+                <h2 id="phone-title">On your phone</h2>
+                <div>
+                    <p class="lead">The Android app has two tabs. Computer shows the paired computer’s Cursor chats and a live screen view. Cloud opens cursor.com/agents.</p>
+                    <p>On the Mac you can also get a notification after every agent turn, through a Cursor stop hook that runs <code>open -g cursorquota://turn</code>.</p>
+                    <p>Allow Phone Control is optional. It asks macOS for Screen Recording and Accessibility, and while it is on, the Mac does not idle-sleep.</p>
+                </div>
+            </div>
+        </section>
+        <section id="pairing" aria-labelledby="pairing-title">
+            <div class="split">
+                <h2 id="pairing-title">Pairing</h2>
+                <div>
+                    <p class="lead">Pair Phone shows a QR code on the computer, and the phone scans it.</p>
+                    <p>The pairing grants access to your Cursor account and lasts until the token expires, which the app shows. Pair each phone with its own computer.</p>
+                    <p>The Computer tab works from any network through a Tailscale Funnel address, or directly on the same Wi-Fi. The phone needs no VPN app.</p>
+                </div>
+            </div>
+        </section>
+        <section id="install" aria-labelledby="install-title">
+            <div class="split">
+                <h2 id="install-title">Install</h2>
+                <div>
+                    <p class="lead">Get <code>CursorQuota-mac.zip</code>, <code>CursorQuota-windows.exe</code> or <code>CursorQuota-android.apk</code> from the <a href="https://github.com/kaanmuar/cursor-quota-releases/releases/latest" rel="noopener">public releases page</a>.</p>
+                    <ul class="facts">
+                        <li>The Mac build is not notarized. macOS says it cannot verify the developer: choose “Open Anyway” in System Settings, under Privacy &amp; Security.</li>
+                        <li>Windows SmartScreen may show “More info”, then “Run anyway”.</li>
+                        <li>Android asks you to allow installing from the browser or the Files app.</li>
+                        <li>The apps check for updates every six hours or on demand, and update themselves. The update metadata is signed: <code>latest.json</code> and <code>latest.json.sig</code>.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+<footer>
+    <div class="wrap">
+        <ul>
+            <li id="support">Support: <a href="mailto:qa@carlosandmunoz.com">qa@carlosandmunoz.com</a></li>
+            <li><a href="index.html">carlosandmunoz.com</a></li>
+        </ul>
+        <p>“Cursor” is the name of the product CursorQuota reads. This page is not from Cursor.</p>
+    </div>
+</footer>
+</body>
+</html>
