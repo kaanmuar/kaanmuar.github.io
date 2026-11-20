@@ -1,13 +1,16 @@
-/* Live review arena: a small 2D game engine over the Lab / Jarvis reference art.
-   Every item was cut out of the reference once (scripts/review-arena-build.py); here each one is an
-   entity with its own state machine (idle / wip / done / fail / risk / skip) and motion set
-   (js/qa-review-arena-motion.js). Entities are driven only by real review log lines. */
+/* Live review arena. Two skins, both driven only by the real review log lines:
+   - lab: a small 2D game engine over reference art. Every item was cut out of the reference once
+     (scripts/review-arena-build.py) and is an entity with its own state machine
+     (idle / wip / done / fail / risk / skip) and motion set (js/qa-review-arena-motion.js).
+   - console: the review monitor (js/qa-review-console.js), drawn natively in HTML and SVG so text and
+     characters stay sharp at any size. This file only feeds it state; it loads on demand. */
 (function () {
 	'use strict';
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
 	const VER = '?v=20261118a';
+	const CONSOLE_VER = '?v=20261120a';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,7 +37,7 @@
 		{ id: 'sign', kind: 'sign' },
 		{ id: 'save', kind: 'send' },
 	];
-	const JARVIS = [
+	const CONSOLE = [
 		{ id: 'fields', kind: 'form' },
 		{ id: 'https', aka: ['open'], kind: 'lock' },
 		{ id: 'dns', kind: 'hammer' },
@@ -54,7 +57,6 @@
 	];
 	const BACKGROUND = { https: 1, dns: 1, robots: 1, webrisk: 1, lookalike: 1, wordpress: 1, mail: 1, lighthouse: 1 };
 	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow' };
-	const LANE_NAME = ['REVIEW', 'BACKGROUND', 'WATCHDOG'];
 	const COLOR = { idle: '#3a4a55', wip: '#5ec8d4', done: '#5dff9a', fail: '#ff5a4a', skip: '#8aa0aa', risk: '#f0c85a' };
 	const PRIORITY = ['wip', 'fail', 'risk'];
 
@@ -100,18 +102,22 @@
 		lastDone: -1,
 		hudPct: 0,
 		celebrate: 0,
+		host: '',
+		seq: 0,
+		cons: null,
+		buildId: 0,
 	};
 
 	function pickSkin() {
 		try {
 			let skin = sessionStorage.getItem(SKIN_KEY);
-			if (skin !== 'lab' && skin !== 'jarvis') {
-				skin = Math.random() < 0.5 ? 'lab' : 'jarvis';
+			if (skin !== 'lab' && skin !== 'console') {
+				skin = Math.random() < 0.5 ? 'lab' : 'console';
 				sessionStorage.setItem(SKIN_KEY, skin);
 			}
 			return skin;
 		} catch (e) {
-			return Math.random() < 0.5 ? 'lab' : 'jarvis';
+			return Math.random() < 0.5 ? 'lab' : 'console';
 		}
 	}
 
@@ -128,7 +134,7 @@
 
 	// ---------------------------------------------------------------- state from facts
 	function boardMap() {
-		return state.skin === 'jarvis' ? JARVIS : LAB;
+		return state.skin === 'console' ? CONSOLE : LAB;
 	}
 
 	function mark(id, status) {
@@ -171,7 +177,7 @@
 		if (id === state.anomaly) return;
 		state.anomaly = id;
 		state.anomalyAt = now();
-		if (id && state.ents.length) {
+		if (id && state.ents.length && state.skin !== 'console') {
 			const from = stationOf(state.activeId);
 			if (from >= 0) launchToken(entCenter(state.ents[from]), anomalyTarget(id), BAYC(id));
 		}
@@ -214,13 +220,17 @@
 		const prog = window.ReviewProgress;
 		const shown = prog && prog.translate ? prog.translate(text) : text;
 		state.log.push({
+			n: ++state.seq,
+			stage: stage || '',
+			anomaly: (fact && fact.anomaly) || '',
+			raw: String(text || ''),
 			time: pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()),
 			tag: def ? def.label.toUpperCase() : fact && fact.anomaly ? fact.anomaly.toUpperCase() : 'LOG',
 			text: String(shown || '').replace(/\s+/g, ' '),
 			status: (fact && fact.status) || (fact && fact.anomaly ? 'risk' : 'wip'),
 			at: now(),
 		});
-		if (state.log.length > 14) state.log.shift();
+		if (state.log.length > 300) state.log.shift();
 	}
 
 	function line(text) {
@@ -231,6 +241,7 @@
 		if (fact) applyFact(fact);
 		else if (!state.anomaly) setPose('work');
 		syncEntities();
+		pushConsole();
 	}
 
 	function quiet(on) {
@@ -244,9 +255,10 @@
 			setPose('work');
 		}
 		syncEntities();
+		pushConsole();
 	}
 
-	function start() {
+	function start(options) {
 		state.skin = pickSkin();
 		state.run = 'running';
 		state.pose = 'work';
@@ -254,6 +266,8 @@
 		state.activeId = '';
 		state.stages = {};
 		state.log = [];
+		state.seq = 0;
+		state.host = String((options && options.host) || '').replace(/^https?:\/\//, '').split('/')[0];
 		state.lastDone = -1;
 		state.parts = [];
 		state.tokens = [];
@@ -282,14 +296,17 @@
 			setAnomaly('');
 			setPose('cheer');
 			state.celebrate = now();
-			state.ents.forEach(function (e, i) {
-				schedule(0.06 * i, function () {
-					burst(entCenter(e), '#5dff9a', 10);
-					ring(entCenter(e), '#5dff9a', 40);
+			if (state.skin !== 'console') {
+				state.ents.forEach(function (e, i) {
+					schedule(0.06 * i, function () {
+						burst(entCenter(e), '#5dff9a', 10);
+						ring(entCenter(e), '#5dff9a', 40);
+					});
 				});
-			});
+			}
 		}
 		syncEntities();
+		pushConsole();
 		wake();
 	}
 
@@ -299,6 +316,7 @@
 		setAnomaly('fail');
 		setPose('fail');
 		syncEntities();
+		pushConsole();
 		wake();
 	}
 
@@ -316,6 +334,8 @@
 		state.canvas = null;
 		state.ctx = null;
 		state.ents = [];
+		state.buildId++;
+		dropConsole();
 	}
 
 	// ---------------------------------------------------------------- assets
@@ -371,11 +391,94 @@
 		return wrap;
 	}
 
+	// ---------------------------------------------------------------- console skin
+	function consoleModel() {
+		return {
+			run: state.run,
+			pose: state.pose,
+			anomaly: state.anomaly,
+			anomalyAt: state.anomalyAt,
+			activeId: state.activeId,
+			stages: state.stages,
+			log: state.log,
+			host: state.host,
+			ents: state.ents,
+			now: now(),
+		};
+	}
+
+	function loadConsole() {
+		if (window.ReviewConsole) return Promise.resolve(window.ReviewConsole);
+		if (state.consoleLoad) return state.consoleLoad;
+		state.consoleLoad = new Promise(function (resolve) {
+			const css = document.createElement('link');
+			css.rel = 'preload';
+			css.as = 'style';
+			css.href = 'css/qa-review-console.css' + CONSOLE_VER;
+			document.head.appendChild(css);
+			const js = document.createElement('script');
+			js.src = 'js/qa-review-console.js' + CONSOLE_VER;
+			js.onload = function () {
+				resolve(window.ReviewConsole || null);
+			};
+			js.onerror = function () {
+				state.consoleLoad = null;
+				resolve(null);
+			};
+			document.head.appendChild(js);
+		});
+		return state.consoleLoad;
+	}
+
+	function pushConsole() {
+		if (state.cons) state.cons.sync();
+	}
+
+	function dropConsole() {
+		if (state.cons) state.cons.destroy();
+		state.cons = null;
+		const panel = document.getElementById('run-panel');
+		if (panel) panel.classList.remove('ra-console-on');
+	}
+
+	function buildConsole(wrap) {
+		const id = state.buildId;
+		dropConsole();
+		wrap.setAttribute('aria-hidden', 'true');
+		wrap.removeAttribute('role');
+		wrap.removeAttribute('aria-label');
+		wrap.textContent = '';
+		state.canvas = null;
+		state.ctx = null;
+		state.ents = buildEntities();
+		const panel = document.getElementById('run-panel');
+		if (panel) panel.classList.add('ra-console-on');
+		loadConsole().then(function (C) {
+			if (!C || id !== state.buildId || state.skin !== 'console' || state.run === 'idle') return;
+			state.cons = C.mount(wrap, { model: consoleModel, hud: readHud, stages: facts().STAGES, css: 'css/qa-review-console.css' + CONSOLE_VER });
+			state.cons.sync();
+		});
+		if (!state.io && typeof IntersectionObserver === 'function') {
+			state.io = new IntersectionObserver(function (list) {
+				state.visible = list.some(function (x) {
+					return x.isIntersecting;
+				});
+			});
+			state.io.observe(wrap);
+		}
+	}
+
 	function build(wrap) {
 		const skin = state.skin;
+		state.buildId++;
 		state.atlas = (window.ReviewArenaAtlas || {})[skin];
 		wrap.className = 'ra ra--' + skin;
 		wrap.setAttribute('data-skin', skin);
+		if (skin === 'console') {
+			buildConsole(wrap);
+			return;
+		}
+		dropConsole();
 		wrap.textContent = '';
 		const canvas = document.createElement('canvas');
 		canvas.className = 'ra-canvas';
@@ -427,9 +530,9 @@
 
 	function buildEntities() {
 		const A = state.atlas;
-		if (!A) return [];
 		const map = boardMap();
 		if (state.skin === 'lab') {
+			if (!A) return [];
 			return A.stations.map(function (s, i) {
 				return {
 					i: i,
@@ -447,22 +550,13 @@
 				};
 			});
 		}
-		return A.nodes.map(function (n, k) {
-			const i = n.n;
-			return {
-				i: i,
-				lane: n.lane,
-				def: map[i],
-				rect: n.rect,
-				sprite: n.sprite,
-				cx: n.cx,
-				cy: n.cy,
-				status: 'idle',
-				since: -9,
-				phase: hash(k) * 6,
-				fx: 0,
-			};
-		});
+		const out = [];
+		for (let lane = 0; lane < 3; lane++) {
+			map.forEach(function (def, i) {
+				out.push({ i: i, lane: lane, def: def, status: 'idle', since: -9 });
+			});
+		}
+		return out;
 	}
 
 	function entCenter(e) {
@@ -482,10 +576,10 @@
 		return hz ? { x: hz.cx, y: hz.cy } : { x: 640, y: 400 };
 	}
 
-	// status each entity shows (per lane on Jarvis)
+	// status each entity shows (per lane on the console)
 	function statusOfEntity(e) {
 		const base = derive(e.def);
-		if (state.skin !== 'jarvis' || e.lane === 0) return base;
+		if (state.skin !== 'console' || e.lane === 0) return base;
 		if (e.lane === 1) return BACKGROUND[e.def.id] ? base : 'idle';
 		return base === 'fail' || base === 'risk' || base === 'skip' ? base : 'idle';
 	}
@@ -498,6 +592,7 @@
 			const prev = e.status;
 			e.status = st;
 			e.since = t;
+			if (state.skin === 'console') return; // the console reads the statuses and animates them itself
 			const c = entCenter(e);
 			if (st === 'done') {
 				burst(c, '#5dff9a', 9);
@@ -1090,87 +1185,6 @@
 		ctx.restore();
 	}
 
-	function drawJarvisHud(ctx, A, t) {
-		const hud = readHud();
-		const col = runColor();
-		ctx.save();
-		// live % tube in the lanes header
-		const bx = 880,
-			by = 80,
-			bw = 250,
-			bh = 10;
-		ctx.fillStyle = 'rgba(4,12,16,.95)';
-		ctx.strokeStyle = 'rgba(94,200,212,.45)';
-		rrect(ctx, bx, by, bw, bh, 5);
-		ctx.fill();
-		ctx.stroke();
-		const fw = Math.max(0, ((bw - 2) * hud.shown) / 100);
-		if (fw > 2) {
-			const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-			g.addColorStop(0, '#0f7a86');
-			g.addColorStop(1, state.run === 'failed' ? '#ff5a4a' : '#3fe0d0');
-			ctx.fillStyle = g;
-			rrect(ctx, bx + 1, by + 1, fw, bh - 2, 4);
-			ctx.fill();
-		}
-		ctx.font = '700 12px ' + MONO;
-		ctx.textBaseline = 'middle';
-		ctx.textAlign = 'left';
-		ctx.fillStyle = '#cfe8ec';
-		ctx.fillText(Math.round(hud.shown) + '%', bx + bw + 10, by + 6);
-		ctx.fillStyle = col;
-		ctx.fillText(fitText(ctx, hud.phase.toUpperCase(), 130) + '  ' + hud.clock, bx + bw + 48, by + 6);
-		ctx.restore();
-
-		// process table: live log lines
-		const cols = [236, 612, 696, 872, 962, 1058];
-		const big = !!state.big;
-		const rows = state.log.slice(big ? -5 : -6);
-		ctx.save();
-		ctx.font = '500 ' + (big ? 17 : 12) + 'px ' + MONO;
-		ctx.textBaseline = 'middle';
-		ctx.textAlign = 'left';
-		rows.forEach(function (r, i) {
-			const y = 522 + i * (big ? 30 : 24);
-			const fresh = clamp((t - r.at) / 0.3, 0, 1);
-			ctx.globalAlpha = 0.5 + 0.5 * fresh;
-			ctx.strokeStyle = 'rgba(94,200,212,.12)';
-			ctx.beginPath();
-			ctx.moveTo(236, y + 12);
-			ctx.lineTo(1250, y + 12);
-			ctx.stroke();
-			const c = COLOR[r.status] || COLOR.wip;
-			ctx.fillStyle = c;
-			ctx.beginPath();
-			ctx.arc(244, y, 3, 0, 6.283);
-			ctx.fill();
-			ctx.fillStyle = '#d4e8ee';
-			ctx.fillText(fitText(ctx, r.text, big ? 340 : 350), cols[0] + 16 - (1 - fresh) * 10, y);
-			ctx.fillStyle = '#8ab0b8';
-			ctx.fillText('Review', cols[1], y);
-			ctx.fillStyle = '#cfe8ec';
-			ctx.fillText(fitText(ctx, r.tag, 160), cols[2], y);
-			ctx.fillStyle = c;
-			ctx.fillText(
-				r.status === 'done'
-					? 'DONE'
-					: r.status === 'fail'
-						? 'ERROR'
-						: r.status === 'risk'
-							? 'RISK'
-							: r.status === 'skip'
-								? 'SKIPPED'
-								: 'RUNNING',
-				cols[3],
-				y
-			);
-			ctx.fillStyle = '#8ab0b8';
-			ctx.fillText(hud.clock, cols[4], y);
-			ctx.fillText(r.time, cols[5], y);
-		});
-		ctx.restore();
-	}
-
 	// ---------------------------------------------------------------- Lab board
 	function drawTick(ctx, e, t) {
 		const b = e.box;
@@ -1400,243 +1414,6 @@
 		drawLabHud(ctx, A, t);
 	}
 
-	// ---------------------------------------------------------------- Jarvis board
-	function laneNode(lane, n) {
-		return state.ents.find(function (e) {
-			return e.lane === lane && e.i === n;
-		});
-	}
-
-	function drawJarvisLane(ctx, A, lane, t) {
-		const cy = A.laneY[lane];
-		const list = state.ents.filter(function (e) {
-			return e.lane === lane;
-		});
-		// energy line between nodes, colored by the next node's status
-		for (let k = 0; k < list.length - 1; k++) {
-			const a = list[k];
-			const b = list[k + 1];
-			const x0 = a.cx + 20;
-			const x1 = b.cx - 20;
-			const st = b.status === 'idle' && a.status === 'done' ? 'wip' : b.status;
-			const col = COLOR[st];
-			ctx.save();
-			ctx.strokeStyle = col;
-			ctx.lineWidth = st === 'idle' ? 1.2 : 2.6;
-			ctx.globalAlpha = st === 'idle' ? 0.28 : 0.9;
-			ctx.shadowColor = col;
-			ctx.shadowBlur = st === 'idle' ? 0 : 8;
-			ctx.beginPath();
-			ctx.moveTo(x0, cy);
-			ctx.lineTo(x1, cy);
-			ctx.stroke();
-			if (st === 'wip') {
-				for (let m = 0; m < 2; m++) {
-					const u = (t * 1.4 + m / 2 + k * 0.13) % 1;
-					ctx.fillStyle = '#fff';
-					ctx.globalAlpha = Math.sin(u * 3.14);
-					ctx.beginPath();
-					ctx.arc(x0 + (x1 - x0) * u, cy, 2.8, 0, 6.283);
-					ctx.fill();
-				}
-			}
-			ctx.restore();
-		}
-		list.forEach(function (e) {
-			const standby = (lane === 1 && !BACKGROUND[e.def.id]) || (lane === 2 && e.status === 'idle');
-			drawEntity(ctx, e, t, { alpha: standby ? 0.4 : 1 });
-			drawNodeBadge(ctx, e, t);
-		});
-		ctx.save();
-		ctx.font = '700 10px ' + MONO;
-		ctx.fillStyle = 'rgba(120,220,230,.75)';
-		ctx.textAlign = 'right';
-		ctx.textBaseline = 'middle';
-		ctx.fillText(LANE_NAME[lane], 1246, cy - 33);
-		ctx.restore();
-	}
-
-	function drawNodeBadge(ctx, e, t) {
-		const st = e.status;
-		if (st === 'idle') return;
-		const c = entCenter(e);
-		const age = Math.max(0, t - e.since);
-		ctx.save();
-		ctx.translate(c.x, c.y);
-		ctx.strokeStyle = COLOR[st];
-		ctx.shadowColor = COLOR[st];
-		ctx.shadowBlur = 8;
-		ctx.lineWidth = 2;
-		ctx.globalAlpha = st === 'skip' ? 0.5 : 0.9;
-		if (st === 'wip') {
-			ctx.beginPath();
-			ctx.arc(0, 0, 25, t * 5, t * 5 + 2.4);
-			ctx.stroke();
-			ctx.beginPath();
-			ctx.arc(0, 0, 25, t * 5 + 3.14, t * 5 + 3.14 + 1.2);
-			ctx.stroke();
-		} else {
-			ctx.beginPath();
-			ctx.arc(0, 0, 25, 0, 6.283);
-			ctx.stroke();
-			ctx.translate(15, -17);
-			ctx.fillStyle = '#05121a';
-			ctx.beginPath();
-			ctx.arc(0, 0, 8, 0, 6.283);
-			ctx.fill();
-			ctx.stroke();
-			ctx.lineCap = 'round';
-			ctx.lineJoin = 'round';
-			ctx.lineWidth = 2.2;
-			ctx.beginPath();
-			if (st === 'done') {
-				const p = clamp(age / 0.25, 0, 1);
-				ctx.moveTo(-4, 0);
-				ctx.lineTo(-4 + 2 * Math.min(p * 2, 1), 0 + 3 * Math.min(p * 2, 1));
-				if (p > 0.5) ctx.lineTo(1 + 4 * (p - 0.5) * 2, 3 - 7 * (p - 0.5) * 2);
-			} else if (st === 'fail') {
-				ctx.moveTo(-3.5, -3.5);
-				ctx.lineTo(3.5, 3.5);
-				ctx.moveTo(3.5, -3.5);
-				ctx.lineTo(-3.5, 3.5);
-			} else if (st === 'risk') {
-				ctx.moveTo(0, -4);
-				ctx.lineTo(0, 1);
-				ctx.moveTo(0, 3.5);
-				ctx.lineTo(0, 3.6);
-			} else {
-				ctx.moveTo(-4, 0);
-				ctx.lineTo(4, 0);
-			}
-			ctx.stroke();
-		}
-		ctx.restore();
-	}
-
-	function drawHazard(ctx, A, t) {
-		const on = !!state.anomaly;
-		const target = on ? 0 : 0.66;
-		state.veil = (state.veil == null ? 0.66 : state.veil) + (target - (state.veil == null ? 0.66 : state.veil)) * 0.12;
-		ctx.save();
-		const vg = ctx.createLinearGradient(0, 334, 0, 360);
-		vg.addColorStop(0, 'rgba(5,11,17,0)');
-		vg.addColorStop(1, 'rgba(5,11,17,' + state.veil.toFixed(3) + ')');
-		ctx.fillStyle = vg;
-		ctx.fillRect(322, 334, 930, 26);
-		ctx.fillStyle = 'rgba(5,11,17,' + state.veil.toFixed(3) + ')';
-		ctx.fillRect(322, 360, 930, 92);
-		ctx.restore();
-		const hzId = HAZARD_OF[state.anomaly];
-		A.hazard.forEach(function (h) {
-			const lit = on && h.id === hzId;
-			const e = {
-				sprite: h.sprite,
-				rect: h.rect,
-				def: {
-					kind:
-						h.id === 'timeout'
-							? 'gear'
-							: h.id === 'stop'
-								? 'lock'
-								: h.id === 'fail'
-									? 'spark'
-									: h.id === 'slow'
-										? 'hammer'
-										: 'bot',
-				},
-				status: lit ? 'fail' : 'idle',
-				since: state.anomalyAt,
-				phase: 0,
-				i: 0,
-			};
-			const age = lit ? t - state.anomalyAt : 0;
-			drawEntity(ctx, e, t, { alpha: lit ? 1 : 0.35 });
-			if (lit) {
-				ctx.save();
-				ctx.strokeStyle = '#ff5a4a';
-				ctx.shadowColor = '#ff5a4a';
-				ctx.shadowBlur = 10;
-				ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 8);
-				ctx.lineWidth = 2;
-				ctx.beginPath();
-				ctx.arc(h.cx, h.cy - 3, 28 + 3 * Math.sin(t * 6), 0, 6.283);
-				ctx.stroke();
-				ctx.restore();
-				void age;
-			}
-		});
-		if (on) {
-			// detour: red marching dashes along the hazard row, rejoining the review
-			ctx.save();
-			ctx.strokeStyle = '#ff5a4a';
-			ctx.shadowColor = '#ff5a4a';
-			ctx.shadowBlur = 8;
-			ctx.lineWidth = 2.4;
-			ctx.setLineDash([10, 8]);
-			ctx.lineDashOffset = -t * 60;
-			ctx.globalAlpha = 0.8;
-			ctx.beginPath();
-			ctx.moveTo(330, A.hazardY);
-			ctx.lineTo(1240, A.hazardY);
-			ctx.stroke();
-			ctx.restore();
-		}
-	}
-
-	function drawRetry(ctx, t) {
-		if (state.anomaly !== 'retry') return;
-		const idx = stationOf(state.activeId);
-		const e = state.ents.find(function (x) {
-			return x.lane === 0 && x.i === idx;
-		});
-		if (!e) return;
-		const c = entCenter(e);
-		ctx.save();
-		ctx.translate(c.x, c.y);
-		ctx.rotate(-t * 4);
-		ctx.strokeStyle = '#f0c85a';
-		ctx.shadowColor = '#f0c85a';
-		ctx.shadowBlur = 8;
-		ctx.lineWidth = 2.4;
-		ctx.beginPath();
-		ctx.arc(0, 0, 30, 0.4, 5.2);
-		ctx.stroke();
-		ctx.beginPath();
-		ctx.moveTo(30 * Math.cos(5.2), 30 * Math.sin(5.2));
-		ctx.lineTo(30 * Math.cos(5.2) - 9, 30 * Math.sin(5.2) - 2);
-		ctx.moveTo(30 * Math.cos(5.2), 30 * Math.sin(5.2));
-		ctx.lineTo(30 * Math.cos(5.2) + 3, 30 * Math.sin(5.2) - 9);
-		ctx.stroke();
-		ctx.restore();
-	}
-
-	function drawJarvis(ctx, t) {
-		const A = state.atlas;
-		drawHazard(ctx, A, t);
-		[0, 1, 2].forEach(function (l) {
-			drawJarvisLane(ctx, A, l, t);
-		});
-		drawRetry(ctx, t);
-		// watchdog marker under the failing stage on lane 3
-		if (state.anomaly) {
-			const idx = stationOf(state.activeId);
-			const e = laneNode(2, idx);
-			if (e) {
-				ctx.save();
-				ctx.strokeStyle = '#ff5a4a';
-				ctx.shadowColor = '#ff5a4a';
-				ctx.shadowBlur = 10;
-				ctx.globalAlpha = 0.5 + 0.4 * Math.sin(t * 8);
-				ctx.lineWidth = 2;
-				ctx.beginPath();
-				ctx.arc(e.cx, e.cy - 2, 27, 0, 6.283);
-				ctx.stroke();
-				ctx.restore();
-			}
-		}
-		drawJarvisHud(ctx, A, t);
-	}
-
 	// ---------------------------------------------------------------- loop
 	function render() {
 		state.frame = 0;
@@ -1651,8 +1428,7 @@
 		ctx.globalAlpha = 1;
 		ctx.clearRect(0, 0, W, H);
 		ctx.drawImage(state.assets.clean, 0, 0, W, H);
-		if (state.skin === 'jarvis') drawJarvis(ctx, t);
-		else drawLab(ctx, t, dt);
+		drawLab(ctx, t, dt);
 		drawParticles(ctx);
 		if (!reduced.matches && state.visible && !document.hidden && state.wrap && !state.wrap.hidden) {
 			state.frame = requestAnimationFrame(render);
@@ -1705,6 +1481,13 @@
 
 	function boot() {
 		hookProgress();
+		if (state.skin === 'console') {
+			const warm = function () {
+				loadConsole();
+			};
+			if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
+			else setTimeout(warm, 1500);
+		}
 		if (!window.ReviewProgress) {
 			document.addEventListener('DOMContentLoaded', hookProgress);
 			setTimeout(hookProgress, 0);
@@ -1742,12 +1525,12 @@
 				activeId: state.activeId,
 				stages: Object.assign({}, state.stages),
 				items: items,
-				ready: !!(state.assets && state.assets.clean && state.assets.items),
+				ready: state.skin === 'console' ? !!state.cons : !!(state.assets && state.assets.clean && state.assets.items),
 			};
 		},
 		pickSkin: pickSkin,
 		forceSkin: function (skin) {
-			if (skin === 'lab' || skin === 'jarvis') {
+			if (skin === 'lab' || skin === 'console') {
 				try {
 					sessionStorage.setItem(SKIN_KEY, skin);
 				} catch (e) {

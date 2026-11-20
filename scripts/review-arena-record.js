@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Record a draft of the review arena fed with real review log lines.
-   node scripts/review-arena-record.js <lab|jarvis> <run|detour|stop> <out.mp4> [port]
+   node scripts/review-arena-record.js <lab|console> <run|detour|stop> <out.mp4> [port]
    Needs: python3 scripts/static-server.py <port> running, ffmpeg on PATH. */
 const fs = require('fs');
 const path = require('path');
