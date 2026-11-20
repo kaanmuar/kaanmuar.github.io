@@ -375,6 +375,16 @@ fun CyberMapPanel(s: UiState) {
                     if (d > 0) "$d exposed" else null, if (g > 0) "$g same country" else null).joinToString(" · "), onClick = { picked = cc })
         }
         val events = mp.objs("events").filter { picked == null || it.arr("countries").any { c2 -> c2.toString().trim('"') == picked } }
+        // Cloudflare Radar, last 24 h (#3935): internal personal use only (CC BY-NC 4.0), never shown to customers.
+        val rd = c.obj("radar")
+        Text("Attack traffic, last 24 h · Cloudflare Radar", color = J.amber, fontSize = 12.sp)
+        if (rd == null) Muted("Not read yet. The threat feeds job reads it every 30 minutes.") else {
+            listOf("layer3Origin" to "Network attacks from", "layer3Target" to "Network attacks to", "layer7Origin" to "Web attacks from", "layer7Target" to "Web attacks to").forEach { (k, label) ->
+                val rows = rd.objs(k).take(5)
+                KeyRow(label, if (rows.isEmpty()) "none read" else rows.joinToString(" · ") { (it.str("name") ?: it.str("cc").orEmpty()) + " " + fmt(it.num("share")) + "%" })
+            }
+            Muted("Share of each attack type's traffic, data as of ${ago(rd.str("asOf")).orEmpty()}. ${rd.str("attribution").orEmpty()} Not for customers, reports or the public map.")
+        }
         Text("Cyber-attack and breach headlines · ${events.size}", color = J.amber, fontSize = 12.sp)
         if (events.isEmpty()) Muted(if (picked == null) "No headlines in the latest feed." else "No headline names this country in the latest feed.")
         events.take(12).forEach { e ->

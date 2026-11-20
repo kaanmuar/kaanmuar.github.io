@@ -2498,6 +2498,9 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(cyber.locator('svg.jv-geo-map path.jv-cy-c').first()).toBeAttached();
 		await expect(cyber.locator('circle.jv-cy-pin')).toHaveCount(3);
 		await expect(cyber).toContainText('bleepingcomputer.com');
+		await expect(cyber).toContainText('Attack traffic, last 24 h · Cloudflare Radar');
+		await expect(cyber).toContainText('Network attacks from');
+		await expect(cyber).toContainText('Not for customers, reports or the public map.');
 		await expect(cyber).toContainText('heise.de');
 		await expect(cyber).toContainText('2026.11.10');
 		await cyber.locator('[data-cy-range="30d"]').click();

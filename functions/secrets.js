@@ -28,6 +28,8 @@ const BY_FUNCTION = {
   diagnoseReviewFailures: list(BROWSER),
   rerunReviewFailures: list(MAIL, SCAN, GEMINI),
   fileReviewFailureBugs: list(GITHUB),
+  // threatFeeds (#3935): Cloudflare Radar attack traffic for the internal Jarvis cyber map (personal use only).
+  threatFeeds: list(["CLOUDFLARE_API_TOKEN"]),
   sweep: list(SCAN),
   // pastRerunReviews (#3458): same review browser as the sweep, plus SendGrid for the follow-up note.
   pastRerunReviews: list(SCAN, MAIL),

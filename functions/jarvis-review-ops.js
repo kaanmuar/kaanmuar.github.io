@@ -15,6 +15,9 @@ const promise = require("./url-review-promise");
 const fixOffers = require("./url-review-fix-offers");
 const pastRerun = require("./url-review-rerun-past");
 const reviewMap = require("./url-review-map");
+const radarModule = require("./url-review-radar");
+const { radarSummary } = radarModule;
+const reviewHostGeo = require("./url-review-host-geo");
 
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
@@ -448,7 +451,7 @@ function exposureSummary(threatRows, reviews, mapRanges, { now, days }) {
   };
 }
 
-function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews }, { now, days }) {
+function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews, radar }, { now, days }) {
   const start = now - days * DAY;
   const real = (reviews || []).filter((r) => r && r.test !== true && ms(r.createdAt) >= start);
   const counted = real.filter((r) => Array.isArray(r.checks));
@@ -502,7 +505,8 @@ function checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threa
       sources
     },
     tf ? { threatFeeds: tf } : {},
-    intel ? { threats: intel.threats, map: intel.map, exposure } : {}
+    intel ? { threats: intel.threats, map: intel.map, exposure } : {},
+    radar ? { radar: radarSummary(radar) } : {}
   );
 }
 
@@ -515,14 +519,16 @@ async function checksSource(ctx) {
   const storage = ctx.storage !== undefined ? ctx.storage : (() => {
     try { return require("firebase-admin/storage").getStorage(); } catch (error) { return null; }
   })();
-  const [reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap] = await Promise.all([
+  const radarRead = storage ? radarModule.loadRadarNow(storage, reviewHostGeo.BUCKET) : Promise.resolve(null);
+  const [reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, radar] = await Promise.all([
     db.collection("url_reviews").where("createdAt", ">=", since).orderBy("createdAt", "desc").select("createdAt", "test", "source", "checks", "email", "paid", "status", "requestedUrl", "hostingCountry", "sweep.cc", "report.host", "report.targeted.hosting.country", "report.targeted.companyCountry").limit(5000).get().then(rowsOf).catch(() => []),
     one(db.collection("webrisk_usage").doc(month)),
     one(db.collection("threatlist_usage").doc(month)),
     one(db.collection("ops_runs").doc("wordfenceFeed")),
     one(db.collection("ops_runs").doc("threatFeeds")),
     db.collection("url_review_threats").orderBy("observed_at", "desc").select("id", "observed_at", "level", "kind", "host", "subject", "hosting_country", "source", "delist_status", "time_window", "review_id", "role", "evidence").limit(1000).get().then(rowsOf).catch(() => []),
-    reviewMap.loadGlobalMapPayload({ storage, fetch: false, query: { range: "live" } }).catch(() => null)
+    reviewMap.loadGlobalMapPayload({ storage, fetch: false, query: { range: "live" } }).catch(() => null),
+    radarRead.catch(() => null)
   ]);
   // The other ranges come from the same stored object, already held in memory by the first read.
   const others = await Promise.all(["7d", "30d", "90d"].map((range) => reviewMap.loadGlobalMapPayload({ storage, fetch: false, query: { range } }).catch(() => null)));
@@ -534,7 +540,7 @@ async function checksSource(ctx) {
     ? await db.getAll(...missing.map((id) => db.collection("url_reviews").doc(id)), { fieldMask: ["createdAt", "test", "source", "email", "paid", "status", "requestedUrl", "hostingCountry", "sweep.cc", "report.host", "report.targeted.hosting.country", "report.targeted.companyCountry"] })
       .then((snaps) => snaps.filter((snap) => snap.exists).map((snap) => Object.assign({ id: snap.id }, snap.data()))).catch(() => [])
     : [];
-  return checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews }, { now, days });
+  return checksSummary({ reviews, webrisk, threat, wordfence, threatFeeds, threats, globalMap, mapRanges, threatReviews, radar }, { now, days });
 }
 
 // --- Ask -----------------------------------------------------------------------------------------------------

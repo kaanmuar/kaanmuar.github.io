@@ -3093,15 +3093,24 @@ exports.threatFeeds = require("firebase-functions/v2/scheduler").onSchedule({
   timeZone: ops.TIME_ZONE,
   timeoutSeconds: 300,
   memory: "1GiB",
-  maxInstances: 1
+  maxInstances: 1,
+  secrets: SECRETS.threatFeeds
 }, () => track("threatFeeds", async () => {
   const [feeds, geo] = await Promise.all([
     require("./url-review-targeted").refreshFeeds(),
     require("./url-review-host-geo").refreshDbipIndex()
   ]);
+  // Cloudflare Radar, internal use only (#3935): a failure is reported, never fails the other feeds.
+  const radar = await require("./url-review-radar").refreshRadar({
+    token: process.env.CLOUDFLARE_API_TOKEN,
+    storage: require("firebase-admin/storage").getStorage(),
+    bucket: require("./url-review-host-geo").BUCKET,
+    now: Date.now()
+  }).catch((error) => ({ ok: false, error: String(error && error.message || error).slice(0, 120) }));
   return [
     feeds.skipped ? "feeds " + feeds.skipped : "kev " + feeds.kev + ", gdelt " + feeds.gdeltMentions,
-    geo.skipped ? "geo " + geo.skipped : "geo " + geo.version
+    geo.skipped ? "geo " + geo.skipped : "geo " + geo.version,
+    radar.ok ? "radar " + radar.layer3Origin + " origins, " + (radar.failed.length ? "failed " + radar.failed.join(",") : "all lists") : "radar " + radar.error
   ].join("; ");
 }));
 
