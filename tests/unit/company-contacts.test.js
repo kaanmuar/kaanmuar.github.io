@@ -27,6 +27,20 @@ test('only addresses the company publishes on its own domain are kept, role inbo
 		assert.ok(!all.includes(no), no);
 });
 
+test('addresses inside scripts are skipped whatever their end tag looks like (#3691)', () => {
+	for (const end of ['</script>', '</script >', '</SCRIPT>', '</script foo="bar">']) {
+		const html = '<script>var a = "ventas@example.co";' + end + '<p>Escríbanos: info@example.co</p>';
+		assert.deepEqual(CC.contactsOf([{ url: 'https://example.co/', html }], 'example.co').emails.map((e) => e.email), ['info@example.co'], end);
+	}
+});
+
+test('an escaped entity is decoded once: &amp;#64; stays text, &#64; is an at sign (#3692)', () => {
+	const found = (html) => CC.contactsOf([{ url: 'https://example.co/', html }], 'example.co').emails.map((e) => e.email);
+	assert.deepEqual(found('<p>info&amp;#64;example.co</p>'), []);
+	assert.deepEqual(found('<p>info&#64;example&#46;co</p>'), ['info@example.co']);
+	assert.equal(CC.emailOf('info&amp;#64;example.co', 'example.co'), null);
+});
+
 test('phones, profiles, language, country and name come from tel links, links, sameAs and the page', () => {
 	const c = CC.contactsOf([HOME, CONTACT], HOST, { cc: 'mx', lang: 'en' });
 	assert.deepEqual(c.phones, ['+576056601234', '+573001112233']);

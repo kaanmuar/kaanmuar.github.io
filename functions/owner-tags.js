@@ -94,7 +94,14 @@ const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().sl
 const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
 const slug = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const accountId = (network, handle) => network + ":" + String(handle).toLowerCase().replace(/\//g, "|");
-const docKey = (...parts) => "ot-" + crypto.createHash("sha1").update(parts.join("|")).digest("hex").slice(0, 24);
+const docKey = (...parts) => "ot-" + crypto.createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24);
+/* Docs queued before #3689 sit under SHA-1 keys, so a repeat is caught by what the doc does, not only by its key. */
+const captionWork = (post, network) => "caption|" + post + "|" + network;
+const replyWork = (report, account) => "reply|" + report + "|" + account;
+const workOf = (d) => {
+  const t = d.ownerTags || {};
+  return t.kind === "caption" ? captionWork(t.post, d.network) : t.kind === "reply" ? replyWork(t.report, t.account) : "";
+};
 const settingsRef = (db) => db.collection("owner_tags").doc("settings");
 
 // --- Handles ----------------------------------------------------------------------------------------------------
@@ -559,7 +566,7 @@ async function run(deps) {
   const used = Object.assign({}, ((await dayRef.get()).data() || {}).n || {});
   const mine = (await db.collection("engagement_posts").where("campaign", "==", CAMPAIGN).limit(10000).get()).docs.map((d) => Object.assign({ key: d.id }, d.data()));
   const retry = (d) => (d.ownerTags || {}).latest && Date.parse((d.ownerTags || {}).none || "") < now - LATEST_RETRY_DAYS * DAY;
-  const keys = new Set(mine.filter((d) => !retry(d)).map((d) => d.key));
+  const keys = new Set(mine.filter((d) => !retry(d)).flatMap((d) => [d.key, workOf(d)]).filter(Boolean));
   const byPost = new Map();
   mine.forEach((d) => {
     const t = d.ownerTags || {};
@@ -618,7 +625,7 @@ async function run(deps) {
           out.captionWould += 1;
           if (out.sample.length < 8) out.sample.push({ network: p.network, url: p.url, text: cap.text, kind: "caption", would: true, from: clip(original, 240) });
         }
-        if (conf.editCaptions && !keys.has(key)) {
+        if (conf.editCaptions && !keys.has(key) && !keys.has(captionWork(p.key, p.network))) {
           const tags = Object.assign({ kind: "caption", post: p.key, mentions: cap.mentions, reports: p.reports.map((r) => r.id) }, cap.tags ? { menu: cap.tags } : {});
           await add(key, captionEngagementDoc(p, cap.text, original, lang, tags, now));
           if (conf.live) out.captions += 1;
@@ -651,7 +658,7 @@ async function run(deps) {
     const onMac = LATEST_NETS.includes(a.network);
     if (!report || room(a.network) <= 0 || (onMac ? latest >= LATEST_PER_RUN : fetched >= REPLY_PER_RUN)) continue;
     const key = docKey("reply", report.id, a.network, a.handle.toLowerCase());
-    if (keys.has(key)) continue;
+    if (keys.has(key) || keys.has(replyWork(report.id, accountId(a.network, a.handle)))) continue;
     let target;
     if (onMac) {
       latest += 1;
