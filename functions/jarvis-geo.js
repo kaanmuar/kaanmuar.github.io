@@ -82,7 +82,7 @@ async function readLiveIndex(fetchImpl, opts) {
   }
   return null;
 }
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 const domainOf = (email) => bare(String(email || "").split("@")[1] || "");
 const round = (n, d) => Math.round(n * (d || 1)) / (d || 1);
 

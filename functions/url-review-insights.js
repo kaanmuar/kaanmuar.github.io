@@ -108,7 +108,7 @@ function normal(value) {
     const url = new URL(value);
     url.hash = "";
     let path = url.pathname.replace(/\/index\.html?$/i, "/");
-    if (path.length > 1) path = path.replace(/\/+$/, "");
+    if (path.length > 1) path = path.replace(/(?<!\/)\/+$/, "");
     return url.protocol + "//" + url.host.toLowerCase() + path + url.search;
   } catch (error) {
     return String(value || "");

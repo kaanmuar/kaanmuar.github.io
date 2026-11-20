@@ -98,7 +98,7 @@ const contactOk = (value) => /^(mailto:[^\s@]+@[^\s@]+|tel:\+?[0-9][0-9 ().-]{3,
 const MONTH_AHEAD = 366 * 24 * 3600 * 1000;
 
 function sameUrl(a, b) {
-  const norm = (text) => String(text || "").trim().replace(/\/+$/, "").toLowerCase();
+  const norm = (text) => String(text || "").trim().replace(/(?<!\/)\/+$/, "").toLowerCase();
   return norm(a) === norm(b);
 }
 

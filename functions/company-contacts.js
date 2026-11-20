@@ -9,6 +9,7 @@
    Nothing is guessed: no address patterns, no people search, no third-party directories. Role inboxes (info@,
    ventas@, reservas@) come first; a named address the site publishes is kept after them as "named". */
 const P = require("./engagement-profiles");
+const { replaceBlocks } = require("./tag-blocks");
 
 const CONTACT_PAGES = 3;
 const MAX_EMAILS = 4;
@@ -27,7 +28,14 @@ const COUNTRY_NAMES = { colombia: "co", mexico: "mx", méxico: "mx", peru: "pe",
   switzerland: "ch", schweiz: "ch", suisse: "ch", france: "fr", belgium: "be", belgique: "be", italy: "it", italia: "it", "united kingdom": "gb", uk: "gb", ireland: "ie", canada: "ca", australia: "au",
   "united states": "us", usa: "us" };
 
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
+/* group 1 of the first match of a global `re` that sets it. Each `re` ends in a branch that swallows a tag that cannot
+   match, so the next try starts after that tag instead of inside it (#3965). */
+const firstGroup = (re, text) => {
+  let m;
+  while ((m = re.exec(text)) && !m[1]);
+  return m ? m[1] : undefined;
+};
 /* Decode obfuscation only (@ / dot). Do not turn &amp; into & here: emailOf calls decode
    again, and CodeQL flags that as double-unescaping (#3719 / alert 141). */
 const decode = (s) => String(s || "").replace(/&#64;|&#x40;|%40/gi, "@").replace(/&#46;|&#x2e;/gi, ".");
@@ -41,7 +49,7 @@ function sameSite(email, host) {
 
 /** A published address worth keeping as { email, kind: "role"|"named" }, or null. */
 function emailOf(raw, host) {
-  const email = decode(raw).trim().toLowerCase().replace(/^mailto:/, "").split("?")[0].replace(/[.,;:]+$/, "");
+  const email = decode(raw).trim().toLowerCase().replace(/^mailto:/, "").split("?")[0].replace(/(?<![.,;:])[.,;:]+$/, "");
   if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) return null;
   if (/\.(png|jpe?g|gif|webp|svg|css|js)$/.test(email) || SKIP_INBOX.test(email) || FREE_MAIL.test(email) || !sameSite(email, host)) return null;
   return { email, kind: ROLE.test(email.split("@")[0]) ? "role" : "named" };
@@ -117,7 +125,7 @@ function contactLinks(html, base) {
 
 /** The two-letter language a page declares, if it is a site language. */
 function langOf(html) {
-  const l = ((String(html || "").match(/<html[^>]*\blang\s*=\s*["']?([a-zA-Z]{2})/i) || [])[1] || "").toLowerCase();
+  const l = (firstGroup(/<html[^>]*\blang\s*=\s*["']?([a-zA-Z]{2})|<html[^>]*/gi, String(html || "")) || "").toLowerCase();
   return SITE_LANGS.includes(l) ? l : "";
 }
 
@@ -143,11 +151,12 @@ function contactsOf(pages, host, hint) {
     const add = (raw) => { const e = emailOf(raw, host); if (e && !emails.has(e.email)) emails.set(e.email, Object.assign(e, { url: p.url })); };
     for (const m of html.matchAll(/href\s*=\s*["']mailto:([^"'?]+)/gi)) add(m[1]);
     org.emails.forEach(add);
-    const text = decode(html.replace(/<script\b[\s\S]*?<\/script[^>]*>|<style\b[\s\S]*?<\/style[^>]*>/gi, " ")).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
-    for (const m of text.matchAll(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)) add(m[0]);
+    const text = decode(replaceBlocks(html, /<(script|style)\b/gi, " ", true)).replace(/\s?\[at\]\s?|\s?\(at\)\s?/gi, "@").replace(/\s?\[dot\]\s?|\s?\(dot\)\s?/gi, ".");
+    // The second branch swallows a run with no address so no later start inside it rescans it (#3965).
+    for (const m of text.matchAll(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})|[A-Za-z0-9._%+-]+/g)) if (m[1]) add(m[1]);
     [...[...html.matchAll(/href\s*=\s*["']tel:([^"']+)/gi)].map((m) => m[1]), ...org.phones].map(phoneOf).forEach((x) => { if (x && !phones.includes(x)) phones.push(x); });
     socialHtml.push(html, org.sameAs.length ? '"sameAs": ' + JSON.stringify(org.sameAs) : "");
-    if (!name) name = org.name || ((html.match(/<meta[^>]+property\s*=\s*["']og:site_name["'][^>]+content\s*=\s*["']([^"']+)/i) || [])[1] || "").trim().slice(0, 120);
+    if (!name) name = org.name || (firstGroup(/<meta[^>]+?property\s*=\s*["']og:site_name["'](?:[^>]+content\s*=\s*["']([^"']+)|[^>]*)|<meta[^>]*/gi, html) || "").trim().slice(0, 120);
     if (!country) country = org.country;
     if (!lang) lang = langOf(html);
   });
@@ -176,7 +185,7 @@ async function page(fetchFn, url) {
 /** Reads the homepage and its contact pages and returns contactsOf them, or null when the site does not answer. */
 async function discover(fetchFn, host, hint) {
   const h = bare(host);
-  const home = await page(fetchFn, "https://" + host.replace(/^https?:\/\//, "").replace(/\/.*$/, "") + "/") || await page(fetchFn, "https://www." + h + "/");
+  const home = await page(fetchFn, "https://" + host.replace(/^https?:\/\//, "").replace(/\/(?<!\/[^\n\r\u2028\u2029/]*\/).*$/, "") + "/") || await page(fetchFn, "https://www." + h + "/");
   if (!home) return null;
   const more = [];
   for (const u of contactLinks(home.html, home.url)) {

@@ -51,8 +51,9 @@ const SECRET_PATTERNS = [
 	/(?:key|token|secret|pass(?:word)?)=[^\s&]{1,200}/gi,
 	/[A-Za-z0-9+/_-]{24,200}={0,2}/g,
 	/[a-f0-9]{32,200}/gi,
-	/[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}/g,
 ];
+const LOCAL_CHAR = /[A-Za-z0-9._%+-]/;
+const DOMAIN_CHAR = /[A-Za-z0-9.-]/;
 
 /* Copy per language. Placeholders: {host}, {day}, {what} (from PLAIN), {ev} (scrubbed evidence).
    Every language carries the same parts: one message, a free check list, a false-positive reply and a STOP reply.
@@ -230,6 +231,25 @@ function blankTags(text) {
 	return out + text.slice(kept);
 }
 
+// Same result as text.replace(/[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}/g, '[removed]') as a scan (#3965): recheck
+// cannot settle those bounded repeats. Each address keeps at most 64 characters before "@" and 253 after it, and the
+// next one starts after the last one ends.
+function scrubAddresses(text) {
+	let out = '';
+	let kept = 0;
+	for (let at = text.indexOf('@'); at >= 0; at = text.indexOf('@', at + 1)) {
+		if (at <= kept || !LOCAL_CHAR.test(text[at - 1]) || !DOMAIN_CHAR.test(text[at + 1] || '')) continue;
+		let start = at - 1;
+		while (start > kept && at - start < 64 && LOCAL_CHAR.test(text[start - 1])) start -= 1;
+		let end = at + 1;
+		while (end < text.length && end - at <= 253 && DOMAIN_CHAR.test(text[end])) end += 1;
+		out += text.slice(kept, start) + '[removed]';
+		kept = end;
+		at = end - 1;
+	}
+	return out + text.slice(kept);
+}
+
 function scrub(value) {
 	let text = blankTags(String(value == null ? '' : value))
 		.replace(/https?:\/\/\S+/gi, '[link removed]')
@@ -238,6 +258,7 @@ function scrub(value) {
 	SECRET_PATTERNS.forEach((pattern) => {
 		text = text.replace(pattern, '[removed]');
 	});
+	text = scrubAddresses(text);
 	return text.length > 200 ? text.slice(0, 199) + '…' : text;
 }
 
@@ -356,6 +377,7 @@ function draft(threat, ctx) {
 
 module.exports = {
 	blankTags,
+	scrubAddresses,
 	SITE_KINDS,
 	LEVELS,
 	ROLES,
