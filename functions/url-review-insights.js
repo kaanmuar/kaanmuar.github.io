@@ -16,6 +16,7 @@ const hackSigns = require("./url-review-hack-signs");
 const targeted = require("./url-review-targeted");
 const geoAgent = require("./url-review-geo-agent");
 const cyberPassive = require("./url-review-cyber-passive");
+const trustGrade = require("./url-review-trust-grade");
 
 const BROWSER_READ_NOTE = english(say("warn.browserRead"));
 const UNTAGGED_READ_NOTE = english(say("warn.untaggedRead"));
@@ -1694,6 +1695,7 @@ function analyze(input) {
       say("sec-tls-chain.fix"), { effort: "minutes" });
   }
   const sec = extras.securityTxt || null;
+  trustGrade.securityTxtFindings(sec, add);
   if (sec) {
     if (sec.status === 200 && !sec.html && /contact\s*:/i.test(sec.body || "")) {
       const expires = ((sec.body || "").match(/^\s*expires\s*:\s*(.+)$/im) || [])[1];
@@ -1968,6 +1970,7 @@ function analyze(input) {
     geo,
     analytics,
     security,
+    trust: trustGrade.trustGrade(findings),
     chat,
     carbon,
     graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
@@ -2112,6 +2115,7 @@ function fixKit(ctx) {
     jsonLd: ctx.entity ? null : jsonLd,
     llmsTxt: (llmsParsed.ok && llmsParsed.complete) ? "" : llmsTxt,
     securityTxt: (ctx.extras.securityTxt && ctx.extras.securityTxt.status === 200 && !ctx.extras.securityTxt.html) ? "" : securityTxt,
+    helmet: trustGrade.helmetSnippet(headers.filter((row) => row.missing).map((row) => row.name)),
     dns: dnsRecords,
     mtaSts,
     libraries: libraryUpgrades,
