@@ -77,9 +77,15 @@ function normalize(input) {
 }
 
 const addressIn = (s) => {
-  // The cut keeps this unanchored scan linear on a hostile field.
-  const m = /([^\s<>;,"'()]+@[^\s<>;,"'()]+)/.exec(String(s || "").slice(0, 400));
-  return m ? m[1].replace(/[.>]+$/, "").toLowerCase() : "";
+  // Split on the characters an address cannot hold, then take the first piece with an @ inside (linear, no backtracking).
+  for (const piece of String(s || "").slice(0, 400).split(/[\s<>;,"'()]+/)) {
+    const at = piece.indexOf("@");
+    if (at < 1 || at === piece.length - 1) continue;
+    let end = piece.length;
+    while (end > at + 1 && (piece[end - 1] === "." || piece[end - 1] === ">")) end--;
+    return piece.slice(0, end).toLowerCase();
+  }
+  return "";
 };
 const field = (text, name) => {
   const m = new RegExp("^[ \\t]*" + name + ":[ \\t]*([^\\r\\n]*)", "im").exec(text);
@@ -108,8 +114,13 @@ function statusOf(n) {
   const near = /(?:^|[^\d])[45]\d\d[ -]+(?:\(?#?)([245]\.\d{1,3}\.\d{1,3})(?!\.?\d)/m.exec(n.text);
   const fromDiag = enhanced(diag) || (near ? near[1] : "");
   if (fromDiag) return fromDiag;
-  const plain = /\bsmtp;?\s*([45])\d\d\b/i.exec(diag) || /(?:^|\n)\s*([45])\d\d[ -]\d/.exec(n.text);
-  return plain ? plain[1] + ".0.0" : "";
+  const plain = /\bsmtp; ?([45])\d\d\b/i.exec(diag);
+  if (plain) return plain[1] + ".0.0";
+  for (const line of n.text.split(/\r?\n/)) {
+    const m = /^ {0,8}([45])\d\d[ -]\d/.exec(line);
+    if (m) return m[1] + ".0.0";
+  }
+  return "";
 }
 
 const isDsn = (n) => {
