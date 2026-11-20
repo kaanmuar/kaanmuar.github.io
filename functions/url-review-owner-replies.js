@@ -10,6 +10,8 @@
    bounce     the notice address does not exist or a mailing list refused it: that address is stopped
    complaint  spam, legal or data-protection wording: the domain is stopped, the operator is told
    stop       "remove us": the domain is stopped, the operator is told
+   false-positive  a reply to a security heads-up (#3997) that says FALSE POSITIVE: the domain is stopped, the finding
+              is marked, the operator is told (the heads-up reply kinds are set by takeOwnerReply in index.js)
    redirect   "write to the new person in charge": waits; the decision page offers every address in the reply,
               the one it points to first, and sends the notice to the one picked
    interested thanks, a price, a call: waits; Gemini draft + Send answer on the decide page
@@ -336,6 +338,7 @@ function outreachCategory(kind) {
 			auto: 'auto_reply',
 			bounce: 'bounce',
 			stop: 'opt_out',
+			'false-positive': 'opt_out',
 			complaint: 'opt_out',
 			redirect: 'wrong_person',
 			interested: 'interested',
@@ -350,6 +353,8 @@ function plan(reply, notice) {
 	if (kind === 'auto') return { status: 'filed', apply: [], propose: '' };
 	if (kind === 'bounce') return { status: 'filed', apply: notice && notice.email ? ['stop-address'] : [], propose: '' };
 	if (kind === 'complaint' || kind === 'stop') return { status: 'applied', apply: ['stop-domain'], propose: '' };
+	// A reply to a security heads-up (#3997): stop everything to the domain and mark the finding, so it is never drafted again.
+	if (kind === 'false-positive') return { status: 'applied', apply: ['stop-domain', 'false-positive'], propose: '' };
 	const to = notice ? resendChoices({ mentioned: reply.mentioned, noticeEmail: notice.email })[0] : '';
 	if (kind === 'redirect' && to) return { status: 'waiting', apply: [], propose: 'resend:' + to };
 	return { status: 'waiting', apply: [], propose: kind === 'interested' ? 'answer' : '' };
@@ -360,6 +365,7 @@ const KIND_LABELS = {
 	bounce: 'the address bounced',
 	complaint: 'complaint (domain stopped)',
 	stop: 'asked for no more notices (domain stopped)',
+	'false-positive': 'says the heads-up finding is a false positive (domain stopped, finding marked)',
 	redirect: 'asks to write to someone else',
 	interested: 'interested, answer personally',
 	other: 'needs a look',
