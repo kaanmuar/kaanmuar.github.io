@@ -349,6 +349,24 @@ https://www.youtube.com/shorts/P2FFK6IcwFA</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Nosotros contra ellos: Auditorías SEO en cuatro tiempos.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-es.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo-es</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparativa</category>
+      <category>Battle</category>
+      <description>Un breve hilo de X/Threads: en qué ganan las auditorías de SEO, qué cubre la revisión de URL, una división honesta y la tabla de comparación.
+
+Lección: Publique el gancho, luego los cuatro tiempos como respuestas, no un carrusel LI/IG.
+
+Cobertura comparada desde las páginas de cada proveedor, marcada 2026-11-10. Los nombres son marcas comerciales de sus propietarios.
+Tabla: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Cualquier sitio puede enmarcar las páginas de Harvard.</title>
       <link>https://carlosandmunoz.com/social/runs-100/18-harvard-es.html</link>
       <guid isPermaLink="false">runs-100/18-harvard-es</guid>
@@ -445,6 +463,24 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisión de URL vs auditorías SEO.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-es.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/01-vs-seo-scorecard-es</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparativa</category>
+      <category>Battle</category>
+      <description>Un cuadro de mando de cobertura de las páginas de cada proveedor (marcado 2026-11-10). 10 comprueba que nombramos las auditorías de SEO; profundizan en los problemas de rastreo de SEO.
+
+Lección: Mantenga el rastreador de SEO para profundizar en la página; agregue una revisión de URL para detectar amenazas, imitaciones, autenticación de correo y paquetes de reparación.
+
+Cobertura comparada desde las páginas de cada proveedor, marcada 2026-11-10. Los nombres son marcas comerciales de sus propietarios.
+Tabla: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" length="223120" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>Las etiquetas canonical del MIT apuntan a su CMS.</title>
@@ -918,34 +954,6 @@ Vía Search Engine Journal, de Shelley Walsh, 2026-11-16.
 
 https://www.searchenginejournal.com/cms-market-share-trends-top-content-management-systems-nov-2026/596729/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2025/10/cms-market-share-trends-446.png" medium="image"/>
-    </item>
-    <item>
-      <title>Core Web Vitals para 500 URL en una sola ejecución, con las correcciones clasificadas por tiempo ahorrado (sin clave API, $3 por 1,000)</title>
-      <link>https://carlosandmunoz.com/social/pick/core-web-vitals-for-500-urls-in-one-run-with-the-fixes-ranke-es.html</link>
-      <guid isPermaLink="false">pick/core-web-vitals-for-500-urls-in-one-run-with-the-fixes-ranke-es</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Performance</category>
-      <description>pagespeed.web.dev es genial para una página. Para las 200 páginas principales de un cliente, o para cada página de producto antes de...
-
-Vía DEV, por SpellzCode, 2026-11-15.
-
-https://dev.to/spellzcode/core-web-vitals-for-500-urls-in-one-run-with-the-fixes-ranked-by-time-saved-no-api-key-3-per-gl0</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fce8m30x6xz5hc333x5ns.png" medium="image"/>
-    </item>
-    <item>
-      <title>Cómo agregar monitoreo de PageSpeed ​​Insights en su configuración de Laravel</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-add-pagespeed-insights-monitoring-in-your-laravel-set-es.html</link>
-      <guid isPermaLink="false">pick/how-to-add-pagespeed-insights-monitoring-in-your-laravel-set-es</guid>
-      <pubDate>Mon, 16 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Recomendado</category>
-      <category>Performance</category>
-      <description>Programe Google PageSpeed ​​Insights desde Laravel, almacene puntuaciones y campos de Core Web Vitals, y observe la cuota de API. Raw Guzzle funciona hasta que duele; el código abierto...
-
-Vía DEV, por Apogee Watcher, 2026-11-16.
-
-https://apogeewatcher.com/blog/how-to-add-pagespeed-insights-monitoring-laravel</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fcdn.apogeewatcher.com%2Fstorage%2Fblog-images%2FIBhuPv6mtkdvGgLs.webp" medium="image"/>
     </item>
   </channel>
 </rss>

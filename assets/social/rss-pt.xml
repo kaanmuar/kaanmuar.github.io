@@ -349,6 +349,24 @@ https://www.youtube.com/shorts/P2FFK6IcwFA</description>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>Nós contra eles: Auditorias de SEO em quatro momentos.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-pt.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo-pt</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparativo</category>
+      <category>Battle</category>
+      <description>Um pequeno tópico X / Threads: quais são as vantagens das auditorias de SEO, o que a revisão de URL cobre, uma divisão honesta e a tabela de comparação.
+
+Lição: Poste o gancho e depois as quatro batidas como respostas - não um carrossel LI/IG.
+
+Cobertura comparada nas próprias páginas de cada fornecedor, verificada 2026-11-10. Os nomes são marcas registradas de seus proprietários.
+Tabela: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Qualquer site pode embutir as páginas de Harvard em frame.</title>
       <link>https://carlosandmunoz.com/social/runs-100/18-harvard-pt.html</link>
       <guid isPermaLink="false">runs-100/18-harvard-pt</guid>
@@ -445,6 +463,24 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Revisão de URL versus auditorias de SEO.</title>
+      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-pt.html</link>
+      <guid isPermaLink="false">battle-vs-2026-11/01-vs-seo-scorecard-pt</guid>
+      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Comparativo</category>
+      <category>Battle</category>
+      <description>Um scorecard de cobertura das próprias páginas de cada fornecedor (marcado 2026-11-10). 10 verificações que nomeamos e que as auditorias de SEO não; eles se aprofundam nos problemas de rastreamento de SEO.
+
+Lição: Mantenha o rastreador de SEO para obter profundidade na página; adicione uma revisão de URL para ameaças, sósias, autenticação de e-mail e pacotes de correção.
+
+Cobertura comparada nas próprias páginas de cada fornecedor, verificada 2026-11-10. Os nomes são marcas registradas de seus proprietários.
+Tabela: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" length="223120" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>As tags canonical do MIT apontam para o CMS.</title>
@@ -953,46 +989,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #Automation #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/03-vs-sosfanta-com.jpg" length="265299" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-12/feed/03-vs-sosfanta-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>hsbc.bm: 75. A lacuna: medição.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-13/02-u-hsbc-bm-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-13/02-u-hsbc-bm-pt</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>National</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os scripts identificam o navegador antes que o visitante escolha.
-
-A lição para toda equipe: Encontre a tag atrás de cada host e mantenha-a até o consentimento, como um cookie de rastreamento. Se for fraude ou proteção contra bot, indique-o no aviso de privacidade.
-
-Uma análise automatizada de páginas públicas em 13 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-hsbc-bm&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-hsbc-bm
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Analytics #Programming #DevOps #QA #WebDev #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/02-u-hsbc-bm.jpg" length="241220" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-13/feed/02-u-hsbc-bm.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>actualite.cd: 48. A lacuna: nomes de links.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-14/01-u-actualite-cd-pt</guid>
-      <pubDate>Sun, 15 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>National</category>
-      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os links precisam ter texto discernível.
-
-A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
-
-Uma análise automatizada de páginas públicas em 13 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" length="224017" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

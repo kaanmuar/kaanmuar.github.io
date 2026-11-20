@@ -73,7 +73,18 @@
       targetedClear: "No public attack, active exploit, C2, blocklist, or breach signal matched {host}.",
       targetedFound: "{n} targeting or attack signals matched {host} (status: {status}).",
       targetedHost: "Hosting IP {ip} ({country}) on AS{asn}.",
-      targetedSources: "Sources checked: {list}."
+      targetedSources: "Sources checked: {list}.",
+      askListed: "Am I listed anywhere?",
+      listedTitle: "Listed?",
+      listedNone: "This report has no saved blocklist check.",
+      listedClear: "{host} is not on any blocklist this report checked (DROP, Feodo, URL and phishing lists).",
+      listedFound: "{host} appears in {n} blocklist or threat-list entries:",
+      listedHow: "Fix the cause first, then ask each list to remove the entry. The fix steps below say who can ask.",
+      askFirst: "What should I do first?",
+      firstTitle: "Start here",
+      firstLead: "Start with {ref}.",
+      firstNext: "Next: {list}.",
+      firstNone: "Nothing in this report needs fixing first."
     },
     es: {
       open: "Preguntar al informe", title: "Respuestas solo de este informe", close: "Cerrar", send: "Preguntar",
@@ -139,7 +150,18 @@
       targetedClear: "Ninguna señal pública de ataque, exploit activo, C2, lista de bloqueo o filtración coincidió con {host}.",
       targetedFound: "{n} señales de ataque o exposición coincidieron con {host} (estado: {status}).",
       targetedHost: "IP de alojamiento {ip} ({country}) en AS{asn}.",
-      targetedSources: "Fuentes consultadas: {list}."
+      targetedSources: "Fuentes consultadas: {list}.",
+      askListed: "¿Aparezco en alguna lista?",
+      listedTitle: "¿Está en una lista?",
+      listedNone: "Este informe no tiene una comprobación guardada de listas de bloqueo.",
+      listedClear: "{host} no está en ninguna lista de bloqueo que este informe comprobó (DROP, Feodo, listas de URL y phishing).",
+      listedFound: "{host} aparece en {n} entradas de listas de bloqueo o amenazas:",
+      listedHow: "Corrige primero la causa y luego pide a cada lista que retire la entrada. Los pasos de corrección indican quién puede pedirlo.",
+      askFirst: "¿Qué hago primero?",
+      firstTitle: "Empieza aquí",
+      firstLead: "Empieza por {ref}.",
+      firstNext: "Después: {list}.",
+      firstNone: "Nada en este informe necesita arreglarse primero."
     },
     pt: {
       open: "Perguntar ao relatório", title: "Respostas só deste relatório", close: "Fechar", send: "Perguntar",
@@ -205,7 +227,18 @@
       targetedClear: "Nenhum sinal público de ataque, exploit ativo, C2, lista de bloqueio ou vazamento correspondeu a {host}.",
       targetedFound: "{n} sinais de ataque ou exposição corresponderam a {host} (status: {status}).",
       targetedHost: "IP de hospedagem {ip} ({country}) no AS{asn}.",
-      targetedSources: "Fontes verificadas: {list}."
+      targetedSources: "Fontes verificadas: {list}.",
+      askListed: "Estou em alguma lista?",
+      listedTitle: "Está em uma lista?",
+      listedNone: "Este relatório não tem uma verificação salva de listas de bloqueio.",
+      listedClear: "{host} não está em nenhuma lista de bloqueio que este relatório verificou (DROP, Feodo, listas de URL e phishing).",
+      listedFound: "{host} aparece em {n} entradas de listas de bloqueio ou ameaças:",
+      listedHow: "Corrija primeiro a causa e depois peça a cada lista que remova a entrada. Os passos de correção dizem quem pode pedir.",
+      askFirst: "O que faço primeiro?",
+      firstTitle: "Comece aqui",
+      firstLead: "Comece por {ref}.",
+      firstNext: "Depois: {list}.",
+      firstNone: "Nada neste relatório precisa ser corrigido primeiro."
     },
     de: {
       open: "Den Bericht fragen", title: "Antworten nur aus diesem Bericht", close: "Schließen", send: "Fragen",
@@ -271,7 +304,18 @@
       targetedClear: "Kein öffentliches Angriffs-, Exploit-, C2-, Blocklisten- oder Vorfallssignal passte zu {host}.",
       targetedFound: "{n} Angriffs- oder Zielsignale passten zu {host} (Status: {status}).",
       targetedHost: "Hosting-IP {ip} ({country}) in AS{asn}.",
-      targetedSources: "Geprüfte Quellen: {list}."
+      targetedSources: "Geprüfte Quellen: {list}.",
+      askListed: "Stehe ich auf einer Liste?",
+      listedTitle: "Auf einer Liste?",
+      listedNone: "Dieser Bericht enthält keine gespeicherte Prüfung auf Sperrlisten.",
+      listedClear: "{host} steht auf keiner Sperrliste, die dieser Bericht geprüft hat (DROP, Feodo, URL- und Phishing-Listen).",
+      listedFound: "{host} erscheint in {n} Einträgen von Sperr- oder Bedrohungslisten:",
+      listedHow: "Beheben Sie zuerst die Ursache und bitten Sie dann jede Liste, den Eintrag zu entfernen. Die Korrekturschritte nennen, wer fragen kann.",
+      askFirst: "Was mache ich zuerst?",
+      firstTitle: "Hier anfangen",
+      firstLead: "Beginnen Sie mit {ref}.",
+      firstNext: "Danach: {list}.",
+      firstNone: "Nichts in diesem Bericht muss zuerst behoben werden."
     },
     fr: {
       open: "Interroger le rapport", title: "Réponses tirées de ce rapport uniquement", close: "Fermer", send: "Demander",
@@ -337,7 +381,18 @@
       targetedClear: "Aucun signal public d’attaque, d’exploit actif, de C2, de liste de blocage ou de fuite ne correspondait à {host}.",
       targetedFound: "{n} signaux d’attaque ou de ciblage correspondaient à {host} (statut : {status}).",
       targetedHost: "IP d’hébergement {ip} ({country}) sur AS{asn}.",
-      targetedSources: "Sources vérifiées : {list}."
+      targetedSources: "Sources vérifiées : {list}.",
+      askListed: "Suis-je sur une liste ?",
+      listedTitle: "Sur une liste ?",
+      listedNone: "Ce rapport ne contient pas de contrôle enregistré des listes de blocage.",
+      listedClear: "{host} ne figure sur aucune liste de blocage vérifiée par ce rapport (DROP, Feodo, listes d’URL et d’hameçonnage).",
+      listedFound: "{host} apparaît dans {n} entrées de listes de blocage ou de menaces :",
+      listedHow: "Corrigez d’abord la cause, puis demandez à chaque liste de retirer l’entrée. Les étapes de correction indiquent qui peut le demander.",
+      askFirst: "Que faire en premier ?",
+      firstTitle: "Commencez ici",
+      firstLead: "Commencez par {ref}.",
+      firstNext: "Ensuite : {list}.",
+      firstNone: "Rien dans ce rapport n’est à corriger en priorité."
     },
     it: {
       open: "Chiedi al report", title: "Risposte solo da questo report", close: "Chiudi", send: "Chiedi",
@@ -403,7 +458,18 @@
       targetedClear: "Nessun segnale pubblico di attacco, exploit attivo, C2, blocklist o violazione corrisponde a {host}.",
       targetedFound: "{n} segnali di attacco o esposizione corrispondono a {host} (stato: {status}).",
       targetedHost: "IP di hosting {ip} ({country}) su AS{asn}.",
-      targetedSources: "Fonti verificate: {list}."
+      targetedSources: "Fonti verificate: {list}.",
+      askListed: "Sono in qualche lista?",
+      listedTitle: "In una lista?",
+      listedNone: "Questo report non ha un controllo salvato sulle blocklist.",
+      listedClear: "{host} non è in nessuna blocklist controllata da questo report (DROP, Feodo, liste di URL e phishing).",
+      listedFound: "{host} compare in {n} voci di blocklist o liste di minacce:",
+      listedHow: "Correggi prima la causa, poi chiedi a ogni lista di rimuovere la voce. I passaggi di correzione dicono chi può chiederlo.",
+      askFirst: "Cosa faccio per primo?",
+      firstTitle: "Parti da qui",
+      firstLead: "Parti da {ref}.",
+      firstNext: "Poi: {list}.",
+      firstNone: "Niente in questo report richiede una correzione prioritaria."
     }
   };
   const SEVERITY_RANK = { critical: 5, high: 4, medium: 3, low: 2, info: 1 };
@@ -431,6 +497,8 @@
     "sec-mta-sts": ["mtaSts", "mta-sts.txt"]
   };
   const INTENTS = [
+    ["first", /\b(first|start\w*|begin\w*|primero|primeiro|empez\w*|comenz\w*|comec\w*|zuerst|anfangen|beginn\w*|d abord|commenc\w*|prima|inizi\w*|parti)\b/],
+    ["listed", /\b(listed|lists?|blocklist\w*|blacklist\w*|blocked|delist\w*|lista\w*|listas|bloqueo|bloqueada|bloqueio|gelistet|sperrliste\w*|liste\w*|listee?s?|blocage)\b/],
     ["export", /\b(github|jira|issues?|tickets?|export\w*|esporta\w*)\b/],
     ["playwright", /\b(playwright|scripts?|specs?|tests?|testfall|prueba|teste)\b/],
     ["fix", /\b(fix\w*|repair|solve|stack|hosting|config\w*|arregl\w*|corrig\w*|soluc\w*|correc\w*|correz\w*|korrektur\w*|beheb\w*|repar\w*|risolv\w*)\b/],
@@ -466,7 +534,8 @@
 
   function intentOf(question) {
     const words = plain(question).replace(/github pages|github\.com/g, " ");
-    const found = INTENTS.find(([, pattern]) => pattern.test(words));
+    const named = idsIn(question).length > 0;
+    const found = INTENTS.find(([name, pattern]) => !(named && (name === "first" || name === "listed")) && pattern.test(words));
     return found ? found[0] : "";
   }
 
@@ -539,7 +608,8 @@
     if (top) asks.push(fill(L.askRated, { id: top.id, severity: severityWord(L, top.severity) }), fill(hosting ? L.askFixOn : L.askFix, { id: top.id, host: hosting }));
     if (firstCase) asks.push(fill(L.askPlaywright, { id: firstCase.id }));
     if (top) asks.push(fill(L.askExport, { id: top.id }));
-    if (report && report.targeted && !report.preview) asks.push(L.askTargeted);
+    if (report && report.targeted && !report.preview) asks.push(L.askTargeted, L.askListed);
+    if (top && report && report.targeted && !report.preview) asks.push(L.askFirst);
     return asks;
   }
 
@@ -887,6 +957,39 @@
     return { intent: "targeted", title: L.targetedTitle, parts, suggest: suggestions(report, null) };
   }
 
+  const LISTED_KINDS = ["phishing-host", "malware-host", "c2-indicator", "mail-blocklist", "hacked-spam"];
+  const LISTED_KEYS = ["sec-drop", "sec-feodo"];
+  const ATTACK_KEY = /^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/;
+
+  function explainListed(L, report) {
+    const t = report && report.targeted;
+    if (!t || typeof t !== "object") return { intent: "listed", title: L.listedTitle, parts: [text(L.listedNone)] };
+    const host = (typeof t.host === "string" && t.host) || report.host || "";
+    const items = (Array.isArray(t.items) ? t.items : []).filter((it) => it && LISTED_KINDS.indexOf(it.kind) !== -1 && it.level !== "info");
+    if (!items.length) return { intent: "listed", title: L.listedTitle, parts: [text(fill(L.listedClear, { host }))] };
+    const parts = [
+      text(fill(L.listedFound, { n: items.length, host })),
+      list(items.slice(0, 8).map((it) => [it.level, it.kind, it.subject || host, it.source, it.evidence].filter(Boolean).join(" · "))),
+      text(L.listedHow)
+    ];
+    const steps = findings(report).filter((row) => LISTED_KEYS.indexOf(row.key) !== -1 && row.verdict !== "pass" && row.fix).map((row) => row.id + " · " + row.fix);
+    if (steps.length) parts.push(list(steps));
+    return { intent: "listed", title: L.listedTitle, parts };
+  }
+
+  // What to do first: open attack-source findings of high severity lead, then the report's own ranking.
+  function explainFirst(L, report) {
+    const open = openFindings(report).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99));
+    if (!open.length) return { intent: "first", title: L.firstTitle, parts: [text(L.firstNone)] };
+    const attack = open.filter((row) => ATTACK_KEY.test(row.key || "") && (SEVERITY_RANK[row.severity] || 0) >= 3);
+    const ordered = attack.concat(open.filter((row) => attack.indexOf(row) === -1));
+    const lead = ordered[0];
+    const parts = [text(fill(L.firstLead, { ref: lead.id + " · " + lead.title }))];
+    if (lead.fix) parts.push(text(fill(L.fix, { fix: lead.fix })));
+    if (ordered.length > 1) parts.push(text(fill(L.firstNext, { list: ordered.slice(1, 3).map((row) => row.id + " · " + row.title).join("; ") })));
+    return { intent: "first", title: L.firstTitle, parts, suggest: followUps(L, report, { kind: "finding", item: lead }), ref: lead.id };
+  }
+
   function answer(source, question, options) {
     const opts = options || {};
     const L = book(opts.lang);
@@ -897,6 +1000,11 @@
     if (intent === "targeted" && !idsIn(asked).length) {
       const out = explainTargeted(L, report);
       out.suggest = suggestions(report, opts.lang);
+      return out;
+    }
+    if (intent === "listed" || intent === "first") {
+      const out = intent === "listed" ? explainListed(L, report) : explainFirst(L, report);
+      if (!out.suggest) out.suggest = suggestions(report, opts.lang);
       return out;
     }
     const hit = asked ? target(report, asked, intent === "playwright" ? "case" : "finding") : null;
