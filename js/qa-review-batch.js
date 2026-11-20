@@ -140,6 +140,7 @@
 			else url.setAttribute('required', '');
 		}
 		refreshPreview();
+		document.dispatchEvent(new CustomEvent('qa-review-mode', { detail: { mode: bulk ? 'many' : 'one' } }));
 	}
 
 	function leadUrl() {
@@ -309,8 +310,10 @@
 				if (!picked) return;
 				const reader = new FileReader();
 				reader.onload = () => {
-					if (text) text.value = String(reader.result || '');
-					refreshPreview();
+					if (text) {
+						text.value = String(reader.result || '');
+						text.dispatchEvent(new Event('input', { bubbles: true }));
+					} else refreshPreview();
 				};
 				reader.readAsText(picked);
 			});

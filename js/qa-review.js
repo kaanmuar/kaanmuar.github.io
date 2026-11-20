@@ -665,7 +665,10 @@
 		const done = {
 			you: signedIn() && !!document.getElementById('name').value.trim(),
 			why: !!code && (code !== 'other' || !!reasonBox.value.trim()),
-			page: !!urlInput.value.trim(),
+			page:
+				window.QAReviewBatch && QAReviewBatch.mode() === 'many'
+					? !QAReviewBatch.parseList(QAReviewBatch.listText()).error
+					: !!urlInput.value.trim(),
 			cases: names.length > 0,
 			scope:
 				!!reviewForm.querySelector('input[name="pages"]:checked') &&
@@ -743,6 +746,10 @@
 	reviewForm.addEventListener('change', paintSteps);
 	reviewForm.addEventListener('invalid', (event) => openStepOf(event.target), true);
 	if (window.ReviewAuth) ReviewAuth.onChange(paintSteps);
+	document.addEventListener('qa-review-mode', () => {
+		paintSteps();
+		paintSoftRunLabels();
+	});
 	paintSteps();
 	const followUpBox = document.getElementById('follow-up');
 	if (followUpBox)
@@ -836,7 +843,9 @@
 		const label = softLeft == null ? 'Run' : 'Run · ' + softLeft + ' left';
 		if (reviewBtn && !activeRun) {
 			const base = reviewBtn.getAttribute('data-soft-label') || 'Review';
-			reviewBtn.textContent = softLeft == null ? base : 'Run · ' + softLeft + ' left';
+			// Free previews never pay for a bulk review, so their count would read as runs the batch can use.
+			const bulk = window.QAReviewBatch && QAReviewBatch.mode() === 'many';
+			reviewBtn.textContent = softLeft == null || bulk ? base : 'Run · ' + softLeft + ' left';
 			if (!reviewBtn.getAttribute('data-soft-label')) reviewBtn.setAttribute('data-soft-label', base);
 		}
 		const heroBtn = stageStart && stageStart.querySelector('button[type="submit"]');
@@ -3715,10 +3724,13 @@
 		const pass = passOn();
 		const left = pass && pass.runsLeft != null ? pass.runsLeft : 0;
 		if (!pass || left < parsed.urls.length) {
-			setStatus(
-				left <= 0 ? batchCopy('needCreditsNone') : batchCopy('needCredits', { need: parsed.urls.length, left }),
-				true
-			);
+			const msg =
+				left <= 0 ? batchCopy('needCreditsNone') : batchCopy('needCredits', { need: parsed.urls.length, left });
+			setStatus(msg, true);
+			// The status line sits by the button, far below the list; say it where the list is too (#3932).
+			const listError = document.getElementById('batch-error');
+			listError.textContent = msg;
+			listError.scrollIntoView({ block: 'center', behavior: 'smooth' });
 			return;
 		}
 		if (!termsOk) {
@@ -3737,6 +3749,8 @@
 		activeRun = 'batch';
 		reviewBtn.disabled = true;
 		bc.paintStarting(parsed.urls);
+		// Run sits far below the list; bring the panel that tracks every row on screen.
+		document.getElementById('batch-panel').scrollIntoView({ block: 'center', behavior: 'smooth' });
 		document.getElementById('run-log').innerHTML = '';
 		if (window.ReviewProgress) ReviewProgress.start({ host: parsed.urls[0].host, pages: selectedPages() });
 		appendLog(batchCopy('starting'));
@@ -3815,6 +3829,13 @@
 			stopBtn.disabled = true;
 			loadStanding();
 			if (bc) bc.paintPanel(pool.batch);
+			const finalStatus = document.getElementById('batch-panel-status');
+			if (finalStatus && pool.batch.status !== 'running') setStatus(finalStatus.textContent, false);
+			if (pool.leadPayload && !pool.stopping) {
+				layer = 'All';
+				render(pool.leadPayload);
+				dash.scrollTop = 0;
+			}
 		}
 	}
 
@@ -3885,11 +3906,8 @@
 				if (window.ReviewProgress) ReviewProgress.finish(stopped || pool.stopping ? 'stopped' : 'ready');
 				if (window.QAReviewBatch) QAReviewBatch.paintPanel(updated);
 				if (window.SiteAnalytics) SiteAnalytics.trackEvent('qa_review_done', 'URL Review', payload.report.host);
-				if (!pool.stopping && index === 0) {
-					layer = 'All';
-					render(payload);
-					dash.scrollTop = 0;
-				}
+				// The report modal covers the batch panel, so the lead report opens once every row has run (#3932).
+				if (!pool.stopping && index === 0) pool.leadPayload = payload;
 				return;
 			} catch (error) {
 				lastError = error;
