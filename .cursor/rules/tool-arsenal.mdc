@@ -178,7 +178,7 @@ Verdicts from the review of the three candidates in scout PR #3907. The end-user
 
 | Tool / Source | License | Ticket | Whole vs. Part & Fit |
 |---|---|---|---|
-| `pourdev/pour-engine` | MIT | #3909 | **Watch:** a zero-dependency in-page WCAG 2.2 engine, an optional second accessibility engine for URL Review beside axe (#3831) and `koodikiht/axtree-audit`. Pin a version, dedupe against axe before any use, and do not use the name "pour" in branding (a UK trademark). Its tests live upstream, so nothing is vendored yet. |
+| `pourdev/pour-engine` | MIT | #4067 (wave #3909) | **Reference only:** we already run axe-core 4.14 with the WCAG 2.0 to 2.2 tags plus a phone target-size pass, so it overlaps almost every rule. Its publisher account is as new as the repo and its tests are not published, so it is unverifiable. Only the idea of a "needs a human" criteria list is worth borrowing. Do not vendor it, and do not use the name "pour" in branding (a UK trademark). |
 | `Capta1nRaj/goshipit` | Apache-2.0 | #3909 | **Pattern:** a ticked pre-deploy checklist for Jarvis chats only. Its checks are run by an agent, not a deterministic gate, so it never replaces the #3833 gates (zizmor, gitleaks, osv-scanner). Do not install it as a global skill. |
 | `rbartoli/obsidian-tela-theme` | MIT | #3909 | **Skip, end-user app (Carlos's responsibility):** a CSS-only Obsidian theme for Carlos's own vault. Never embedded in product or customer code. |
 
