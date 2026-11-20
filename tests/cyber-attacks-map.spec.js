@@ -291,6 +291,13 @@ test.describe('Cyber attacks map (#3819)', () => {
 		await expect(page.locator('#map-tab-global')).toHaveAttribute('aria-selected', 'true');
 		await expect(page.locator('#desk-map-svg-wrap svg.desk-map-svg path.desk-map-cc')).toHaveCount(174);
 
+		// Line-light faces (#3826): tabs, kind markers per leading country, and a legend.
+		await expect(page.locator('#map-tab-global img.desk-face')).toHaveAttribute('src', /faces\/line\/cybermap\.svg/);
+		await expect(page.locator('#map-tab-ours img.desk-face')).toHaveAttribute('src', /faces\/line\/linked\.svg/);
+		await expect(page.locator('#desk-map-svg-wrap image.desk-map-mark')).toHaveCount(3);
+		await expect(page.locator('#desk-map-svg-wrap image.desk-map-mark').evaluateAll((n) => n.map((i) => i.dataset.face))).resolves.toEqual(['ransomware', 'history', 'ddos']);
+		await expect(page.locator('#desk-map-legend li')).toHaveText(['Ransomware', 'Data breach', 'DDoS', 'Cyber attack']);
+
 		// Switch to Tab 2: Our reviewed sites
 		await page.locator('#map-tab-ours').click();
 		await expect(page.locator('#map-tab-ours')).toHaveAttribute('aria-selected', 'true');
@@ -298,6 +305,8 @@ test.describe('Cyber attacks map (#3819)', () => {
 		await expect(page.locator('#desk-map-ours-tools')).toBeVisible();
 		await expect(page.locator('#desk-map-detail')).toContainText('United States (US)');
 		await expect(page.locator('#desk-map-detail')).toContainText('Germany (DE)');
+		await expect(page.locator('#desk-map-svg-wrap image.desk-map-mark').evaluateAll((n) => n.map((i) => i.dataset.face))).resolves.toEqual(['lvl-critical', 'lvl-high']);
+		await expect(page.locator('#desk-map-legend li')).toHaveText(['Critical', 'High', 'Watch', 'Info']);
 
 		// Select United States on Ours map and inspect sites + jump to Threat List
 		await page.locator('#desk-map-svg-wrap path.desk-map-cc[data-cc="US"]').click();
