@@ -370,6 +370,7 @@ object Home {
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
+        MapKind.entries.forEach { k -> runCatching { mapWidget(k).updateAll(context) } }
         runCatching { TileService.requestListeningState(context, ComponentName(context, StatusTile::class.java)) }
         val today = today(context.applicationContext as JarvisApp)
         Ongoing.show(context, today)

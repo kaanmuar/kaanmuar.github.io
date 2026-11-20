@@ -50,23 +50,24 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.serialization.json.JsonObject
 
-private fun color(argb: Int) = ColorProvider(Color(argb))
-private val Muted = TextStyle(color = color(Art.MUTED), fontSize = 11.sp)
-private fun Context.px(dp: Dp) = (dp.value * resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
+internal fun color(argb: Int) = ColorProvider(Color(argb))
+internal val Muted = TextStyle(color = color(Art.MUTED), fontSize = 11.sp)
+internal fun Context.px(dp: Dp) = (dp.value * resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
 private fun ago(at: Long) = if (System.currentTimeMillis() - at < 60_000) "just now"
     else DateUtils.getRelativeTimeSpanString(at, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
 
 /** The glass card every widget sits in: gradient fill, cyan hairline border and corner brackets (drawable/widget_glass). */
 @Composable
-private fun Glass(open: Intent, title: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun Glass(open: Intent, title: String, trailing: (@Composable () -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     Column(
         GlanceModifier.fillMaxSize().cornerRadius(20.dp).background(ImageProvider(R.drawable.widget_glass)).padding(horizontal = 14.dp, vertical = 12.dp)
             .clickable(actionStartActivity(open))
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Image(ImageProvider(R.drawable.widget_cube), null, GlanceModifier.size(12.dp))
             Spacer(GlanceModifier.width(6.dp))
-            Text(title.uppercase(), style = TextStyle(color = color(Art.CYAN), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium))
+            Text(title.uppercase(), style = TextStyle(color = color(Art.CYAN), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Medium), maxLines = 1)
+            if (trailing != null) { Spacer(GlanceModifier.defaultWeight()); trailing() }
         }
         Spacer(GlanceModifier.height(6.dp))
         Column(GlanceModifier.fillMaxWidth().defaultWeight(), content = content)
@@ -74,7 +75,7 @@ private fun Glass(open: Intent, title: String, content: @Composable ColumnScope.
 }
 
 @Composable
-private fun SignedOut(open: Intent, title: String) = Glass(open, title) {
+internal fun SignedOut(open: Intent, title: String) = Glass(open, title) {
     Text("Sign in to Jarvis", style = TextStyle(color = color(Art.TEXT), fontSize = 14.sp, fontWeight = FontWeight.Medium))
     Text("Widgets fill in after the first refresh.", style = Muted)
 }
