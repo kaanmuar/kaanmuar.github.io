@@ -22,6 +22,51 @@ test('each notice carries its heading and text without scripts', () => {
 	);
 });
 
+test('legal/clauses.json renders the whole page, script and notices, from a page stripped of both', () => {
+	const at = html.indexOf('function paint(');
+	const start = html.lastIndexOf('<script>', at) + '<script>'.length;
+	const blank = (html.slice(0, start) + 'function paint(){}' + html.slice(html.indexOf('</script>', at)))
+		.replace(/(<article class="sheet" id="[a-z-]+-notice">)[\s\S]*?(<\/article>)/g, '$1$2')
+		.replace(/ 'sha256-[A-Za-z0-9+/=]+'/g, '');
+	assert.ok(!blank.includes('Ley Estatutaria 1581 de 2012'));
+	assert.equal(legal.build(blank), html);
+});
+
+test('a clause edited in legal/clauses.json is what the page then shows', () => {
+	const source = legal.source();
+	const clauses = source.clauses.map((clause) =>
+		clause.id === 'national.personal-data.2' ? { ...clause, text: 'Edited clause.' } : clause
+	);
+	const page = legal.build(html, { ...source, clauses });
+	assert.match(Object.fromEntries(legal.painted(page))['origin-notice'], /<li>Edited clause\.<\/li>/);
+	assert.ok(!page.includes('Decreto 1377 de 2013 is compiled'));
+	assert.throws(() => legal.build(html, { ...source, clauses: clauses.slice(1) }), /lacks/);
+});
+
+test('every clause carries its id, language, jurisdiction, status, lastChecked date, and on-file citations', () => {
+	const { clauses } = legal.source();
+	const date = /^\d{4}-\d{2}-\d{2}$/;
+	const real = (day) => date.test(day) && new Date(day + 'T00:00:00Z').toISOString().slice(0, 10) === day;
+	const statutes = new Map(
+		clauses.filter((clause) => clause.kind === 'statute').map((clause) => [clause.text, clause.cites[0].url])
+	);
+	assert.equal(new Set(clauses.map((clause) => clause.id)).size, clauses.length, 'clause ids are unique');
+	clauses.forEach((clause) => {
+		const where = clause.id + ': ';
+		assert.ok(clause.text && clause.language && clause.jurisdiction, where + 'text, language, and jurisdiction');
+		assert.ok(['draft', 'counsel-approved'].includes(clause.status), where + 'status ' + clause.status);
+		assert.ok(real(clause.lastChecked), where + 'lastChecked ' + clause.lastChecked);
+		if (clause.status === 'counsel-approved') assert.ok(real(clause.counselReviewedOn), where + 'counselReviewedOn');
+		else assert.equal(clause.counselReviewedOn, null, where + 'a draft has no counsel review date');
+		assert.ok(Array.isArray(clause.cites), where + 'cites');
+		clause.cites.forEach((cite) => {
+			assert.match(cite.url, /^https:\/\//, where + cite.name);
+			assert.equal(statutes.get(cite.name), cite.url, where + cite.name + ' matches its statute record');
+		});
+	});
+	assert.equal(statutes.size, 18);
+});
+
 test("every root page's hreflang alternates are separate files, and the cluster includes the page's canonical", () => {
 	const root = path.join(__dirname, '..', '..');
 	const site = 'https://carlosandmunoz.com/';
