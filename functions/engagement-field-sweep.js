@@ -7,6 +7,7 @@ const DAY = 24 * 3600000;
 function toPost(item, now) {
   if (!item || !item.url || !/^https:\/\//.test(String(item.url))) return null;
   const topic = clip(item.topic, 40);
+  // Tender notices stay discovery-only. Cyber items (CVE, advisories) reach the scouts like any other, and engagement.guard() still keeps AI replies off every field-sweep post (#3940).
   const tender = /procurement|tender/i.test(topic);
   const at = item.date ? (String(item.date).length === 10 ? item.date + "T12:00:00Z" : item.date) : new Date(now).toISOString();
   return {
@@ -22,6 +23,7 @@ function toPost(item, now) {
     metrics: { likes: num(item.signal), replies: 0, reposts: 0, views: 0 },
     tags: topic ? [topic.toLowerCase()] : [],
     via: "field-sweep",
+    credit: clip(item.credit, 120),
     topic,
     discoveryOnly: tender || item.discoveryOnly === true
   };

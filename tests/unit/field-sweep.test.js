@@ -29,12 +29,12 @@ const ATOM = `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://sear
 <content type="html">&lt;p&gt;New &lt;code&gt;toMatchAriaSnapshot&lt;/code&gt; options.&lt;/p&gt;</content>
 <media:thumbnail url="https://avatars.githubusercontent.com/u/1?v=4"/></entry></feed>`;
 
-test('cyber security sources are registered for discovery scouts (#3839)', () => {
+test('cyber security sources are registered for the hub queue and the scouts (#3839, #3940)', () => {
 	['cisa-kev', 'github-advisories'].forEach((id) => {
 		const s = source(id);
 		assert.ok(s, id);
 		assert.equal(s.topic, 'Security');
-		assert.equal(s.discoveryOnly, true);
+		assert.ok(!s.discoveryOnly, id + ' reaches the hub queue');
 		assert.ok(['kev', 'ghsa'].includes(s.type));
 	});
 	assert.ok(sweep.requests(source('cisa-kev'), NOW).includes('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'));
@@ -255,7 +255,7 @@ test('rank merges the same article across sources and boosts it', () => {
 	assert.equal(top.firstSeen, '2026-10-24');
 });
 
-test('rank marks discoveryOnly proposals for scout opt-in (#3839)', () => {
+test('rank keeps cyber proposals out of discovery-only, so they reach the hub queue (#3940)', () => {
 	const cyber = item({
 		sourceId: 'cisa-kev',
 		source: 'CISA KEV',
@@ -266,8 +266,41 @@ test('rank marks discoveryOnly proposals for scout opt-in (#3839)', () => {
 		date: '2026-10-23',
 	});
 	const [proposal] = sweep.rank([cyber], { now: NOW, state: admin.empty(), previous: null });
-	assert.equal(proposal.discoveryOnly, true);
+	assert.equal(proposal.discoveryOnly, false);
 	assert.equal(proposal.topic, 'Security');
+	assert.ok(!('credit' in proposal), 'CC0 KEV needs no credit');
+	assert.equal(admin.pendingProposals([proposal], admin.empty()).length, 1);
+});
+
+test('rank discoveryOnly sources still mark their proposals (#3839)', () => {
+	const tender = item({ sourceId: 'ted-eu', source: 'TED EU', url: 'https://ted.europa.eu/en/notice/1', title: 'Software testing services tender notice', summary: 'Tender for software testing.', time: NOW - 86400000, date: '2026-10-23' });
+	const [proposal] = sweep.rank([tender], { now: NOW, state: admin.empty(), previous: null });
+	assert.equal(proposal.discoveryOnly, true);
+});
+
+test('GitHub advisory items carry the CC BY 4.0 credit into the proposal (#3940)', () => {
+	const [parsed] = sweep.parseGhsa(GHSA_FIXTURE, source('github-advisories'));
+	assert.equal(parsed.credit, 'GitHub Advisory Database (CC BY 4.0)');
+	const [proposal] = sweep.rank([Object.assign({}, parsed, { time: NOW - 86400000 })], { now: NOW, state: admin.empty(), previous: null });
+	assert.equal(proposal.credit, 'GitHub Advisory Database (CC BY 4.0)');
+	assert.equal(proposal.discoveryOnly, false);
+	// it survives the next sweep even when the item is no longer fetched
+	const [kept] = sweep.rank([], { now: NOW, state: admin.empty(), previous: { proposals: [proposal] } });
+	assert.equal(kept.credit, proposal.credit);
+	// a KEV item merged with an advisory for the same address takes the advisory's credit
+	const kev = item({ sourceId: 'cisa-kev', source: 'CISA KEV', url: parsed.url, title: parsed.title, summary: 'x', time: NOW - 86400000, weight: 1.15 });
+	const [merged] = sweep.rank([kev, Object.assign({}, parsed, { time: NOW - 86400000 })], { now: NOW, state: admin.empty(), previous: null });
+	assert.equal(merged.credit, 'GitHub Advisory Database (CC BY 4.0)');
+});
+
+test('the hub draft of an advisory proposal keeps the credit in the post text, even for a long summary (#3940)', () => {
+	const base = { id: 'eeeeeeeeeeee', title: 'CVE-2026-1: Example', url: 'https://github.com/advisories/GHSA-xxxx-yyyy-zzzz', source: 'GitHub Advisories', author: 'GitHub Advisory', date: '2026-10-23', topic: 'Security', summary: 'Short.', image: '', credit: 'GitHub Advisory Database (CC BY 4.0)' };
+	const draft = admin.proposalDraft(base, '2026-10-24');
+	assert.match(draft.text, /Credit: GitHub Advisory Database \(CC BY 4\.0\)\.$/);
+	const long = admin.proposalDraft(Object.assign({}, base, { summary: 'x'.repeat(5000) }), '2026-10-24');
+	assert.ok(long.text.length <= 3000);
+	assert.match(long.text, /Credit: GitHub Advisory Database \(CC BY 4\.0\)\.$/);
+	assert.ok(!/Credit:/.test(admin.proposalDraft(Object.assign({}, base, { credit: undefined }), '2026-10-24').text));
 });
 
 test('rank leaves out what is approved, dismissed, on the hub, too old or off topic for a general source', () => {
