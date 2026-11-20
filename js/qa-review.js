@@ -16,6 +16,7 @@
 	const COMPARE_USD = 9;
 	const RUN_PAID_KEY = 'qa-review-run-paid';
 	const FIXLIST_USD = 5;
+	const DEEP_USD = 19;
 	const FIXLIST_KEY = 'qa-review-fixlist';
 	const openedAt = Date.now();
 	const SITE_COUNTRY = {
@@ -5642,6 +5643,74 @@
 		);
 	}
 
+	// The Deep check (#3946): offered on a paid report, run once after it is bought, shown inside the Threat picture.
+	let deepRunFor = '';
+
+	function deepBlock(report, paid, payload) {
+		const src = payload || current || {};
+		const result = src.deep && typeof src.deep === 'object' && src.deep.checkedAt ? src.deep : null;
+		const bought = (src.addons || []).indexOf('deep') !== -1;
+		if (result) {
+			const hits = (Array.isArray(result.findings) ? result.findings : []).filter((row) => row && row.verdict !== 'pass');
+			const read = (Array.isArray(result.sourcesRead) ? result.sourcesRead : []).map(cleanTargetedText).filter(Boolean);
+			const skipped = (Array.isArray(result.sourcesSkipped) ? result.sourcesSkipped : []).map(cleanTargetedText).filter(Boolean);
+			return (
+				'<div class="targeted-deep" id="targeted-deep"><h3>' +
+				esc(rc.t('deepTitle')) +
+				'</h3>' +
+				(hits.length
+					? '<div class="targeted-list">' +
+						hits
+							.map(
+								(row) =>
+									'<article class="targeted-item"><h3>' +
+									esc(cleanTargetedText(fc.line(row.msg && row.msg.title, row.title))) +
+									'</h3><p>' +
+									esc(cleanTargetedText(fc.line(row.msg && row.msg.evidence, row.evidence))) +
+									'</p></article>'
+							)
+							.join('') +
+						'</div>'
+					: '<p class="muted">' + esc(rc.t('deepClear')) + '</p>') +
+				'<div class="targeted-foot">' +
+				(read.length ? '<span>' + esc(rc.t('targetedSources', { list: read.join(', ') })) + '</span>' : '') +
+				(skipped.length ? '<span>' + esc(rc.t('targetedSkipped', { list: skipped.join(', ') })) + '</span>' : '') +
+				'</div></div>'
+			);
+		}
+		if (bought) {
+			return '<div class="targeted-deep" id="targeted-deep"><h3>' + esc(rc.t('deepTitle')) + '</h3><p class="meta-line" id="targeted-deep-status">' + esc(rc.t('deepRunning')) + '</p></div>';
+		}
+		// Offered only while the server says it can run the check (a CertSpotter key is set); the server refuses the sale otherwise.
+		if (!report || !report.id || src.deepAvailable !== true) return '';
+		return (
+			'<div class="targeted-deep no-print" id="targeted-deep"><h3>' +
+			esc(rc.t('deepTitle')) +
+			'</h3><p class="meta-line">' +
+			esc(rc.t('deepOfferHint', { usd: DEEP_USD })) +
+			'</p><a class="btn btn-ghost" data-act="deep-offer" href="' +
+			esc(payPage() + '?purpose=deep&reportId=' + encodeURIComponent(report.id)) +
+			'">' +
+			esc(rc.t('deepOfferBtn', { usd: DEEP_USD })) +
+			'</a></div>'
+		);
+	}
+
+	async function runDeepCheck(report, paid, payload) {
+		const id = report && report.id;
+		if (!id || deepRunFor === id || !window.ReviewAuth || !ReviewAuth.signedIn()) return;
+		deepRunFor = id;
+		try {
+			const data = await batchPost('/account/deep/run', { id });
+			if (current) current.deep = data.deep;
+			paintTargeted(report, paid, Object.assign({}, payload || {}, { deep: data.deep }));
+		} catch (error) {
+			deepRunFor = '';
+			const status = document.getElementById('targeted-deep-status');
+			if (status) status.textContent = rc.t('deepFailed');
+		}
+	}
+
 	async function downloadEvidencePdf() {
 		const button = document.getElementById('targeted-evidence-pdf');
 		if (!button || !current || !current.paid || !current.report) return;
@@ -5840,12 +5909,15 @@
 			listHtml +
 			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '') +
 			offerHtml +
-			pdfBtn;
+			pdfBtn +
+			deepBlock(report, paid, payload);
 		const offerBtn = box.querySelector('[data-act="owner-notice-offer"]');
 		const offerNote = box.querySelector('.targeted-owner-status');
 		if (offerBtn && report && report.id) {
 			offerBtn.addEventListener('click', () => sendAttackOwnerNotice(report.id, offerBtn, offerNote));
 		}
+		const deepSrc = payload || current || {};
+		if ((deepSrc.addons || []).indexOf('deep') !== -1 && !(deepSrc.deep && deepSrc.deep.checkedAt)) runDeepCheck(report, paid, payload);
 		const evidenceBtn = document.getElementById('targeted-evidence-pdf');
 		if (evidenceBtn && !evidenceBtn.dataset.wired) {
 			evidenceBtn.dataset.wired = '1';

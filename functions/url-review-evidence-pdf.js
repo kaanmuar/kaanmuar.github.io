@@ -29,6 +29,7 @@ const LABEL = {
     sourcesReadLabel: "Read",
     sourcesSkippedLabel: "Skipped",
     noSources: "No source answered in time.",
+    deepTag: "Deep check",
     colFinding: "Finding",
     colLevel: "Level",
     colSource: "Source",
@@ -47,6 +48,7 @@ const LABEL = {
     sourcesReadLabel: "Leídas",
     sourcesSkippedLabel: "Omitidas",
     noSources: "Ninguna fuente respondió a tiempo.",
+    deepTag: "Revisión profunda",
     colFinding: "Hallazgo",
     colLevel: "Nivel",
     colSource: "Fuente",
@@ -65,6 +67,7 @@ const LABEL = {
     sourcesReadLabel: "Lidas",
     sourcesSkippedLabel: "Ignoradas",
     noSources: "Nenhuma fonte respondeu a tempo.",
+    deepTag: "Verificação profunda",
     colFinding: "Achado",
     colLevel: "Nível",
     colSource: "Fonte",
@@ -83,6 +86,7 @@ const LABEL = {
     sourcesReadLabel: "Gelesen",
     sourcesSkippedLabel: "Übersprungen",
     noSources: "Keine Quelle hat rechtzeitig geantwortet.",
+    deepTag: "Tiefenprüfung",
     colFinding: "Befund",
     colLevel: "Stufe",
     colSource: "Quelle",
@@ -101,6 +105,7 @@ const LABEL = {
     sourcesReadLabel: "Lues",
     sourcesSkippedLabel: "Ignorées",
     noSources: "Aucune source n’a répondu à temps.",
+    deepTag: "Contrôle approfondi",
     colFinding: "Constat",
     colLevel: "Niveau",
     colSource: "Source",
@@ -119,6 +124,7 @@ const LABEL = {
     sourcesReadLabel: "Lette",
     sourcesSkippedLabel: "Saltate",
     noSources: "Nessuna fonte ha risposto in tempo.",
+    deepTag: "Controllo approfondito",
     colFinding: "Rilievo",
     colLevel: "Livello",
     colSource: "Fonte",
@@ -218,11 +224,26 @@ function attackFindings(report) {
   return findings.filter((row) => row && FINDING_KEYS.indexOf(String(row.key || "")) !== -1);
 }
 
+// The Deep check bought on this report (#3946): its findings that are hits, tagged so they read apart from the plain read.
+function deepRows(record, lang) {
+  const block = record && record.deep;
+  if (!block || typeof block !== "object" || !Array.isArray(block.findings)) return [];
+  const tag = label(lang, "deepTag");
+  return block.findings.filter((finding) => finding && finding.verdict !== "pass" && FINDING_KEYS.indexOf(String(finding.key || "")) !== -1).map((finding) => ({
+    key: finding.key,
+    deep: true,
+    title: tag + ": " + findingLine(lang, finding, "title"),
+    level: finding.severity || "low",
+    evidence: findingLine(lang, finding, "evidence"),
+    source: sourcesForKey(finding.key, block).join(", "),
+    time: stamp(timeForKey(finding.key, block))
+  }));
+}
+
 function rows(record, lang) {
   const report = (record && record.report) || {};
   const targetedBlock = report.targeted;
-  if (!targetedBlock || typeof targetedBlock !== "object") return [];
-  return attackFindings(report).map((finding) => ({
+  const base = !targetedBlock || typeof targetedBlock !== "object" ? [] : attackFindings(report).map((finding) => ({
     key: finding.key,
     title: findingLine(lang, finding, "title"),
     level: finding.severity || "low",
@@ -230,6 +251,7 @@ function rows(record, lang) {
     source: sourcesForKey(finding.key, targetedBlock).join(", "),
     time: stamp(timeForKey(finding.key, targetedBlock))
   }));
+  return base.concat(deepRows(record, lang));
 }
 
 function paidReport(record) {
@@ -270,8 +292,10 @@ function page(record, options) {
   const runAt = stamp(report.fetchedAt || targetedBlock.checkedAt || (record && record.createdAt));
   const host = String(report.host || "");
   const id = String(report.id || (record && record.id) || "");
-  const checks = sourceLines(lang, targetedBlock);
-  const attr = Array.isArray(targetedBlock.attributions) ? targetedBlock.attributions : [];
+  const deepBlock = record && record.deep && typeof record.deep === "object" ? record.deep : null;
+  const checks = sourceLines(lang, targetedBlock).concat(deepBlock ? sourceLines(lang, deepBlock).map((line) => label(lang, "deepTag") + " · " + line) : []);
+  const attr = (Array.isArray(targetedBlock.attributions) ? targetedBlock.attributions : [])
+    .concat((deepBlock && Array.isArray(deepBlock.attributions) ? deepBlock.attributions : []).filter((line) => (targetedBlock.attributions || []).indexOf(line) === -1));
   const tableRows = list.map((row) =>
     "<tr><td>" + customerMail.esc(row.title) + "</td><td class=\"lvl\">" + customerMail.esc(sevLabel(lang, row.level)) +
     "</td><td>" + customerMail.esc(row.source) + "</td><td>" + customerMail.esc(row.time) + "</td><td>" + customerMail.esc(row.evidence) + "</td></tr>"
