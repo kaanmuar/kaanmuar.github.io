@@ -81,14 +81,15 @@ function trustGrade(findings) {
   return { score: Math.min(105, score), grade: letter(score, capped), capped, rows, bonus };
 }
 
-const FIELD = /^\s*([A-Za-z][A-Za-z0-9-]*)\s*:\s*(.*?)\s*$/;
+const FIELD_NAME = /^[A-Za-z][A-Za-z0-9-]*$/;
 
 function fieldsOf(body) {
   const fields = [];
   String(body || "").replace(/^\uFEFF/, "").split(/\r?\n/).forEach((line) => {
     if (!line.trim() || /^\s*#/.test(line) || /^-----(BEGIN|END) PGP/.test(line)) return;
-    const match = line.match(FIELD);
-    if (match) fields.push({ name: match[1].toLowerCase(), value: match[2] });
+    const colon = line.indexOf(":");
+    const name = colon > 0 ? line.slice(0, colon).trim() : "";
+    if (FIELD_NAME.test(name)) fields.push({ name: name.toLowerCase(), value: line.slice(colon + 1).trim() });
   });
   return fields;
 }
