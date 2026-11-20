@@ -61,7 +61,7 @@ jobs:
           -o /usr/local/bin/osv-scanner
         chmod +x /usr/local/bin/osv-scanner
         osv-scanner --version
-    - name: Scan lockfiles and Python requirements
+    - name: Scan lockfiles (npm, Gradle) and Python requirements
       run: |
         set -euo pipefail
         args=()
@@ -71,13 +71,11 @@ jobs:
         for lock in workers/*/package-lock.json packages/*/package-lock.json qalabreview/package-lock.json reddit/live-reports/package-lock.json; do
           [ -f "$lock" ] && args+=( -L "$lock" )
         done
+        while IFS= read -r lock; do
+          args+=( -L "$lock" )
+        done < <(find android -name gradle.lockfile -not -path '*/build/*' | sort)
         args+=( -r requirements-robot.txt )
         osv-scanner scan "${args[@]}"
-    - name: Note on Android
-      run: |
-        if ! find android -name 'package-lock.json' -o -name 'gradle.lockfile' 2>/dev/null | grep -q .; then
-          echo "::notice::No Node or Gradle lockfile under android/; OSV skipped Gradle BOM until a lockfile exists (#3833)."
-        fi
 
   recheck:
     name: recheck-redos
