@@ -5,6 +5,9 @@
 # The worktree is locked to this chat (scripts/worktree-lock.sh, #2244): one another live chat holds is refused
 # and its holder named; --take takes it over. A new worktree also warns, on stderr, about open PRs and other worktrees
 # that already name the ticket or touch the files its issue names (scripts/open-work.js, #2969).
+# Writes to the shared .git/ (fetch, worktree add) run under scripts/git-lock.sh (#3835): flock(1) where installed,
+# else a mkdir lock with a stale timeout (macOS ships no flock). Dirty-tree safeguards, all warnings on stderr: a reused
+# worktree with uncommitted changes, and a dirty main checkout (read-only for chats).
 set -euo pipefail
 take=
 for arg; do
@@ -16,23 +19,36 @@ done
 branch=${branch:?usage: scripts/ticket-worktree.sh <branch> [--take]}
 main=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
 lock=$(cd "$(dirname "$0")" && pwd)/worktree-lock.sh
+gitlock=$(cd "$(dirname "$0")" && pwd)/git-lock.sh
+gitcommon=$(git rev-parse --path-format=absolute --git-common-dir)
+warn_dirty() { # <dir> <what>
+	local n
+	n=$(git -C "$1" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+	[ "${n:-0}" -eq 0 ] || echo "warning: $2 has $n uncommitted change(s); do not switch, stash or reset it ($1)" >&2
+}
 "$lock" install
 
 existing=$(git -C "$main" worktree list --porcelain | awk -v ref="refs/heads/$branch" '$1 == "worktree" { dir = $2 } $1 == "branch" && $2 == ref { print dir }')
 if [ -n "$existing" ]; then
 	"$lock" claim "$existing" $take
+	warn_dirty "$existing" "the reused worktree"
 	echo "$existing"
 	exit 0
 fi
 
 dir="$main/.worktrees/${branch//\//-}"
-git -C "$main" fetch -q origin
+warn_dirty "$main" "the main checkout"
+if [ -e "$dir" ]; then
+	echo "refusing: $dir exists but is not a worktree of branch $branch; move it aside first" >&2
+	exit 1
+fi
+"$gitlock" "$gitcommon/ticket-worktree.lock" git -C "$main" fetch -q origin
 if git -C "$main" show-ref -q --verify "refs/heads/$branch"; then
-	git -C "$main" worktree add -q "$dir" "$branch"
+	"$gitlock" "$gitcommon/ticket-worktree.lock" git -C "$main" worktree add -q "$dir" "$branch"
 elif git -C "$main" show-ref -q --verify "refs/remotes/origin/$branch"; then
-	git -C "$main" worktree add -q --track -b "$branch" "$dir" "origin/$branch"
+	"$gitlock" "$gitcommon/ticket-worktree.lock" git -C "$main" worktree add -q --track -b "$branch" "$dir" "origin/$branch"
 else
-	git -C "$main" worktree add -q --no-track -b "$branch" "$dir" origin/main
+	"$gitlock" "$gitcommon/ticket-worktree.lock" git -C "$main" worktree add -q --no-track -b "$branch" "$dir" origin/main
 fi
 "$lock" claim "$dir"
 

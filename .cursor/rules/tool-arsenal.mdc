@@ -22,6 +22,14 @@ Carlos, Nov 18–19 2026: the evaluations exist so that chats and Jarvis know wh
 - A weekly scout (`scripts/tool-scout.js`, draft PRs named `tool-scout/<date>`, #3857) re-checks every repo here and searches for new ones. Its report is a suggestion: a row is added or changed only with its ticket.
 - Tools that make public output follow the rule for that output: `social-clips.mdc` (voice, clips), `scrum-board.mdc` (design assets, images), `media-review.mdc` (media for review).
 
+## Gate for outside skills and MCP servers (#3835, Nov 20 2026)
+Before any third-party `.cursor/skills/*`, `SKILL.md` or MCP server is copied in or enabled, run this gate and put the result in the ticket. A documented step, not a dependency: nothing below is installed or vendored.
+1. Provenance: publisher, LICENSE file text, pinned commit. Read every file of the skill, and any `setup` or install script, before running anything.
+2. Scan with `cisco-ai-defense/skill-scanner` (LICENSE reads Apache-2.0, `pyproject.toml` agrees; the GitHub badge shows NOASSERTION; checked at `c558c42`). Run it from a scratch checkout or `uvx`, outside this repo: `skill-scanner scan <skill dir>`. Any high or critical finding (prompt injection, exfiltration, hidden commands) rejects the skill.
+3. Overlap check with `NVIDIA/SkillEvaluator` (Apache-2.0, checked at `1dd97c8`), optional, also from a scratch path: skip a skill that duplicates one in `.cursor/skills` or a rule in `.cursor/rules`.
+4. MCP servers: list the tools and env vars it asks for, grant no more than the ticket needs, never put a key in the repo, and pin the version.
+5. Adopt by adding a row under Adopted with the pin and notice (as `.cursor/skills/THIRD_PARTY_NOTICES.md` does). Install either scanner into the repo only through its own ticket.
+
 ## Adopted
 | Tool | Source and pin | Where it lives | Use |
 |---|---|---|---|

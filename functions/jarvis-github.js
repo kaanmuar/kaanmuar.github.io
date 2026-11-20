@@ -7,6 +7,7 @@
    (jarvis_github_local/latest). Every part is caught on its own; a 403/404 for a permission the app lacks leaves that
    part { ok:false, error, need } and a line in needs[]. */
 const core = require("./jarvis-core");
+const etag = require("./etag-cache");
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -102,7 +103,12 @@ async function mapLimit(list, limit, fn) {
 
 // --- GitHub client ----------------------------------------------------------------------------------------------
 
-function client(fetchImpl, token) {
+/* GETs are conditional (#3835): a 304 serves the remembered body and spends no REST quota. The store lives as long as the
+   instance; client().cacheStats counts hits (304) and misses. */
+const ETAGS = etag.memoryStore(500);
+
+function client(rawFetch, token) {
+  const fetchImpl = etag.etagFetch(rawFetch, ETAGS, token);
   const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" };
   const call = async (path, init) => {
     const res = await fetchImpl(/^https:/.test(path) ? path : API + path, Object.assign({ headers, signal: AbortSignal.timeout(15000) }, init));
@@ -140,7 +146,7 @@ function client(fetchImpl, token) {
     }
     return data.data || {};
   };
-  return { get, pages, graphql };
+  return { get, pages, graphql, cacheStats: fetchImpl.stats };
 }
 
 async function tokenFor(ctx, scope) {
@@ -1064,4 +1070,4 @@ async function backfill(ctx) {
   return { ok: true, days, left };
 }
 
-module.exports = { source, daily, backfill, kaanmuarBudget, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy, scoutPart };
+module.exports = { __client: client, source, daily, backfill, kaanmuarBudget, grade, doraLevel, xpLevel, REPO, TTL, runTotals, ticketOf, checkState, isDeploy, scoutPart };
