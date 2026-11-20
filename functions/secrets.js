@@ -39,7 +39,8 @@ const BY_FUNCTION = {
   wordfenceFeed: list(["WORDFENCE_KEY"]),
   // Gemini drafts answers for interested / other owner replies on the decide page (#3670).
   ownerReplies: list(MAIL, GEMINI, ["OWNER_REPLY_KEY"]),
-  reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY", "TURNSTILE_SECRET_KEY", "QA_LAB_MCP_KEY"]),
+  // CERTSPOTTER_KEY (#3946): the paid Deep check reads certificate-transparency logs (scripts/set-certspotter-key.sh stores it).
+  reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, ["PUBLISH_KEY", "QA_TEST_KEY", "TURNSTILE_SECRET_KEY", "QA_LAB_MCP_KEY", "CERTSPOTTER_KEY"]),
   reviewRun: list(MAIL, SCAN, SITE_TOKEN, ["QA_TEST_KEY", "TURNSTILE_SECRET_KEY", "QA_LAB_MCP_KEY"]),
   reviewBrowser: list(BROWSER),
   jarvisReviewRun: list(SCAN, SITE_TOKEN),
