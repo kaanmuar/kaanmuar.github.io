@@ -1059,8 +1059,11 @@ async function main() {
 					continue;
 				}
 				const hub = await gate(batch, slug, captions[slug], input.dueAt || new Date().toISOString());
+				// An X post with an AI label and no thread carries twitter metadata without a thread (#3840).
 				const thread =
-					input.metadata && input.metadata.twitter ? ' (thread of ' + input.metadata.twitter.thread.length + ')' : '';
+					input.metadata && input.metadata.twitter && input.metadata.twitter.thread
+						? ' (thread of ' + input.metadata.twitter.thread.length + ')'
+						: '';
 				if (opts['dry-run']) {
 					console.log(
 						'dry-run',
