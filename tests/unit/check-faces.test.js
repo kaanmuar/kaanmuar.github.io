@@ -57,3 +57,16 @@ test('every cyber line face the report uses exists, and each page tags its cyber
 	const tags = PAGES.map((p) => [...fs.readFileSync(path.join(root, p), 'utf8').matchAll(/<h2 id="targeted-head" data-line="([a-z-]+)"/g)].map((m) => m[1]));
 	for (const t of tags) assert.deepEqual(t, ['targeted'], 'the cyber heading uses the line face');
 });
+
+test('the attacks map on the desk uses the report\'s own kind and level faces', () => {
+	const grab = (file, name) => {
+		const src = fs.readFileSync(path.join(root, file), 'utf8');
+		const body = src.match(new RegExp(`const ${name} = \\{([\\s\\S]*?)\\};`))[1];
+		return [...body.matchAll(/["']?([a-z0-9-]+)["']?\s*:\s*["']([a-z-]+)["']/g)].map((m) => `${m[1]}=${m[2]}`).sort();
+	};
+	for (const name of ['LINE_KIND', 'LINE_LEVEL']) {
+		const report = grab('js/qa-review.js', name);
+		assert.ok(report.length >= 4, name);
+		assert.deepEqual(grab('functions/url-review-desk.js', name), report, `${name} matches the report`);
+	}
+});
