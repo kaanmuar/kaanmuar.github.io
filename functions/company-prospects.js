@@ -40,7 +40,7 @@ const LEAD_HEADER = ["segment", "sector", "org", "host", "cc", "country", "langu
   "tiktok_url", "x_url", "source", "sequence", "sender", "finding_1", "finding_2", "finding_1_en", "finding_2_en", "reason", "trial_code", "trial_url", "trial_days",
   "after_percent", "live_report_url", "approved", "status"];
 
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 
 /** The trial's terms: { days, after } from outreach-trials TRIAL. */
 const terms = () => ({ days: trials.TRIAL.days, after: trials.TRIAL.followup.company });

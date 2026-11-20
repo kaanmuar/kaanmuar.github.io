@@ -74,7 +74,7 @@ function attr(tag, name) {
   return match ? decode(match[2] || match[3] || match[4] || "") : "";
 }
 
-const stripTags = (html) => decode(String(html || "").replace(/<[^>]+>/g, " "));
+const stripTags = (html) => decode(String(html || "").replace(/<[^>]+>|(<[^>]*$)/g, (tag, open) => open || " "));
 
 const CLOSE = { script: /<\/script\s*>/gi, style: /<\/style\s*>/gi, noscript: /<\/noscript\s*>/gi, template: /<\/template\s*>/gi, svg: /<\/svg\s*>/gi, head: /<\/head\s*>/gi };
 const PAGE_BLOCKS = /<(script|style|noscript|template|svg|head)\b/gi;
@@ -101,7 +101,7 @@ function dropBlocks(html, open) {
 
 function visibleText(html) {
   return stripTags(dropBlocks(String(html || ""), PAGE_BLOCKS)
-    .replace(/<!--[\s\S]*?-->/g, " "));
+    .replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, (block, open) => (open ? block : " ")));
 }
 
 const hostOf = (href) => { try { return new URL(href).hostname.toLowerCase(); } catch (error) { return ""; } };
@@ -179,7 +179,7 @@ function siteScript(site) {
 }
 
 const bareHost = (host) => String(host || "").toLowerCase().replace(/^www\./, "");
-const pageKey = (href) => { try { const url = new URL(href); return bareHost(url.hostname) + (url.pathname.replace(/\/+$/, "") || "/") + url.search; } catch (error) { return ""; } };
+const pageKey = (href) => { try { const url = new URL(href); return bareHost(url.hostname) + (url.pathname.replace(/(?<!\/)\/+$/, "") || "/") + url.search; } catch (error) { return ""; } };
 
 /* Search rows on the domain that carry spam phrases. Rows from other sites are dropped, since the query's operators
    are only a hint to the search engine. A phrase in a snippet alone is what a page about spam reads like (#3308), so
@@ -282,7 +282,7 @@ const hiddenTag = (attrs) => HIDDEN_STYLE.test(attr(attrs, "style")) || /(?:^|\s
 // Links and text with spam phrases in a page's HTML, marked hidden when CSS or the hidden attribute keeps them
 // from visitors.
 function spamLinks(html, pageUrl, skip) {
-  const body = dropBlocks(String(html || ""), SPAM_BLOCKS).replace(/<!--[\s\S]*?-->/g, " ");
+  const body = dropBlocks(String(html || ""), SPAM_BLOCKS).replace(/<!--[\s\S]*?-->|(<!--)[\s\S]*/g, (block, open) => (open ? block : " "));
   const rows = [];
   const seen = new Set();
   const push = (row) => {

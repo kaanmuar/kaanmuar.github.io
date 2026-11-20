@@ -18,7 +18,7 @@ export const MODES = {
 const INSTALLATION = 175836846;
 const REPO = "qa-lab-outreach";
 
-const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/(?<!=)=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 const text64 = (value) => b64url(new TextEncoder().encode(JSON.stringify(value)));
 
 async function github(path, token, body) {

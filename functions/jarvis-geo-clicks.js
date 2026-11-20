@@ -25,7 +25,7 @@ const NEED = "Short-link clicks by visitor country: add Account > Account Analyt
 // XX is Cloudflare's unknown country.
 const valid = (cc) => /^[A-Z]{2}$/.test(cc) && cc !== "XX";
 const round = (n) => Math.round(n * 100) / 100;
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 const bogotaDay = (ms) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
 
 const tokenOf = (env) => (env && env.CLOUDFLARE_ANALYTICS_TOKEN) || "";
