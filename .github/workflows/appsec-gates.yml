@@ -101,4 +101,5 @@ jobs:
       run: |
         set -euo pipefail
         npm install --no-save recheck@4.6.2
+        node --test tests/unit/appsec-redos-scanner.test.js
         node scripts/appsec-redos.js functions workers
