@@ -640,6 +640,10 @@
  },
  "aria-selected on tabs: the selected tab that lies (WCAG ⟦1⟧)": "aria-selected en pestañas: la pestaña seleccionada que miente (WCAG ⟦1⟧)",
  "Armenia's city hall: no main landmark.": "Alcaldía de Armenia: sin landmark main.",
+ "asoto.digital:": {
+  "text": "asoto.digital:",
+  "machine": true
+ },
  "Assert each one answers below ⟦1⟧.": "Comprueba que cada uno responde por debajo de ⟦1⟧.",
  "Astro Tutorial:": "Tutorial de Astro:",
  "Atlántico: alt text everywhere, no HSTS.": "Atlántico: texto alt en todo, sin HSTS.",
@@ -841,9 +845,17 @@
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Pero ⟦1⟧ prohíbe a bingbot todo el sitio, y el índice de Bing también alimenta a Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Pero ⟦1⟧ prohíbe a ChatGPT-User, el agente que abre una página cuando alguien le pregunta a ChatGPT por ella.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Pero ⟦1⟧ prohíbe a OAI-SearchBot y a otros nueve agentes de búsqueda con IA, así que sus respuestas no pueden citarlo.",
+ "But ⟦1⟧ elements must be contained in a ⟦2⟧ or ⟦3⟧.": {
+  "text": "Pero los elementos ⟦1⟧ deben estar contenidos en ⟦2⟧ o ⟦3⟧.",
+  "machine": true
+ },
  "But ⟦1⟧ form controls have no label.": "Pero ⟦1⟧ controles de formulario no tienen etiqueta.",
  "But ⟦1⟧ front-end libraries have known flaws.": "Pero ⟦1⟧ librerías front-end tienen fallos conocidos.",
  "But ⟦1⟧ has Google MX records and no SPF or DMARC record, so anyone can send mail in its name.": "Pero ⟦1⟧ tiene registros MX de Google y ningún registro SPF ni DMARC, así que cualquiera puede enviar correo en su nombre.",
+ "But ⟦1⟧ images are more than twice the size shown.": {
+  "text": "Pero las imágenes de ⟦1⟧ tienen más del doble del tamaño que se muestra.",
+  "machine": true
+ },
  "But ⟦1⟧ images have no alt attribute.": "Pero ⟦1⟧ imágenes no tienen atributo alt.",
  "But ⟦1⟧ images have no width or height.": {
   "text": "Pero las imágenes ⟦1⟧ no tienen ancho ni alto.",
@@ -852,6 +864,10 @@
  "But ⟦1⟧ inner pages name ⟦2⟧ as their canonical, which asks search engines to index the home instead.": "Pero ⟦1⟧ páginas internas declaran ⟦2⟧ como canonical, lo que pide a los buscadores indexar la home en su lugar.",
  "But ⟦1⟧ internal link leads to an error.": "Pero ⟦1⟧ enlace interno lleva a un error.",
  "But ⟦1⟧ internal links lead to an error.": "Pero ⟦1⟧ enlaces internos llevan a un error.",
+ "But ⟦1⟧ JSON-LD block does not parse.": {
+  "text": "Pero el bloque ⟦1⟧ JSON-LD no se analiza.",
+  "machine": true
+ },
  "But ⟦1⟧ JSON-LD blocks do not parse.": "Pero ⟦1⟧ bloques JSON-LD no se pueden procesar.",
  "But ⟦1⟧ language alternate problems.": "Pero hay ⟦1⟧ problemas con las alternativas de idioma.",
  "But ⟦1⟧ links on the English home page use /content/mygov/ paths that ⟦2⟧ to /en/, so every click takes an extra hop.": "Pero ⟦1⟧ enlaces de la home en inglés usan rutas /content/mygov/ que hacen ⟦2⟧ a /en/, así que cada clic da un salto extra.",
@@ -868,6 +884,10 @@
  "But ⟦1⟧ page has no title.": "Pero ⟦1⟧ página no tiene título.",
  "But ⟦1⟧ pages analyzed have no ⟦2⟧, the home page included.": "Pero ⟦1⟧ páginas analizadas no tienen ⟦2⟧, incluida la home.",
  "But ⟦1⟧ pages analyzed use a positive tabindex, which pulls one element ahead of everything else in keyboard order.": "Pero ⟦1⟧ páginas analizadas usan un tabindex positivo, que adelanta un elemento a todos los demás en el orden del teclado.",
+ "But ⟦1⟧ pages ask search engines not to index them.": {
+  "text": "Pero las páginas ⟦1⟧ piden a los motores de búsqueda que no las indexen.",
+  "machine": true
+ },
  "But ⟦1⟧ pages configure two GA4 properties, G-R2FPS06ZSD and G-N4639JFT8D, so numbers split unless both teams know.": "Pero ⟦1⟧ páginas configuran dos propiedades de GA4, G-R2FPS06ZSD y G-N4639JFT8D, así que los números se dividen salvo que ambos equipos lo sepan.",
  "But ⟦1⟧ pages have no meta description.": {
   "text": "Pero las páginas ⟦1⟧ no tienen meta descripción.",
@@ -934,8 +954,16 @@
   "text": "Pero ciertos roles ARIA deben contener hijos específicos.",
   "machine": true
  },
+ "But cross-Origin-Opener-Policy is not sent.": {
+  "text": "Pero la política de apertura de origen cruzado no se envía.",
+  "machine": true
+ },
  "But CSP frame-ancestors allows *.⟦1⟧ and *.⟦2⟧, hosts any Azure customer can publish on, so any of them could embed its pages.": "Pero el frame-ancestors de la CSP permite *.⟦1⟧ y *.⟦2⟧, hosts donde cualquier cliente de Azure puede publicar, así que cualquiera de ellos podría incrustar sus páginas.",
  "But DMARC is p=none, so spoofed ⟦1⟧ mail is reported, not stopped.": "Pero DMARC está en p=none, así que el correo suplantado de ⟦1⟧ se reporta, no se frena.",
+ "But elements must have their visible text as part of their accessible name.": {
+  "text": "Pero los elementos deben tener su texto visible como parte de su nombre accesible.",
+  "machine": true
+ },
  "But elements must meet minimum color contrast ratio thresholds.": "Pero los elementos deben cumplir los umbrales mínimos de contraste de color.",
  "But every page analyzed loads ⟦1⟧ twice, for two GA4 IDs, so one visit can land in two reports.": "Pero cada página analizada carga ⟦1⟧ dos veces, para dos IDs de GA4, así que una visita puede acabar en dos informes.",
  "But every page analyzed loads its two logo images over ⟦1⟧ so browsers must upgrade or block them.": "Pero cada página analizada carga sus dos imágenes de logo por ⟦1⟧, así que los navegadores tienen que actualizarlas o bloquearlas.",
@@ -1340,6 +1368,10 @@
  "Coursera taps take ⟦1⟧ ms to answer.": "Los toques en Coursera tardan ⟦1⟧ ms en responder.",
  "Craig Morten shows how Guidepup lets a Playwright test drive a real screen reader and assert on what VoiceOver, NVDA or Orca actually announces, instead of reading the accessibility tree.": "Craig Morten muestra cómo Guidepup permite que una prueba de Playwright maneje un lector de pantalla real y verifique lo que VoiceOver, NVDA u Orca anuncian de verdad, en lugar de leer el árbol de accesibilidad.",
  "Creative Commons moves to https with ⟦1⟧.": "Creative Commons pasa a https con ⟦1⟧.",
+ "Cross-Origin-Opener-Policy.": {
+  "text": "Política de apertura de orígenes cruzados.",
+  "machine": true
+ },
  "CSS Animation Triggers: a first draft": "CSS Animation Triggers: un primer borrador",
  "Cúcuta redirects to https, but no HSTS.": "Cúcuta redirige a https, pero sin HSTS.",
  "Cultura Bogotá keeps Universal Analytics.": "Cultura Bogotá sigue con Universal Analytics.",
@@ -1623,6 +1655,10 @@
  "Figma guards its pages, but has no ⟦1⟧.": "Figma protege sus páginas, pero no tiene ⟦1⟧.",
  "File each failure with its criterion number.": "Reporta cada fallo con el número de su criterio.",
  "Fill the required properties of each JSON-LD type, then test it in the Rich Results Test.": "Rellena las propiedades obligatorias de cada tipo JSON-LD y pruébalo en la Rich Results Test.",
+ "Fill the required properties of each JSON-LD type, then test it in the Rich…": {
+  "text": "Complete las propiedades requeridas de cada tipo JSON-LD, luego pruébelo en Rich...",
+  "machine": true
+ },
  "Filter by collect or gtag before you click anything.": "Filtra por collect o gtag antes de hacer clic en nada.",
  "Finance wants it committed by December.": "Finanzas lo quiere comprometido para diciembre.",
  "Find elements the way your users do with cy.getByRole()": "Encuentra elementos como lo hacen tus usuarios con cy.getByRole()",
@@ -2336,6 +2372,10 @@
   "text": "Mantenga el texto del cuerpo en una relación de contraste de ⟦1⟧ o más contra...",
   "machine": true
  },
+ "Keep body text at a ⟦1⟧ contrast ratio or more…": {
+  "text": "Mantenga el texto del cuerpo en una relación de contraste de ⟦1⟧ o más...",
+  "machine": true
+ },
  "Keep each sitemap to its own host.": "Limita cada sitemap a su propio host.",
  "Keep INP under ⟦1⟧ ms.": "Mantén el INP por debajo de ⟦1⟧ ms.",
  "Keep one GA4 property per site, loaded once, ideally through Tag Manager, and retire the old ID.": "Mantén una propiedad GA4 por sitio, cargada una vez, idealmente con Tag Manager, y retira el ID antiguo.",
@@ -2712,6 +2752,10 @@
  "One server setting covers them all.": "Un ajuste del servidor los cubre todos.",
  "One site, one GA4 property, one ⟦1⟧.": "Un sitio, una propiedad GA4, un ⟦1⟧.",
  "One stray comma hides all of it.": "Una coma suelta lo oculta todo.",
+ "One stray comma hides all…": {
+  "text": "Una coma perdida lo oculta todo...",
+  "machine": true
+ },
  "One stray comma…": {
   "text": "Una coma perdida...",
   "machine": true
@@ -2939,6 +2983,10 @@
  "Publish SPF for the senders you use and a DMARC policy.": "Publica SPF para los remitentes que usas y una política DMARC.",
  "Publish the sitemap at the address ⟦1⟧ names, or fix the Sitemap: line to point at the real file.": "Publica el sitemap en la dirección que indica ⟦1⟧, o corrige la línea Sitemap: para que apunte al archivo real.",
  "Publish them as /⟦1⟧.": "Publícalos como /⟦1⟧.",
+ "Put each li inside a ul or ol.": {
+  "text": "Pon cada li dentro de un ul o ol.",
+  "machine": true
+ },
  "Put lang on the html tag of every language version: ⟦1⟧, ⟦2⟧, ⟦3⟧.": "Pon lang en la etiqueta html de cada versión de idioma: ⟦1⟧, ⟦2⟧, ⟦3⟧.",
  "Put the mouse away.": "Aparta el ratón.",
  "Put the organization's name in the home title, with what people come for.": "Pon el nombre de la organización en el título de la portada, junto con lo que la gente busca.",
@@ -3011,6 +3059,10 @@
   "machine": true
  },
  "Real run, requested card. ⟦1⟧:": "Ejecución real, tarjeta solicitada. ⟦1⟧:",
+ "Real run, requested card. asoto.digital:": {
+  "text": "Carrera real, tarjeta solicitada. asoto.digital:",
+  "machine": true
+ },
  "Real run, worldwide card.": "Ejecución real, tarjeta mundial.",
  "Real run, worldwide card. ⟦1⟧ receives mail, but has no SPF.": "Ejecución real, tarjeta mundial. ⟦1⟧ recibe correo, pero no tiene SPF.",
  "Real run, worldwide card. ⟦1⟧'s home page has an empty headline.": "Ejecución real, tarjeta mundial. La home de ⟦1⟧ tiene un headline vacío.",
@@ -3057,6 +3109,14 @@
  "Request your error page and every PDF you link to.": "Pide tu página de error y cada PDF que enlazas.",
  "Research is how you answer these questions, and how you keep up with what’s changing in AI search.": {
   "text": "La investigación es la forma de responder estas preguntas y de mantenerse al día con los cambios en la búsqueda con IA.",
+  "machine": true
+ },
+ "Resize images to at most twice the width they are shown at, and give phones smaller files with srcset.": {
+  "text": "Cambie el tamaño de las imágenes a un máximo del doble del ancho en el que se muestran y proporcione a los teléfonos archivos más pequeños con srcset.",
+  "machine": true
+ },
+ "Resize images to at most twice the width they are shown at, and give phones smaller…": {
+  "text": "Cambie el tamaño de las imágenes a como máximo el doble del ancho en el que se muestran y haga que los teléfonos sean más pequeños...",
   "machine": true
  },
  "Resolve's Michael Johnson outlined a keep-or-cut approach to link building, from qualifying publishers and earning roundup placements to creating linkable assets and a ⟦1⟧-day execution plan.": {
@@ -3272,11 +3332,23 @@
  "Send Content-Security-Policy: frame-ancestors 'self' on pages that no partner needs to embed.": "Envía Content-Security-Policy: frame-ancestors 'self' en las páginas que ningún socio necesita incrustar.",
  "Send Content-Security-Policy: frame-ancestors 'self', or X-Frame-Options:": "Envía Content-Security-Policy: frame-ancestors 'self', o X-Frame-Options:",
  "Send Content-Security-Policy: frame-ancestors 'self'.": "Envía Content-Security-Policy: frame-ancestors 'self'.",
+ "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so windows on other sites lose their handle to the page.": {
+  "text": "Envíe una política de apertura de origen cruzado: permitir ventanas emergentes del mismo origen, para que las ventanas de otros sitios pierdan el control de la página.",
+  "machine": true
+ },
+ "Send Cross-Origin-Opener-Policy: same-origin-allow-popups, so…": {
+  "text": "Enviar política de apertura de origen cruzado: ventanas emergentes permitidas del mismo origen, entonces…",
+  "machine": true
+ },
  "Send Cypress Accessibility and UI Coverage results anywhere with webhooks": "Envía los resultados de Cypress Accessibility y UI Coverage a cualquier lugar con webhooks",
  "Send each one there in a single redirect, and update the links you control.": "Llévalos hasta allí con una sola redirección y actualiza los enlaces que controlas.",
  "Send each one there in a single redirect, and…": "Llévalos hasta allí con una sola redirección y…",
  "Send frame-ancestors 'self' in a CSP, or X-Frame-Options:": "Envía frame-ancestors 'self' en una CSP, o X-Frame-Options:",
  "Send frame-ancestors 'self' in the CSP, or X-Frame-Options:": "Envía frame-ancestors 'self' en la CSP, o X-Frame-Options:",
+ "Send frame-ancestors 'self' in the CSP, or X-Frame-Options…": {
+  "text": "Enviar frame-ancestros 'self' en el CSP, o X-Frame-Options...",
+  "machine": true
+ },
  "Send HSTS with a one-year max-age once every subdomain serves https.": "Envía HSTS con un max-age de un año en cuanto todos los subdominios sirvan https.",
  "Send HSTS with a one-year max-age, and make the http redirect a ⟦1⟧ or ⟦2⟧.": "Envía HSTS con un max-age de un año y haz que la redirección http sea un ⟦1⟧ o ⟦2⟧.",
  "Send HSTS with max-age=⟦1⟧ on every https response, then consider preload.": "Envía HSTS con max-age=⟦1⟧ en cada respuesta https y luego plantéate el preload.",
@@ -3317,6 +3389,10 @@
  },
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analítica ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. ⟦7⟧, ⟦8⟧ páginas analizadas, ⟦9⟧ oct. ⟦10⟧.",
  "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ pages analyzed, ⟦9⟧ Oct ⟦10⟧.": "SEO ⟦1⟧, GEO ⟦2⟧, Analítica ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. ⟦7⟧.basketball, ⟦8⟧ páginas analizadas, ⟦9⟧ oct. ⟦10⟧.",
+ "SEO ⟦1⟧, GEO ⟦2⟧, Analytics ⟦3⟧, Security ⟦4⟧, A11y ⟦5⟧, Speed ⟦6⟧. asoto.digital, ⟦7⟧ pages analyzed, ⟦8⟧ Nov ⟦9⟧.": {
+  "text": "SEO ⟦1⟧, GEO ⟦2⟧, Análisis ⟦3⟧, Seguridad ⟦4⟧, A11y ⟦5⟧, Velocidad ⟦6⟧. asoto.digital, ⟦7⟧ páginas analizadas, ⟦8⟧ noviembre ⟦9⟧.",
+  "machine": true
+ },
  "SEO ⟦1⟧.": "SEO ⟦1⟧.",
  "SEO card.": "Tarjeta de SEO.",
  "SEO skill for Claude Code and Codex: grow signups from search using your own Search Console data.": {
@@ -3343,6 +3419,10 @@
  },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name it in ⟦2⟧.": {
   "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y asígnele el nombre ⟦2⟧.",
+  "machine": true
+ },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it in…": {
+  "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y asígnele el nombre...",
   "machine": true
  },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
@@ -3472,6 +3552,14 @@
  "Start here:": "Empieza aquí:",
  "Start in report-only mode, read the reports, then enforce it.": "Empieza en modo report-only, lee los informes y luego aplícala.",
  "Start in report-only mode, read the reports, then…": "Empieza en modo report-only, lee los informes y luego…",
+ "Start the aria-label with the words that are visible on the control.": {
+  "text": "Comience la etiqueta aria con las palabras que son visibles en el control.",
+  "machine": true
+ },
+ "Start the aria-label with the words that are visible on the…": {
+  "text": "Comience la etiqueta aria con las palabras que son visibles en…",
+  "machine": true
+ },
  "Start with a report-only CSP, read the reports for a few weeks, then enforce it.": "Empieza con una CSP en modo report-only, revisa los informes unas semanas y luego aplícala.",
  "Start with Content-Security-Policy-Report-Only to see what would break, then enforce. default-src 'self' is a start.": "Empieza con Content-Security-Policy-Report-Only para ver qué se rompería y luego aplícala. default-src 'self' es un buen comienzo.",
  "Start with four headers:": "Empieza con cuatro cabeceras:",
@@ -3646,6 +3734,10 @@
   "machine": true
  },
  "The gap: outdated libraries.": "El punto débil: librerías desactualizadas.",
+ "The gap: oversized images.": {
+  "text": "La brecha: imágenes de gran tamaño.",
+  "machine": true
+ },
  "The gap: page titles.": "El punto débil: títulos de página.",
  "The gap: schema fields.": "El punto débil: campos de schema.",
  "The gap: tap targets.": {
@@ -4022,6 +4114,10 @@
  "Tie each field to a ⟦1⟧, or give it an aria-label.": "Asocia cada campo a un ⟦1⟧, o dale un aria-label.",
  "Tighten the content security policy one directive at a time, starting from default-src 'self'.": {
   "text": "Ajuste la política de seguridad de contenido una directiva a la vez, comenzando por default-src 'self'.",
+  "machine": true
+ },
+ "Tighten the content security policy one directive at a time, starting from…": {
+  "text": "Reforzar la política de seguridad de contenidos una directiva a la vez, empezando por...",
   "machine": true
  },
  "Time to first byte is a floor for everything else.": "El tiempo hasta el primer byte es el suelo de todo lo demás.",
@@ -4668,6 +4764,10 @@
   "text": "Cuando utilice roles ARIA, anídelos de la forma...",
   "machine": true
  },
+ "When you use ARIA roles, nest them the way…": {
+  "text": "Cuando uses roles ARIA, anídalos de la manera...",
+  "machine": true
+ },
  "When you use ARIA roles, nest them the…": {
   "text": "Cuando utilices roles ARIA, anídalos en...",
   "machine": true
@@ -4762,6 +4862,10 @@
  "Wrap the primary content of every template in one ⟦1⟧ for skip links.": "Envuelve el contenido principal de cada plantilla en un ⟦1⟧ para los enlaces de salto.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the pitch, not the crawler.": "Escribe una descripción de unos ⟦1⟧ caracteres para cada página clave, así eliges tú el mensaje y no el rastreador.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the crawler.": "Escribe una descripción de unos ⟦1⟧ caracteres para cada página clave, así eliges tú el snippet y no el rastreador.",
+ "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the…": {
+  "text": "Escribe una descripción de aproximadamente ⟦1⟧ caracteres para cada página clave, de modo que elijas el fragmento, no el...",
+  "machine": true
+ },
  "Write a description of about ⟦1⟧ characters for your ten most visited pages, starting with the home page.": "Escribe una descripción de unos ⟦1⟧ caracteres para tus diez páginas más visitadas, empezando por la home.",
  "Write a description per page that says what that page answers.": "Escribe una descripción por página que diga qué responde esa página.",
  "Write a fixed home description about your service.": "Escribe una descripción fija para la home que hable de tu servicio.",

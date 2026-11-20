@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-19T23:50:36.050Z",
+ "updatedAt": "2026-11-20T14:40:27.939Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -236,6 +236,9 @@
     "views": 13,
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-10-22/09-u-lenovo-com": {
@@ -263,6 +266,9 @@
     "views": 7,
     "likes": 3,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-10-22/10-u-uniminuto-edu": {
@@ -426,6 +432,10 @@
     "impressions": 2
    },
    "reddit": {
+    "likes": 1
+   },
+   "tiktok": {
+    "views": 63,
     "likes": 1
    }
   },
@@ -748,16 +758,22 @@
     "likes": 3
    },
    "youtube": {
-    "views": 1,
     "likes": 1,
-    "comments": 2
+    "comments": 1
+   },
+   "linkedin": {
+    "impressions": 6,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 3
    }
   },
   "auto-2026-11-03/02-u-iteso-mx": {
    "tiktok": {
-    "impressions": 91,
-    "views": 99,
-    "likes": 3,
+    "impressions": 88,
+    "views": 101,
+    "likes": 4,
     "comments": 1
    },
    "facebook": {
@@ -767,27 +783,41 @@
     "views": 5
    },
    "youtube": {
-    "views": 7,
-    "likes": 2,
+    "views": 13,
+    "likes": 1,
     "comments": 1
    },
    "reddit": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 10,
+    "likes": 3,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-03/03-u-sp-senai-br": {
    "youtube": {
-    "views": 2,
     "likes": 1,
-    "comments": 2
+    "comments": 1
    },
    "tiktok": {
     "impressions": 2,
-    "views": 4,
+    "views": 5,
     "likes": 3
    },
    "facebook": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 3,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 3
    }
   },
   "auto-2026-11-03/09-u-udg-mx": {
@@ -796,13 +826,18 @@
     "likes": 1
    },
    "tiktok": {
-    "impressions": 83,
-    "views": 89,
-    "likes": 3
+    "impressions": 86,
+    "views": 91,
+    "likes": 4
    },
    "youtube": {
+    "views": 23,
     "likes": 1,
-    "comments": 2
+    "comments": 1
+   },
+   "linkedin": {
+    "impressions": 2,
+    "likes": 2
    }
   },
   "auto-2026-11-04/01-u-selia-co": {
@@ -913,6 +948,9 @@
     "views": 3,
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-05/01-u-houm-com": {
@@ -936,6 +974,9 @@
     "views": 7,
     "likes": 3,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-05/07-u-uacm-edu-mx": {
@@ -958,6 +999,9 @@
    "youtube": {
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-05/13-u-get-moment-com": {
@@ -980,6 +1024,9 @@
    "youtube": {
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-06/01-u-usehelios-ai": {
@@ -1107,7 +1154,7 @@
     "likes": 1
    },
    "tiktok": {
-    "impressions": 78,
+    "impressions": 82,
     "views": 86,
     "likes": 2,
     "comments": 1
@@ -1158,6 +1205,9 @@
    },
    "x": {
     "impressions": 2
+   },
+   "tiktok": {
+    "likes": 1
    }
   },
   "auto-2026-11-10/02-u-meutimao-com-br": {
@@ -1215,6 +1265,23 @@
   "auto-2026-11-12/01-u-made-in-china-com": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 50
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-13/01-u-sliit-lk": {
+   "x": {
+    "impressions": 1
+   },
+   "telegram": {
+    "views": 1
    }
   },
   "auto-2026-11-14/04-vs-sinarharian-com-my": {
@@ -1251,7 +1318,7 @@
     "impressions": 1
    },
    "tiktok": {
-    "impressions": 90,
+    "impressions": 91,
     "views": 91,
     "likes": 2,
     "comments": 1
@@ -1277,19 +1344,77 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 79,
+    "likes": 1
+   }
+  },
+  "auto-2026-11-17/01-u-flyliatair-com": {
+   "tiktok": {
+    "views": 57
+   },
+   "x": {
+    "impressions": 4
    }
   },
   "auto-2026-11-17/01-u-motives-ai": {
    "telegram": {
     "views": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-17/07-u-123carrentalbonaire-com": {
+   "linkedin": {
+    "impressions": 3,
+    "likes": 1,
+    "comments": 2
+   },
+   "tiktok": {
+    "views": 62
+   },
+   "x": {
+    "impressions": 1
+   }
+  },
+  "auto-2026-11-17/13-u-24hour-emergencydentist-co-uk": {
+   "x": {
+    "impressions": 2
+   }
+  },
+  "auto-2026-11-17/25-u-7diasdesabor-com": {
+   "x": {
+    "impressions": 2
    }
   },
   "auto-2026-11-18/06-u-aeropost-com": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 69
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "auto-2026-11-18/12-u-affinityplusbb-com": {
+   "telegram": {
+    "views": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-18/18-u-agenciadeviajestravelone-cl": {
    "telegram": {
     "views": 1
    }
@@ -1297,6 +1422,17 @@
   "auto-2026-11-18/24-u-agilex-com-co": {
    "telegram": {
     "views": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "auto-2026-11-18/39-u-aireacondicionadodemexico-com": {
+   "x": {
+    "impressions": 2
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -1690,6 +1826,9 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "likes": 1
    }
   },
   "evergreen-2026-11/02-myth-lighthouse": {
@@ -1721,6 +1860,20 @@
   "evergreen-2026-11/03-hreflang": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 54
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "evergreen-2026-11/04-coverage": {
+   "telegram": {
+    "views": 1
    }
   },
   "evergreen-2026-11/05-myth-https": {
@@ -1744,6 +1897,9 @@
     "views": 8,
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "evergreen-2026-11/07-pre-release": {
@@ -1767,6 +1923,9 @@
     "views": 5,
     "likes": 3,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "evergreen-2026-11/10-myth-overlay": {
@@ -2090,6 +2249,16 @@
     "likes": 1
    }
   },
+  "live/2026-11-18": {
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "live/2026-11-19": {
+   "telegram": {
+    "views": 1
+   }
+  },
   "promo-social-hub-2026-10/01-one-page-en": {
    "linkedin": {
     "impressions": 7,
@@ -2207,6 +2376,9 @@
     "views": 7,
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 1
    }
   },
   "promo-social-hub-2026-10/26-real-reviews-it": {
@@ -2266,7 +2438,7 @@
     "views": 1
    },
    "tiktok": {
-    "impressions": 113,
+    "impressions": 119,
     "views": 127,
     "likes": 4
    },
@@ -2287,7 +2459,7 @@
     "views": 1
    },
    "tiktok": {
-    "impressions": 78,
+    "impressions": 82,
     "views": 82,
     "likes": 2,
     "comments": 1
@@ -2305,6 +2477,17 @@
   "promo-social-hub-2026-10/34-six-languages-en": {
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "impressions": 1,
+    "views": 60,
+    "likes": 2
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "runs-100/01-wikipedia": {
@@ -2345,7 +2528,7 @@
     "impressions": 5
    },
    "tiktok": {
-    "impressions": 81,
+    "impressions": 82,
     "views": 86,
     "likes": 2,
     "comments": 1
@@ -2394,14 +2577,44 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "runs-2026-10/05-bbc": {
    "telegram": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 64,
+    "likes": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "runs-2026-10/06-transmilenio": {
+   "telegram": {
+    "views": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "reddit": {
+    "likes": 1
+   }
+  },
+  "runs-2026-10/07-python": {
+   "x": {
+    "impressions": 1
+   },
    "telegram": {
     "views": 1
    }
@@ -2409,6 +2622,12 @@
   "runs-2026-10/08-bancolombia": {
    "telegram": {
     "views": 1
+   },
+   "x": {
+    "impressions": 1
+   },
+   "reddit": {
+    "likes": 1
    }
   },
   "runs-3/01-ilo": {
@@ -2504,6 +2723,9 @@
     "views": 13,
     "likes": 1,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "skits-friday-release/02-friday-release-es": {
@@ -2760,7 +2982,7 @@
     "impressions": 3
    },
    "telegram": {
-    "views": 288
+    "views": 293
    },
    "reddit": {
     "likes": 1
@@ -2822,6 +3044,9 @@
     "views": 6,
     "likes": 3,
     "comments": 1
+   },
+   "x": {
+    "impressions": 2
    }
   },
   "tips-2026-10/14-share-card": {
@@ -3026,7 +3251,7 @@
     "impressions": 3
    },
    "tiktok": {
-    "impressions": 83,
+    "impressions": 84,
     "views": 86,
     "likes": 2,
     "comments": 1
@@ -3086,7 +3311,7 @@
    },
    "tiktok": {
     "impressions": 104,
-    "views": 122,
+    "views": 123,
     "likes": 4
    },
    "x": {
@@ -3108,7 +3333,7 @@
    },
    "tiktok": {
     "impressions": 109,
-    "views": 121,
+    "views": 122,
     "likes": 5
    },
    "x": {
@@ -3150,17 +3375,17 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 167,
-   "answered": 164,
-   "insights": 164,
-   "error": "Graph 400: {\"message\":\"(#100) Tried accessing nonexisting field (reactions)\",\"type\":\"OAuthException\",\"code\":100,\"fbtrace_id\":\"AejXhq-vjKhJp8oUyswlm2k\"}"
+   "asked": 177,
+   "answered": 172,
+   "insights": 172,
+   "error": "Graph 400: {\"message\":\"(#100) Tried accessing nonexisting field (reactions)\",\"type\":\"OAuthException\",\"code\":100,\"fbtrace_id\":\"Ar10S72-PgkuxmkNKv-jyaC\"}"
   }
  },
  "channels": {
   "telegram": {
    "chat": "@qalab_live",
    "members": 3,
-   "at": "2026-11-19T23:50:36.050Z",
+   "at": "2026-11-20T14:40:27.939Z",
    "history": [
     {
      "date": "2026-11-05",
@@ -3216,6 +3441,10 @@
     },
     {
      "date": "2026-11-19",
+     "members": 3
+    },
+    {
+     "date": "2026-11-20",
      "members": 3
     }
    ]
