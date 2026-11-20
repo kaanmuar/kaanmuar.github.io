@@ -1,0 +1,1060 @@
+{
+	"about": [
+		"One entry per clause id of legal/clauses.json: sha256 is the SHA-256 (hex, UTF-8) of the clause `text` the owner signed off.",
+		"scripts/check-legal-signoff.js fails CI when a clause text no longer matches, unless the PR also updates this file; that update is the owner's act.",
+		"counselReviewedOn is the day the owner reported that counsel had read that text; scripts/legal-signoff.js --apply copies it into legal/clauses.json.",
+		"Sign off with: node scripts/legal-signoff.js --sign --by \"<name>\" --on YYYY-MM-DD --note \"<why>\" [--counsel-on YYYY-MM-DD], then --apply."
+	],
+	"signoffs": {
+		"statute.CO": {
+			"sha256": "74ab849e7baa75d94cb1b91204a04b049d865a23818ae3658498399b94d82cfb",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.EU": {
+			"sha256": "4b5bb657d7a3b36fd90b706312282b510588573566ce32bb411dcec7cc806465",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.GB": {
+			"sha256": "3d955b41aa5469b6afda56158debe8346a7cf649c3c2b51192cf35a30cf76a22",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.US": {
+			"sha256": "1ce5a773191f11a35a00c428e023443b612f425ff77fc8f7bd19669c6aad3e9e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.MX": {
+			"sha256": "fcd832152f55d38cbd3a480383fe33ac010834c7b78137a43994ef8c835e6988",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.BR": {
+			"sha256": "762d46641d978dabf3adfdf61c62de7f5f608a6ed5b76b476a5360373b5573bf",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.ES": {
+			"sha256": "638fa91a7384f3b9919b337288bba2c3b68d9965b77557c0fff61b3fdeb7918a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.DE": {
+			"sha256": "38c429699151b13616c05817396e102aff57b8cefe6e0ff1d7b135c66960136b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.FR": {
+			"sha256": "c94b87c41c78fb6b627be05d4ec90f6613e967571e82ad63a92ee0b2d209e309",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.AR": {
+			"sha256": "213406d20edc1be6c3f9a71cdc98489d57a89a94cabd9f0211cd9635f55f5e67",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.CL": {
+			"sha256": "54e61a49a3adcc328e600b2a38224600aa0377b91428ff8c4a8cc14ff93aef68",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.PE": {
+			"sha256": "2a294fc7aea0af3b6dfd872c49e8a9bfa0bbb29381c4fc76dfa6c92a967a3a9d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.CA": {
+			"sha256": "f64d1d7ea18ba6465f6ab56853b09790863de32a0c76397ed349e863a12af61f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.AU": {
+			"sha256": "a259c79b1e5a6ae0afbb7b9d83981e516308fb422be72e9ae71e6cdd4359384b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.NZ": {
+			"sha256": "46fe8a65cd7cc0f6f80e6619e27a7a4cedd24f516c9f301c7fd1ca37b998429f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.IN": {
+			"sha256": "5a92e9252fe874fb94d16f3febe25ee1e3e37787f08862b0ef064e161f4e134c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.JP": {
+			"sha256": "076de34268e5ea4d52a7c59fd005281f029069269b3a7663ed9796b3ce7f312e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"statute.ZA": {
+			"sha256": "99efececb628bc1f3cfa6e11736455ede921fd252171ad1a3412a9031cd3c5ac",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"local.lead.1": {
+			"sha256": "3e8a51ce21f495ed8972f894feca1ef862a2c48954942e7874f84074b923e25a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"local.claims.heading": {
+			"sha256": "85af1602f47f7243c408d0493f5a3ddc6b69bd6ab8e8be835afc177e986ec715",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"local.claims.1": {
+			"sha256": "2731455b49552ada3d51f6e64635ee8614ac0bdbaa827764dc3bab93e3e27de4",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"local.claims.2": {
+			"sha256": "f058b74166c5149cb3245196e0c18e5470be6badae8cb40e5042830e54aa1d2c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.lead.1": {
+			"sha256": "97be1e844fe1f8b5859e79d7c199dc99eb5ddbfbe354701aacd62749f3ddd1e5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.heading": {
+			"sha256": "8b80e66ed94066a71b3eaec25c9af33ee9c6cd2ec4d585d526530a259c3dade9",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.1": {
+			"sha256": "d76ee94352087978af6515ab5a7fed2e3d83b5c11e21d3c5aab2fac3a35db7b6",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.2": {
+			"sha256": "db59eb510ffcc1be4d0c905cd0980603e073e9b4b6671e9daee9882b5b0fba4e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.3": {
+			"sha256": "cef72ee33ff136e054914a7d292e4be7fd1d1717f43fb80759835f2b746bf6f4",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.4": {
+			"sha256": "464636f8fd89423e8797a0873224aa927feccba4797cfe111a3bc936cabb560b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.service.5": {
+			"sha256": "7a522ffede52c323905179f1b9d32c0648270d60c8ea6e807cad9391d870d8f1",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.heading": {
+			"sha256": "a48a9e20c87667a976d7ceca6d6f149de97c1274fe1a2dcf1a31cf257cb4c889",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.1": {
+			"sha256": "26e4195da74c1c336c0d4ff89c4e536018b62e00f53437fd23e5b9b618403508",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.2": {
+			"sha256": "d437620725276ef6dbb26be9439df236ba07e6e147f55ac6ea05b857bd7074cd",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.3": {
+			"sha256": "471c49fc8348812e2e0b2ba3767a95a172be67290748ef24197ae118772ac390",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.4": {
+			"sha256": "60bbe008c50c947ac42a9cf46819a9d01e835d0901b5765a2be14d8d378fcd37",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.5": {
+			"sha256": "400d020be0e21628f87e55215dd2f5e08558f1f3f9bd1a9d8720141d8baaa387",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.access.6": {
+			"sha256": "79fff7d12b206f859e73826d891c43876ad18d79c2c5a7d853113c352d37677b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.heading": {
+			"sha256": "f32260cde9ea817538b3b34b3d82f66b31c58ad8bcb42387fa0286b17c659f4f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.1": {
+			"sha256": "8765bc4a7118f7e45b28531f65d1ea29b659305dd0487b059295a483d1bbb980",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.2": {
+			"sha256": "95bb4115d48086347117f1039d2ab553eaf612e727b07c264f0dcf0d2487fa89",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.3": {
+			"sha256": "01887b6d47f1d3efb702b063cba2d94e1fad079d346dd888980065f188ca0c1d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.4": {
+			"sha256": "a90ac6bc8f68c45ba3601547a0d8ae90231338bbe97f39cd1ee8c3b2f6d67aa5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.5": {
+			"sha256": "4b0c9ec5188544ba56a6227c3995877102a374afd37f1636d374aeb097f4daa1",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.6": {
+			"sha256": "c92c7a03e2368183f21c2e62b119ffe9fd78f60d963dfa97e52d51926038c904",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.7": {
+			"sha256": "f405d908539e75026b791207f5668cb24394a63612b328d4be5b8454079c6de5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.8": {
+			"sha256": "c705841145ace384bdfab7ca876815801d86f81961f81cd2f271de584f6f0a8d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.9": {
+			"sha256": "c0256c883cf0836e16653911b47fe240055770d83be2c4ae24bc73556ffe75e1",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.10": {
+			"sha256": "a165f5bf9295c9666d28ad048adfb656a8e85d872cab19f8b2b6665776cf56fa",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.11": {
+			"sha256": "606b5b9dc2a798de737a6008b95c058a5ad26df345f805c7cb6d3febe7dfebb2",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.12": {
+			"sha256": "7d21377b280140d736c37ea3e6a293a07ac5b3b90ff218390ebeb769fd0ed4e1",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.13": {
+			"sha256": "fc6a14b2386099585d82e9765fbbfecc44385bc6f8cec8c1da8bda00d54fbab8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.14": {
+			"sha256": "d86eaaacea8cf7447b41b3ef1c7ac419a21cd29495b2f4441108245e1f0eb4df",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.15": {
+			"sha256": "9fb001d25c0cc564fbf270da471a06db427b98f0548c0fc02b6831364a0fa41d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.16": {
+			"sha256": "4e90996d9d1c9cb56e81300f8e02a064b7a7448a33162ee6d4e2f2d94a1ba90f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.personal-data.17": {
+			"sha256": "fce3b209ed8750f0e303cc40b1768c8ee9119107767c656c3ff33f43ef3964c4",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.heading": {
+			"sha256": "318e1cf227c1fe669c19a03cbd1ada1fe07048567a958b7e6e79787c142b4f76",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.1": {
+			"sha256": "7103219601f196b7c7188b2b4372ec8f9807f6d8fc94ebe34a1912229498260c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.2": {
+			"sha256": "838ce9f01da652a8292a4b971e1b67f42ea5683dcd339c23baac50ff76b48f04",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.3": {
+			"sha256": "d728f15f2fb783924d51cf23078c75329de7cc59530a5f319386477e8e116dd6",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.4": {
+			"sha256": "c45771b7e104e647347686c31319974bfd79de48c7452032e9719c5fbd9ec5d9",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.5": {
+			"sha256": "fedf841a4d1654344b41c0271dc9e2aa2af77b0d9ea8943d0c294d3a144a7d5e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.6": {
+			"sha256": "ab4b327562043c3427edd16294948425dcb5072bcdc6bdf31458612fc04197ed",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.7": {
+			"sha256": "a10caa2a61814a828abef188c5634b7d7eb68bce2ccb4fda1564d59762a89afb",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.8": {
+			"sha256": "b9c3f790cd95f327a611b5e9caa12afae4e4425c667a2f73884514e019e704a0",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.9": {
+			"sha256": "66752f6b2c4ee87df92edd16fb30f8cb5bc070409c3d94f2b1a0823e67a5268f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.10": {
+			"sha256": "3d9f8fc9f792cf6324013a37df9ab3d37a29dfa6fd386d0b7ffcd1bbf0b464b3",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.recipients.11": {
+			"sha256": "6d9758da17fa8686bff32301e15f00e0904bcfcde83ad9f9280884569d94ac4b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.transfer.heading": {
+			"sha256": "6ed14c8161c13b3d432d9e979b2a84cab96b5aa804cfe4ac74852ac61167d5d8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.transfer.1": {
+			"sha256": "735e6221281463be7f87fda9232240020757ea9dc45fa9d5f33d55697234d718",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.transfer.2": {
+			"sha256": "b6989e0a4366ed5c22d90d8878dff4b854540da639b329704af413f79acaf87c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.transfer.3": {
+			"sha256": "33f0b3ff91410be0075349adbd33c96fce0a333307e5fb807adacbe1e0b72664",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.transfer.4": {
+			"sha256": "42e622fc9652c173e9b8f1091d8791ea35358593e571b54b6c5376191c517d8e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.heading": {
+			"sha256": "f99a2274007706c714981b4ee913b00b176e040b4a44f10e67ec09b75c86cebf",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.1": {
+			"sha256": "e995141d5b54c3040c7724a87ad954f9252931edb440c5ac3753235c0d810fa8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.2": {
+			"sha256": "c14904027feac87dc5adf17069484c120f13025526722cf55bd551f4f68d7310",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.3": {
+			"sha256": "055ad2a500b1cdf768936d3592e762e53be75bfa4cde6044544d51a15818735a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.4": {
+			"sha256": "e7705bd86084c90e0d88c4f03570b351ac12ff84f0f7859241f235d7ce033cc8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.payment.5": {
+			"sha256": "8407cbce8ac8c4887a8ada9ce106c7c21ae5fc35467898fb94ad6401035da335",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.site-content.heading": {
+			"sha256": "67b7063d69270876261fc842dee8a5f264583309d155719e63e53b0212a82c72",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.site-content.1": {
+			"sha256": "167eb02f075f28ca26c35bc0a129dbe14798fa356e593569bf9673aa43f5e56a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.site-content.2": {
+			"sha256": "5f5b89e4a117ef530d7b07a462db5f526aef4e34c3926658a283ccbf2aa91009",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.inconclusive.heading": {
+			"sha256": "d04f0091480c993c8ecac34a0d71adfd007d005c517c02c339e9c8923b25c44b",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.inconclusive.1": {
+			"sha256": "493a889d4b89a254a93978788e079f1298c57b3444626fbf9699f2389766f2be",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.inconclusive.2": {
+			"sha256": "f2495a92950fb197bb59a0ab2c04191141eb1ed6f3cda79a77828574421850f7",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.heading": {
+			"sha256": "f47cdd0eeeea79b6783a4b281c9ba462a7d1687c40cb7227b50fe6a4cba1fbe2",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.1": {
+			"sha256": "52aaebb78d7088d7c1a728b8082b418b1e2bf57bd836b22cfaddde8958a37ed8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.2": {
+			"sha256": "00a2253cfdf55859043c3aef09994a5788721748b018e4f7ff5e711eb5c1ebbe",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.3": {
+			"sha256": "a0d285a84da5edd1478b644859664b8b6b3ec1a7f538091c014c3ecc7cff9364",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.4": {
+			"sha256": "369cf681095495046d56278054cd1cd2650eefc964cabc8136c6a6ce121cbb18",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.fix-packages.5": {
+			"sha256": "f07cf22c976b6aee762e904be31906b4a8e8fa0ccc95eb2180cf2bf5d36d93d8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.heading": {
+			"sha256": "abfef74edff2243de87617dbf233461ed2c1e2ad6091f186d4dd9d07f988a9ed",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.1": {
+			"sha256": "c5581cafdfa9fad4a7c1db8116d7995e897e6da9eb4a6dc04074876667e7cdbb",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.2": {
+			"sha256": "a37109944e4b315677c1b3dfa64362f843bc38164cab39e31d93bdaf4744399c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.3": {
+			"sha256": "60c77976200613404058b6e8053d1f10ca5217b89615a9de93885b2c6a612869",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.4": {
+			"sha256": "1b65b2c4ed856c9477dce94cca575906d5ddfa9cbb95b8b76ba737dff980715f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.trials.5": {
+			"sha256": "7a5e5065c8f2d0130821371a5f5dd07c1c18410a0712bd1d0493575b601baad8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.operator-reviews.heading": {
+			"sha256": "625fd31ffedebaba70d59402f1d4a729bc8d2be7c4729fc654deb9d98da2ba01",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.operator-reviews.1": {
+			"sha256": "3e2a20454bf254e4c734d50fe105cc020b41f4b5d5fb2fca62bd035665bf87fa",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.operator-reviews.2": {
+			"sha256": "b173f3f9eed7c3471a4e067c1c79a5d08bdb245a2216648e3e833aa55e819fa5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.operator-reviews.3": {
+			"sha256": "81452a6770a0f5e7c934de864b81a9eb7080c6f7554e629c79e6aa03c95687c6",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.heading": {
+			"sha256": "921567251cfca2d1ac5360be7464bf713a2d91411676b6edf1913e04418b535d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.1": {
+			"sha256": "82cc3523039e38a984737eb70e90e015bd46a6cdfd0f21b23a9b9620b4647147",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.2": {
+			"sha256": "43e5558956022041f5829c58a9b43ae31201e5bf4c7113a0998aa8cb136716f5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.3": {
+			"sha256": "220fddd426301a218aa4d5449e6a9ebd296fd03ea46937e1d6a0691c117837c6",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.4": {
+			"sha256": "1450d34cba52132903f9dd0a29a71881fc1cca88868928baf4cb5003a543526d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.5": {
+			"sha256": "288d939a1b25fb1ab4ca3a7fe41b430f7df8060eb6347438c0530e431e875bd0",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.6": {
+			"sha256": "4627ad8f27bf66f33417d250c5f5cb80d791e2d35f42c4eb2e11679015063a80",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.7": {
+			"sha256": "46dbab9fe8df87097bdd1674070744d313ba74c30168f96536c53380236b108d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.outreach.8": {
+			"sha256": "50cbc46b5960042ec76df527ef64ffbddea04461f8d2e84ed2871c65865ac850",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.social.heading": {
+			"sha256": "c1a8c0e7d5ab3d122b6ddcf90857a0ed990302d38352ab7085ea1e132ef5dba3",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.social.1": {
+			"sha256": "19474bc933626aada677b7632c5ed4632bda2724b829d6e64b70da48468dcc2d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.social.2": {
+			"sha256": "2bdf608944bfc590ac76a296f055f5202e57e0486427ea78154ee0a24cff0864",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.social.3": {
+			"sha256": "4bd1171f61d10296a6d5d419346fcdf6b8a14d91592b7bdf265947189baf02b0",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.social.4": {
+			"sha256": "b13bb99d2434f6dc615b271b9b48bccb1e8d77f3f17f4233add197ec680765dd",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.ai.heading": {
+			"sha256": "a7698132d7bea6e4243b6f49f320d441a3167f59bde08b06241b29bc767b67dc",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.ai.1": {
+			"sha256": "b82740dcf6616d13843192cf7285ff595c59429960b79fc88323ed6c1f23b449",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.ai.2": {
+			"sha256": "d06fee791327f4f64869328d871aeefee656c3d5c6910e70799eed17a0e7c6cb",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.ai.3": {
+			"sha256": "c7f1f49ccd26c5483efb30869cabb8f19fea4ced7c902a976fcf847ddc2629a3",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.ai.4": {
+			"sha256": "6aca251a74c6122150c012ab2ce777c83e1ef9e093f22fe5d48d4aa228e021ae",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.contact.heading": {
+			"sha256": "cfe3b4cd6067413302e0f0a751ba6bea5e0aee7576894400321ba358a71ca52f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.contact.1": {
+			"sha256": "c4e4496306d67bf5c531868966c7cef6880afcd9d591d57faed7835952446263",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.contact.2": {
+			"sha256": "1f2f327e6f28ef85c1832e8dd440bd901791f4d80c554e9d6a890a94d0eb22c5",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.heading": {
+			"sha256": "178dd5dc672de6d65889d48e762bce09bc3c467723b1579b406e0bb47379a879",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.1": {
+			"sha256": "1de449225a88947ad191f2b341a811c0beb1a9ca6db8a569bb088d0a80e572c9",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.2": {
+			"sha256": "0fecc6a51e35c76d66c0eecee880fecb36ffd2fcd0c8473714b9180daf2ef517",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.3": {
+			"sha256": "4bf1adeab84d823fd9473160fb12f92c34e6408aef762722483a0dd02d10abc8",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.4": {
+			"sha256": "07e4fd406bc0bb9a23c78cfe5e71c4559bca700b03eb4d665598650821e9769a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.confidentiality.5": {
+			"sha256": "df15ec911787f0d37cd3044e33a4fba4cc2ef67a3ca1546ce209bbff29fbfe3d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.no-statute.1": {
+			"sha256": "0c84ec28ea8fc855240421b6915319af07edf7ef5c4b8e702368ddf273d5137c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.country.1": {
+			"sha256": "30a0ac3e5f1f77ae7eb8fb7ac0c570f68bba726485b2cf7cf1f3f28144ccc7d2",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.country.2": {
+			"sha256": "1b3060db519da523dcc1e7190d06b919e62cd3defbea27bb07c7b3d254b6987a",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.EU.1": {
+			"sha256": "072dffb94788d8089befc09703d4b2f3ca479f11b3fe2edd82967ca0446b0103",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.EU.2": {
+			"sha256": "d6af362283b4d3bb2ad485ba1bd7ec316dffd1c80190a37b1fbfe37e5142bedd",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.US.1": {
+			"sha256": "2b0a5276845fc50fbccdef71fc459cd646f87fc68e20a513ef44b6d92c066560",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.GB.1": {
+			"sha256": "d9f5ca035d46cebe4f59b83cb0e8f9f5984dae03e2b3bbaf27e0b0b58934f766",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.GB.2": {
+			"sha256": "a75fb648b1be91ed4ceef857667ce4b97e4e779ab00725573375818af194430e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.CA.1": {
+			"sha256": "53d0259486c7cab79b1072027fa9135607c3b8de507bfbe5601e4f54be6e6357",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.AU.1": {
+			"sha256": "9c5bf8780dcb1d9603bc43f4419d6c6d62655090a683154e0f652e9fb2626f6e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.BR.1": {
+			"sha256": "ae25a13c062fd4432acef4c189fa3b29722a9a3220b717b40f1f3b9cd749d1ae",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.CL.1": {
+			"sha256": "777bb844bbc6c2a9b41df015d41eca91aefbf463503204d6d82beca48ed34170",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.heading": {
+			"sha256": "987442dc03df65996953cfe3117d3cf0e1d01f66f3aaf2badf62a66e598de784",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.1": {
+			"sha256": "7956063ac5f17ca1a211fc74336d513785319c0deca22fb1463f46e386cf5b7c",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.2": {
+			"sha256": "d20ddcf8f44c70e09b677b3c790b21bc05f6b265ff539300f1283ef316c17bda",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.3": {
+			"sha256": "da5bc0ea2a128176a7dff0aadd694327b09612c36a7d0758ef94c022df3c885d",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.4": {
+			"sha256": "5fd3a8820b2ddbe60e27b7bb8d4fca8ac3cc0dc3285321527d143be573b0f04f",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.rules.5": {
+			"sha256": "1525339ddc388c8369ff2c2f04dae94a61c9031c92af19e3677d98fba0040485",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.no-country.1": {
+			"sha256": "c94174de99de2570f110e41df781e79ce74841bd7939d807f13c32e6716cf63e",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.country.heading": {
+			"sha256": "b6ace4f9dcad00b4e745a57d83db8796b628613b5f572fe3ff90b67bd4e83a53",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"local.title": {
+			"sha256": "a5822d8e800e58f9d509c4de76f8ed364ba07a01afbee7f9ac59d133e9b4e3c7",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"national.title": {
+			"sha256": "2abd40cfde34a4ee1832f6157adc623400a56710097467bd2f262c41fb983b63",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		},
+		"site.title": {
+			"sha256": "aac304b26c610883e3ef9e44deaf66a5101d79a6feae96a20a12e7567dc0eecd",
+			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"signedOffOn": "2026-11-20",
+			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"counselReviewedOn": "2026-11-19"
+		}
+	}
+}
