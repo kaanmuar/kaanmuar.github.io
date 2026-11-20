@@ -79,8 +79,10 @@ test("a withdrawn site is rebuilt out of its post, and an emptied batch says the
 		]
 	);
 	assert.equal(plan[0].text, tg.withdrawn('2026-11-04'));
-	assert.ok(!plan[0].text.includes('b.com'));
-	assert.ok(!plan[1].text.includes('c.com') && plan[1].text.includes('d.com'));
+	const names = (text) => (text.match(/[a-z0-9]+(?:\.[a-z0-9]+)+/gi) || []).filter((t) => /^[a-z]\.com$/.test(t));
+	assert.deepEqual(names(plan[0].text), []);
+	assert.ok(!names(plan[1].text).some((t) => t === 'c.com'));
+	assert.ok(names(plan[1].text).some((t) => t === 'd.com'));
 	assert.ok(plan[1].text.includes('The series now holds 2 public sites.'));
 });
 

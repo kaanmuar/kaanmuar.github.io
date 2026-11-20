@@ -9,6 +9,14 @@ const ROOT = path.join(__dirname, '../..');
 const BASE = 'https://carlosandmunoz.com/';
 const LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
 const TYPES = ['WebApplication', 'Organization', 'Service', 'BreadcrumbList', 'FAQPage'];
+const stripTags = (html) => {
+	let text = html;
+	for (let prev; prev !== text; ) {
+		prev = text;
+		text = text.replace(/<[^>]*>/g, '');
+	}
+	return text;
+};
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 const pageOf = (lang) => (lang === 'en' ? 'qa-review.html' : `qa-review-${lang}.html`);
 
@@ -85,12 +93,7 @@ for (const lang of LANGS) {
 
 	test(`${page}: the safety, promise and fix answers are the page's visible facts`, () => {
 		const visible = new Set(
-			[...html.matchAll(/<dd[^>]*>([\s\S]*?)<\/dd>/g)].map((m) =>
-				m[1]
-					.replace(/<[^>]+>/g, '')
-					.replace(/&amp;/g, '&')
-					.trim()
-			)
+			[...html.matchAll(/<dd[^>]*>([\s\S]*?)<\/dd>/g)].map((m) => stripTags(m[1]).replace(/&amp;/g, '&').trim())
 		);
 		const faq = nodes.find((n) => n['@type'] === 'FAQPage');
 		faq.mainEntity.slice(-3).forEach((q) => assert.ok(visible.has(q.acceptedAnswer.text), q.name));
