@@ -24,8 +24,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.EU",
@@ -44,8 +44,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.GB",
@@ -69,8 +69,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.US",
@@ -89,8 +89,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.MX",
@@ -109,8 +109,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.BR",
@@ -129,8 +129,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.ES",
@@ -154,8 +154,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.DE",
@@ -179,8 +179,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.FR",
@@ -204,8 +204,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.AR",
@@ -224,8 +224,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.CL",
@@ -244,8 +244,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.PE",
@@ -264,8 +264,8 @@
 				}
 			],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.CA",
@@ -284,8 +284,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.AU",
@@ -304,8 +304,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.NZ",
@@ -324,8 +324,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.IN",
@@ -344,8 +344,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.JP",
@@ -364,8 +364,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "statute.ZA",
@@ -384,8 +384,8 @@
 				}
 			],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "local.lead.1",
@@ -407,8 +407,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "local.claims.heading",
@@ -419,8 +419,8 @@
 			"text": "Where a local claim is heard",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "local.claims.1",
@@ -437,8 +437,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "local.claims.2",
@@ -455,8 +455,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.lead.1",
@@ -473,8 +473,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.heading",
@@ -485,8 +485,8 @@
 			"text": "What the service is",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.1",
@@ -503,8 +503,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.2",
@@ -521,8 +521,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.3",
@@ -533,8 +533,8 @@
 			"text": "Disclaimer. Nothing on this site is legal advice for the asker or for the owner of the site under review.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.4",
@@ -545,8 +545,8 @@
 			"text": "Disclaimer. Results are automated. Some checks rely on lists and services run by others: Google Web Risk, Cloudflare URL Scanner, PhishStats, URLhaus, public DNS blocklists, the Wordfence Intelligence feed, and Brave Search results. Those sources can be wrong, late, or incomplete, and a page can answer this service differently from a visitor. So a report can flag a problem that is not there (a false positive) or miss one that is (a false negative). Where a check could not run, the report says it was not checked; that is not a pass. A listing in a report is what that list said at the time of the review.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.service.5",
@@ -557,8 +557,8 @@
 			"text": "Disclaimer. A clean report, a finished fix, or a re-review is not a guarantee that the site will not be hacked, listed, blocked, or broken later. A lookalike domain named in a report is a registered name that looks like the site's; naming it is not a finding that its holder acts in bad faith.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.heading",
@@ -569,8 +569,8 @@
 			"text": "Public analysis, no access beyond what was asked",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.1",
@@ -592,8 +592,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.2",
@@ -615,8 +615,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.3",
@@ -627,8 +627,8 @@
 			"text": "Disclaimer. A signal in a report is what the public response showed: a missing control, or a string shaped like a secret. The secret itself is not copied into the report. The signal is not proof of a break-in. The tail of each signal stays blurred until that section is paid. Public write-ups are titles retrieved for the host on that pass. They are not a press review written by this service.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.4",
@@ -639,8 +639,8 @@
 			"text": "Disclaimer. To look for signs that a site was hacked, the review may request the same public page as a search crawler would, to compare what crawlers and visitors get, and may run a site: search for the domain on Brave Search, to look for spam in search results. A strong sign is reported as a finding; a mere mention is reported as information only.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.5",
@@ -651,8 +651,8 @@
 			"text": "Disclaimer. Exposed-file checks, such as a public .env file, .git folder, backup, or database dump, run only after the asker proves the site is theirs: a mailbox on the site's domain, a verified signed-in run of the site, or the account's qa-lab-verify token in the site's DNS or homepage. Each probe is one request for a well-known path, reads at most 4 KB, and keeps only the key name or header that shows the exposure, never its value. Without that proof the report carries at most a neutral note, and a Live Report never carries any of it.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.access.6",
@@ -663,8 +663,8 @@
 			"text": "Rescue. When a review fails because the site refuses cloud data centers, a later re-run may read the same public pages from the operator's own computer in Medellín, Colombia, in an ordinary Chrome browser window on a home internet connection. The site then sees that computer's address, not the asker's. Where the site shows an automatic browser check, the window waits for it to clear as it would for a visitor. The rescue does not sign in, does not solve a puzzle or CAPTCHA, and does not get past a login or a paywall.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.heading",
@@ -675,8 +675,8 @@
 			"text": "Personal data of the person who asks",
 			"cites": [],
 			"lastChecked": "2026-11-09",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.1",
@@ -693,8 +693,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.2",
@@ -721,8 +721,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.3",
@@ -733,8 +733,8 @@
 			"text": "Who is responsible. The operator, Carlos A. Muñoz, Calle 29 # 29-31, Medellín, Colombia (050016), qa@carlosandmunoz.com, is the Responsable del Tratamiento of the request record, the account, and the visit log. The operator is not the Responsable of the visitors of the site under review, and does not take on that site's duties to its own visitors.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.4",
@@ -751,8 +751,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.5",
@@ -769,8 +769,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.6",
@@ -781,8 +781,8 @@
 			"text": "Publication. Unless the asker ticks “Don't publish this review” on the request, the scores and findings for the public pages may be published on this site, its public GitHub repository, and llms-full.txt, and on LinkedIn, Facebook, Instagram, X, Threads, Bluesky, Mastodon, TikTok, and YouTube, as images and voiced clips, and in the Telegram channel @qalab_live and the Reddit community r/QALabLiveReports, as a daily post that opens the Live Reports in those apps. The asker's name, email, reason, IP address, and browser are never published. Sites flagged by Google Safe Browsing and test runs are never published. A site owner can ask for its Live Report to be taken down: a take-down stops future posts and removes the Live Report from this site; posts already made are deleted on request where the network allows it. When a Live Report is up, one email may go to the site's owner, to an address the site or its public records publish: its pages, structured data, security.txt and llms.txt, the domain's registration (RDAP) and DNS records, a GitHub profile the site links to, or public web search results for the domain. That email says a Live Report exists and shows its scores. It never says who asked. It offers the blurred report to an address on the site's domain, removal from Live Reports, and a link to stop further notices. At most one goes to a domain every six months, an operator approves each one, and sites under .de and .at are not emailed.",
 			"cites": [],
 			"lastChecked": "2026-11-04",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.7",
@@ -793,8 +793,8 @@
 			"text": "Failed reviews. When a review fails for a reason on this service's side, the host name, the time, the error, and the last log lines, without the asker's name, email, or URL query, are posted in a public GitHub issue on https://github.com/kaanmuar/kaanmuar.github.io so the fault can be fixed.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.8",
@@ -816,8 +816,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.9",
@@ -828,8 +828,8 @@
 			"text": "Fix requests. “Ask us to fix it” on a report sends the findings picked, the package or a request for a quote, the name, how to reach the site (host, CMS, or repository; never a password), and a deadline and a budget when given. The request keeps the history of its status. Purpose: to quote, perform, and check the fix the client asked for. A paid package also creates a payment record. Access to the site is given by the client directly on its own host or platform, not through this site's forms.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.10",
@@ -840,8 +840,8 @@
 			"text": "Visits. Opening a review page records the IP address, browser, approximate city, region and country, time zone, languages, screen size, and referring site, to count visits. Once the asker signs in, each review page opened while signed in adds to a visit on the account: the pages, the number of page views, the first and last time, and the time the tab was visible, measured by a signal every 30 seconds. A visit ends after 30 minutes without activity. None of this is recorded without a sign-in.",
 			"cites": [],
 			"lastChecked": "2026-11-02",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.11",
@@ -852,8 +852,8 @@
 			"text": "What is stored. Name, email, reason, URL, selected frameworks, review log, whether the review was stopped, time, IP address, browser, device id, language, the version of these terms that was accepted, the follow-up choice, and the full report with its screenshots. The country, region, and city are stored when the host provides them. A coupon redemption and a payment reference are stored when they apply. Client name, client email, and client website are stored when the reason is a client request. An ownership claim stores only that the email domain matched the host. It does not prove legal ownership. A password is not collected. The text of the pages under review is not sent to a model vendor; the models that are used, and what they read, are listed under “Automated and AI tools”. For the owner notice, the addresses found for a site, the one mailed, when, and a list of addresses and domains that asked for no more notices are stored.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.12",
@@ -875,8 +875,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.13",
@@ -887,8 +887,8 @@
 			"text": "Sign-in. The sign-in options offered today are email (a 6-digit code or a link, valid for 15 minutes and only on the same device), Google, Microsoft, GitHub, Yahoo, and X. Other providers are offered only when the operator switches them on. Each provider learns that the holder signed in to this service, under its own privacy policy. The account keeps the email, the sign-in methods used, the provider's user id, and the first and last sign-in time. Each signed-in browser has a session, kept 30 days, with a hash of its device key. A pending sign-in keeps the IP address and a hash of the device key for one hour, or ten minutes for a provider sign-in. A provider sign-in also keeps the name, given and family name, photo, language, and the Google Workspace domain the provider shares. Google Firebase Authentication keeps its own user record for a Google, Microsoft, GitHub, Yahoo, or X sign-in. A Google sign-in asks Google for the account's other email addresses, birthday, phone numbers, postal addresses, gender, and organization, job title, and department, and keeps what Google returns. The server asks Google itself with a short-lived access token; that token is not stored. The sign-in is used to know who holds the account and reach them about their reviews. The Google fields above are kept for a future paid plan and are not used yet. A field the holder stops sharing with this service in their Google account is cleared at the next sign-in. The account is kept for 12 months after the last sign-in. Signing in with email instead shares only the address. Until Google approves this service's request for these fields, Google may show an “unverified app” notice.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.14",
@@ -905,8 +905,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.15",
@@ -928,8 +928,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.16",
@@ -946,8 +946,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.personal-data.17",
@@ -964,8 +964,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.heading",
@@ -976,8 +976,8 @@
 			"text": "Who receives data",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.1",
@@ -988,8 +988,8 @@
 			"text": "Google: Firebase Authentication, Cloud Firestore, and Cloud Functions in us-central1, United States, and europe-west1, Belgium, where the headless browser runs; PageSpeed Insights, which receives the start address; Web Risk, which receives the start address and the host of each third-party script, frame, form, and link on the reviewed pages; the People API, for a Google sign-in; the Gemini API, which receives the sentences of one Ask the report answer, and nothing else from the report or the account, only when its owner turns on AI phrasing; Gemini on Vertex AI, in this service's own Google Cloud project, with the Gemini API as a fallback, which receives the diagnosis of a review that failed: its address, host, error, and last log lines, without the asker's name or email; Google Analytics, only after the visitor allows it; Google Translate, when a language other than English is chosen; and Google Fonts.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.2",
@@ -1000,8 +1000,8 @@
 			"text": "Attack and exploit sources (#3816). The review downloads CISA's Known Exploited Vulnerabilities list, Spamhaus's DROP and ASN-DROP netblock lists, Feodo Tracker's botnet list, the Tor Project's bulk exit list, and the GDELT 2.0 event feed. Those downloads are plain requests, and the lists are matched on this service's side, so their publishers learn nothing about the reviewed site. It sends OSV.dev the names and versions of the JavaScript libraries it found on the reviewed site, and FIRST EPSS the CVE ids that match them; each receives only that request and returns its answer. It sends CertSpotter, a certificate-transparency service, the reviewed domain only when the asker buys the Deep check for a paid report and this service holds a CertSpotter key; the Deep check also matches the reviewed host against the GDELT news feed on this service's side, so GDELT learns nothing about it. The certificate check opens a TLS connection to the reviewed host itself. None of these checkers receives the asker's name or email. Copies of the downloaded lists are kept in this service's own Google Cloud storage and refreshed when they are older than 25 minutes; a warm instance keeps them in memory for up to four hours. The map history keeps, for 90 days, a daily count of GDELT events per country and nothing else: no hosts, addresses, or names. A threat-list record in the internal desk is kept by its level, 180 days by default. A client can switch these checks off for one run; then none of the sources above is contacted for that run.",
 			"cites": [],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.3",
@@ -1012,8 +1012,8 @@
 			"text": "Checkers of the site under review. Cloudflare URL Scanner receives the reviewed address without its query, fragment, or any username and password in it, and opens it; when a part of the path looks like a token, it receives only the site's address, such as https://example.com/. Its scans are unlisted: they stay out of Cloudflare Radar's public lists and search, but anyone who holds a scan's link can see that address, a screenshot, and what the page loaded on Cloudflare Radar, https://radar.cloudflare.com/. A scan of the same host from the last day is reused instead of a new one, and a reused scan may be one that someone else made public. Private information in a path that does not look like a token can still show there, so do not submit such an address. Brave Search receives a site: search for the reviewed domain. PhishStats and URLhaus (abuse.ch) receive the host, once this service holds keys for them. Public DNS blocklists (SpamCop, Barracuda, Mailspike, PSBL, 0spam, and NordSpam) receive DNS lookups of the domain and its mail-server addresses. Cloudflare DNS and Google Public DNS answer the lookups for lookalike domains. This service downloads the public Wordfence Intelligence vulnerability feed; Wordfence receives nothing about the asker or the site. None of these checkers receives the asker's name or email.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.4",
@@ -1024,8 +1024,8 @@
 			"text": "The operator's own computer, in Medellín, Colombia, reads the site under review for a rescue, as described above.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.5",
@@ -1036,8 +1036,8 @@
 			"text": "Twilio SendGrid sends the emails. PayPal collects payments for reports and for fix packages, and receives what the payer gives it under PayPal's own privacy statement. GitHub hosts this site, its public repository with the Live Reports and llms-full.txt, the voiced clips, and the public issues for failed reviews.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.6",
@@ -1048,8 +1048,8 @@
 			"text": "Buffer schedules the posts on LinkedIn, X, TikTok, and YouTube. Meta receives the posts on the Facebook Page, Instagram, and Threads directly. Bluesky (bsky.social) and Mastodon (mastodon.social) receive their posts directly. Telegram receives the daily channel post, and live.html loads Telegram's Mini App script from telegram.org; inside Telegram it reads only the app's language, and stores nothing. Reddit receives an app that carries each day's Live Reports and posts them in r/QALabLiveReports.",
 			"cites": [],
 			"lastChecked": "2026-11-04",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.7",
@@ -1060,8 +1060,8 @@
 			"text": "People the operator contacts first (see that section) are not askers. Instantly, the outreach mail service, receives their published business address, first name or role, and the text of the messages and replies. Cloudflare Workers AI, through the operator's own Worker, reads their replies to sort them and draft an answer. Cloudflare also runs the short links, which keep a click's country and campaign, and no IP address. Google Places API receives the search terms for a city and a sector and returns websites, of which only the site's address, country, sector, and place ID are kept. Public group, channel, and profile pages on the networks are read from the operator's own accounts.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.8",
@@ -1072,8 +1072,8 @@
 			"text": "Live shows. TikTok and Instagram receive the live video the operator streams to them. The public chat of a TikTok live is read through an unofficial connector that signs its requests through the server of Euler Stream, which learns which live is read. The Instagram Graph API returns the comments of the operator's live video.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.9",
@@ -1084,8 +1084,8 @@
 			"text": "Calls and messages on the CV. Google Calendar and Google Meet receive the name and email of a person who books a call, and send the invite. SendGrid sends the replies to a message.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.10",
@@ -1096,8 +1096,8 @@
 			"text": "ipwho.is receives the visitor's IP address to suggest a language. The domain's registry answers an RDAP lookup, and DNS resolvers answer the mail and certificate lookups, for the site under review.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.recipients.11",
@@ -1108,8 +1108,8 @@
 			"text": "The sign-in providers offered: Google, Microsoft, GitHub, Yahoo, and X.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.transfer.heading",
@@ -1120,8 +1120,8 @@
 			"text": "Transfer of the asker's data out of Colombia",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.transfer.1",
@@ -1138,8 +1138,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.transfer.2",
@@ -1156,8 +1156,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.transfer.3",
@@ -1174,8 +1174,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.transfer.4",
@@ -1192,8 +1192,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.heading",
@@ -1204,8 +1204,8 @@
 			"text": "Payment, retracto, and what cannot be waived",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.1",
@@ -1222,8 +1222,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.2",
@@ -1240,8 +1240,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.3",
@@ -1258,8 +1258,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.4",
@@ -1276,8 +1276,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.payment.5",
@@ -1299,8 +1299,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.site-content.heading",
@@ -1311,8 +1311,8 @@
 			"text": "The reviewed site's own content",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.site-content.1",
@@ -1334,8 +1334,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.site-content.2",
@@ -1346,8 +1346,8 @@
 			"text": "The included first review is 20 pages and 2 links deep. A wider or deeper review, each later run, and each later view or export of a report after its first 7 days, requires payment, unless the account has a free or test allowance, a coupon, or a pass granted by the operator. For those 7 days, the account that ran a report can open its blurred copy again at no charge. A report, paid or free, opens in full only for the signed-in account that ran it. Anyone else who opens its link, including a colleague it was forwarded to, sees the blurred preview and is asked to sign in. Opens by another signed-in account are counted on the report with the first and last time, never who opened it, and the owner gets one email the first time. The report email goes only to that account's address, and every page of its PDF carries that address. Until that payment is confirmed, the pages of this service carry a watermark. The report page shows the top proposed case in full as a sample, and the tail of each other proposed case stays blurred. A paid copy keeps one attribution line.",
 			"cites": [],
 			"lastChecked": "2026-11-02",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.inconclusive.heading",
@@ -1358,8 +1358,8 @@
 			"text": "A review that could not be concluded",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.inconclusive.1",
@@ -1370,8 +1370,8 @@
 			"text": "The promise. When a review cannot be concluded right away for a reason on this service's side, the page says so and promises the full report by email. The service runs the review again on its own, several times over the next 40 hours and then less often until 14 days after the failure, and emails the report as soon as a re-run finishes. Delivery is a best effort, not a guarantee; it usually happens within 48 hours. If no report is ready after 48 hours, an apology email goes out, and a report that finishes later within the 14 days is still emailed. If none finishes by then, a last email says so, and the code stays valid. A failure caused by the site itself, such as a site that is down, is reported as that and is not part of this promise.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.inconclusive.2",
@@ -1382,8 +1382,8 @@
 			"text": "The apology code. The same notice carries a code that starts with SORRY-, for 20% off the asker's next review or report payment. It is valid for 90 days, works once, and only for the address it was sent to. It does not apply to fix packages, and it cannot be exchanged for money. The code stays valid when the report arrives late and when the apology is sent.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.heading",
@@ -1394,8 +1394,8 @@
 			"text": "Fix packages",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.1",
@@ -1406,8 +1406,8 @@
 			"text": "What a package is. On a report, “Ask us to fix it” offers four ways: fix it yourself with the guidance shown, ask for a quote, order a fixed-price package, or book a call. The packages, in US dollars at launch prices until December 10, 2026 (after that date the list prices apply: Security headers, 139; Email and DNS, 129; TLS and redirects, 99; Accessibility quick fixes, 239; Performance basics, 289; SEO meta and structured data, 169), are: Security headers, 99, about 3 working days; Email and DNS, 89, about 3; TLS and redirects, 69, about 2; Accessibility quick fixes, 169, about 5; Performance basics, 199, about 5; SEO meta and structured data, 119, about 4. The amount is shown before PayPal confirms it. Coupons and apology codes do not apply to packages.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.2",
@@ -1418,8 +1418,8 @@
 			"text": "Scope. A package covers only the findings of that report it lists under “Covers”, on the host the report reviewed, as described on the package. Working days are business days in Colombia and count from when the access the work needs is in place. Not included: findings outside the package's list; a redesign, new pages, or content written from scratch; a hosting plan, domain, certificate, plugin licence, or other third-party fee; a change the host, platform, or a third party does not allow; and anything changed on the site after the fix. These can be quoted separately.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.3",
@@ -1430,8 +1430,8 @@
 			"text": "Access. The client gives the access the work needs, on its own host, CDN, DNS, CMS, or repository, ideally a user or role made for this work and removed afterwards. Passwords are not sent through this site's forms. By giving that access, the client states that it may grant it for that site. That access is used only for the package's scope.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.4",
@@ -1448,8 +1448,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.fix-packages.5",
@@ -1460,8 +1460,8 @@
 			"text": "Fixing it yourself. A paid report includes one free re-check after the client's own fix: the site is reviewed again and the same before/after is sent. A package fixes the listed findings at the time of the work. It does not guarantee that the site cannot be hacked, will rank, will pass an audit, or will stay fixed after later changes. Refunds are under “Payment, retracto, and what cannot be waived”.",
 			"cites": [],
 			"lastChecked": "2026-11-10",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.heading",
@@ -1472,8 +1472,8 @@
 			"text": "Trials, student and company passes, and discount codes",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.1",
@@ -1484,8 +1484,8 @@
 			"text": "What they are. A TRY- link opens a short Freelancer pass at no charge for one signed-in address: 2 days and 3 runs. The link works for 14 days. When the pass ends, its holder gets one AFTER- code, valid for 7 days, for 20% off the next review, report, or pass (40% for a student). A live show gives one shared TRY- code per show, valid for the show and 24 hours after it, still one trial per address. A SORRY- code (above) and a LAUNCH- code (50% off one review until December 10, 2026) are separate codes.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.2",
@@ -1502,8 +1502,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.3",
@@ -1514,8 +1514,8 @@
 			"text": "Limits. There is one trial per address. A company trial is locked to one company domain, one per domain. A student trial asks for an address on the school's domain when the trial is claimed. A free trial is not a purchase: the retracto and refund rules above apply to the payment that follows, including a payment made with an AFTER- or LAUNCH- code.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.4",
@@ -1526,8 +1526,8 @@
 			"text": "Student check. To decide whether to offer a student trial, the operator weighs, with fixed rules and no model, a school email address (a domain on a public list of universities, or an academic suffix such as .edu or .ac), what the person says about themselves on a public profile, and the student community they posted in. It never offers a trial to school pupils. A person who cannot show a school address is asked for one at the claim. This is a check of who gets a discount, not a judgment of the person.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.trials.5",
@@ -1538,8 +1538,8 @@
 			"text": "Data. A claim stores the address, the code, the trial's dates and runs, and the AFTER- code, with the rest of the account (see “Personal data of the person who asks”). It is kept as the account is.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.operator-reviews.heading",
@@ -1550,8 +1550,8 @@
 			"text": "Reviews no one asked for",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.operator-reviews.1",
@@ -1562,8 +1562,8 @@
 			"text": "What they are. Each day the operator's service reviews the most visited sites of many countries, and sites picked from public lists for outreach (up to 96 and 384 a day), with no person asking. It runs the same review a person would, on the public pages, as described under “Public analysis, no access beyond what was asked”. The exposed-file checks do not run, because no owner proved the site is theirs. The seeds are public top-site lists and Google Maps searches; from Maps only the site's address, country, sector, and place ID are kept.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.operator-reviews.2",
@@ -1574,8 +1574,8 @@
 			"text": "Publication. Such a review is published as a Live Report like any other, and its owner can get the one notice described under “Publication”. A site flagged by Google Safe Browsing is not published. There is no asker, so no asker's data is in it. A site owner can write to qa@carlosandmunoz.com to take the Live Report down, to be removed from the operator's lists, and to get no further notice.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.operator-reviews.3",
@@ -1586,8 +1586,8 @@
 			"text": "Not a judgment. A Live Report of a site no one asked about is what the public response showed on one day. It is not a finding that the owner did anything wrong, and the “Results are automated” disclaimer applies.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.heading",
@@ -1598,8 +1598,8 @@
 			"text": "People the operator contacts first",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.1",
@@ -1610,8 +1610,8 @@
 			"text": "Who and why. To offer the trial, the operator writes to students and learning communities, schools, agencies and start-ups, and companies whose sales, bookings, or trust live on their own website. It writes to a business, or to a person in their trade or studies, not to a consumer in their private life.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.2",
@@ -1622,8 +1622,8 @@
 			"text": "Where the details come from. Only what the person or the organization publishes: the contact addresses on a company's own site (role inboxes such as info@ first; no free-mail address, no personal inbox, no guessed address pattern, no people search, no third-party directory), the phone numbers and profile links on that site, a published contact name and job title, and a public post or profile on a social network or in a public group, with its handle, name, language, and link.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.3",
@@ -1634,8 +1634,8 @@
 			"text": "What is kept. One ledger row per person or company: network and handle, name, language, domain, published email and phone, links, the threads taken part in, the messages sent, the codes offered, the stage (found, engaged, replied, offered, claimed, trial ended, discount sent, paid, declined, or blocked), notes, a history of changes, and the findings of the review of their site that the offer cites.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.4",
@@ -1687,8 +1687,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.5",
@@ -1705,8 +1705,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.6",
@@ -1717,8 +1717,8 @@
 			"text": "Stopping. A reply that says stop, a click on the stop link, a block, or a note to qa@carlosandmunoz.com ends all messages. The address, handle, or domain then goes on a do-not-contact list that every routine checks before it writes. Nothing is sent to a domain that asked to stop, to anyone who declined or was blocked, or to an address that bounced.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.7",
@@ -1729,8 +1729,8 @@
 			"text": "Short links. A link in a message goes through a short-link service on Cloudflare that counts a click with the visitor's country, the kind of message, the campaign, the prospect's host, and the language. It keeps no IP address, browser, network, or data center. Clicks by crawlers, link previews, and mail scanners are marked apart.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.outreach.8",
@@ -1741,8 +1741,8 @@
 			"text": "Rights and retention. A person or company in the ledger can ask qa@carlosandmunoz.com to know, correct, or delete its row. A query is answered within 10 business days and a claim within 15, and a claim not resolved goes to the Superintendencia de Industria y Comercio, as above. A row is deleted 12 months after the last contact with its person or company (the latest thread, message, offer, or update). A person who declined or was blocked keeps only the address, handle, or domain on the do-not-contact list, so nobody is written to after asking not to be. A row can also be deleted sooner on request.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.social.heading",
@@ -1753,8 +1753,8 @@
 			"text": "Public posts, replies, and live shows",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.social.1",
@@ -1765,8 +1765,8 @@
 			"text": "Reading the field. Every 30 minutes the operator's service reads public posts on the networks above, and in the public groups, channels, and subreddits the operator's accounts joined. It keeps the posts that name a topic of the field (web quality, testing, accessibility, security, and the like), with the author's handle, the counts, and a model's read of them, to decide whether to like, repost, follow, or reply. It reads nothing from a private account or a private message sent to someone else.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.social.2",
@@ -1777,8 +1777,8 @@
 			"text": "Replies, reactions, and messages. A reply, a reaction, a follow, a join of a public group, and a direct message are made from the operator's accounts, through the network's API or in an ordinary browser window on the operator's own computer. A reply in the field waits for the operator's approval and lapses unapproved after 6 hours; an answer to a comment under the operator's own post lapses after a day. The networks' own rules for those accounts also apply. A person can ask for no more messages by replying stop, by blocking the account, or by writing to qa@carlosandmunoz.com.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.social.3",
@@ -1789,8 +1789,8 @@
 			"text": "Live shows. In a live show on TikTok or Instagram, a viewer who comments a public web address gets that site reviewed on stream. The viewer's public username and the site named are shown and spoken on the stream, and appear in the recording and in the clips cut from it, which are posted on the networks above. A clip never shows the trial code of its live. The review is of a public site, as everywhere on this page, and is published as a Live Report unless it is kept out of them. A viewer can ask qa@carlosandmunoz.com to remove their username from a clip or the review from the Live Reports.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.social.4",
@@ -1801,8 +1801,8 @@
 			"text": "Voices. The clips and cards use synthetic voices in six languages, generated by software and not recordings of a real person, unless the operator voices a clip himself. A clip with a synthetic voice is marked AI-generated where the network's publishing interface has that field: TikTok, YouTube, Instagram and X, through the scheduling tool. Facebook Pages and LinkedIn have no such field there, so their posts carry no mark.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.ai.heading",
@@ -1813,8 +1813,8 @@
 			"text": "Automated and AI tools",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.ai.1",
@@ -1825,8 +1825,8 @@
 			"text": "Where a model is used. Gemini on Vertex AI, in this service's own Google Cloud project, with the Gemini API as a fallback, reads the public posts and the comments under the operator's posts that the scout keeps, and drafts replies; it also reads the diagnosis of a failed review (see “Who receives data”). Cloudflare Workers AI, through the operator's own Worker, sorts the replies of people the operator wrote to, drafts answers, and fills gaps in outreach lists from public pages. The Ask the report answer is phrased by Gemini only when the report's owner turns it on.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.ai.2",
@@ -1837,8 +1837,8 @@
 			"text": "What a model does not read. It does not read the asker's name or email, or the text of the pages under review. A reply from a person the operator wrote to is read by Workers AI.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.ai.3",
@@ -1849,8 +1849,8 @@
 			"text": "No decision by a model alone. A model proposes; the operator decides who is written to, with approval and caps as above, and no model decides a price, a refund, a right, or who gets a trial: the student check above is made of fixed rules. Anyone can ask for a person's answer by writing to qa@carlosandmunoz.com, and every reply is read by the operator.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.ai.4",
@@ -1861,8 +1861,8 @@
 			"text": "Operator tools. The operator runs Jarvis, a private console that gathers the figures, queues, and drafts above, on the web and on a phone. Only the operator signs in to it. It is where approvals are made, where a take-down or a stop is applied, and where the do-not-contact list is kept.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.contact.heading",
@@ -1873,8 +1873,8 @@
 			"text": "Messages, ratings, and calls on the CV",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.contact.1",
@@ -1885,8 +1885,8 @@
 			"text": "Messages and ratings. The Message and Rating forms on the CV store the name, email, topic, message text (up to 8,000 characters), an optional attachment link, and a rating with its comment, in Cloud Firestore. The operator reads them and may answer by email through SendGrid. A rating stays pending until the operator reviews it. Purpose: to answer and to keep a record of who wrote. A person can ask qa@carlosandmunoz.com to see, correct, or delete what they sent. A message or rating is deleted 24 months after it was sent or rated.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.contact.2",
@@ -1897,8 +1897,8 @@
 			"text": "Calls. book.html asks for a name, email, company, a site or report, and a note, reads the free times in the operator's Google Calendar, and creates a Google Calendar event with a Google Meet link; Google sends the invite. The booking record keeps those fields, the language, and the time, for the call and its follow-up, in Cloud Firestore; it is deleted 24 months after the call, or sooner on request. At most two upcoming calls are kept for one address.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.heading",
@@ -1909,8 +1909,8 @@
 			"text": "Confidentiality and NDAs",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.1",
@@ -1921,8 +1921,8 @@
 			"text": "What is kept confidential. What the client gives the operator for a fix package, a quote, or a call, and that is not public: access credentials and roles, configuration, source code, the findings of a review that the client did not publish, and the client's business information. The operator uses it only for that work, shares it with no one except the processors named above that the work needs, does not copy credentials into this site's forms, tickets, or repository, stops using access when the work is marked done, and asks the client to remove the user or role it made.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.2",
@@ -1944,8 +1944,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.3",
@@ -1956,8 +1956,8 @@
 			"text": "What is not confidential. What the public site shows, and what the public review of it found; a Live Report the asker did not keep out of publication; what the operator already knew, learned from a third party, or built without that information; what becomes public without the operator's fault; and what a court or an authority orders the operator to give, in which case the client is told first where the law allows it.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.4",
@@ -1968,8 +1968,8 @@
 			"text": "A signed NDA. The review of a public address is not secret, and an NDA cannot make it so. Before the client gives access, or shares code or a non-public document, a mutual NDA can be signed: write to qa@carlosandmunoz.com. The operator signs a client's own NDA if it does not bar what this page says about public reviews, Live Reports, and the data the service keeps by law. A client that needs its review kept out of the Live Reports ticks “Don't publish this review” on the request. Colombian law governs an NDA unless both sides write another law, and the judge of the defendant's domicile hears it, as above.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.confidentiality.5",
@@ -1980,8 +1980,8 @@
 			"text": "Not legal advice. This section is a statement of how the operator treats confidential information. It does not create a lawyer-client or a professional-secrecy duty.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.no-statute.1",
@@ -1992,8 +1992,8 @@
 			"text": "No single privacy statute is attached on this page for {place}. The cross-border disclaimers above still apply. The company behind the site under review keeps its own duties to its visitors under the law of the place where that company is established.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.country.1",
@@ -2004,8 +2004,8 @@
 			"text": "The personal-data statute named by the public authorities of {place} is {statute}. The official text is at {statuteUrl}. The authority for a complaint about personal data is {authority} ({authorityUrl}). This page does not copy that statute.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.country.2",
@@ -2016,8 +2016,8 @@
 			"text": "Disclaimer. Under that statute, the operator is responsible for the asker's request record and is not responsible for the visitors of the site under review. Access to or deletion of the request record is on the account page, https://carlosandmunoz.com/qa-review-account.html, or by writing to qa@carlosandmunoz.com. The report is not a finding that the reviewed site complies with the law of {place}.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.EU.1",
@@ -2034,8 +2034,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.EU.2",
@@ -2052,8 +2052,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.US.1",
@@ -2085,8 +2085,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.GB.1",
@@ -2103,8 +2103,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.GB.2",
@@ -2121,8 +2121,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.CA.1",
@@ -2139,8 +2139,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.AU.1",
@@ -2157,8 +2157,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.BR.1",
@@ -2175,8 +2175,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.CL.1",
@@ -2198,8 +2198,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.heading",
@@ -2210,8 +2210,8 @@
 			"text": "Rules that apply even when the domain names no country",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.1",
@@ -2228,8 +2228,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.2",
@@ -2246,8 +2246,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.3",
@@ -2274,8 +2274,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.4",
@@ -2302,8 +2302,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.rules.5",
@@ -2320,8 +2320,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.no-country.1",
@@ -2332,8 +2332,8 @@
 			"text": "The address did not name a country. Choose the country of the site under review to add that country's statute. The company behind that site keeps its own duties to its visitors. The disclaimers above still apply to the asker.",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.country.heading",
@@ -2344,8 +2344,8 @@
 			"text": "{country}, the country selected for the site under review",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "local.title",
@@ -2356,8 +2356,8 @@
 			"text": "Local law. The operator's domicile",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "national.title",
@@ -2368,8 +2368,8 @@
 			"text": "National law. Colombia",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		},
 		{
 			"id": "site.title",
@@ -2380,8 +2380,8 @@
 			"text": "International law",
 			"cites": [],
 			"lastChecked": "2026-10-25",
-			"status": "draft",
-			"counselReviewedOn": null
+			"status": "counsel-approved",
+			"counselReviewedOn": "2026-11-19"
 		}
 	]
 }

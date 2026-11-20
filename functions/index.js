@@ -2904,6 +2904,27 @@ exports.retentionSweep = require("firebase-functions/v2/scheduler").onSchedule({
   maxInstances: 1
 }, () => track("retentionSweep", () => retention.sweep(getFirestore(), { apply: process.env.RETENTION_APPLY === "on" })));
 
+// Legal watch (#4004): weekly, fetches the official pages legal/clauses.json cites and files ONE issue under #4004 when a page's
+// text changed since last week. It only reads: it never edits the clauses, the sign-off or the legal page (functions/legal-watch.js).
+exports.legalWatch = require("firebase-functions/v2/scheduler").onSchedule({
+  schedule: ops.cron("legalWatch"),
+  timeZone: ops.TIME_ZONE,
+  timeoutSeconds: 540,
+  memory: "512MiB",
+  maxInstances: 1,
+  retryConfig: { retryCount: 0 },
+  secrets: SECRETS.legalWatch
+}, () => track("legalWatch", async () => {
+  const legalWatch = require("./legal-watch");
+  const token = await githubApp.token();
+  return legalWatch.run({
+    db: getFirestore(),
+    fetchImpl: fetch,
+    clauses: await legalWatch.loadClauses(fetch),
+    openIssue: token ? (issue) => openBoardIssue({ title: issue.title, body: issue.body, labels: ["area:be"], parent: 4004 }, token) : null
+  });
+}));
+
 exports.outreachSweep = require("firebase-functions/v2/scheduler").onSchedule({
   schedule: ops.cron("outreachSweep"),
   timeZone: ops.TIME_ZONE,

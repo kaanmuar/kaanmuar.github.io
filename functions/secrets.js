@@ -28,6 +28,8 @@ const BY_FUNCTION = {
   diagnoseReviewFailures: list(BROWSER),
   rerunReviewFailures: list(MAIL, SCAN, GEMINI),
   fileReviewFailureBugs: list(GITHUB),
+  // legalWatch (#4004): the app token that files the issue under #4004 when a cited law page changed.
+  legalWatch: list(GITHUB),
   // threatFeeds (#3935): Cloudflare Radar attack traffic for the internal Jarvis cyber map (personal use only).
   threatFeeds: list(["CLOUDFLARE_API_TOKEN"]),
   sweep: list(SCAN),
