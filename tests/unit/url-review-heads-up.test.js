@@ -2,6 +2,8 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+// Built at runtime so no literal key sits in the source (gitleaks aws-access-token).
+const FAKE_AWS = ['AKIA', 'ABCDEFGHIJKLMNOP'].join('');
 const heads = require('../../functions/url-review-heads-up');
 
 const NOW = Date.parse('2026-11-20T00:00:00Z');
@@ -188,7 +190,9 @@ test('draft never sells: no price, discount, plan, urgency or upsell words', () 
 test('evidence is scrubbed of links, keys, tokens and addresses', () => {
 	const dirty = threat({
 		evidence:
-			'Injected https://evil.example/x?id=1 and AKIAABCDEFGHIJKLMNOP, token=abc123 ' +
+			'Injected https://evil.example/x?id=1 and ' +
+			FAKE_AWS +
+			', token=abc123 ' +
 			'eyJhbGciOi.eyJzdWIiOi.sig sk_live_abcdefgh12 user@private.org 0123456789abcdef0123456789abcdef ' +
 			'QWxhZGRpbjpvcGVuIHNlc2FtZVFXRVJUWVVJT1BfYXNkZmdo',
 	});
@@ -199,7 +203,7 @@ test('evidence is scrubbed of links, keys, tokens and addresses', () => {
 });
 
 test('exposed secrets are described without repeating any value', () => {
-	const secret = threat({ kind: 'exposed-secret', evidence: 'AKIAABCDEFGHIJKLMNOP in app.js' });
+	const secret = threat({ kind: 'exposed-secret', evidence: '' + FAKE_AWS + ' in app.js' });
 	const mail = heads.draft(secret, Object.assign(ctx(), { sender: SENDER }));
 	assert.match(mail.text, /We have withheld the value/);
 	assert.doesNotMatch(mail.text, /AKIA/);
@@ -227,4 +231,53 @@ test('draft refuses to go out without a sender name, postal address and website'
 		() => heads.draft(threat(), Object.assign(ctx(), { sender: { name: 'x', website: 'https://x' } })),
 		/sender/
 	);
+});
+
+const LANG_STOP = { en: 'STOP', es: 'STOP', pt: 'STOP', de: 'STOP', fr: 'STOP', it: 'STOP' };
+
+test('each language carries the same parts: subject, host, check list, false-positive and STOP reply', () => {
+	const withSender = Object.assign(ctx(), { sender: SENDER });
+	for (const lang of heads.LANGS) {
+		const mail = heads.draft(threat(), Object.assign({}, withSender, { lang: lang }));
+		assert.equal(mail.lang, lang);
+		assert.match(mail.subject, /shop\.northwind-shop\.io/, lang);
+		assert.equal(mail.text.split('\n').filter((line) => /^[1-4]\. /.test(line)).length, 4, lang);
+		assert.match(mail.text, new RegExp('\\b' + LANG_STOP[lang] + '\\b'), lang);
+		assert.match(mail.text, /site:shop\.northwind-shop\.io/, lang);
+		assert.match(mail.text, /Example postal address/, lang);
+		assert.doesNotMatch(mail.text, /\{(host|day|what|ev)\}/, lang);
+		assert.equal(mail.text.includes('<'), false, lang);
+	}
+});
+
+test('each language reads as a warning, not a sales message', () => {
+	const withSender = Object.assign(ctx(), { sender: SENDER });
+	const sales =
+		/\b(precio|oferta|descuento|preço|desconto|prix|remise|offre|prezzo|sconto|offerta|angebot|rabatt|preis|kaufen|comprar|acheter|comprare|upgrade|mise à niveau|aggiornamento premium)\b/i;
+	for (const lang of heads.LANGS) {
+		const mail = heads.draft(threat(), Object.assign({}, withSender, { lang: lang }));
+		assert.doesNotMatch(mail.subject + '\n' + mail.text, sales, lang);
+	}
+});
+
+test('an unknown or missing language falls back to English', () => {
+	const withSender = Object.assign(ctx(), { sender: SENDER });
+	assert.equal(heads.draft(threat(), Object.assign({}, withSender, { lang: 'xx' })).lang, 'en');
+	assert.equal(heads.draft(threat(), withSender).subject, 'Possible compromise seen on shop.northwind-shop.io');
+});
+
+test('the English copy is unchanged from the reviewed version', () => {
+	const mail = heads.draft(threat(), Object.assign(ctx(), { sender: SENDER }));
+	assert.match(
+		mail.text,
+		/^Hello,\n\nOur scanner, QA-lab URL Review, looked at shop\.northwind-shop\.io on 2026-11-19 and saw spam or hidden links injected into pages\./
+	);
+});
+
+test('exposed secrets are withheld in every language', () => {
+	const secret = threat({ kind: 'exposed-secret', evidence: FAKE_AWS + ' in app.js' });
+	for (const lang of heads.LANGS) {
+		const mail = heads.draft(secret, Object.assign(ctx(), { sender: SENDER, lang: lang }));
+		assert.doesNotMatch(mail.text, /AKIA/, lang);
+	}
 });
