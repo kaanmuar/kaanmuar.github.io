@@ -35,26 +35,26 @@ const CORNERS = [
 	{
 		id: 'B',
 		name: 'Customer GEO, speed, accessibility and agency',
-		queries: ['"llms.txt"', '"generative engine optimization"', '"wcag" audit', '"core web vitals" audit', '"cookie consent" scanner', '"json-ld" validator', '"accessibility" "playwright"'],
+		queries: ['"llms.txt"', '"generative engine optimization"', '"wcag" audit', '"core web vitals" audit', '"cookie consent" scanner', '"json-ld" validator', '"accessibility" "playwright"', '"hreflang" validator', '"structured data" "schema.org" audit'],
 	},
 	{
 		id: 'C',
 		name: 'Internal AppSec, CI, ops and outreach',
-		queries: ['"github actions" security audit', '"github actions" "template injection"', '"secret scanner"', '"dmarc" report', '"webhook" idempotency', '"cloudflare workers" retry', '"sbom" scanner'],
+		queries: ['"github actions" security audit', '"github actions" "template injection"', '"secret scanner"', '"dmarc" report', '"webhook" idempotency', '"cloudflare workers" retry', '"sbom" scanner', '"dependency" "license" audit', '"cold email" deliverability'],
 	},
 	{
 		id: 'D',
 		name: 'Design, media, social and field sweep',
-		queries: ['"satori" renderer', '"webgl" shader', '"programmatic video"', '"c2pa"', '"audio watermark"', '"bluesky" bot', '"atproto" sdk'],
+		queries: ['"satori" renderer', '"webgl" shader', '"programmatic video"', '"c2pa"', '"audio watermark"', '"bluesky" bot', '"atproto" sdk', '"design tokens" generator', '"open graph" image generator'],
 	},
 	{
 		id: 'A',
 		name: 'Cyber-attack side (passive checks only)',
-		queries: ['"content security policy" evaluator', '"security headers" checker', '"typosquatting"', '"threat intelligence" feed', '"epss"', '"subresource integrity"'],
+		queries: ['"content security policy" evaluator', '"security headers" checker', '"typosquatting"', '"threat intelligence" feed', '"epss"', '"subresource integrity"', '"dns" "spf" checker', '"tls" certificate monitor'],
 	},
 ];
 
-const CAPS = { permissive: 12, attribution: 3, isolate: 3, trap: 8, unknown: 5 };
+const CAPS = { permissive: 12, attribution: 3, isolate: 6, trap: 8, unknown: 5 };
 
 // Tools that undo provenance or evade protections work against #3824 (AI labels) and passive-only checks: never suggested.
 const DENY = /remov\w*[- ]?(ai[- ]?)?watermarks?|watermarks?[- ]?remov|strip\w*[- ](ai[- ])?watermarks?|anti-attribution|humaniz|bypass|crack(er|ed)?\b|keygen|stealer|keylogger|downloader|jailbreak|evad(e|ing)|obfuscat|malware builder/i;
@@ -237,7 +237,7 @@ function scout(text, seen, now) {
 	for (const corner of CORNERS) {
 		const hits = new Map();
 		for (const q of corner.queries) {
-			const res = gh(['-X', 'GET', 'search/repositories', '-f', `q=${q} in:name,description,topics pushed:>=${since} stars:>=20 archived:false`, '-f', 'sort=stars', '-f', 'order=desc', '-f', 'per_page=10']);
+			const res = gh(['-X', 'GET', 'search/repositories', '-f', `q=${q} in:name,description,topics pushed:>=${since} stars:>=10 archived:false`, '-f', 'sort=stars', '-f', 'order=desc', '-f', 'per_page=10']);
 			for (const item of res.items || []) hits.set(item.full_name, item);
 		}
 		const groups = rank([...hits.values()], known);

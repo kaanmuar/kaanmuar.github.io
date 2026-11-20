@@ -6,6 +6,7 @@ const targeted = require('./url-review-targeted');
 const watchCases = require('./url-review-watch');
 const findingsCopy = require('./url-review-findings-copy');
 const customerMail = require('./url-review-customer-mail');
+const playbooks = require('./url-review-playbooks');
 
 const FINDING_KEYS = watchCases.TARGETED_KEYS.slice();
 
@@ -289,6 +290,142 @@ function checksRead(targetedBlock) {
 	return targeted.lines(targetedBlock || null);
 }
 
+// Trust grade block (#3958). Non-English strings are machine-assisted; native review is tracked in #3952.
+const TRUST_LABEL = {
+	en: {
+		title: 'Customer trust grade',
+		points: 'points',
+		fixFirst: 'Fix these first',
+		cost: 'costs',
+		helmet: 'Helmet setup for the missing headers (Node and Express)',
+		capped: 'A planted backdoor caps the grade at F.',
+	},
+	es: {
+		title: 'Nota de confianza del cliente',
+		points: 'puntos',
+		fixFirst: 'Arregla esto primero',
+		cost: 'resta',
+		helmet: 'Configuración de helmet para los encabezados que faltan (Node y Express)',
+		capped: 'Una puerta trasera plantada limita la nota a F.',
+	},
+	pt: {
+		title: 'Nota de confiança do cliente',
+		points: 'pontos',
+		fixFirst: 'Corrija isto primeiro',
+		cost: 'tira',
+		helmet: 'Configuração do helmet para os cabeçalhos em falta (Node e Express)',
+		capped: 'Uma porta dos fundos plantada limita a nota a F.',
+	},
+	de: {
+		title: 'Vertrauensnote für Kunden',
+		points: 'Punkte',
+		fixFirst: 'Das zuerst beheben',
+		cost: 'kostet',
+		helmet: 'Helmet-Einrichtung für die fehlenden Header (Node und Express)',
+		capped: 'Eine eingeschleuste Hintertür begrenzt die Note auf F.',
+	},
+	fr: {
+		title: 'Note de confiance client',
+		points: 'points',
+		fixFirst: 'À corriger en premier',
+		cost: 'retire',
+		helmet: 'Configuration de helmet pour les en-têtes manquants (Node et Express)',
+		capped: 'Une porte dérobée plantée plafonne la note à F.',
+	},
+	it: {
+		title: 'Voto di fiducia per i clienti',
+		points: 'punti',
+		fixFirst: 'Correggi prima questi',
+		cost: 'toglie',
+		helmet: 'Configurazione di helmet per le intestazioni mancanti (Node ed Express)',
+		capped: 'Una backdoor piantata limita il voto a F.',
+	},
+};
+
+function trustLabel(lang, key) {
+	const code = customerMail.langOf(lang);
+	return (TRUST_LABEL[code] || TRUST_LABEL.en)[key] || TRUST_LABEL.en[key];
+}
+
+function trustBlock(report, lang) {
+	const ins = report && report.insights;
+	const trust = ins && ins.trust;
+	if (!trust || !trust.grade) return '';
+	const byKey = {};
+	(Array.isArray(ins.findings) ? ins.findings : []).forEach((item) => {
+		if (item && !byKey[item.key]) byKey[item.key] = item;
+	});
+	const esc = customerMail.esc;
+	const fix = (Array.isArray(trust.rows) ? trust.rows : [])
+		.slice(0, 5)
+		.filter((row) => byKey[row.key])
+		.map(
+			(row) =>
+				'<li>' +
+				esc(findingLine(lang, byKey[row.key], 'title')) +
+				' <span class="muted">(' +
+				esc(trustLabel(lang, 'cost')) +
+				' ' +
+				esc(row.points) +
+				')</span></li>'
+		)
+		.join('');
+	const helmet = ins.fixkit && ins.fixkit.helmet ? String(ins.fixkit.helmet) : '';
+	return (
+		'<h2>' +
+		esc(trustLabel(lang, 'title')) +
+		'</h2>' +
+		'<p class="trust"><span class="grade">' +
+		esc(trust.grade) +
+		'</span> ' +
+		esc(trust.score) +
+		' ' +
+		esc(trustLabel(lang, 'points')) +
+		(trust.capped ? ' · ' + esc(trustLabel(lang, 'capped')) : '') +
+		'</p>' +
+		(fix ? '<h3>' + esc(trustLabel(lang, 'fixFirst')) + '</h3><ol class="fixrows">' + fix + '</ol>' : '') +
+		(helmet ? '<h3>' + esc(trustLabel(lang, 'helmet')) + '</h3><pre>' + esc(helmet) + '</pre>' : '')
+	);
+}
+
+// The IR playbooks for the attack-source findings this report raised (#3958).
+function playbookBlock(list, lang) {
+	const esc = customerMail.esc;
+	const books = playbooks.forKeys(
+		list.map((row) => row.key),
+		lang
+	);
+	if (!books.length) return '';
+	const head = playbooks.heading(lang);
+	return (
+		'<h2>' +
+		esc(head.section) +
+		'</h2>' +
+		(playbooks.native(lang) ? '' : '<p class="checks">' + esc(head.note || '') + '</p>') +
+		books
+			.map(
+				(book) =>
+					'<div class="book"><h3>' +
+					esc(book.title) +
+					' <span class="muted">(' +
+					esc(head.irm) +
+					' ' +
+					esc(book.irm) +
+					')</span></h3>' +
+					playbooks.PHASES.map(
+						(phase) =>
+							'<p class="phase"><strong>' +
+							esc(head.phases[phase]) +
+							'</strong></p><ul>' +
+							book.steps[phase].map((step) => '<li>' + esc(step) + '</li>').join('') +
+							'</ul>'
+					).join('') +
+					'</div>'
+			)
+			.join('')
+	);
+}
+
 const PDF_STYLE =
 	"@page{margin:14mm 16mm 18mm}body{margin:0;font-family:Inter,'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#243436;line-height:1.45}" +
 	"h1{font-family:Georgia,'Times New Roman',serif;font-size:22pt;font-weight:normal;margin:0 0 4mm;color:#0c3539}" +
@@ -297,6 +434,9 @@ const PDF_STYLE =
 	'table{width:100%;border-collapse:collapse;font-size:9pt}th,td{border:1px solid #d4e2e3;padding:2.2mm 2.6mm;vertical-align:top;text-align:left}' +
 	'th{background:#eef6f7;font-size:8pt;text-transform:uppercase;letter-spacing:.06em;color:#3f5c60}' +
 	'tr:nth-child(even) td{background:#fafcfc}.lvl{font-weight:700;text-transform:uppercase;font-size:8pt;letter-spacing:.04em}' +
+	'.trust{font-size:11pt;margin:0 0 3mm}.grade{font-family:Georgia,serif;font-size:26pt;color:#0c3539;margin-right:3mm}.muted{color:#5a7174}' +
+	'h3{font-size:10pt;margin:4mm 0 1.5mm;color:#0c3539}pre{font-family:Menlo,Consolas,monospace;font-size:8pt;background:#eef6f7;padding:3mm;white-space:pre-wrap;word-break:break-all}' +
+	'.book{break-inside:avoid}.phase{margin:2mm 0 0}ul,ol{margin:1mm 0 0;padding-left:5mm}' +
 	'.checks{font-size:9pt;color:#3f5c60;margin:0 0 2mm}.foot{margin-top:6mm;padding-top:3mm;border-top:1px solid #d4e2e3;font-size:8pt;color:#5a7174}';
 
 function page(record, options) {
@@ -373,6 +513,15 @@ function page(record, options) {
 		'</th></tr></thead><tbody>' +
 		tableRows +
 		'</tbody></table>' +
+		trustBlock(report, lang) +
+		playbookBlock(list, lang) +
+		(list.length
+			? '<div class="foot"><strong>' +
+				customerMail.esc(label(lang, 'attribution')) +
+				' (IRM):</strong> ' +
+				customerMail.esc(playbooks.attribution(lang)) +
+				'</div>'
+			: '') +
 		(attr.length
 			? '<div class="foot"><strong>' +
 				customerMail.esc(label(lang, 'attribution')) +

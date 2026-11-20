@@ -719,13 +719,15 @@ async function bookingCallback(req, res) {
 			code: String(req.query.code || ''),
 			redirect: BOOKING_REDIRECT,
 		});
-		await db.doc('booking_private/google').set({
-			refresh: got.refresh,
-			email: got.email,
-			scope: got.scope,
-			connectedAt: new Date().toISOString(),
-			error: '',
-		});
+		await db
+			.doc('booking_private/google')
+			.set({
+				refresh: got.refresh,
+				email: got.email,
+				scope: got.scope,
+				connectedAt: new Date().toISOString(),
+				error: '',
+			});
 		bookingToken = { value: '', until: 0 };
 		bookingPage(
 			res,
@@ -4320,10 +4322,12 @@ async function opsWatchdog() {
 			problems.push({ job: row.job, why: 'could not be checked: ' + error.message });
 		}
 	}
-	const review = await systemReview.run({ fetch, token, now }).catch((error) => ({
-		problems: [],
-		rows: [{ label: 'System review', value: 'could not run: ' + String(error.message || error).slice(0, 160) }],
-	}));
+	const review = await systemReview
+		.run({ fetch, token, now })
+		.catch((error) => ({
+			problems: [],
+			rows: [{ label: 'System review', value: 'could not run: ' + String(error.message || error).slice(0, 160) }],
+		}));
 	const jobProblems = problems.length;
 	problems.push(...review.problems.filter((p) => !problems.some((q) => q.job === p.job)));
 	const monday = new Date(now).getUTCDay() === 1;
@@ -5950,14 +5954,16 @@ async function reviewSignIn(req, res, pathName) {
 	}
 	const answer = (result) => {
 		if (result.ok)
-			res.status(200).json({
-				ok: true,
-				session: result.session,
-				email: result.email,
-				provider: result.provider,
-				name: result.name || '',
-				picture: result.picture || '',
-			});
+			res
+				.status(200)
+				.json({
+					ok: true,
+					session: result.session,
+					email: result.email,
+					provider: result.provider,
+					name: result.name || '',
+					picture: result.picture || '',
+				});
 		else res.status(result.status).json({ error: result.error, code: result.code || '' });
 	};
 	if (pathName.endsWith('/auth/email')) {
@@ -6124,10 +6130,12 @@ async function reviewAccount(req, res, pathName) {
 					},
 				};
 		await db.collection('url_review_accounts').doc(signedIn.email).set(patch, { merge: true });
-		res.status(200).json({
-			ok: true,
-			branding: next.cleared ? null : { companyName: next.companyName, logoDataUrl: next.logoDataUrl },
-		});
+		res
+			.status(200)
+			.json({
+				ok: true,
+				branding: next.cleared ? null : { companyName: next.companyName, logoDataUrl: next.logoDataUrl },
+			});
 		return;
 	}
 	if (pathName.endsWith('/account/agency-ci') && req.method === 'POST') {
@@ -6318,11 +6326,13 @@ async function reviewAccount(req, res, pathName) {
 		if (pathName.endsWith('/account/verify-check') && host) {
 			const found = await urlReview.proveOwner({ email: signedIn.email, siteToken: tokenFor }, host);
 			if (found.kind === 'site') await rememberSiteProof(signedIn.email, host, found.how);
-			res.status(200).json(
-				Object.assign({ available: true, ok: found.kind === 'site', how: found.how || '' }, given, {
-					proofs: await proofs(),
-				})
-			);
+			res
+				.status(200)
+				.json(
+					Object.assign({ available: true, ok: found.kind === 'site', how: found.how || '' }, given, {
+						proofs: await proofs(),
+					})
+				);
 			return;
 		}
 		res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
@@ -7039,15 +7049,17 @@ exports.reviewUrl = functions
 					.filter((row) => !rivals.shady(row.host))
 					.map((row) => Object.assign(row, { rivals: row.rivals.filter((rival) => !rivals.shady(rival.host)) }))
 					.filter((row) => row.rivals.length);
-				res.status(200).json({
-					since,
-					until,
-					read: records.length,
-					held: picked.held,
-					unlisted,
-					reports: picked.reports,
-					comparisons,
-				});
+				res
+					.status(200)
+					.json({
+						since,
+						until,
+						read: records.length,
+						held: picked.held,
+						unlisted,
+						reports: picked.reports,
+						comparisons,
+					});
 			} catch (error) {
 				console.error('Publishable reviews failed:', error);
 				res.status(503).json({ error: 'The reviews are not available right now.' });
@@ -7833,21 +7845,25 @@ exports.reviewUrl = functions
 						false
 					);
 					if (!access.ok && access.status !== 402) {
-						res.status(access.status).json({
-							error: access.locked
-								? 'Only the account that ran this report can unlock it. Sign in with that account. No charge was made.'
-								: access.error,
-							signIn: !!access.signIn,
-						});
+						res
+							.status(access.status)
+							.json({
+								error: access.locked
+									? 'Only the account that ran this report can unlock it. Sign in with that account. No charge was made.'
+									: access.error,
+								signIn: !!access.signIn,
+							});
 						return;
 					}
 				}
 				if (purpose === 'deep') {
 					// Deep is added to a report already paid for, once; the free preview is not a report to deepen.
 					if (reportData.paid !== true || reportData.status === 'stopped') {
-						res.status(402).json({
-							error: 'The Deep check is added to a paid report. Unlock the report first. No charge was made.',
-						});
+						res
+							.status(402)
+							.json({
+								error: 'The Deep check is added to a paid report. Unlock the report first. No charge was made.',
+							});
 						return;
 					}
 					if ((reportData.addons || []).indexOf('deep') !== -1) {
@@ -7864,10 +7880,12 @@ exports.reviewUrl = functions
 						Object.assign({}, req.body || {}, { touch: false })
 					);
 					if (!signedIn.ok) {
-						res.status(signedIn.status || 401).json({
-							error: 'Sign in first. A pass belongs to the address you sign in with. No charge was made.',
-							signIn: true,
-						});
+						res
+							.status(signedIn.status || 401)
+							.json({
+								error: 'Sign in first. A pass belongs to the address you sign in with. No charge was made.',
+								signIn: true,
+							});
 						return;
 					}
 					passOwner = signedIn.email;
@@ -7889,11 +7907,13 @@ exports.reviewUrl = functions
 						Date.now()
 					);
 					if (!run || !run.due) {
-						res.status(400).json({
-							error: !run
-								? 'No open pass with a run left is on this account. No charge was made.'
-								: 'This run asks for nothing over your pass. Start it from the review page. No charge was made.',
-						});
+						res
+							.status(400)
+							.json({
+								error: !run
+									? 'No open pass with a run left is on this account. No charge was made.'
+									: 'This run asks for nothing over your pass. Start it from the review page. No charge was made.',
+							});
 						return;
 					}
 					passPlan = run.plan;
@@ -8055,13 +8075,15 @@ exports.reviewUrl = functions
 					frameworks: priced.frameworks || [],
 					paid: false,
 				});
-				res.status(200).json({
-					url: session.url,
-					id: session.id,
-					provider: session.provider,
-					currency: session.currency,
-					amount: session.amount,
-				});
+				res
+					.status(200)
+					.json({
+						url: session.url,
+						id: session.id,
+						provider: session.provider,
+						currency: session.currency,
+						amount: session.amount,
+					});
 			} catch (error) {
 				res.status(error.status || 502).json({
 					error: error.message || 'Payment could not be started.',
@@ -8106,12 +8128,14 @@ exports.reviewUrl = functions
 				}
 				const field = rivals.fieldOf(body, data.report.observed && data.report.observed.lang);
 				if (!access.locked && !rivals.fieldRoom(data.report, field)) {
-					res.status(429).json({
-						error:
-							'This report has searched ' +
-							rivals.FIELDS_MAX +
-							" kinds of competition already. Pick one of them or the site's own field.",
-					});
+					res
+						.status(429)
+						.json({
+							error:
+								'This report has searched ' +
+								rivals.FIELDS_MAX +
+								" kinds of competition already. Pick one of them or the site's own field.",
+						});
 					return;
 				}
 				const found = access.locked
@@ -8122,15 +8146,17 @@ exports.reviewUrl = functions
 					(row) => !unlisted.some((u) => row.host === u || row.host.endsWith('.' + u))
 				);
 				const records = await Promise.all(list.map((row) => latestPublicReview(row.host, unlisted)));
-				res.status(200).json({
-					field: field ? field.key : '',
-					rivals: rivals.payload(
-						Object.assign({ id }, data.report),
-						Object.assign({}, found, { list }),
-						records,
-						!!access.ok
-					),
-				});
+				res
+					.status(200)
+					.json({
+						field: field ? field.key : '',
+						rivals: rivals.payload(
+							Object.assign({ id }, data.report),
+							Object.assign({}, found, { list }),
+							records,
+							!!access.ok
+						),
+					});
 			} catch (error) {
 				console.error('Natural competitors failed for ' + id + ':', error);
 				res.status(503).json({ error: 'The natural competitors are not available right now.' });
@@ -12202,6 +12228,9 @@ exports.mailInbound = functions
 				return;
 			}
 			const row = mailInbound.codeOf(mail);
+			// A bounce, auto-reply or complaint is named in the answer and the log (class and code only), never stored or acted on here (#3837).
+			const bounce = row ? '' : mailInbound.bounceLabel(req.body);
+			if (bounce) console.log('mailInbound: ' + bounce + ' to ' + (mail.alias || '?'));
 			if (!row && (mail.alias === 'qa' || mailFace.isFaceAlias(mail.alias)) && !mailInbound.fromUs(mail.fromEmail)) {
 				const out = await takeOwnerReply(
 					mailInbound.replyMail(req.body),
@@ -12211,16 +12240,16 @@ exports.mailInbound = functions
 				res
 					.status(200)
 					.send(
-						out.outcome === 'taken'
+						(out.outcome === 'taken'
 							? 'owner reply ' + out.id
 							: out.outcome === 'seen'
 								? 'seen'
-								: 'no code, ' + out.outcome
+								: 'no code, ' + out.outcome) + (bounce ? ', ' + bounce : '')
 					);
 				return;
 			}
 			if (!row) {
-				res.status(200).send('no code');
+				res.status(200).send(bounce ? 'no code, ' + bounce : 'no code');
 				return;
 			}
 			const now = Date.now();
