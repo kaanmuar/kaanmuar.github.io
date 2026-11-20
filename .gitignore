@@ -10,6 +10,7 @@ cypress/videos/
 cypress/reports/
 cypress/downloads/
 playwright-report/
+monocart-report/
 test-results/
 robot-results/
 .venv-robot/
