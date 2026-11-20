@@ -342,6 +342,17 @@
     "checked": "2026-11-20T01:21:41.908Z"
    }
   ],
+  "auto-2026-11-14/01-u-actualite-cd": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "124",
+    "at": "2026-11-20T23:23:02.811Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/124",
+    "checked": "2026-11-20T23:23:06.574Z"
+   }
+  ],
   "auto-2026-11-14/04-vs-sinarharian-com-my": [
    {
     "channel": "telegram",
@@ -949,6 +960,17 @@
     "result": "failed",
     "error": "Telegram sendPhoto 400: Bad Request: failed to get HTTP URL content",
     "checked": "2026-11-19T02:12:09.892Z"
+   }
+  ],
+  "promo-social-hub-2026-10/35-follow-es": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "123",
+    "at": "2026-11-20T23:22:58.136Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/123",
+    "checked": "2026-11-20T23:23:02.811Z"
    }
   ],
   "runs-100/01-wikipedia": [
