@@ -38,6 +38,13 @@ test('gambling, betting and lottery sites are caught', () => {
 	assert.equal(kind({ host: 'bet365.com' }), 'gambling');
 });
 
+test('script and style bodies are dropped whatever their end tag looks like (#3694)', () => {
+	const gate = '<p>You must be 18 or older to enter.</p>';
+	for (const end of ['</script>', '</script >', '</SCRIPT>', '</script\n>', '</script foo="bar">'])
+		assert.equal(kind({ host: 'example.com', html: page('Welcome', '', '<script>var t = "' + gate + '";' + end + '<p>Hi</p>') }), '', end);
+	assert.equal(kind({ host: 'example.com', html: page('Welcome', '', '<style>p{}</style >' + gate) }), 'adult', 'text after the end tag still counts');
+});
+
 test('a word inside a longer one, or a passing mention, is not a signal', () => {
 	assert.equal(kind({ host: 'www.essex.gov.uk', titles: ['Essex County Council'] }), '');
 	assert.equal(kind({ host: 'javascript.info', titles: ['The Modern JavaScript Tutorial'] }), '');
