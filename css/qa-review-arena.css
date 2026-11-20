@@ -1,4 +1,11 @@
-/* Review arena: one canvas over the Lab / Jarvis reference art (see js/qa-review-arena.js). */
-.ra { position: relative; width: 100%; margin: 14px 0 6px; border: 1px solid rgba(94, 200, 212, .28); border-radius: 12px; overflow: hidden; background: #02070a; box-shadow: 0 10px 40px rgba(0, 0, 0, .45); }
+/* Review arena: the Lab canvas over reference art, or the review console (css/qa-review-console.css). See js/qa-review-arena.js. */
+.ra { position: relative; width: 100%; margin: 14px 0 6px; border: 1px solid rgba(94, 200, 212, .28); border-radius: 12px; overflow: hidden; background: #02070a; box-shadow: 0 10px 40px rgba(0, 0, 0, .45); container: ra / inline-size; }
 .ra[hidden] { display: none; }
 .ra-canvas { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; }
+
+/* The console carries its own live log, so the plain log under it stays for screen readers and the Logs view takes its place. */
+#run-panel.ra-console-on { min-height: 0; }
+#run-panel.ra-console-on .log {
+    position: absolute; width: 1px; height: 1px; min-height: 0; max-height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+html.rc-noscroll { overflow: hidden; }
