@@ -3,8 +3,8 @@ description: Media that needs Carlos's review is named in the reply, so the phon
 alwaysApply: true
 ---
 # Media for review goes in the reply
-Carlos reviews from the CursorQuota phone app, which shows images, video and audio inside the message that names them (#1660). A file only in tool output, or only on the desktop, does not reach him.
+CursorQuota phone shows media only when the reply names it (#1660)—not tool-only or desktop-only paths.
 
-- When a video, clip, image, screenshot, render or audio file needs his review, name each file by its absolute path in your reply, as a markdown link or in backticks: `![home](/Users/Apple/.../home.png)`, `[clip](</path with spaces/clip.mp4>)`.
-- Write the file before the reply that names it. Use formats a phone plays: .mp4 (H.264 and AAC), .webm or .mov; .mp3, .wav or .m4a; .png, .jpg, .gif or .webp.
+- Name each review file by absolute path as a markdown link or backticks: `![home](/Users/Apple/.../home.png)`, `[clip](</path with spaces/clip.mp4>)`.
+- Write the file before that reply. Phone formats: `.mp4` (H.264/AAC), `.webm`/`.mov`; `.mp3`/`.wav`/`.m4a`; `.png`/`.jpg`/`.gif`/`.webp`.
 - Don't ask him to open the desktop to look.

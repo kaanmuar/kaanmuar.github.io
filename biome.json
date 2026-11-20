@@ -1,0 +1,67 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.4/schema.json",
+	"assist": { "enabled": false },
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineWidth": 120
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always",
+			"trailingCommas": "es5"
+		}
+	},
+	"json": {
+		"formatter": {
+			"trailingCommas": "none"
+		}
+	},
+	"linter": {
+		"enabled": false
+	},
+	"files": {
+		"includes": ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.ts", "**/*.tsx", "**/*.jsx", "**/*.json"],
+		"ignoreUnknown": true
+	},
+	"overrides": [
+		{
+			"includes": [
+				"media/**",
+				"social/**",
+				"assets/**",
+				"data/**",
+				"android/**",
+				"node_modules/**",
+				".worktrees/**",
+				"coverage/**",
+				"playwright-report/**",
+				"test-results/**",
+				"package-lock.json",
+				"**/captions*.json",
+				"**/fixtures/**"
+			],
+			"formatter": { "enabled": false }
+		},
+		{
+			"includes": [
+				"js/qa-review-findings-copy*.js",
+				"js/qa-review-report-copy.js",
+				"js/qa-review-multi.js",
+				"js/qa-review-compare-copy.js",
+				"js/qa-review-progress.js",
+				"js/qa-review-verify.js",
+				"js/qa-review-benchmark.js",
+				"js/qa-review-live.js",
+				"js/qa-review-ask.js",
+				"js/qa-review-pay-copy.js",
+				"js/site-glossary.js",
+				"js/site-i18n.js",
+				"js/async-css.js"
+			],
+			"formatter": { "enabled": false }
+		}
+	]
+}

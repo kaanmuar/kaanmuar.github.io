@@ -34,6 +34,8 @@
    launch-campaign #2475: an Instantly campaign still a draft with leads, steps, a mailbox and a start date at most
                    LAUNCH_DAYS away (jarvis-marketing.js launchReady) is activated after the countdown, one countdown per
                    campaign and start date, so one Carlos cancels stays a draft
+   resend-cold     #3566: step-1 cold emails with open tracking, unopened 48h–4d, on the countdown in one batch up to the
+                   daily cap; Instantly forwards silently to the same address
    index-submit    logged by the Monday jarvisIndexPush job (#2480): the sitemap pages missing from Brave's index sent to
                    IndexNow and Brave's Submit URL form (jarvis-index.js)
    #2660, owner tags (owner-tags.js):
@@ -55,7 +57,9 @@
    gh-agent           Carlos's click: Jarvis's worker (#2957), or a Cursor cloud agent when he picks Cursor
    gh-worker          Jarvis's worker on its own, once per target: diagnoses (code, test, config) at the confidence bar and
                       URL review bugs labelled needs-agent; nothing while the month's AI budget is used
-   gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow or a security alert, on a click only (#2808)
+   gh-quarantine, gh-security-ticket  file a Backlog bug for a flaky workflow (pct >= 10 of >= 5 runs) or a critical/high
+                   Dependabot or code scanning alert (and every secret alert), once per workflow or alert (#3489); a click
+                   still runs them; Gemini may pick them too
    gh-dismiss-alert, gh-dismiss-low  dismiss security alerts; only on Carlos's click, never a Gemini pick (GH_CLICK_ONLY)
    Jobs and workflows that mail third parties, post in public or deploy (RISKY_JOBS, RISKY_CI) run on their own only
    after the countdown (jarvis-countdown.js), which Carlos can cancel or run at once. Pages on main's newest commit
@@ -71,13 +75,16 @@ const jarvisLog = require("./jarvis-log");
 
 const SAFE = core.SAFE_ACTIONS;
 const CAPS = { "rerun-held": 10, "resend-notices": 10, "publish-hub": 2, "rerun-job": 3, "rerun-ci": 5, "refresh-stale": 6, "rerun-reviews": 2, "ai-fix": 5, "retry-social": 3, "resume-outreach": 1, "merge-pr": 3, "enable-warmup": 2, "restore-alias": 2, "launch-campaign": 10,
+  /* #3566: auto forward unopened cold step-1 after 48h; Carlos set daily cap to 5 */ "resend-cold": 5,
   "gh-board-sync": 10, "gh-orphan-ticket": 5, "gh-update-pr": 5, "gh-merge-pr": 3, "gh-revert": 1, "gh-delete-branch": 2, "gh-close-issue": 5, "gh-remove-worktree": 5,
+  "gh-quarantine": 5, "gh-security-ticket": 10,
   "owner-tags-approve-verified": 20, "owner-tags-block": 10, "gh-worker": 6 };
 const LABELS = {
   "rerun-held": "Send held re-runs", "resend-notices": "Re-send failed owner notices", "publish-hub": "Publish the Social hub", "run-job": "Run a job again", "rerun-ci": "Re-run failed CI jobs",
-  "rating-decide": "Decide ratings", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
+  "rating-decide": "Decide ratings", "csat-testimonial-decide": "Decide CSAT quotes", "brief-mark": "Snooze or dismiss a briefing line", "rerun-job": "Re-run a failed job", "refresh-stale": "Refresh stale data", "rerun-reviews": "Re-run reviews after a fix",
   "pause-outreach": "Pause an outreach mailbox", "resume-outreach": "Resume outreach mailboxes", "retry-social": "Retry failed social posts", "ai-ask": "Ask the AI what to fix", "ai-fix": "Run a fix the AI picked",
   "merge-pr": "Merge a green PR", "index-submit": "Send missing pages to search engines", "enable-warmup": "Turn mailbox warm-up back on", "restore-alias": "Restore a missing alias", "launch-campaign": "Launch a draft campaign",
+  "resend-cold": "Re-send unopened cold emails",
   "pagespeed-merge": "Merge PageSpeed fixes", "pagespeed-close": "Close PageSpeed fixes", "pagespeed-run": "Start the PageSpeed run",
   "gh-board-sync": "Sync the board", "gh-orphan-ticket": "File a ticket for the PR", "gh-update-pr": "Update the PR with main", "gh-merge-pr": "Merge the green PR",
   "gh-revert": "Open a revert PR", "gh-delete-branch": "Delete merged branches", "gh-close-issue": "Close the issue", "gh-remove-worktree": "Remove the merged worktree",
@@ -93,7 +100,8 @@ const GH_RISKY = ["gh-update-pr", "gh-merge-pr", "gh-revert", "gh-delete-branch"
 const GH_CLICK_ONLY = ["gh-agent", "gh-dismiss-alert", "gh-dismiss-low"];
 // A Gemini pick's GitHub action: the catalog().github list its argument must be in, and the argument's name.
 const GH_PICKS = { "gh-board-sync": ["drift", "number"], "gh-orphan-ticket": ["orphans", "pr"], "gh-update-pr": ["behind", "pr"], "gh-merge-pr": ["green", "pr"],
-  "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"] };
+  "gh-revert": ["mainBroken", "sha"], "gh-delete-branch": ["merged", "branch"], "gh-remove-worktree": ["worktrees", "path"],
+  "gh-quarantine": ["flaky", "workflow"], "gh-security-ticket": ["security", "number"] };
 const NOTICE_TRIES = 3;
 const NOTICE_HOURS = { from: 8, to: 19 };
 const CONFIDENCE = 0.8;
@@ -115,6 +123,8 @@ const AI_CATALOG = {
   "gh-revert": "open a revert PR for the main commit that turned CI red; args { \"sha\": one of github.mainBroken }",
   "gh-delete-branch": "delete a merged branch; args { \"branch\": one of github.merged }",
   "gh-remove-worktree": "remove a merged local worktree through the Mac uploader; args { \"path\": one of github.worktrees }",
+  "gh-quarantine": "file a Backlog bug for a flaky workflow; args { \"workflow\": one of github.flaky }",
+  "gh-security-ticket": "file a Backlog bug for a critical/high security alert; args { \"number\": one of github.security }",
   "owner-tags-approve-verified": "approve suggested owner-tag accounts whose handle resolves or matches an owner's handle on another network; args {}"
 };
 const DAY = 24 * 60 * 60 * 1000;
@@ -176,7 +186,7 @@ function aiPrompt(alerts, catalog) {
 function parsePicks(raw, alerts) {
   const keys = new Set(alerts.map((a) => a.key));
   let list;
-  try { list = JSON.parse(String(raw || "").replace(/^```(?:json)?\s*|\s*```$/g, "").trim()); } catch (error) { throw new Error("The AI's answer was not JSON."); }
+  try { list = JSON.parse(String(raw || "").replace(/^```(?:json)?\s*|(?<!\s)\s+```$|```$/g, "").trim()); } catch (error) { throw new Error("The AI's answer was not JSON."); }
   return (Array.isArray(list) ? list : []).filter((p) => p && keys.has(p.key)).slice(0, 6).map((p) => ({
     key: text(p.key, 140), action: text(p.action, 40), args: p.args && typeof p.args === "object" ? p.args : {},
     confidence: Math.max(0, Math.min(1, Number(p.confidence) || 0)), title: text(p.title, 120), why: text(p.why, 240)
@@ -509,6 +519,26 @@ async function autoRun({ db, now, settings, ops }) {
     }
   }
 
+  if (ops.coldResendCandidates && ops.resendCold && left("resend-cold") > 0) {
+    const inCold = busy("resend-cold");
+    let candidates = [];
+    try { candidates = await ops.coldResendCandidates(left("resend-cold")); } catch (error) {
+      const detail = "Instantly: " + text(error.message || error, 200);
+      if (!rows.some((r) => r.action === "resend-cold" && r.status === "failed" && r.detail === detail)) rows.push(await log(db, { action: "resend-cold", mode: "auto", status: "failed", target: "cold resends", detail }, now));
+    }
+    const fresh = candidates.filter((c) => c && c.id && !inCold.has(c.id));
+    if (fresh.length) {
+      const capLeft = left("resend-cold");
+      const take = fresh.slice(0, capLeft);
+      if (take.length) {
+        await later({ action: "resend-cold", target: plural(take.length, "unopened cold email"), count: take.length, part: take.map((c) => c.id).sort().join(","),
+          payload: { items: take.map((c) => ({ id: c.id, to: c.to })) },
+          why: "Unopened after 2 days: " + names(take.map((c) => c.org || c.to)) + ".", onCancel: "forward them from Jarvis > Marketing" });
+      }
+      if (fresh.length > take.length) await wait("resend-cold", fresh.length - take.length, "Over today's cap of " + cfg.caps["resend-cold"] + ".");
+    }
+  }
+
   if (ops.ownerTagsApprovable && ops.ownerTagsApprove) {
     const approvable = await ops.ownerTagsApprovable().catch(() => []);
     const take = approvable.slice(0, left("owner-tags-approve-verified"));
@@ -550,7 +580,7 @@ async function autoRun({ db, now, settings, ops }) {
     try { g = await ops.githubWork(); } catch (error) { g = null; }
     if (g && g.ok !== false) {
       const t = core.githubTargets(g);
-      ["gh:drift:", "gh:orphan-pr:", "gh:pr-behind:", "gh:pr-green:", "gh:main-broken:", "gh:branch-merged", "gh:worktree-merged:"].forEach((h) => handled.add(h));
+      ["gh:drift:", "gh:orphan-pr:", "gh:pr-behind:", "gh:pr-green:", "gh:main-broken:", "gh:branch-merged", "gh:worktree-merged:", "gh:flaky:", "gh:security:"].forEach((h) => handled.add(h));
       for (const d of t.drift) {
         await once("gh-board-sync", "#" + d.number + " to " + d.should, text(d.why, 200) || "In " + d.column + ", should be in " + d.should + ".",
           () => ops.githubAct("gh-board-sync", { number: d.number, should: d.should, item: d.item }));
@@ -576,6 +606,22 @@ async function autoRun({ db, now, settings, ops }) {
       }
       for (const w of t.worktrees) {
         await later({ action: "gh-remove-worktree", target: w.dir, part: w.path, payload: { path: w.path }, why: w.branch + " is merged, clean and no chat holds it." });
+      }
+      // #3489: file Backlog bugs for flaky workflows and severe security alerts (once per target).
+      for (const w of t.flaky) {
+        await once("gh-quarantine", w.name, w.pct + "% of " + w.runs + " runs failed then passed on a re-run.",
+          () => ops.githubAct("gh-quarantine", { workflow: w.name, pct: w.pct, runs: w.runs, path: w.path, links: (w.links || []).slice(0, 10) }));
+      }
+      for (const a of t.security) {
+        const who = (a.kind === "dependabot" ? text(a.package, 60) : a.kind === "codeScanning" ? text(a.rule, 80) : text(a.type, 60) || "secret")
+          + " #" + a.number + (a.repo && a.repo !== "kaanmuar/kaanmuar.github.io" ? " in " + a.repo : "");
+        await once("gh-security-ticket", a.kind + ":" + (a.repo || "kaanmuar/kaanmuar.github.io") + "#" + a.number,
+          (a.severity || "unknown") + " " + a.kind + " alert: " + who + ".",
+          () => ops.githubAct("gh-security-ticket", {
+            kind: a.kind, repo: a.repo, number: a.number, severity: a.severity, package: a.package, manifest: a.manifest,
+            rule: a.rule, path: a.path, type: a.type, url: a.url, summary: a.summary, patched: a.patched,
+            pr: a.pr && a.pr.number ? a.pr.number : undefined
+          }));
       }
     }
   }

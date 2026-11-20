@@ -45,7 +45,7 @@ const block = (value, max) => String(value === null || value === undefined ? "" 
 const int = (value) => { const n = Number(String(value === undefined || value === null ? "" : value).replace(/^#/, "")); return Number.isInteger(n) && n > 0 ? n : 0; };
 const monthOf = (now) => new Date(now).toISOString().slice(0, 7);
 const round = (usd) => Math.round(usd * 10000) / 10000;
-const slug = (value) => text(value, 80).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "task";
+const slug = (value) => text(value, 80).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+/, "").replace(/(?<!-)-+$/, "").slice(0, 40) || "task";
 
 function priceOf(model) {
   const m = String(model || "");

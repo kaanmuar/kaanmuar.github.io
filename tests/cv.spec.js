@@ -3,375 +3,424 @@ const { CVPage } = require('./CVPage.js');
 const { forceGlancePair, prepareCV, waitForCVApp } = require('./helpers.js');
 
 test.describe('CV desktop', () => {
-  test.beforeEach(async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.visit({ theme: 'light' });
-  });
+	test.beforeEach(async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.visit({ theme: 'light' });
+	});
 
-  test('toggles dark mode and persists it', async ({ page }) => {
-    const cv = new CVPage(page);
-    await expect(cv.html).not.toHaveClass(/dark-mode/);
-    await cv.themeToggle.click();
-    await expect(cv.html).toHaveClass(/dark-mode/);
-    await page.reload();
-    await expect(cv.html).toHaveClass(/dark-mode/);
-  });
+	test('toggles dark mode and persists it', async ({ page }) => {
+		const cv = new CVPage(page);
+		await expect(cv.html).not.toHaveClass(/dark-mode/);
+		await cv.themeToggle.click();
+		await expect(cv.html).toHaveClass(/dark-mode/);
+		await page.reload();
+		await expect(cv.html).toHaveClass(/dark-mode/);
+	});
 
-  test('switches language to Spanish and back to English', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.selectLanguage('es');
-    await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Resumen/i);
-    await cv.selectLanguage('en');
-    await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Professional Summary/i);
-  });
+	test('switches language to Spanish and back to English', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.selectLanguage('es');
+		await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Resumen/i);
+		await cv.selectLanguage('en');
+		await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Professional Summary/i);
+	});
 
-  test('honors ?lang=de on load', async ({ page }) => {
-    await prepareCV(page, { theme: 'light' });
-    await page.goto('/index.html?lang=de');
-    await waitForCVApp(page);
-    await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
-  });
+	test('honors ?lang=de on load', async ({ page }) => {
+		await prepareCV(page, { theme: 'light' });
+		await page.goto('/index.html?lang=de');
+		await waitForCVApp(page);
+		await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
+	});
 
-  test('opens and closes the profile photo modal', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.profilePhoto.click();
-    await expect(cv.imageModal).toBeVisible();
-    await page.locator('.modal-close').click();
-    await expect(cv.imageModal).not.toHaveClass(/visible/);
-  });
+	test('opens and closes the profile photo modal', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.profilePhoto.click();
+		await expect(cv.imageModal).toBeVisible();
+		await page.locator('.modal-close').click();
+		await expect(cv.imageModal).not.toHaveClass(/visible/);
+	});
 
-  test('shows glance KPIs with 18+ years', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.glanceKpis.scrollIntoViewIfNeeded();
-    await expect(cv.glanceKpis).toContainText('18+');
-    await expect(page.locator('.glance-kpi')).toHaveCount(5);
-  });
+	test('shows glance KPIs with 18+ years', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.glanceKpis.scrollIntoViewIfNeeded();
+		await expect(cv.glanceKpis).toContainText('18+');
+		await expect(page.locator('.glance-kpi')).toHaveCount(5);
+	});
 
-  test('filters toolkit from a radar label', async ({ page }) => {
-    const cv = new CVPage(page);
-    await forceGlancePair(page, 0);
-    await cv.competenciesRadarChart.scrollIntoViewIfNeeded();
-    await cv.competenciesRadarChart.locator('g.radar-label:has-text("QA & Automation")').click();
-    await expect(page.locator('#toolkit-heading')).toBeInViewport();
-    await expect(page.locator('.tech-tag[data-skill-name="Selenium"]')).toHaveClass(/selected/);
-    await expect(page.locator('.tech-tag[data-skill-name="Cypress"]')).toHaveClass(/selected/);
-  });
+	test('filters toolkit from a radar label', async ({ page }) => {
+		const cv = new CVPage(page);
+		await forceGlancePair(page, 0);
+		await cv.competenciesRadarChart.scrollIntoViewIfNeeded();
+		await cv.competenciesRadarChart.locator('g.radar-label:has-text("QA & Automation")').click();
+		await expect(page.locator('#toolkit-heading')).toBeInViewport();
+		await expect(page.locator('.tech-tag[data-skill-name="Selenium"]')).toHaveClass(/selected/);
+		await expect(page.locator('.tech-tag[data-skill-name="Cypress"]')).toHaveClass(/selected/);
+	});
 
-  test('core competency highlights related CV content and restores on outside click', async ({ page }) => {
-    await page.locator('.competency-item[data-competency="pm"]').click();
-    await expect(page.locator('html')).toHaveClass(/topic-focus/);
-    await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
-    const roles = await page.locator('#experience-container .experience-item').count();
-    await expect(page.locator('#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim')).toHaveCount(roles);
-    await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
-    await expect(page.locator('#languages-section')).toHaveClass(/topic-dim/);
-    await page.locator('#languages-heading').click({ force: true });
-    await expect(page.locator('html')).not.toHaveClass(/topic-focus/);
-    await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');
-  });
+	test('core competency highlights related CV content and restores on outside click', async ({ page }) => {
+		await page.locator('.competency-item[data-competency="pm"]').click();
+		await expect(page.locator('html')).toHaveClass(/topic-focus/);
+		await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'true');
+		await expect(page.locator('.experience-item.topic-match')).not.toHaveCount(0);
+		const roles = await page.locator('#experience-container .experience-item').count();
+		await expect(
+			page.locator(
+				'#experience-container .experience-item.topic-match, #experience-container .experience-item.topic-dim'
+			)
+		).toHaveCount(roles);
+		await expect(page.locator('.timeline-item.topic-match')).not.toHaveCount(0);
+		await expect(page.locator('#languages-section')).toHaveClass(/topic-dim/);
+		await page.locator('#languages-heading').click({ force: true });
+		await expect(page.locator('html')).not.toHaveClass(/topic-focus/);
+		await expect(page.locator('.competency-item[data-competency="pm"]')).toHaveAttribute('aria-pressed', 'false');
+	});
 
-  test('sections reveal without moving, so an early click lands on what it aimed at', async ({ page }) => {
-    const hiddenTransforms = await page.evaluate(() => [...document.querySelectorAll('.animate-on-scroll')].map((el) => {
-      el.classList.remove('is-visible');
-      const transform = getComputedStyle(el).transform;
-      el.classList.add('is-visible');
-      return transform;
-    }));
-    expect(hiddenTransforms.length).toBeGreaterThan(0);
-    expect([...new Set(hiddenTransforms)]).toEqual(['none']);
-  });
+	test('sections reveal without moving, so an early click lands on what it aimed at', async ({ page }) => {
+		const hiddenTransforms = await page.evaluate(() =>
+			[...document.querySelectorAll('.animate-on-scroll')].map((el) => {
+				el.classList.remove('is-visible');
+				const transform = getComputedStyle(el).transform;
+				el.classList.add('is-visible');
+				return transform;
+			})
+		);
+		expect(hiddenTransforms.length).toBeGreaterThan(0);
+		expect([...new Set(hiddenTransforms)]).toEqual(['none']);
+	});
 
-  test('tour includes competencies after glance', async ({ page }) => {
-    const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
-    expect(keys.indexOf('tour_title_competencies')).toBe(keys.indexOf('tour_title_glance') + 1);
-  });
+	test('tour includes competencies after glance', async ({ page }) => {
+		const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
+		expect(keys.indexOf('tour_title_competencies')).toBe(keys.indexOf('tour_title_glance') + 1);
+	});
 
-  test('filters experience by a skill tag', async ({ page }) => {
-    await page.locator('#expand-all-toolkit').click();
-    await page.locator('.tech-tag[data-skill-name="Selenium"]').click();
-    await expect(page.locator('.experience-item.filter-match')).not.toHaveCount(0);
-    await expect(page.locator('.experience-item.filter-no-match')).not.toHaveCount(0);
-  });
+	test('filters experience by a skill tag', async ({ page }) => {
+		await page.locator('#expand-all-toolkit').click();
+		const selenium = page.locator('.tech-tag[data-skill-name="Selenium"]');
+		const section = page.locator('.toolkit-section').filter({ has: selenium });
+		// Expand-all can leave a section closed under load; wait until its header is open and
+		// the collapsed preview is hidden so it cannot intercept the tag click (#3044).
+		await expect(section.locator('.toolkit-header')).toHaveAttribute('aria-expanded', 'true');
+		await expect(section.locator('.toolkit-preview')).toBeHidden();
+		await selenium.click();
+		await expect(page.locator('.experience-item.filter-match')).not.toHaveCount(0);
+		await expect(page.locator('.experience-item.filter-no-match')).not.toHaveCount(0);
+	});
 
-  test('timeline link expands the matching experience', async ({ page }) => {
-    const cv = new CVPage(page);
-    const first = cv.timelineContainer.locator('.timeline-item a').first();
-    const href = await first.getAttribute('href');
-    await first.click({ force: true });
-    await expect(page.locator(`${href}`)).toHaveClass(/is-open/);
-    await expect(page.locator(`${href} .experience-body`)).toBeVisible();
-  });
+	test('timeline link expands the matching experience', async ({ page }) => {
+		const cv = new CVPage(page);
+		const first = cv.timelineContainer.locator('.timeline-item a').first();
+		const href = await first.getAttribute('href');
+		await first.click({ force: true });
+		await expect(page.locator(`${href}`)).toHaveClass(/is-open/);
+		await expect(page.locator(`${href} .experience-body`)).toBeVisible();
+	});
 
-  test('export menu lists PDF JPG DOC JSON Text', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.exportSelector.click({ force: true });
-    const menu = page.locator('#export-options');
-    await expect(menu).toBeVisible();
-    for (const label of ['Export as PDF', 'Export as JPG', 'Export as DOC', 'Export as JSON', 'Export as Text']) {
-      await expect(menu.getByRole('button', { name: label })).toBeVisible();
-    }
-  });
+	test('export menu lists PDF JPG DOC JSON Text', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.exportSelector.click({ force: true });
+		const menu = page.locator('#export-options');
+		await expect(menu).toBeVisible();
+		for (const label of ['Export as PDF', 'Export as JPG', 'Export as DOC', 'Export as JSON', 'Export as Text']) {
+			await expect(menu.getByRole('button', { name: label })).toBeVisible();
+		}
+	});
 
-  // html2canvas clones the whole CV once per PDF page, about 7 s each on a CI runner.
-  test('PDF export loads its libraries on first use and downloads the file', async ({ page }) => {
-    test.setTimeout(180000);
-    expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['undefined', 'undefined']);
-    const cv = new CVPage(page);
-    await cv.exportSelector.click({ force: true });
-    const download = page.waitForEvent('download', { timeout: 150000 });
-    await page.locator('#export-options').getByRole('button', { name: 'Export as PDF' }).click();
-    expect((await download).suggestedFilename()).toBe('CarlosMunozCV_Export.pdf');
-    expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual(['function', 'function']);
-  });
+	// html2canvas clones the whole CV once per PDF page, about 7 s each on a CI runner.
+	test('PDF export loads its libraries on first use and downloads the file', async ({ page }) => {
+		test.setTimeout(180000);
+		expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual([
+			'undefined',
+			'undefined',
+		]);
+		const cv = new CVPage(page);
+		await cv.exportSelector.click({ force: true });
+		const download = page.waitForEvent('download', { timeout: 150000 });
+		await page.locator('#export-options').getByRole('button', { name: 'Export as PDF' }).click();
+		expect((await download).suggestedFilename()).toBe('CarlosMunozCV_Export.pdf');
+		expect(await page.evaluate(() => [typeof window.jsPDF, typeof window.html2canvas])).toEqual([
+			'function',
+			'function',
+		]);
+	});
 
-  test('the content security policy blocks nothing the CV uses', async ({ page }) => {
-    test.setTimeout(240000);
-    const analytics = [];
-    await page.route(/google-analytics\.com\/g\/collect/, (route) => {
-      analytics.push(route.request().url());
-      return route.fulfill({ status: 204 });
-    });
-    await page.addInitScript(() => {
-      localStorage.setItem('site-analytics', 'allow');
-      window.__csp = [];
-      document.addEventListener('securitypolicyviolation', (event) => window.__csp.push(event.violatedDirective + ' ' + event.blockedURI));
-    });
-    await page.reload();
-    await waitForCVApp(page);
-    const cv = new CVPage(page);
-    await cv.exportSelector.click({ force: true });
-    for (const label of ['Export as PDF', 'Export as JPG']) {
-      const download = page.waitForEvent('download', { timeout: 150000 });
-      await page.locator('#export-options').getByRole('button', { name: label }).click();
-      await download;
-    }
-    await cv.profilePhoto.click();
-    await page.locator('.modal-close').click();
-    await cv.themeToggle.click();
-    await cv.selectLanguage('es');
-    await cv.selectLanguage('en');
-    expect(await page.evaluate(() => window.__csp)).toEqual([]);
-    expect(analytics.length).toBeGreaterThan(0);
-  });
+	test('the content security policy blocks nothing the CV uses', async ({ page }) => {
+		test.setTimeout(240000);
+		const analytics = [];
+		await page.route(/google-analytics\.com\/g\/collect/, (route) => {
+			analytics.push(route.request().url());
+			return route.fulfill({ status: 204 });
+		});
+		await page.addInitScript(() => {
+			localStorage.setItem('site-analytics', 'allow');
+			window.__csp = [];
+			document.addEventListener('securitypolicyviolation', (event) =>
+				window.__csp.push(event.violatedDirective + ' ' + event.blockedURI)
+			);
+		});
+		await page.reload();
+		await waitForCVApp(page);
+		const cv = new CVPage(page);
+		await cv.exportSelector.click({ force: true });
+		for (const label of ['Export as PDF', 'Export as JPG']) {
+			const download = page.waitForEvent('download', { timeout: 150000 });
+			await page.locator('#export-options').getByRole('button', { name: label }).click();
+			await download;
+		}
+		await cv.profilePhoto.click();
+		await page.locator('.modal-close').click();
+		await cv.themeToggle.click();
+		await cv.selectLanguage('es');
+		await cv.selectLanguage('en');
+		expect(await page.evaluate(() => window.__csp)).toEqual([]);
+		expect(analytics.length).toBeGreaterThan(0);
+	});
 
-  test('print control is present', async ({ page }) => {
-    await expect(page.locator('#print-btn')).toBeVisible();
-  });
+	test('print control is present', async ({ page }) => {
+		await expect(page.locator('#print-btn')).toBeVisible();
+	});
 
-  test('simulator and regression lab launchers exist', async ({ page }) => {
-    const cv = new CVPage(page);
-    await expect(cv.simLaunchBtn).toBeVisible();
-    await expect(page.locator('#qa-lab-btn')).toBeVisible();
-  });
+	test('simulator and regression lab launchers exist', async ({ page }) => {
+		const cv = new CVPage(page);
+		await expect(cv.simLaunchBtn).toBeVisible();
+		await expect(page.locator('#qa-lab-btn')).toBeVisible();
+	});
 
-  test('tour includes the regression lab after the studio', async ({ page }) => {
-    const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
-    expect(keys.indexOf('tour_title_qa_lab')).toBe(keys.indexOf('tour_title_simulator') + 1);
-  });
+	test('tour includes the regression lab after the studio', async ({ page }) => {
+		const keys = await page.evaluate(() => window.CarlosMunozCV.tourSteps.map((s) => s.titleKey));
+		expect(keys.indexOf('tour_title_qa_lab')).toBe(keys.indexOf('tour_title_simulator') + 1);
+	});
 
-  test('summary expands on Read More', async ({ page }) => {
-    await page.locator('#read-more-btn').click();
-    await expect(page.locator('#read-more-btn')).toHaveAttribute('aria-expanded', 'true');
-  });
+	test('summary expands on Read More', async ({ page }) => {
+		await page.locator('#read-more-btn').click();
+		await expect(page.locator('#read-more-btn')).toHaveAttribute('aria-expanded', 'true');
+	});
 
-  test('education section lists key certifications', async ({ page }) => {
-    await page.locator('section[aria-labelledby="education-heading"]').scrollIntoViewIfNeeded();
-    await expect(page.locator('#certs-subheading')).toBeVisible();
-    await expect(page.locator('section[aria-labelledby="education-heading"]')).toContainText('ISTQB');
-  });
+	test('education section lists key certifications', async ({ page }) => {
+		await page.locator('section[aria-labelledby="education-heading"]').scrollIntoViewIfNeeded();
+		await expect(page.locator('#certs-subheading')).toBeVisible();
+		await expect(page.locator('section[aria-labelledby="education-heading"]')).toContainText('ISTQB');
+	});
 
-  test('contact widget validates empty message form', async ({ page }) => {
-    await page.locator('#contact-widget-fab').click();
-    await expect(page.locator('#contact-widget')).toBeVisible();
-    await page.locator('#sender-name').focus();
-    await page.locator('#sender-email').focus();
-    await expect(page.locator('#send-message-btn, #message-form button[type="submit"]').first()).toBeDisabled();
-  });
+	test('contact widget validates empty message form', async ({ page }) => {
+		await page.locator('#contact-widget-fab').click();
+		await expect(page.locator('#contact-widget')).toBeVisible();
+		await page.locator('#sender-name').focus();
+		await page.locator('#sender-email').focus();
+		await expect(page.locator('#send-message-btn, #message-form button[type="submit"]').first()).toBeDisabled();
+	});
 
-  test('tour waits for demo then advances and can close', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.tourStartBtn.click();
-    await expect(page.locator('#tour-tooltip')).toBeVisible();
-    await expect(page.locator('#tour-step-counter')).toContainText('1 /');
-    await expect(page.locator('#tour-next-btn')).toBeDisabled();
-    await expect(page.locator('#tour-next-btn')).toBeEnabled({ timeout: 16000 });
-    await page.locator('#tour-next-btn').click();
-    await expect(page.locator('#tour-step-counter')).toContainText('2 /');
-    await page.locator('#tour-close-btn').click();
-    await expect(page.locator('#tour-tooltip')).not.toBeVisible();
-  });
+	test('tour waits for demo then advances and can close', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.tourStartBtn.click();
+		await expect(page.locator('#tour-tooltip')).toBeVisible();
+		await expect(page.locator('#tour-step-counter')).toContainText('1 /');
+		await expect(page.locator('#tour-next-btn')).toBeDisabled();
+		await expect(page.locator('#tour-next-btn')).toBeEnabled({ timeout: 16000 });
+		await page.locator('#tour-next-btn').click();
+		await expect(page.locator('#tour-step-counter')).toContainText('2 /');
+		await page.locator('#tour-close-btn').click();
+		await expect(page.locator('#tour-tooltip')).not.toBeVisible();
+	});
 
-  test('every language shows its own summary title', async ({ page }) => {
-    const cv = new CVPage(page);
-    const titles = [
-      ['en', /Professional Summary/i],
-      ['es', /Resumen Profesional/i],
-      ['pt', /Resumo Profissional/i],
-      ['de', /Berufliches Profil/i],
-      ['fr', /Résumé Professionnel/i],
-      ['it', /Riepilogo Professionale/i]
-    ];
-    for (const [code, pattern] of titles) {
-      await cv.selectLanguage(code);
-      await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(pattern);
-    }
-    await cv.selectLanguage('en');
-  });
+	test('every language shows its own summary title', async ({ page }) => {
+		const cv = new CVPage(page);
+		const titles = [
+			['en', /Professional Summary/i],
+			['es', /Resumen Profesional/i],
+			['pt', /Resumo Profissional/i],
+			['de', /Berufliches Profil/i],
+			['fr', /Résumé Professionnel/i],
+			['it', /Riepilogo Professionale/i],
+		];
+		for (const [code, pattern] of titles) {
+			await cv.selectLanguage(code);
+			await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(pattern);
+		}
+		await cv.selectLanguage('en');
+	});
 
-  test('published English keeps translations unless the admin changed it', async ({ page }) => {
-    await prepareCV(page, { theme: 'light' });
-    await page.addInitScript(() => {
-      localStorage.setItem('cv-live-preview', JSON.stringify({
-        version: 2,
-        machineTranslate: true,
-        summary: { title: 'Professional Summary' },
-        competencies: { title: 'What I do best' },
-        roles: [{ source: 0, title: 'Senior QA & Program Consultant', company: 'Team International', dates: 'Jan 2021 - Present' }]
-      }));
-    });
-    await page.goto('/index.html?cvpreview=1&lang=de');
-    await waitForCVApp(page);
-    await expect(page.locator('#cv-preview-banner')).toBeVisible();
-    await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
-    await expect(page.locator('[data-translate-key="competencies_title"]').first()).toHaveText('What I do best');
-    await expect(page.locator('h4[data-translate-key="exp_0_title"]')).toHaveText('Senior QA- und Programmberater');
-  });
+	test('published English keeps translations unless the admin changed it', async ({ page }) => {
+		await prepareCV(page, { theme: 'light' });
+		await page.addInitScript(() => {
+			localStorage.setItem(
+				'cv-live-preview',
+				JSON.stringify({
+					version: 2,
+					machineTranslate: true,
+					summary: { title: 'Professional Summary' },
+					competencies: { title: 'What I do best' },
+					roles: [
+						{
+							source: 0,
+							title: 'Senior QA & Program Consultant',
+							company: 'Team International',
+							dates: 'Jan 2021 - Present',
+						},
+					],
+				})
+			);
+		});
+		await page.goto('/index.html?cvpreview=1&lang=de');
+		await waitForCVApp(page);
+		await expect(page.locator('#cv-preview-banner')).toBeVisible();
+		await expect(page.locator('[data-translate-key="summary_title"]')).toHaveText(/Berufliches Profil/i);
+		await expect(page.locator('[data-translate-key="competencies_title"]').first()).toHaveText('What I do best');
+		await expect(page.locator('h4[data-translate-key="exp_0_title"]')).toHaveText('Senior QA- und Programmberater');
+	});
 
-  test('dark mode stores the theme and the theme color', async ({ page }) => {
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
-    await page.locator('#theme-toggle').click();
-    expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#10161d');
-    await page.locator('#theme-toggle').click();
-    expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
-  });
+	test('dark mode stores the theme and the theme color', async ({ page }) => {
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
+		await page.locator('#theme-toggle').click();
+		expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#10161d');
+		await page.locator('#theme-toggle').click();
+		expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0d6e76');
+	});
 
-  test('profile photo dialog closes on Escape', async ({ page }) => {
-    await page.locator('#profile-photo').click();
-    const modal = page.locator('#image-modal');
-    await expect(modal).toHaveAttribute('role', 'dialog');
-    await expect(modal).toHaveAttribute('aria-modal', 'true');
-    await expect(page.locator('.modal-close')).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(modal).not.toHaveClass(/visible/);
-  });
+	test('profile photo dialog closes on Escape', async ({ page }) => {
+		await page.locator('#profile-photo').click();
+		const modal = page.locator('#image-modal');
+		await expect(modal).toHaveAttribute('role', 'dialog');
+		await expect(modal).toHaveAttribute('aria-modal', 'true');
+		await expect(page.locator('.modal-close')).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(modal).not.toHaveClass(/visible/);
+	});
 
-  test('a short or invalid note keeps Send disabled', async ({ page }) => {
-    await page.locator('#contact-widget-fab').click();
-    for (const id of ['sender-name', 'sender-email', 'message-topic', 'sender-message']) {
-      await expect(page.locator('label[for="' + id + '"]')).toBeVisible();
-    }
-    await page.locator('#sender-name').fill('Al');
-    await page.locator('#sender-email').fill('not-an-email');
-    await page.locator('#message-topic').selectOption('inquiry');
-    await page.locator('#sender-message').fill('123456789');
-    await expect(page.locator('#send-message-btn')).toBeDisabled();
-    await page.locator('#sender-email').blur();
-    await expect(page.locator('#sender-email')).toHaveClass(/invalid/);
-    await expect(page.locator('#sender-email')).toHaveAttribute('aria-invalid', 'true');
-    await page.locator('#sender-email').fill('ada@example.com');
-    await page.locator('#sender-message').fill('1234567890');
-    await expect(page.locator('#send-message-btn')).toBeEnabled();
-    await page.locator('#widget-close-btn').click();
-  });
+	test('a short or invalid note keeps Send disabled', async ({ page }) => {
+		await page.locator('#contact-widget-fab').click();
+		for (const id of ['sender-name', 'sender-email', 'message-topic', 'sender-message']) {
+			await expect(page.locator('label[for="' + id + '"]')).toBeVisible();
+		}
+		await page.locator('#sender-name').fill('Al');
+		await page.locator('#sender-email').fill('not-an-email');
+		await page.locator('#message-topic').selectOption('inquiry');
+		await page.locator('#sender-message').fill('123456789');
+		await expect(page.locator('#send-message-btn')).toBeDisabled();
+		await page.locator('#sender-email').blur();
+		await expect(page.locator('#sender-email')).toHaveClass(/invalid/);
+		await expect(page.locator('#sender-email')).toHaveAttribute('aria-invalid', 'true');
+		await page.locator('#sender-email').fill('ada@example.com');
+		await page.locator('#sender-message').fill('1234567890');
+		await expect(page.locator('#send-message-btn')).toBeEnabled();
+		await page.locator('#widget-close-btn').click();
+	});
 
-  test('a rating carries a Turnstile token to submitGuardedForm and nothing writes to Firestore', async ({ page }) => {
-    const calls = [];
-    const firestore = [];
-    await page.route(/cloudfunctions\.net\/submitGuardedForm/, (route) => {
-      calls.push(route.request().postDataJSON().data);
-      return route.fulfill({ status: 200, contentType: 'application/json', body: '{"result":{"ok":true}}' });
-    });
-    await page.route(/firestore\.googleapis\.com/, (route) => { firestore.push(route.request().url()); return route.abort(); });
-    await page.addInitScript(() => {
-      window.__csp = [];
-      document.addEventListener('securitypolicyviolation', (event) => window.__csp.push(event.violatedDirective + ' ' + event.blockedURI));
-    });
-    await page.reload();
-    await waitForCVApp(page);
-    await page.locator('#contact-widget-fab').click();
-    await expect(page.locator('#rating-turnstile input[name="cf-turnstile-response"]')).toHaveValue(/\S/, { timeout: 20000 });
-    await page.locator('#rating-tab').click();
-    await page.locator('#rater-name').fill('Ada Test');
-    await page.locator('#rater-email').fill('ada@example.com');
-    await page.locator('#star-rating [data-value="5"]').click();
-    await page.locator('#send-rating-btn').click();
-    await expect.poll(() => calls.length, { timeout: 30000 }).toBe(1);
-    expect(calls[0]).toMatchObject({ kind: 'rating', name: 'Ada Test', email: 'ada@example.com', rating: 5, token: 'XXXX.DUMMY.TOKEN.XXXX' });
-    expect(firestore.filter((url) => /messages|ratings/.test(url))).toEqual([]);
-    expect(await page.evaluate(() => window.__csp)).toEqual([]);
-  });
+	test('a rating carries a Turnstile token to submitGuardedForm and nothing writes to Firestore', async ({ page }) => {
+		const calls = [];
+		const firestore = [];
+		await page.route(/cloudfunctions\.net\/submitGuardedForm/, (route) => {
+			calls.push(route.request().postDataJSON().data);
+			return route.fulfill({ status: 200, contentType: 'application/json', body: '{"result":{"ok":true}}' });
+		});
+		await page.route(/firestore\.googleapis\.com/, (route) => {
+			firestore.push(route.request().url());
+			return route.abort();
+		});
+		await page.addInitScript(() => {
+			window.__csp = [];
+			document.addEventListener('securitypolicyviolation', (event) =>
+				window.__csp.push(event.violatedDirective + ' ' + event.blockedURI)
+			);
+		});
+		await page.reload();
+		await waitForCVApp(page);
+		await page.locator('#contact-widget-fab').click();
+		await expect(page.locator('#rating-turnstile input[name="cf-turnstile-response"]')).toHaveValue(/\S/, {
+			timeout: 20000,
+		});
+		await page.locator('#rating-tab').click();
+		await page.locator('#rater-name').fill('Ada Test');
+		await page.locator('#rater-email').fill('ada@example.com');
+		await page.locator('#star-rating [data-value="5"]').click();
+		await page.locator('#send-rating-btn').click();
+		await expect.poll(() => calls.length, { timeout: 30000 }).toBe(1);
+		expect(calls[0]).toMatchObject({
+			kind: 'rating',
+			name: 'Ada Test',
+			email: 'ada@example.com',
+			rating: 5,
+			token: 'XXXX.DUMMY.TOKEN.XXXX',
+		});
+		expect(firestore.filter((url) => /messages|ratings/.test(url))).toEqual([]);
+		expect(await page.evaluate(() => window.__csp)).toEqual([]);
+	});
 
-  test('company names open their sites and leave the job closed', async ({ page }) => {
-    const team = page.locator('#experience-1 .company-link');
-    await expect(team).toHaveAttribute('href', 'https://www.teaminternational.com');
-    await expect(team).toHaveAttribute('target', '_blank');
-    await expect(team).toHaveAttribute('rel', /noopener/);
-    await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
-    await team.evaluate((el) => {
-      el.addEventListener('click', (event) => event.preventDefault(), { capture: true });
-      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    });
-    await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('.company-link', { hasText: 'Zagalabs' }).first()).toHaveAttribute('href', 'https://zaga.co');
-    await expect(page.locator('.company-link', { hasText: 'Prodigious' }).first()).toHaveAttribute('href', 'https://publicisproduction.com');
-    await expect(page.locator('.company-name', { hasText: 'Bitgray' }).first()).toBeVisible();
-    const json = await page.locator('#person-structured-data').textContent();
-    expect(json).toContain('"worksFor"');
-    expect(json).toContain('https://zaga.co');
-    const sitemap = await (await page.request.get('/sitemap.xml')).text();
-    expect(sitemap).not.toContain('zaga.co');
-    expect(sitemap).not.toContain('globant.com');
-  });
+	test('company names open their sites and leave the job closed', async ({ page }) => {
+		const team = page.locator('#experience-1 .company-link');
+		await expect(team).toHaveAttribute('href', 'https://www.teaminternational.com');
+		await expect(team).toHaveAttribute('target', '_blank');
+		await expect(team).toHaveAttribute('rel', /noopener/);
+		await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
+		await team.evaluate((el) => {
+			el.addEventListener('click', (event) => event.preventDefault(), { capture: true });
+			el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+		});
+		await expect(page.locator('#experience-header-1')).toHaveAttribute('aria-expanded', 'false');
+		await expect(page.locator('.company-link', { hasText: 'Zagalabs' }).first()).toHaveAttribute(
+			'href',
+			'https://zaga.co'
+		);
+		await expect(page.locator('.company-link', { hasText: 'Prodigious' }).first()).toHaveAttribute(
+			'href',
+			'https://publicisproduction.com'
+		);
+		await expect(page.locator('.company-name', { hasText: 'Bitgray' }).first()).toBeVisible();
+		const json = await page.locator('#person-structured-data').textContent();
+		expect(json).toContain('"worksFor"');
+		expect(json).toContain('https://zaga.co');
+		const sitemap = await (await page.request.get('/sitemap.xml')).text();
+		expect(sitemap).not.toContain('zaga.co');
+		expect(sitemap).not.toContain('globant.com');
+	});
 });
 
 test.describe('CV mobile', () => {
-  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+	test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-  test.beforeEach(async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.visit({ theme: 'light' });
-  });
+	test.beforeEach(async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.visit({ theme: 'light' });
+	});
 
-  test('shows mobile toolbar and hides desktop theme toggle', async ({ page }) => {
-    const cv = new CVPage(page);
-    await expect(cv.mobileToolbar).toBeVisible();
-    await expect(cv.themeToggle).toBeHidden();
-  });
+	test('shows mobile toolbar and hides desktop theme toggle', async ({ page }) => {
+		const cv = new CVPage(page);
+		await expect(cv.mobileToolbar).toBeVisible();
+		await expect(cv.themeToggle).toBeHidden();
+	});
 
-  test('mobile toolbar includes studio and lab launchers without sideways spill', async ({ page }) => {
-    await expect(page.locator('#sim-launch-btn-mobile')).toBeVisible();
-    await expect(page.locator('#qa-lab-btn-mobile')).toBeVisible();
-    const extra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(extra).toBeLessThanOrEqual(2);
-  });
+	test('mobile toolbar includes studio and lab launchers without sideways spill', async ({ page }) => {
+		await expect(page.locator('#sim-launch-btn-mobile')).toBeVisible();
+		await expect(page.locator('#qa-lab-btn-mobile')).toBeVisible();
+		const extra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+		expect(extra).toBeLessThanOrEqual(2);
+	});
 
-  test('mobile toolbar becomes sticky after scroll', async ({ page }) => {
-    const cv = new CVPage(page);
-    await page.evaluate(() => {
-      window.scrollTo(0, 1600);
-      window.dispatchEvent(new Event('scroll'));
-    });
-    await expect(cv.mobileToolbar).toHaveClass(/is-sticky/, { timeout: 8000 });
-  });
+	test('mobile toolbar becomes sticky after scroll', async ({ page }) => {
+		const cv = new CVPage(page);
+		await page.evaluate(() => {
+			window.scrollTo(0, 1600);
+			window.dispatchEvent(new Event('scroll'));
+		});
+		await expect(cv.mobileToolbar).toHaveClass(/is-sticky/, { timeout: 8000 });
+	});
 
-  test('toggles dark mode from the mobile control', async ({ page }) => {
-    const cv = new CVPage(page);
-    await cv.mobileThemeToggle.click();
-    await expect(cv.html).toHaveClass(/dark-mode/);
-  });
+	test('toggles dark mode from the mobile control', async ({ page }) => {
+		const cv = new CVPage(page);
+		await cv.mobileThemeToggle.click();
+		await expect(cv.html).toHaveClass(/dark-mode/);
+	});
 });
 
 test.describe('CV first visit', () => {
-  test('the guided tour waits for the first key press instead of opening on load', async ({ page }) => {
-    await prepareCV(page, { tour: true, theme: 'light' });
-    await page.goto('/index.html');
-    await waitForCVApp(page);
-    await page.waitForTimeout(2000);
-    await expect(page.locator('html')).not.toHaveClass(/cv-tour/);
-    await page.keyboard.press('ArrowDown');
-    await expect(page.locator('html')).toHaveClass(/cv-tour/, { timeout: 5000 });
-  });
+	test('the guided tour waits for the first key press instead of opening on load', async ({ page }) => {
+		await prepareCV(page, { tour: true, theme: 'light' });
+		await page.goto('/index.html');
+		await waitForCVApp(page);
+		await page.waitForTimeout(2000);
+		await expect(page.locator('html')).not.toHaveClass(/cv-tour/);
+		await page.keyboard.press('ArrowDown');
+		await expect(page.locator('html')).toHaveClass(/cv-tour/, { timeout: 5000 });
+	});
 });

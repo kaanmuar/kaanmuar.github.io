@@ -7,8 +7,11 @@
                region that speak its language, weighted by prospects. A split row is marked est.
    replies     the outreach replies (marketing-sync) per country, and how many were positive
    social      engagement report replies (waiting or approved) about a site in that country
-   visitors    GA4 sessions per country, now and in the prior span
+   visitors    GA4 sessions, engaged sessions, users and key events for every country, now and in the prior span
+               (jarvis-geo-ga4.js, #3282)
    links       short-link visits, reviews, paid unlocks and USD per prospect host
+   clicks      short-link clicks by the visitor's country from the Worker, and link reviews, paid unlocks and USD by the
+               visitor's country (#3281, jarvis-geo-clicks.js); clicks light a country like visitors do
    gaps        why a country needs attention: prospects or reviewed sites but no campaign, visitors but no outreach,
                a target market with no activity, a reply rate under half the average, bounces over 5%, no prospects left
    light       how far we got with a country, 0 to 5 (#2988): Dark, Spark (prospects or reviewed sites), Ember (contacted
@@ -19,9 +22,16 @@
                reports first. Carlos's answers go into the same doc's decisions (or skipped); the daily Live Reports job
                reads them through reviewUrl/country-decisions and writes them to data/live-report-countries.json.
 
+   time        the daily history summed into 7, 30 and 90-day ranges against the span before, and 13 weeks to play
+               (#3109, jarvis-geo-time.js); replyDays are the replies by Bogotá day it records.
+
    Target markets are every country speaking one of our six languages unless jarvis_settings/geo lists others. */
 
 const sweep = require("./url-review-sweep");
+const { beforeLastLineDelim } = require("./line-cut");
+const geoTime = require("./jarvis-geo-time");
+const clicks = require("./jarvis-geo-clicks");
+const geoGa4 = require("./jarvis-geo-ga4");
 
 const ORIGIN = "https://carlosandmunoz.com";
 const LANG_COUNTRIES = {
@@ -46,10 +56,33 @@ const NO_REPORTS = new Set(["AQ", "BV", "GS", "HM", "TF", "UM"]);
 const POSITIVE = /interest|positive|meeting|yes|book/i;
 const ACTIVE = /^(active|running subsequences)$/;
 const MIN_SENT = 50;
+const LIVE_INDEX = ORIGIN + "/assets/live-reports/index.json";
+const LIVE_TRIES = 3;
+const LIVE_WAIT_MS = 400;
 
 const up = (cc) => String(cc || "").trim().toUpperCase();
 const valid = (cc) => /^[A-Z]{2}$/.test(cc);
-const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "").replace(/^www\./, "");
+const sleep = (ms) => (ms > 0 ? new Promise((ok) => setTimeout(ok, ms)) : Promise.resolve());
+
+/** Live Reports index for the Map (#3645): retries through a brief publish miss; null when every try fails. */
+async function readLiveIndex(fetchImpl, opts) {
+  const tries = Math.max(1, Number(opts && opts.tries) || LIVE_TRIES);
+  const wait = opts && opts.wait !== undefined ? Number(opts.wait) || 0 : LIVE_WAIT_MS;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res = await fetchImpl(LIVE_INDEX, { signal: AbortSignal.timeout(15000), cache: "no-store" });
+      if (!res.ok) throw new Error("status " + res.status);
+      const data = await res.json();
+      if (data && Array.isArray(data.reports)) return data;
+      throw new Error("bad shape");
+    } catch (error) {
+      if (i + 1 >= tries) return null;
+      await sleep(wait * (i + 1));
+    }
+  }
+  return null;
+}
+const bare = (host) => String(host || "").toLowerCase().replace(/^https?:\/\//, "").replace(/[/:](?<![/:][^\n\r\u2028\u2029/:]*[/:]).*$/, "").replace(/^www\./, "");
 const domainOf = (email) => bare(String(email || "").split("@")[1] || "");
 const round = (n, d) => Math.round(n * (d || 1)) / (d || 1);
 
@@ -96,7 +129,7 @@ function lightOf(r) {
   const n = (k) => Number(r && r[k]) > 0;
   if (n("positive") || n("interested") || n("paid") || n("usd")) return 5;
   if (n("replies") || n("answered")) return 4;
-  if (n("opened") || n("visits") || n("visitors") || n("socialApproved")) return 3;
+  if (n("opened") || n("visits") || n("visitors") || n("clicks") || n("socialApproved")) return 3;
   if (n("contacted") || n("sent") || n("social")) return 2;
   if (n("prospects") || n("reviewed") || n("leads")) return 1;
   return 0;
@@ -150,6 +183,7 @@ function geoRows(input) {
     if (l.host) leadHosts[bare(l.host)] = cc;
   });
   const countryOf = hostCountry([leadHosts, queueHosts, liveHosts]);
+  const replyDays = {};
 
   ((i.marketing && i.marketing.campaigns && i.marketing.campaigns.rows) || []).forEach((c) => {
     const weights = {};
@@ -173,11 +207,12 @@ function geoRows(input) {
     });
   });
   ((i.sync && i.sync.replies) || []).forEach((rep) => {
-    const from = String(rep.from || "").toLowerCase().replace(/^.*</, "").replace(/>.*$/, "").trim();
+    const from = beforeLastLineDelim(String(rep.from || "").toLowerCase().replace(/^.*</, ""), ">").trim();
     const r = row(leadEmail[from] || countryOf(domainOf(from)));
     if (!r) return;
     r.answered++;
     if (POSITIVE.test(rep.category || "")) r.positive++;
+    if (geoTime.dayOf(rep.at)) geoTime.tally(replyDays, geoTime.dayOf(rep.at), r.cc, POSITIVE.test(rep.category || ""));
   });
   const social = (list, approved) => (list || []).forEach((p) => {
     const r = p && p.report && row(countryOf(p.report.host));
@@ -187,12 +222,8 @@ function geoRows(input) {
   });
   social(i.engagement && i.engagement.waiting, false);
   social(i.engagement && i.engagement.approved, true);
-  ((i.ga4 && i.ga4.countries) || []).forEach((c) => {
-    const r = row(codeOf(c.label));
-    if (!r) return;
-    r.visitors += Number(c.value) || 0;
-    r.visitorsPrior += Number(c.prior) || 0;
-  });
+  const visitors = geoGa4.byCountry(i.ga4, codeOf);
+  Object.keys(visitors).forEach((cc) => { const r = row(cc); if (r) Object.assign(r, visitors[cc]); });
   ((i.links && i.links.prospects) || []).forEach((p) => {
     const r = row(countryOf(p.host));
     if (!r) return;
@@ -201,6 +232,7 @@ function geoRows(input) {
     r.paid += Number(p.paid) || 0;
     r.usd += Number(p.usd) || 0;
   });
+  clicks.addRows(i, row, rows, countryOf);
 
   const list = Object.values(rows).map((r) => {
     ["leads", "contacted", "sent", "opened", "replies", "interested", "bounced"].forEach((k) => { r[k] = Math.round(r[k]); });
@@ -209,6 +241,7 @@ function geoRows(input) {
       replyRate: r.sent ? round((r.replies / r.sent) * 100, 10) : null, openRate: r.sent ? round((r.opened / r.sent) * 100, 10) : null });
     delete out.scoreSum;
     delete out.scored;
+    geoGa4.finish(out, i.ga4 && i.ga4.keyEvents);
     out.light = lightOf(out);
     return out;
   });
@@ -219,9 +252,9 @@ function geoRows(input) {
   list.forEach((r) => {
     r.gaps = [];
     const add = (kind, weight, text) => { r.gaps.push(kind); gaps.push({ cc: r.cc, name: r.name, kind, weight, text }); };
-    const busy = r.prospects || r.reviewed || r.campaigns || r.social || r.visitors || r.visits;
+    const busy = r.prospects || r.reviewed || r.campaigns || r.social || r.visitors || r.visits || r.clicks;
     if (!r.campaigns && (r.prospects || r.reviewed)) add("no-campaign", r.prospects + r.reviewed, `${r.prospects} prospects and ${r.reviewed} reviewed sites, but no campaign`);
-    else if (!r.campaigns && (r.visitors || r.visits)) add("visitors-no-outreach", r.visitors + r.visits, `${r.visitors + r.visits} visits, but we never reach out`);
+    else if (!r.campaigns && (r.visitors || r.visits || r.clicks)) add("visitors-no-outreach", r.visitors + r.visits + r.clicks, `${r.visitors + r.visits + r.clicks} visits, but we never reach out`);
     if (r.target && !busy) add("silent", 1, `speaks ${r.langs.join(", ") || "a target language"}, no activity at all`);
     if (avgReply && r.sent >= MIN_SENT && r.replyRate < avgReply / 2) add("low-reply", r.sent, `${r.replyRate}% replies against ${avgReply}% on average`);
     if (r.sent >= MIN_SENT && r.bounced / r.sent > 0.05) add("bouncing", r.bounced, `${Math.round((r.bounced / r.sent) * 100)}% of emails bounced`);
@@ -234,6 +267,7 @@ function geoRows(input) {
     targets: Array.from(targets).sort(),
     countries: list.sort((a, b) => b.sent - a.sent || b.prospects - a.prospects || a.cc.localeCompare(b.cc)),
     gaps: gaps.slice(0, 80),
+    replyDays,
     totals: {
       countries: acting.length, targets: targets.size, targetsActive: acting.filter((r) => r.target).length,
       missing: list.filter((r) => r.gaps.some((k) => k !== "silent")).length, silent: list.filter((r) => r.gaps.includes("silent")).length, avgReply,
@@ -328,11 +362,12 @@ async function geo(ctx) {
   const needs = [];
   const peer = (op) => (ctx.peer ? ctx.peer(op).then((o) => (o && o.ok !== false ? o : null)).catch(() => null) : Promise.resolve(null));
   const countryDoc = ctx.db.collection("jarvis_settings").doc(COUNTRY_DOC).get().then((s) => (s.exists ? s.data() : null)).catch(() => null);
+  const clicksP = clicks.read(ctx);
   const [queue, state, lane, live, targets, marketing, sync, outreach, engagement, ga4, calendar] = await Promise.all([
     ctx.db.collection("url_review_sweep").doc("outreach").get(),
     ctx.db.collection("url_review_sweep").doc("state").get(),
     ctx.db.collection("url_review_sweep").doc("lane").get(),
-    ctx.fetch(ORIGIN + "/assets/live-reports/index.json", { signal: AbortSignal.timeout(10000) }).then((r) => r.json()).catch(() => null),
+    readLiveIndex(ctx.fetch, ctx.liveIndex),
     readTargets(ctx.db),
     peer("marketing"), peer("marketing-sync"), peer("outreach"), peer("engagement"), peer("ga4"), peer("calendar")
   ]);
@@ -342,14 +377,26 @@ async function geo(ctx) {
   if (!marketing || !marketing.campaigns || marketing.campaigns.ok === false) needs.push("Instantly campaigns are missing, so email numbers per country are empty.");
   if (!sync) needs.push("Marketing sync has not run, so campaigns are split by region instead of by their leads.");
   if (!ga4) needs.push("GA4 is not connected, so visitors per country are empty.");
+  else needs.push(...geoGa4.needs(ga4));
+  const linkClicks = await clicksP;
+  if (!linkClicks.ok) needs.push(linkClicks.need || "Short-link clicks could not be read: " + linkClicks.error);
   const out = geoRows({
     queue: { hosts: q.hosts, sweptAt: view && view.outreachAt }, live, targets, marketing, sync, engagement, ga4,
-    links: outreach && outreach.links
+    links: outreach && outreach.links, clicks: linkClicks
   });
+  out.totals = Object.assign(out.totals, clicks.totals(linkClicks));
   joinDates(out.countries, calendar, ctx.now);
+  Object.assign(out, require("./jarvis-geo-flow").build({ campaigns: marketing && marketing.campaigns && marketing.campaigns.rows, countries: out.countries, calendar, now: ctx.now }));
+  const heat = require("./jarvis-geo-heat");
+  out.heat = heat.heatRows({ sync, marketing, queue: { hosts: q.hosts }, live, countries: out.countries, now: ctx.now });
+  out.sectors = heat.sectorGrid({ queue: { hosts: q.hosts }, sync, marketing });
   const confirm = confirmQueue(await countryDoc, live);
   out.totals = Object.assign({}, out.totals, { confirm: confirm.total, confirmed: confirm.decided });
-  return Object.assign({ ok: true, needs, days: ctx.days }, out, { confirm: confirm.rows });
+  out.time = await geoTime.read(ctx.db).catch(() => null);
+  await require("./jarvis-geo-cost").attach(ctx, out, { marketing, needs }).catch(() => null);
+  await require("./jarvis-geo-actions").attach(ctx, out, { outreach, marketing, calendar, confirm: confirm.rows });
+  // cache:false when Live Reports missed: jarvisCached must not keep that miss for the full TTL (#3645).
+  return Object.assign({ ok: true, needs, days: ctx.days }, live ? {} : { cache: false }, out, { confirm: confirm.rows });
 }
 
-module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS };
+module.exports = { geo, geoRows, joinDates, lightOf, LIGHTS, setTarget, readTargets, confirmQueue, confirmCountry, regionCountries, codeOf, nameOf, langsOf, LANG_COUNTRIES, DEFAULT_TARGETS, readLiveIndex };

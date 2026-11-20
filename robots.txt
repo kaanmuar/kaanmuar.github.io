@@ -13,6 +13,8 @@ Disallow: /media/social-posts/
 # The post images the social hub (qa-review-social.html) shows and offers for download.
 Allow: /media/social-posts/*.jpg$
 Disallow: /assets/sweep/
+Disallow: /media/brand-kit-2026-10/
+Disallow: /media/faces-2026-11/
 
 Sitemap: https://carlosandmunoz.com/sitemap.xml
 Sitemap: https://carlosandmunoz.com/sitemap-social.xml

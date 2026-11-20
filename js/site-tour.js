@@ -1,5 +1,5 @@
 (function (global) {
-  const STYLE = `
+	const STYLE = `
     #site-tour-overlay {
       display: none; position: fixed; inset: 0; z-index: 1; pointer-events: none;
       background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none;
@@ -83,35 +83,45 @@
     #site-tour-close, #site-tour-back { background: transparent; color: #c5d0d8; border: 1px solid #2a3440; }
     #site-tour-back[hidden] { display: none; }
   `;
-  // A tour may pass its own labels; {n} and {m} in step are the step number and the step count.
-  const LABELS = { back: 'Back', close: 'Close', next: 'Next', finish: 'Finish', step: 'Step {n} of {m}.', progress: 'Step progress', wait: 'Available when this step finishes.' };
+	// A tour may pass its own labels; {n} and {m} in step are the step number and the step count.
+	const LABELS = {
+		back: 'Back',
+		close: 'Close',
+		next: 'Next',
+		finish: 'Finish',
+		step: 'Step {n} of {m}.',
+		progress: 'Step progress',
+		wait: 'Available when this step finishes.',
+	};
 
-  let cfg = null;
-  let index = 0;
-  let timer = null;
-    let hit = null;
-    let held = false;
-    let returnFocus = null;
+	let cfg = null;
+	let index = 0;
+	let timer = null;
+	let hit = null;
+	let held = false;
+	let returnFocus = null;
 
-  function $(id) { return document.getElementById(id); }
+	function $(id) {
+		return document.getElementById(id);
+	}
 
-  function inject() {
-    if ($('site-tour-style')) return;
-    const style = document.createElement('style');
-    style.id = 'site-tour-style';
-    style.textContent = STYLE;
-    document.head.appendChild(style);
-    const wrap = document.createElement('div');
-    wrap.id = 'site-tour-overlay';
-    document.body.appendChild(wrap);
-    const tip = document.createElement('div');
-    tip.id = 'site-tour-tooltip';
-    tip.setAttribute('role', 'dialog');
-    tip.setAttribute('aria-modal', 'false');
-    tip.setAttribute('aria-labelledby', 'site-tour-step-label site-tour-title');
-    tip.setAttribute('aria-describedby', 'site-tour-body');
-    tip.tabIndex = -1;
-    tip.innerHTML = `
+	function inject() {
+		if ($('site-tour-style')) return;
+		const style = document.createElement('style');
+		style.id = 'site-tour-style';
+		style.textContent = STYLE;
+		document.head.appendChild(style);
+		const wrap = document.createElement('div');
+		wrap.id = 'site-tour-overlay';
+		document.body.appendChild(wrap);
+		const tip = document.createElement('div');
+		tip.id = 'site-tour-tooltip';
+		tip.setAttribute('role', 'dialog');
+		tip.setAttribute('aria-modal', 'false');
+		tip.setAttribute('aria-labelledby', 'site-tour-step-label site-tour-title');
+		tip.setAttribute('aria-describedby', 'site-tour-body');
+		tip.tabIndex = -1;
+		tip.innerHTML = `
         <div id="site-tour-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Step progress"><div id="site-tour-progress-fill"></div></div>
         <div id="site-tour-tooltip-content">
           <span id="site-tour-step-label" class="site-tour-sr"></span>
@@ -128,273 +138,336 @@
           </div>
           <span id="site-tour-next-wait" class="site-tour-sr">Available when this step finishes.</span>
         </div>`;
-    document.body.appendChild(tip);
-    $('site-tour-next').onclick = () => SiteTour.next();
-    $('site-tour-back').onclick = () => SiteTour.back();
-    $('site-tour-close').onclick = () => SiteTour.stop();
-    document.addEventListener('keydown', (e) => {
-      if (!cfg) return;
-      const tag = e.target && e.target.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        SiteTour.stop();
-      } else if (e.key === 'ArrowRight' && !$('site-tour-next').disabled) {
-        e.preventDefault();
-        SiteTour.next();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        SiteTour.back();
-      }
-    });
-  }
+		document.body.appendChild(tip);
+		$('site-tour-next').onclick = () => SiteTour.next();
+		$('site-tour-back').onclick = () => SiteTour.back();
+		$('site-tour-close').onclick = () => SiteTour.stop();
+		document.addEventListener('keydown', (e) => {
+			if (!cfg) return;
+			const tag = e.target && e.target.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+			if (e.key === 'Escape') {
+				e.preventDefault();
+				SiteTour.stop();
+			} else if (e.key === 'ArrowRight' && !$('site-tour-next').disabled) {
+				e.preventDefault();
+				SiteTour.next();
+			} else if (e.key === 'ArrowLeft') {
+				e.preventDefault();
+				SiteTour.back();
+			}
+		});
+	}
 
-  function studioClip() {
-    return '<div class="clip-agents"><span>Steward</span><span>Tests</span><span>Auto</span><span>Release</span></div><div class="clip-board"><div><b>To do</b></div><div><b>Doing</b></div><div><b>QA</b></div><div><b>Done</b></div><i class="clip-card"></i><i class="clip-scan"></i></div>';
-  }
+	function studioClip() {
+		return '<div class="clip-agents"><span>Steward</span><span>Tests</span><span>Auto</span><span>Release</span></div><div class="clip-board"><div><b>To do</b></div><div><b>Doing</b></div><div><b>QA</b></div><div><b>Done</b></div><i class="clip-card"></i><i class="clip-scan"></i></div>';
+	}
 
-  function labClip() {
-    return '<div class="clip-rows"><div class="clip-row"><span>CV-04</span><em></em></div><div class="clip-row"><span>STU-02</span><em></em></div><div class="clip-row"><span>SEC-08</span><em></em></div></div><div class="clip-stage"><div class="clip-page"></div><i class="clip-cursor"></i></div>';
-  }
+	function labClip() {
+		return '<div class="clip-rows"><div class="clip-row"><span>CV-04</span><em></em></div><div class="clip-row"><span>STU-02</span><em></em></div><div class="clip-row"><span>SEC-08</span><em></em></div></div><div class="clip-stage"><div class="clip-page"></div><i class="clip-cursor"></i></div>';
+	}
 
-  function clearHit() {
-    if (hit) hit.classList.remove('site-tour-hit', 'site-tour-hit-wide');
-    hit = null;
-  }
+	function clearHit() {
+		if (hit) hit.classList.remove('site-tour-hit', 'site-tour-hit-wide');
+		hit = null;
+	}
 
-  function viewportBox() {
-    const view = window.visualViewport;
-    return {
-      left: view ? view.offsetLeft : 0,
-      top: view ? view.offsetTop : 0,
-      width: view ? view.width : window.innerWidth,
-      height: view ? view.height : window.innerHeight
-    };
-  }
+	function viewportBox() {
+		const view = window.visualViewport;
+		return {
+			left: view ? view.offsetLeft : 0,
+			top: view ? view.offsetTop : 0,
+			width: view ? view.width : window.innerWidth,
+			height: view ? view.height : window.innerHeight,
+		};
+	}
 
-  function pinTip() {
-    const tip = $('site-tour-tooltip');
-    if (!tip) return;
-    if (window.innerWidth >= 768) {
-      tip.style.left = '';
-      tip.style.right = '';
-      tip.style.top = '';
-      tip.style.bottom = '';
-      tip.style.width = '';
-      tip.style.maxWidth = '';
-      return;
-    }
-    const view = viewportBox();
-    const width = Math.max(200, Math.round(view.width - 24));
-    tip.style.boxSizing = 'border-box';
-    tip.style.left = Math.round(view.left + 12) + 'px';
-    tip.style.right = 'auto';
-    tip.style.width = width + 'px';
-    tip.style.maxWidth = width + 'px';
-    tip.style.top = 'auto';
-    tip.style.bottom = Math.max(12, Math.round(window.innerHeight - (view.top + view.height) + 12)) + 'px';
-  }
+	function pinTip() {
+		const tip = $('site-tour-tooltip');
+		if (!tip) return;
+		if (window.innerWidth >= 768) {
+			tip.style.left = '';
+			tip.style.right = '';
+			tip.style.top = '';
+			tip.style.bottom = '';
+			tip.style.width = '';
+			tip.style.maxWidth = '';
+			return;
+		}
+		const view = viewportBox();
+		const width = Math.max(200, Math.round(view.width - 24));
+		tip.style.boxSizing = 'border-box';
+		tip.style.left = Math.round(view.left + 12) + 'px';
+		tip.style.right = 'auto';
+		tip.style.width = width + 'px';
+		tip.style.maxWidth = width + 'px';
+		tip.style.top = 'auto';
+		tip.style.bottom = Math.max(12, Math.round(window.innerHeight - (view.top + view.height) + 12)) + 'px';
+	}
 
-  function clearOfTip(el) {
-    const tip = $('site-tour-tooltip');
-    if (!el || !tip || window.innerWidth >= 768) return;
-    if (getComputedStyle(el).position === 'fixed') return;
-    const rect = el.getBoundingClientRect();
-    const tipRect = tip.getBoundingClientRect();
-    const view = viewportBox();
-    const pad = 28;
-    if (rect.width < 2 || tipRect.height < 2) return;
-    const clearTop = view.top + 12;
-    const clearBottom = tipRect.top - pad;
-    let shift = 0;
-    if (rect.bottom > clearBottom) shift = rect.bottom - clearBottom;
-    if (rect.top - shift < clearTop) shift = rect.top - clearTop;
-    if (Math.abs(shift) > 1) {
-      const root = document.scrollingElement || document.documentElement;
-      const html = document.documentElement;
-      const prev = html.style.scrollBehavior;
-      html.style.scrollBehavior = 'auto';
-      root.scrollTop += shift;
-      html.style.scrollBehavior = prev;
-    }
-  }
+	// The bottom of a sticky or fixed top bar, which would cover a target scrolled to the top.
+	function topCover(el) {
+		let bottom = 0;
+		document.querySelectorAll('body > header, .topbar').forEach((bar) => {
+			if (bar.contains(el)) return;
+			const pos = getComputedStyle(bar).position;
+			if (pos !== 'fixed' && pos !== 'sticky') return;
+			const rect = bar.getBoundingClientRect();
+			if (rect.top <= 1 && rect.bottom > bottom) bottom = rect.bottom;
+		});
+		return bottom;
+	}
 
-  function blurFields() {
-    const active = document.activeElement;
-    const tip = $('site-tour-tooltip');
-    if (!active || (tip && tip.contains(active))) return;
-    const tag = active.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable) active.blur();
-  }
+	function clearOfTip(el) {
+		const tip = $('site-tour-tooltip');
+		if (!el || !tip || window.innerWidth >= 768) return;
+		if (getComputedStyle(el).position === 'fixed') return;
+		const rect = el.getBoundingClientRect();
+		const tipRect = tip.getBoundingClientRect();
+		const view = viewportBox();
+		const pad = 28;
+		if (rect.width < 2 || tipRect.height < 2) return;
+		const clearTop = Math.max(view.top, topCover(el)) + 12;
+		const clearBottom = tipRect.top - pad;
+		let shift = 0;
+		if (rect.bottom > clearBottom) shift = rect.bottom - clearBottom;
+		if (rect.top - shift < clearTop) shift = rect.top - clearTop;
+		if (Math.abs(shift) > 1) {
+			const root = document.scrollingElement || document.documentElement;
+			const html = document.documentElement;
+			const prev = html.style.scrollBehavior;
+			html.style.scrollBehavior = 'auto';
+			root.scrollTop += shift;
+			html.style.scrollBehavior = prev;
+		}
+	}
 
-  function onViewport() {
-    if (!cfg) return;
-    pinTip();
-    if (hit) clearOfTip(hit);
-  }
+	// A details opened just now grows over its CSS transition, later still on a busy machine, and clips its content meanwhile: a smooth scroll aimed into the clipped part never moves the page (#3974).
+	function unfoldDone(folds) {
+		const whole = (fold) => {
+			const bottom = fold.getBoundingClientRect().bottom + 1;
+			const parts = [...fold.children].filter((part) => part.tagName !== 'SUMMARY' && part.getClientRects().length);
+			return parts.length > 0 && parts.every((part) => part.getBoundingClientRect().bottom <= bottom);
+		};
+		return new Promise((done) => {
+			let waiting = true;
+			const finish = () => {
+				if (!waiting) return;
+				waiting = false;
+				done();
+			};
+			setTimeout(finish, 2000);
+			const check = () => {
+				if (!waiting) return;
+				if (folds.every(whole)) finish();
+				else requestAnimationFrame(check);
+			};
+			requestAnimationFrame(check);
+		});
+	}
 
-  function showStep() {
-    const step = cfg.steps[index];
-    const last = index === cfg.steps.length - 1;
-    $('site-tour-title').textContent = step.title;
-    const clip = $('site-tour-clip');
-    if (step.preview) {
-      clip.hidden = false;
-      clip.className = 'tour-clip tour-clip-' + step.preview;
-      clip.innerHTML = step.preview === 'lab' ? labClip() : studioClip();
-    } else {
-      clip.hidden = true;
-      clip.className = 'tour-clip';
-      clip.innerHTML = '';
-    }
-    $('site-tour-body').textContent = step.body;
-    const words = Object.assign({}, LABELS, cfg.labels);
-    $('site-tour-counter').textContent = (index + 1) + ' / ' + cfg.steps.length;
-    $('site-tour-step-label').textContent = words.step.replace('{n}', index + 1).replace('{m}', cfg.steps.length);
-    $('site-tour-next').textContent = last ? words.finish : words.next;
-    $('site-tour-back').textContent = words.back;
-    $('site-tour-close').textContent = words.close;
-    $('site-tour-next-wait').textContent = words.wait;
-    $('site-tour-progress').setAttribute('aria-label', words.progress);
-    $('site-tour-next').disabled = true;
-    $('site-tour-next').setAttribute('aria-describedby', 'site-tour-next-wait');
-    const bar = $('site-tour-progress');
-    if (bar) bar.setAttribute('aria-valuenow', '0');
-    $('site-tour-back').hidden = index === 0;
-    $('site-tour-progress-fill').style.transition = 'none';
-    $('site-tour-progress-fill').style.width = '0';
-    clearHit();
-    if (typeof step.prepare === 'function') step.prepare();
-    const el = step.selector ? document.querySelector(step.selector) : null;
-    for (let fold = el && el.closest('details:not([open])'); fold; fold = fold.parentElement && fold.parentElement.closest('details:not([open])')) fold.open = true;
-    blurFields();
-    pinTip();
-    if (el) {
-      hit = el;
-      el.classList.add('site-tour-hit');
-      const narrow = window.innerWidth < 768;
-      el.scrollIntoView({ block: narrow ? 'start' : 'center', inline: 'nearest', behavior: narrow ? 'auto' : 'smooth' });
-      if (narrow) setTimeout(() => clearOfTip(el), 420);
-    }
-    const ms = step.demoMs || 1400;
-    requestAnimationFrame(() => {
-      $('site-tour-progress-fill').style.transition = 'width ' + ms + 'ms linear';
-      $('site-tour-progress-fill').style.width = '100%';
-    });
-    clearTimeout(timer);
-    const tip = $('site-tour-tooltip');
-    if (tip) tip.focus({ preventScroll: true });
-    timer = setTimeout(() => {
-      const next = $('site-tour-next');
-      if (!next) return;
-      next.disabled = false;
-      next.removeAttribute('aria-describedby');
-      const progress = $('site-tour-progress');
-      if (progress) progress.setAttribute('aria-valuenow', '100');
-    }, ms);
-  }
+	function blurFields() {
+		const active = document.activeElement;
+		const tip = $('site-tour-tooltip');
+		if (!active || (tip && tip.contains(active))) return;
+		const tag = active.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable) active.blur();
+	}
 
-  function tourSeen(key) {
-    if (!key) return false;
-    try {
-      return sessionStorage.getItem(key) === 'true' || localStorage.getItem(key) === 'true';
-    } catch (err) {
-      return false;
-    }
-  }
+	function onViewport() {
+		if (!cfg) return;
+		pinTip();
+		if (hit) clearOfTip(hit);
+	}
 
-  function markTourSeen(key) {
-    if (!key) return;
-    try { sessionStorage.setItem(key, 'true'); } catch (err) { /* ignore */ }
-    try { localStorage.setItem(key, 'true'); } catch (err) { /* ignore */ }
-  }
+	function showStep() {
+		const step = cfg.steps[index];
+		const last = index === cfg.steps.length - 1;
+		$('site-tour-title').textContent = step.title;
+		const clip = $('site-tour-clip');
+		if (step.preview) {
+			clip.hidden = false;
+			clip.className = 'tour-clip tour-clip-' + step.preview;
+			clip.innerHTML = step.preview === 'lab' ? labClip() : studioClip();
+		} else {
+			clip.hidden = true;
+			clip.className = 'tour-clip';
+			clip.innerHTML = '';
+		}
+		$('site-tour-body').textContent = step.body;
+		const words = Object.assign({}, LABELS, cfg.labels);
+		$('site-tour-counter').textContent = index + 1 + ' / ' + cfg.steps.length;
+		$('site-tour-step-label').textContent = words.step.replace('{n}', index + 1).replace('{m}', cfg.steps.length);
+		$('site-tour-next').textContent = last ? words.finish : words.next;
+		$('site-tour-back').textContent = words.back;
+		$('site-tour-close').textContent = words.close;
+		$('site-tour-next-wait').textContent = words.wait;
+		$('site-tour-progress').setAttribute('aria-label', words.progress);
+		$('site-tour-next').disabled = true;
+		$('site-tour-next').setAttribute('aria-describedby', 'site-tour-next-wait');
+		const bar = $('site-tour-progress');
+		if (bar) bar.setAttribute('aria-valuenow', '0');
+		$('site-tour-back').hidden = index === 0;
+		$('site-tour-progress-fill').style.transition = 'none';
+		$('site-tour-progress-fill').style.width = '0';
+		clearHit();
+		if (typeof step.prepare === 'function') step.prepare();
+		const el = step.selector ? document.querySelector(step.selector) : null;
+		const folds = [];
+		for (
+			let fold = el && el.closest('details:not([open])');
+			fold;
+			fold = fold.parentElement && fold.parentElement.closest('details:not([open])')
+		) {
+			fold.open = true;
+			folds.push(fold);
+		}
+		blurFields();
+		pinTip();
+		if (el) {
+			hit = el;
+			el.classList.add('site-tour-hit');
+			const narrow = window.innerWidth < 768;
+			const reveal = () => {
+				if (hit !== el) return;
+				el.scrollIntoView({
+					block: narrow ? 'start' : 'center',
+					inline: 'nearest',
+					behavior: narrow ? 'auto' : 'smooth',
+				});
+				if (narrow) setTimeout(() => clearOfTip(el), 420);
+			};
+			if (folds.length) unfoldDone(folds).then(reveal);
+			else reveal();
+		}
+		const ms = step.demoMs || 1400;
+		requestAnimationFrame(() => {
+			$('site-tour-progress-fill').style.transition = 'width ' + ms + 'ms linear';
+			$('site-tour-progress-fill').style.width = '100%';
+		});
+		clearTimeout(timer);
+		const tip = $('site-tour-tooltip');
+		if (tip) tip.focus({ preventScroll: true });
+		timer = setTimeout(() => {
+			const next = $('site-tour-next');
+			if (!next) return;
+			next.disabled = false;
+			next.removeAttribute('aria-describedby');
+			const progress = $('site-tour-progress');
+			if (progress) progress.setAttribute('aria-valuenow', '100');
+		}, ms);
+	}
 
-  const SiteTour = {
-    start(options) {
-      inject();
-      cfg = options;
-      index = 0;
-      markTourSeen(cfg.key);
-      returnFocus = document.activeElement;
-      document.documentElement.classList.add('site-tour-on');
-      $('site-tour-overlay').classList.add('on');
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onViewport);
-        window.visualViewport.addEventListener('scroll', onViewport);
-      }
-      window.addEventListener('resize', onViewport);
-      showStep();
-      if (global.SiteAnalytics) global.SiteAnalytics.trackEvent('site_tour_start', cfg.name || 'Tour', cfg.name || 'Tour');
-    },
-    next() {
-      if (!cfg) return;
-      if (index >= cfg.steps.length - 1) {
-        this.stop();
-        return;
-      }
-      index += 1;
-      showStep();
-    },
-    back() {
-      if (!cfg || index <= 0) return;
-      index -= 1;
-      showStep();
-    },
-    stop() {
-      clearTimeout(timer);
-      clearHit();
-      held = false;
-      document.documentElement.classList.remove('site-tour-on');
-      const overlay = $('site-tour-overlay');
-      if (overlay) overlay.classList.remove('on');
-      window.removeEventListener('resize', onViewport);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', onViewport);
-        window.visualViewport.removeEventListener('scroll', onViewport);
-      }
-      const tip = $('site-tour-tooltip');
-      if (tip) {
-        tip.style.left = '';
-        tip.style.right = '';
-        tip.style.top = '';
-        tip.style.bottom = '';
-        tip.style.width = '';
-        tip.style.maxWidth = '';
-      }
-      cfg = null;
-      if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus({ preventScroll: true });
-      returnFocus = null;
-    },
-    hold() {
-      if (!cfg) return;
-      held = true;
-      clearTimeout(timer);
-      clearHit();
-      document.documentElement.classList.remove('site-tour-on');
-      const overlay = $('site-tour-overlay');
-      if (overlay) overlay.classList.remove('on');
-    },
-    release() {
-      if (!held || !cfg) {
-        held = false;
-        return;
-      }
-      held = false;
-      document.documentElement.classList.add('site-tour-on');
-      const overlay = $('site-tour-overlay');
-      if (overlay) overlay.classList.add('on');
-      showStep();
-    },
-    bind(button, options) {
-      if (!button) return;
-      button.addEventListener('click', () => this.start(options));
-    },
-    autoStart(options) {
-      if (!options || tourSeen(options.key)) return;
-      if (/autorun=1/.test(location.search)) return;
-      setTimeout(() => this.start(options), options.delay || 900);
-    }
-  };
+	function tourSeen(key) {
+		if (!key) return false;
+		try {
+			return sessionStorage.getItem(key) === 'true' || localStorage.getItem(key) === 'true';
+		} catch (err) {
+			return false;
+		}
+	}
 
-  global.SiteTour = SiteTour;
+	function markTourSeen(key) {
+		if (!key) return;
+		try {
+			sessionStorage.setItem(key, 'true');
+		} catch (err) {
+			/* ignore */
+		}
+		try {
+			localStorage.setItem(key, 'true');
+		} catch (err) {
+			/* ignore */
+		}
+	}
+
+	const SiteTour = {
+		start(options) {
+			inject();
+			cfg = options;
+			index = 0;
+			markTourSeen(cfg.key);
+			returnFocus = document.activeElement;
+			document.documentElement.classList.add('site-tour-on');
+			$('site-tour-overlay').classList.add('on');
+			if (window.visualViewport) {
+				window.visualViewport.addEventListener('resize', onViewport);
+				window.visualViewport.addEventListener('scroll', onViewport);
+			}
+			window.addEventListener('resize', onViewport);
+			showStep();
+			if (global.SiteAnalytics)
+				global.SiteAnalytics.trackEvent('site_tour_start', cfg.name || 'Tour', cfg.name || 'Tour');
+		},
+		next() {
+			if (!cfg) return;
+			if (index >= cfg.steps.length - 1) {
+				this.stop();
+				return;
+			}
+			index += 1;
+			showStep();
+		},
+		back() {
+			if (!cfg || index <= 0) return;
+			index -= 1;
+			showStep();
+		},
+		stop() {
+			clearTimeout(timer);
+			clearHit();
+			held = false;
+			document.documentElement.classList.remove('site-tour-on');
+			const overlay = $('site-tour-overlay');
+			if (overlay) overlay.classList.remove('on');
+			window.removeEventListener('resize', onViewport);
+			if (window.visualViewport) {
+				window.visualViewport.removeEventListener('resize', onViewport);
+				window.visualViewport.removeEventListener('scroll', onViewport);
+			}
+			const tip = $('site-tour-tooltip');
+			if (tip) {
+				tip.style.left = '';
+				tip.style.right = '';
+				tip.style.top = '';
+				tip.style.bottom = '';
+				tip.style.width = '';
+				tip.style.maxWidth = '';
+			}
+			cfg = null;
+			if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus({ preventScroll: true });
+			returnFocus = null;
+		},
+		hold() {
+			if (!cfg) return;
+			held = true;
+			clearTimeout(timer);
+			clearHit();
+			document.documentElement.classList.remove('site-tour-on');
+			const overlay = $('site-tour-overlay');
+			if (overlay) overlay.classList.remove('on');
+		},
+		release() {
+			if (!held || !cfg) {
+				held = false;
+				return;
+			}
+			held = false;
+			document.documentElement.classList.add('site-tour-on');
+			const overlay = $('site-tour-overlay');
+			if (overlay) overlay.classList.add('on');
+			showStep();
+		},
+		bind(button, options) {
+			if (!button) return;
+			button.addEventListener('click', () => this.start(options));
+		},
+		autoStart(options) {
+			if (!options || tourSeen(options.key)) return;
+			if (/autorun=1/.test(location.search)) return;
+			setTimeout(() => this.start(options), options.delay || 900);
+		},
+	};
+
+	global.SiteTour = SiteTour;
 })(window);

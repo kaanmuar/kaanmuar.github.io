@@ -56,8 +56,8 @@ function span(opens, closes) {
 
 function dayRange(spec) {
   const out = [];
-  spec.split(/\s*,\s*/).forEach((part) => {
-    const [from, to] = part.split(/\s*[-–]\s*/).map((day) => DAYS[day.toLowerCase()]);
+  spec.split(/(?:(?<!\s)\s*)?,\s*/).forEach((part) => {
+    const [from, to] = part.split(/(?:(?<!\s)\s*)?[-–]\s*/).map((day) => DAYS[day.toLowerCase()]);
     if (from == null) return;
     if (to == null) { out.push(from); return; }
     for (let day = from, guard = 0; guard < 7; day = (day + 1) % 7, guard += 1) {
@@ -164,7 +164,7 @@ function pick(places, host, phones) {
 
 function nameWords(name) {
   return String(name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9.]+/)
-    .map((word) => word.replace(/\.+$/, "")).filter((word) => word && !NAME_NOISE.has(word));
+    .map((word) => word.replace(/(?<!\.)\.+$/, "")).filter((word) => word && !NAME_NOISE.has(word));
 }
 
 function namesDiffer(site, profile) {

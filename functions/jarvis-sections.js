@@ -22,11 +22,12 @@ const SECTIONS = {
   reports: { fields: ["reports"], from: ["reports"] },
   // Small and fast-changing (#2548): only jarvis_cache/processes, so a writer knows the version it pushes.
   processes: { fields: ["processes"], from: ["processes"] },
+  ledger: { fields: ["ledger"], from: ["ledger"] },
   systems: { external: ["health", "uptime", "speed", "platform", "safety", "cloudflare", "jobs", "github", "github-work"], from: ["external"] },
-  pagespeed: { external: ["pagespeed", "local", "search"], from: ["external"] },
+  pagespeed: { external: ["pagespeed", "local", "search", "rescue", "checks"], from: ["external"] },
   marketing: { external: ["marketing", "marketing-sync", "social", "outreach", "targets", "engagement", "ga4", "geo", "calendar"], from: ["external"] },
   people: { external: ["people", "calls"], from: ["external"] },
-  money: { external: ["money"], from: ["external"] },
+  money: { external: ["money", "fixes"], from: ["external"] },
   mail: { fields: ["mailCodes"], external: ["email", "mailbox", "addresses"], from: ["external"], live: true },
   devices: { fields: ["devices"], live: true },
   other: { from: [] }

@@ -96,6 +96,9 @@ describe('Interactive CV', () => {
 
     it('filters experience by a skill tag', () => {
       cvPage.expandAllToolkitBtn.click();
+      cy.get('.tech-tag[data-skill-name="Selenium"]').parents('.toolkit-section').as('seleniumSection');
+      cy.get('@seleniumSection').find('.toolkit-header').should('have.attr', 'aria-expanded', 'true');
+      cy.get('@seleniumSection').find('.toolkit-preview').should('be.hidden');
       cy.get('.tech-tag[data-skill-name="Selenium"]').click();
       cy.get('.experience-item.filter-match').should('exist');
       cy.get('.experience-item.filter-no-match').should('exist');

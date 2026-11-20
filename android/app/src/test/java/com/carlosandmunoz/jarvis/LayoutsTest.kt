@@ -104,4 +104,30 @@ class LayoutsTest {
         assertNull(Layouts.read(Layouts.patch(moved, "github", null), "github"))
         assertEquals(JsonNull, Layouts.json(null))
     }
+
+    @Test fun panelSizeIsCleanedAndKeptWithStretch() {
+        assertEquals(Layouts.Size(1.56f, 0.5f), Layouts.clampSize(1.555f, 0.2f))
+        assertEquals(Layouts.Size(3f, 1f), Layouts.clampSize(9f, Float.NaN))
+        assertEquals(1, Layouts.sizeSpan(1f, false))
+        assertEquals(2, Layouts.sizeSpan(1.4f, false))
+        assertEquals(3, Layouts.sizeSpan(1.9f, false))
+        assertEquals(3, Layouts.sizeSpan(1f, true))
+        assertEquals(false, Layouts.isWideSize(1.4f))
+        assertEquals(true, Layouts.isWideSize(1.9f))
+        val size = Layouts.cleanSize(mapOf("geo-map" to Layouts.Size(1.5f, 1f), "a" to Layouts.Size(1f, 1f), "bad id!" to Layouts.Size(2f, 1f)))
+        assertEquals(mapOf("geo-map" to Layouts.Size(1.5f, 1f)), size)
+        val kept = Layouts.keep(
+            Saved(listOf("geo-map", "web-x"), emptyList(), mapOf("geo-map" to Layouts.Size(1.4f, 1f), "web-x" to Layouts.Size(2f, 1f)), mapOf("geo-map" to 3, "web-x" to 2)),
+            listOf("geo-map"), emptyList(), listOf("geo-map")
+        )
+        assertEquals(mapOf("geo-map" to Layouts.Size(1.4f, 1f)), kept.size)
+        assertEquals(mapOf("geo-map" to 3), kept.stretch)
+        val snap = JSON.parseToJsonElement("""{"settings":{"layout":{"geo":{"order":["geo-map"],"size":{"geo-map":{"h":1.25,"w":1.5}},"stretch":{"geo-map":2}}}}}""") as JsonObject
+        val read = Layouts.read(snap, "geo")!!
+        assertEquals(Layouts.Size(1.25f, 1.5f), read.size["geo-map"])
+        assertEquals(2, read.stretch["geo-map"])
+        val next = Layouts.withSize(read, "geo-map", Layouts.Size(1f, 1f), listOf("geo-map"))
+        assertEquals(true, next.size.isEmpty())
+        assertEquals(2, next.stretch["geo-map"])
+    }
 }

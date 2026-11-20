@@ -2,343 +2,400 @@ const { test, expect } = require('./net-guard');
 const { skipSiteTours } = require('./helpers.js');
 
 test.describe('CV regression lab', () => {
-  test.beforeEach(async ({ page }) => {
-    await skipSiteTours(page);
-    await page.addInitScript(() => {
-      localStorage.setItem('theme', 'light');
-      localStorage.setItem('cv-preferred-lang', 'en');
-    });
-    await page.goto('/qa-lab.html');
-  });
+	test.beforeEach(async ({ page }) => {
+		await skipSiteTours(page);
+		await page.addInitScript(() => {
+			localStorage.setItem('theme', 'light');
+			localStorage.setItem('cv-preferred-lang', 'en');
+		});
+		await page.goto('/qa-lab.html');
+	});
 
-  test('lists the catalog with where/when/how for a case', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
-    await expect(page.locator('.case-row').first()).toBeVisible();
-    await expect(page.locator('.case-row')).toHaveCount(86);
-    await expect(page.locator('#case-detail')).toContainText('Where');
-    await expect(page.locator('#case-detail')).toContainText('When');
-    await expect(page.locator('#case-detail')).toContainText('How');
-    await expect(page.locator('#dash-charts .chart-card')).not.toHaveCount(0);
-    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
-    await expect(page.locator('#dash-open')).toBeVisible();
-    await expect(page.locator('#tour-start-btn')).toBeVisible();
-    await expect(page.locator('#homeBtn')).toBeVisible();
-    await expect(page.locator('#langToggle')).toBeVisible();
-    await expect(page.locator('[data-pace="1"]')).toHaveClass(/on/);
-    await expect(page.locator('[data-view="watch"]')).toHaveClass(/on/);
-    await expect(page.locator('#sut')).toBeVisible();
-    await expect(page.locator('[data-filter="Mobile"]')).toBeVisible();
-    await expect(page.locator('[data-filter="Performance"]')).toBeVisible();
-    await expect(page.getByRole('button', { name: /PERF-01/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-23/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-28/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-29/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /STU-04/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-33/ })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Robot' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Appium' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'JMeter' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Gatling' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Reqnroll' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Maestro' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'k6' })).toBeVisible();
-    await expect(page.locator('#fw-picker input')).toHaveCount(20);
-    await expect(page.locator('#fw-picker label:not(:has(img.fw-logo))')).toHaveCount(0);
-    await expect(page.locator('#runner-edge')).toBeVisible();
-    await expect(page.locator('#fw-ask')).toBeHidden();
-    await expect(page.locator('#view-slider')).toBeVisible();
-    await expect(page.getByRole('button', { name: /STU-03/ })).toBeVisible();
-    const chip = await page.locator('#case-detail .src-link').first().boundingBox();
-    expect(chip.height).toBeLessThan(28);
-    expect(chip.width).toBeLessThan(140);
-    const source = page.locator('.src-link').first();
-    await expect(source).toBeVisible();
-    await expect(source).toHaveAttribute('href', /github\.com\/kaanmuar\/kaanmuar\.github\.io\/blob\/main\/js\/qa-lab\.js#L/);
-    await expect(page.locator('.case-item:not(:has(.src-link))')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Suite repo' })).toHaveAttribute('href', 'https://github.com/kaanmuar/kaanmuar.github.io');
-  });
+	test('lists the catalog with where/when/how for a case', async ({ page }) => {
+		await expect(page.getByRole('heading', { name: /The suite I run on this CV/i })).toBeVisible();
+		await expect(page.locator('.case-row').first()).toBeVisible();
+		await expect(page.locator('.case-row')).toHaveCount(86);
+		await expect(page.locator('#case-detail')).toContainText('Where');
+		await expect(page.locator('#case-detail')).toContainText('When');
+		await expect(page.locator('#case-detail')).toContainText('How');
+		await expect(page.locator('#dash-charts .chart-card')).not.toHaveCount(0);
+		await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+		await expect(page.locator('#dash-open')).toBeVisible();
+		await expect(page.locator('#tour-start-btn')).toBeVisible();
+		await expect(page.locator('#homeBtn')).toBeVisible();
+		await expect(page.locator('#langToggle')).toBeVisible();
+		await expect(page.locator('[data-pace="1"]')).toHaveClass(/on/);
+		await expect(page.locator('[data-view="watch"]')).toHaveClass(/on/);
+		await expect(page.locator('#sut')).toBeVisible();
+		await expect(page.locator('[data-filter="Mobile"]')).toBeVisible();
+		await expect(page.locator('[data-filter="Performance"]')).toBeVisible();
+		await expect(page.getByRole('button', { name: /PERF-01/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-23/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-28/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-29/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /STU-04/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-33/ })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Robot' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Appium' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'JMeter' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Gatling' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Reqnroll' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'Maestro' })).toBeVisible();
+		await expect(page.getByRole('checkbox', { name: 'k6' })).toBeVisible();
+		await expect(page.locator('#fw-picker input')).toHaveCount(20);
+		await expect(page.locator('#fw-picker label:not(:has(img.fw-logo))')).toHaveCount(0);
+		await expect(page.locator('#runner-edge')).toBeVisible();
+		await expect(page.locator('#fw-ask')).toBeHidden();
+		await expect(page.locator('#view-slider')).toBeVisible();
+		await expect(page.getByRole('button', { name: /STU-03/ })).toBeVisible();
+		const chip = await page.locator('#case-detail .src-link').first().boundingBox();
+		expect(chip.height).toBeLessThan(28);
+		expect(chip.width).toBeLessThan(140);
+		const source = page.locator('.src-link').first();
+		await expect(source).toBeVisible();
+		await expect(source).toHaveAttribute(
+			'href',
+			/github\.com\/kaanmuar\/kaanmuar\.github\.io\/blob\/main\/js\/qa-lab\.js#L/
+		);
+		await expect(page.locator('.case-item:not(:has(.src-link))')).toHaveCount(0);
+		await expect(page.getByRole('link', { name: 'Suite repo' })).toHaveAttribute(
+			'href',
+			'https://github.com/kaanmuar/kaanmuar.github.io'
+		);
+	});
 
-  test('pace control switches hold and persists', async ({ page }) => {
-    await page.locator('[data-pace="2"]').click();
-    await expect(page.locator('[data-pace="2"]')).toHaveClass(/on/);
-    await expect(page.locator('[data-pace="1"]')).not.toHaveClass(/on/);
-    await page.reload();
-    await expect(page.locator('[data-pace="2"]')).toHaveClass(/on/);
-  });
+	test('pace control switches hold and persists', async ({ page }) => {
+		await page.locator('[data-pace="2"]').click();
+		await expect(page.locator('[data-pace="2"]')).toHaveClass(/on/);
+		await expect(page.locator('[data-pace="1"]')).not.toHaveClass(/on/);
+		await page.reload();
+		await expect(page.locator('[data-pace="2"]')).toHaveClass(/on/);
+	});
 
-  test('actions default to Watch and can hide to Background', async ({ page }) => {
-    await expect(page.locator('html')).toHaveClass(/lab-watch/);
-    await expect(page.locator('#sut')).toBeVisible();
-    await page.locator('[data-view="background"]').click();
-    await expect(page.locator('[data-view="background"]')).toHaveClass(/on/);
-    await expect(page.locator('[data-view="watch"]')).not.toHaveClass(/on/);
-    await expect(page.locator('html')).toHaveClass(/lab-background/);
-    await expect(page.locator('#sut')).toBeHidden();
-    await expect(page.locator('.sut-bg-note')).toBeVisible();
-    await page.reload();
-    await expect(page.locator('[data-view="background"]')).toHaveClass(/on/);
-    await expect(page.locator('html')).toHaveClass(/lab-background/);
-    await page.locator('[data-view="watch"]').click();
-    await expect(page.locator('#sut')).toBeVisible();
-  });
+	test('actions default to Watch and can hide to Background', async ({ page }) => {
+		await expect(page.locator('html')).toHaveClass(/lab-watch/);
+		await expect(page.locator('#sut')).toBeVisible();
+		await page.locator('[data-view="background"]').click();
+		await expect(page.locator('[data-view="background"]')).toHaveClass(/on/);
+		await expect(page.locator('[data-view="watch"]')).not.toHaveClass(/on/);
+		await expect(page.locator('html')).toHaveClass(/lab-background/);
+		await expect(page.locator('#sut')).toBeHidden();
+		await expect(page.locator('.sut-bg-note')).toBeVisible();
+		await page.reload();
+		await expect(page.locator('[data-view="background"]')).toHaveClass(/on/);
+		await expect(page.locator('html')).toHaveClass(/lab-background/);
+		await page.locator('[data-view="watch"]').click();
+		await expect(page.locator('#sut')).toBeVisible();
+	});
 
-  test('Watch mode leaves the CV frame room on a 1280x720 screen', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await expect(page.locator('html')).toHaveClass(/lab-watch/);
-    await expect(page.locator('html')).not.toHaveClass(/lab-running/);
-    await expect(page.locator('#case-detail .spec')).toBeVisible();
-    const shown = (selector) => page.evaluate((selector) => {
-      const target = document.querySelector(selector);
-      const box = target.getBoundingClientRect();
-      let top = box.top;
-      let bottom = box.bottom;
-      for (let el = target.parentElement; el && el !== document.body; el = el.parentElement) {
-        if (getComputedStyle(el).overflowY === 'visible') continue;
-        const r = el.getBoundingClientRect();
-        top = Math.max(top, r.top);
-        bottom = Math.min(bottom, r.bottom);
-      }
-      return Math.round(bottom - top);
-    }, selector);
-    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
-    await page.locator('#sut').scrollIntoViewIfNeeded();
-    const hits = await page.evaluate(() => {
-      const box = document.getElementById('sut').getBoundingClientRect();
-      const x = box.left + box.width / 2;
-      return [box.top + 4, box.top + 240].map((y) => y < innerHeight && document.elementFromPoint(x, y)?.id);
-    });
-    expect(hits).toEqual(['sut', 'sut']);
-    expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
-    await page.locator('[data-view="background"]').click();
-    await expect(page.locator('html')).toHaveClass(/lab-background/);
-    expect(await shown('.sut-bg-note')).toBeGreaterThanOrEqual(30);
-  });
+	test('Watch mode leaves the CV frame room on a 1280x720 screen', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 720 });
+		await expect(page.locator('html')).toHaveClass(/lab-watch/);
+		await expect(page.locator('html')).not.toHaveClass(/lab-running/);
+		await expect(page.locator('#case-detail .spec')).toBeVisible();
+		const shown = (selector) =>
+			page.evaluate((selector) => {
+				const target = document.querySelector(selector);
+				const box = target.getBoundingClientRect();
+				let top = box.top;
+				let bottom = box.bottom;
+				for (let el = target.parentElement; el && el !== document.body; el = el.parentElement) {
+					if (getComputedStyle(el).overflowY === 'visible') continue;
+					const r = el.getBoundingClientRect();
+					top = Math.max(top, r.top);
+					bottom = Math.min(bottom, r.bottom);
+				}
+				return Math.round(bottom - top);
+			}, selector);
+		expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
+		await page.locator('#sut').scrollIntoViewIfNeeded();
+		const hits = await page.evaluate(() => {
+			const box = document.getElementById('sut').getBoundingClientRect();
+			const x = box.left + box.width / 2;
+			return [box.top + 4, box.top + 240].map((y) => y < innerHeight && document.elementFromPoint(x, y)?.id);
+		});
+		expect(hits).toEqual(['sut', 'sut']);
+		expect(await shown('#sut')).toBeGreaterThanOrEqual(240);
+		await page.locator('[data-view="background"]').click();
+		await expect(page.locator('html')).toHaveClass(/lab-background/);
+		expect(await shown('.sut-bg-note')).toBeGreaterThanOrEqual(30);
+	});
 
-  test('ships full SEO chrome', async ({ page }) => {
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /qa-lab\.html/);
-    await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
-    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-    await expect(page.locator('link[hreflang]')).toHaveCount(0);
-    const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
-    expect(jsonLd).toContain('WebApplication');
-    expect(jsonLd).toContain('BreadcrumbList');
-  });
+	test('ships full SEO chrome', async ({ page }) => {
+		await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /qa-lab\.html/);
+		await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
+		await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+		await expect(page.locator('link[hreflang]')).toHaveCount(0);
+		const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
+		expect(jsonLd).toContain('WebApplication');
+		expect(jsonLd).toContain('BreadcrumbList');
+	});
 
-  test('back control returns to the CV', async ({ page }) => {
-    await page.locator('#homeBtn').click();
-    await expect(page).toHaveURL(/index\.html/);
-    await expect(page.locator('.main-container')).toBeVisible();
-  });
+	test('back control returns to the CV', async ({ page }) => {
+		await page.locator('#homeBtn').click();
+		await expect(page).toHaveURL(/index\.html/);
+		await expect(page.locator('.main-container')).toBeVisible();
+	});
 
-  test('runs a smoke case, keeps it in the catalog, and opens the dashboard popup', async ({ page }) => {
-    await page.getByRole('button', { name: /SMK-01/ }).click();
-    await page.getByRole('button', { name: 'Run this case' }).click();
-    await expect(page.locator('#run-log')).toContainText('PASS', { timeout: 30000 });
-    await expect(page.locator('#report-body')).toContainText('SMK-01');
-    await expect(page.locator('#kpi-pass')).toHaveText('1');
-    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
-    await expect(page.locator('#dash-title')).toBeVisible();
-    await page.locator('#dash-close').click();
-    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
-  });
+	test('runs a smoke case, keeps it in the catalog, and opens the dashboard popup', async ({ page }) => {
+		await page.getByRole('button', { name: /SMK-01/ }).click();
+		await page.getByRole('button', { name: 'Run this case' }).click();
+		await expect(page.locator('#run-log')).toContainText('PASS', { timeout: 30000 });
+		await expect(page.locator('#report-body')).toContainText('SMK-01');
+		await expect(page.locator('#kpi-pass')).toHaveText('1');
+		await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+		await expect(page.locator('#dash-title')).toBeVisible();
+		await page.locator('#dash-close').click();
+		await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+	});
 
-  test('Dashboard control opens the splash without scrolling the page', async ({ page }) => {
-    await page.locator('#dash-open').click();
-    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
-    await expect(page.locator('#dash-title')).toBeInViewport();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
-  });
+	test('Dashboard control opens the splash without scrolling the page', async ({ page }) => {
+		await page.locator('#dash-open').click();
+		await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+		await expect(page.locator('#dash-title')).toBeInViewport();
+		await page.keyboard.press('Escape');
+		await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+	});
 
-  test('catalog keeps the selected case scrolled into the list', async ({ page }) => {
-    await page.getByRole('button', { name: /MOB-01/ }).click();
-    await page.evaluate(() => window.QALab.focusCase('MOB-01'));
-    await expect.poll(() => page.evaluate(() => {
-      const row = document.querySelector('.case-row[data-id="MOB-01"]');
-      const list = document.getElementById('case-list');
-      const rr = row.getBoundingClientRect();
-      const lr = list.getBoundingClientRect();
-      return rr.top >= lr.top - 2 && rr.bottom <= lr.bottom + 2;
-    }), { timeout: 5000 }).toBeTruthy();
-  });
+	test('catalog keeps the selected case scrolled into the list', async ({ page }) => {
+		await page.getByRole('button', { name: /MOB-01/ }).click();
+		await page.evaluate(() => window.QALab.focusCase('MOB-01'));
+		await expect
+			.poll(
+				() =>
+					page.evaluate(() => {
+						const row = document.querySelector('.case-row[data-id="MOB-01"]');
+						const list = document.getElementById('case-list');
+						const rr = row.getBoundingClientRect();
+						const lr = list.getBoundingClientRect();
+						return rr.top >= lr.top - 2 && rr.bottom <= lr.bottom + 2;
+					}),
+				{ timeout: 5000 }
+			)
+			.toBeTruthy();
+	});
 
-  test('guided tour walks the lab controls', async ({ page }) => {
-    await page.locator('#tour-start-btn').click();
-    await expect(page.locator('#site-tour-overlay')).toHaveClass(/on/);
-    await expect(page.locator('#site-tour-title')).toHaveText('The catalog');
-    await expect(page.locator('#case-list')).toHaveClass(/site-tour-hit/);
-    await page.locator('#site-tour-close').click();
-    await expect(page.locator('#site-tour-overlay')).not.toHaveClass(/on/);
-  });
+	test('guided tour walks the lab controls', async ({ page }) => {
+		await page.locator('#tour-start-btn').click();
+		await expect(page.locator('#site-tour-overlay')).toHaveClass(/on/);
+		await expect(page.locator('#site-tour-title')).toHaveText('The catalog');
+		await expect(page.locator('#case-list')).toHaveClass(/site-tour-hit/);
+		await page.locator('#site-tour-close').click();
+		await expect(page.locator('#site-tour-overlay')).not.toHaveClass(/on/);
+	});
 
-  test('lab tour Next advances after the demo hold', async ({ page }) => {
-    await page.locator('#tour-start-btn').click();
-    await expect(page.locator('#site-tour-next')).toBeDisabled();
-    await expect(page.locator('#site-tour-next')).toBeEnabled({ timeout: 4000 });
-    await page.locator('#site-tour-next').click();
-    await expect(page.locator('#site-tour-title')).toHaveText('Filter by type');
-    await page.locator('#site-tour-close').click();
-  });
+	test('lab tour Next advances after the demo hold', async ({ page }) => {
+		await page.locator('#tour-start-btn').click();
+		await expect(page.locator('#site-tour-next')).toBeDisabled();
+		await expect(page.locator('#site-tour-next')).toBeEnabled({ timeout: 4000 });
+		await page.locator('#site-tour-next').click();
+		await expect(page.locator('#site-tour-title')).toHaveText('Filter by type');
+		await page.locator('#site-tour-close').click();
+	});
 
-  test('closing the dashboard splash by clicking the backdrop', async ({ page }) => {
-    await page.locator('#dash-open').click();
-    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
-    await page.locator('#dash-overlay').click({ position: { x: 4, y: 4 } });
-    await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
-  });
+	test('closing the dashboard splash by clicking the backdrop', async ({ page }) => {
+		await page.locator('#dash-open').click();
+		await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+		await page.locator('#dash-overlay').click({ position: { x: 4, y: 4 } });
+		await expect(page.locator('#dash-overlay')).not.toHaveClass(/open/);
+	});
 
-  test('Mobile filter narrows the catalog', async ({ page }) => {
-    const all = await page.locator('.case-row').count();
-    await page.locator('[data-filter="Mobile"]').click();
-    await expect(page.locator('[data-filter="Mobile"]')).toHaveClass(/on/);
-    const mobile = await page.locator('.case-row').count();
-    expect(mobile).toBeGreaterThan(0);
-    expect(mobile).toBeLessThan(all);
-    await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
-  });
+	test('Mobile filter narrows the catalog', async ({ page }) => {
+		const all = await page.locator('.case-row').count();
+		await page.locator('[data-filter="Mobile"]').click();
+		await expect(page.locator('[data-filter="Mobile"]')).toHaveClass(/on/);
+		const mobile = await page.locator('.case-row').count();
+		expect(mobile).toBeGreaterThan(0);
+		expect(mobile).toBeLessThan(all);
+		await expect(page.getByRole('button', { name: /MOB-01/ })).toBeVisible();
+	});
 
-  test('Performance filter lists the eight budgets and their load tools', async ({ page }) => {
-    await page.locator('[data-filter="Performance"]').click();
-    await expect(page.locator('.case-row')).toHaveCount(8);
-    await expect(page.getByRole('button', { name: /PERF-05/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /PERF-08/ })).toBeVisible();
-    const item = page.locator('.case-item', { has: page.locator('.case-id', { hasText: 'PERF-01' }) });
-    await expect(item.locator('.src-link')).toHaveText(['Lab', 'k6', 'JMeter', 'Gatling']);
-  });
+	test('Performance filter lists the eight budgets and their load tools', async ({ page }) => {
+		await page.locator('[data-filter="Performance"]').click();
+		await expect(page.locator('.case-row')).toHaveCount(8);
+		await expect(page.getByRole('button', { name: /PERF-05/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /PERF-08/ })).toBeVisible();
+		const item = page.locator('.case-item', { has: page.locator('.case-id', { hasText: 'PERF-01' }) });
+		await expect(item.locator('.src-link')).toHaveText(['Lab', 'k6', 'JMeter', 'Gatling']);
+	});
 
-  test('Functional filter still lists competency cases', async ({ page }) => {
-    await page.locator('[data-filter="Functional"]').click();
-    await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /FN-39/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /SMK-01/ })).toHaveCount(0);
-  });
+	test('Functional filter still lists competency cases', async ({ page }) => {
+		await page.locator('[data-filter="Functional"]').click();
+		await expect(page.getByRole('button', { name: /FN-15/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-22/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /FN-39/ })).toBeVisible();
+		await expect(page.getByRole('button', { name: /SMK-01/ })).toHaveCount(0);
+	});
 
-  test('theme, language, share, print, and download cases pass', async ({ page }) => {
-    test.setTimeout(90000);
-    await page.evaluate(() => {
-      localStorage.setItem('qa-lab-pace', '0.5');
-      localStorage.setItem('qa-lab-view', 'background');
-    });
-    const ids = ['FN-23', 'FN-24', 'FN-25', 'FN-26', 'FN-27', 'FN-28'];
-    const results = await page.evaluate(async (caseIds) => {
-      await window.QALab.runIds(caseIds);
-      return window.QALab.results
-        .filter((row) => caseIds.includes(row.id))
-        .map((row) => ({ id: row.id, ok: row.ok, error: row.error || '', detail: row.detail || '' }));
-    }, ids);
-    expect(results.map((row) => row.id).sort()).toEqual(ids.slice().sort());
-    const failed = results.filter((row) => !row.ok);
-    expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
-  });
+	test('theme, language, share, print, and download cases pass', async ({ page }) => {
+		test.setTimeout(90000);
+		await page.evaluate(() => {
+			localStorage.setItem('qa-lab-pace', '0.5');
+			localStorage.setItem('qa-lab-view', 'background');
+		});
+		const ids = ['FN-23', 'FN-24', 'FN-25', 'FN-26', 'FN-27', 'FN-28'];
+		const results = await page.evaluate(async (caseIds) => {
+			await window.QALab.runIds(caseIds);
+			return window.QALab.results
+				.filter((row) => caseIds.includes(row.id))
+				.map((row) => ({ id: row.id, ok: row.ok, error: row.error || '', detail: row.detail || '' }));
+		}, ids);
+		expect(results.map((row) => row.id).sort()).toEqual(ids.slice().sort());
+		const failed = results.filter((row) => !row.ok);
+		expect(failed, JSON.stringify(failed, null, 2)).toEqual([]);
+	});
 
-  test('a run over two screen sizes keeps each screen result per case', async ({ page }) => {
-    test.setTimeout(90000);
-    await page.evaluate(() => {
-      localStorage.setItem('qa-lab-pace', '0.5');
-      localStorage.setItem('qa-lab-view', 'background');
-      localStorage.setItem('qa-lab-devices', JSON.stringify([
-        { platform: 'profile', id: 'a', label: 'Phone A', width: 384, height: 832 },
-        { platform: 'profile', id: 'b', label: 'Phone B', width: 412, height: 915 }
-      ]));
-    });
-    const out = await page.evaluate(async () => {
-      const lab = window.QALab;
-      await lab.runIds(['SMK-02']);
-      await lab.runIds(['SMK-02']);
-      const history = JSON.parse(localStorage.getItem('qa-lab-history') || '[]');
-      const latest = history[history.length - 1];
-      lab.historyPick = new Set();
-      const report = lab.reportDocument({ lang: 'en', graphs: false, cases: true, runners: false, details: true, steps: true, history: false, analysis: false });
-      return {
-        rows: lab.results.map((row) => row.id + '|' + row.frame + '|' + row.ok),
-        saved: latest ? latest.cases.map((row) => row.id + '|' + row.frame) : [],
-        total: latest ? latest.total : 0,
-        report
-      };
-    });
-    expect(out.rows.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px|true', 'SMK-02|Phone B · 412 × 915 px|true']);
-    expect(out.saved.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px', 'SMK-02|Phone B · 412 × 915 px']);
-    expect(out.total).toBe(2);
-    expect(out.report).toContain('1 / ');
-    expect(out.report).toContain('2 checks across screens');
-  });
+	test('a run over two screen sizes keeps each screen result per case', async ({ page }) => {
+		test.setTimeout(90000);
+		await page.evaluate(() => {
+			localStorage.setItem('qa-lab-pace', '0.5');
+			localStorage.setItem('qa-lab-view', 'background');
+			localStorage.setItem(
+				'qa-lab-devices',
+				JSON.stringify([
+					{ platform: 'profile', id: 'a', label: 'Phone A', width: 384, height: 832 },
+					{ platform: 'profile', id: 'b', label: 'Phone B', width: 412, height: 915 },
+				])
+			);
+		});
+		const out = await page.evaluate(async () => {
+			const lab = window.QALab;
+			await lab.runIds(['SMK-02']);
+			await lab.runIds(['SMK-02']);
+			const history = JSON.parse(localStorage.getItem('qa-lab-history') || '[]');
+			const latest = history[history.length - 1];
+			lab.historyPick = new Set();
+			const report = lab.reportDocument({
+				lang: 'en',
+				graphs: false,
+				cases: true,
+				runners: false,
+				details: true,
+				steps: true,
+				history: false,
+				analysis: false,
+			});
+			return {
+				rows: lab.results.map((row) => row.id + '|' + row.frame + '|' + row.ok),
+				saved: latest ? latest.cases.map((row) => row.id + '|' + row.frame) : [],
+				total: latest ? latest.total : 0,
+				report,
+			};
+		});
+		expect(out.rows.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px|true', 'SMK-02|Phone B · 412 × 915 px|true']);
+		expect(out.saved.sort()).toEqual(['SMK-02|Phone A · 384 × 832 px', 'SMK-02|Phone B · 412 × 915 px']);
+		expect(out.total).toBe(2);
+		expect(out.report).toContain('1 / ');
+		expect(out.report).toContain('2 checks across screens');
+	});
 
-  test('printed and copied report carries run details, failures, and every case field', async ({ page }) => {
-    const out = await page.evaluate(async () => {
-      const lab = window.QALab;
-      const at = Date.now();
-      lab.results = [
-        { id: 'SMK-01', ok: true, ms: 120, detail: '11 assets answered 200', layer: 'Smoke', at, frame: '' },
-        { id: 'FN-01', ok: false, ms: 340, error: 'toggle missing', explain: 'The theme toggle did not render.', layer: 'Functional', at: at + 500, frame: 'Samsung Galaxy S26 Ultra · Android 16 · 384 × 832 px' }
-      ];
-      const choices = { lang: 'en', graphs: false, cases: true, runners: false, details: true, steps: true };
-      const en = lab.reportDocument(choices);
-      const es = lab.reportDocument(Object.assign({}, choices, { lang: 'es' }));
-      const text = await lab.copyReport(null);
-      return { en, es, text, title: lab.results.length };
-    });
-    for (const want of ['Run details', 'Browser in use', 'Window size', 'Frameworks chosen', 'Total case time', 'Summary by type',
-      'Failures', 'FN-01', 'toggle missing', 'The theme toggle did not render.', 'Expected', 'Public surfaces return 200',
-      'Samsung Galaxy S26 Ultra', 'Where, when and how', 'Before any UI interaction', 'Catalog cases not run']) {
-      expect(out.en, want).toContain(want);
-    }
-    expect(out.es).toContain('Detalles de la ejecución');
-    expect(out.es).toContain('Resultados por caso');
-    expect(out.text).toContain('toggle missing');
-    expect(out.text).toContain('Run details');
-    expect(out.text).not.toContain('<td');
-  });
+	test('printed and copied report carries run details, failures, and every case field', async ({ page }) => {
+		const out = await page.evaluate(async () => {
+			const lab = window.QALab;
+			const at = Date.now();
+			lab.results = [
+				{ id: 'SMK-01', ok: true, ms: 120, detail: '11 assets answered 200', layer: 'Smoke', at, frame: '' },
+				{
+					id: 'FN-01',
+					ok: false,
+					ms: 340,
+					error: 'toggle missing',
+					explain: 'The theme toggle did not render.',
+					layer: 'Functional',
+					at: at + 500,
+					frame: 'Samsung Galaxy S26 Ultra · Android 16 · 384 × 832 px',
+				},
+			];
+			const choices = { lang: 'en', graphs: false, cases: true, runners: false, details: true, steps: true };
+			const en = lab.reportDocument(choices);
+			const es = lab.reportDocument(Object.assign({}, choices, { lang: 'es' }));
+			const text = await lab.copyReport(null);
+			return { en, es, text, title: lab.results.length };
+		});
+		for (const want of [
+			'Run details',
+			'Browser in use',
+			'Window size',
+			'Frameworks chosen',
+			'Total case time',
+			'Summary by type',
+			'Failures',
+			'FN-01',
+			'toggle missing',
+			'The theme toggle did not render.',
+			'Expected',
+			'Public surfaces return 200',
+			'Samsung Galaxy S26 Ultra',
+			'Where, when and how',
+			'Before any UI interaction',
+			'Catalog cases not run',
+		]) {
+			expect(out.en, want).toContain(want);
+		}
+		expect(out.es).toContain('Detalles de la ejecución');
+		expect(out.es).toContain('Resultados por caso');
+		expect(out.text).toContain('toggle missing');
+		expect(out.text).toContain('Run details');
+		expect(out.text).not.toContain('<td');
+	});
 
-  test('the Report dialog follows the report language', async ({ page }) => {
-    await page.evaluate(() => window.QALab.openReportOptions());
-    const dialog = page.locator('#report-options');
-    await expect(dialog.locator('#report-options-title')).toHaveText('Report');
-    await page.locator('#report-lang').selectOption('de');
-    await expect(dialog.locator('#report-options-title')).toHaveText('Bericht');
-    await expect(dialog.locator('#report-options-download')).toHaveText('Herunterladen');
-    await expect(dialog.locator('[data-report-ui="steps"]')).toHaveText('Wo, wann und wie');
-    await expect(dialog).toHaveAttribute('lang', 'de');
-    await page.locator('#report-options-close').click();
-    await page.evaluate(() => window.QALab.openReportOptions());
-    await expect(dialog.locator('#report-options-copy')).toHaveText('Kopieren');
-    await page.locator('#report-lang').selectOption('en');
-    await expect(dialog.locator('#report-options-copy')).toHaveText('Copy');
-  });
+	test('the Report dialog follows the report language', async ({ page }) => {
+		await page.evaluate(() => window.QALab.openReportOptions());
+		const dialog = page.locator('#report-options');
+		await expect(dialog.locator('#report-options-title')).toHaveText('Report');
+		await page.locator('#report-lang').selectOption('de');
+		await expect(dialog.locator('#report-options-title')).toHaveText('Bericht');
+		await expect(dialog.locator('#report-options-download')).toHaveText('Herunterladen');
+		await expect(dialog.locator('[data-report-ui="steps"]')).toHaveText('Wo, wann und wie');
+		await expect(dialog).toHaveAttribute('lang', 'de');
+		await page.locator('#report-options-close').click();
+		await page.evaluate(() => window.QALab.openReportOptions());
+		await expect(dialog.locator('#report-options-copy')).toHaveText('Kopieren');
+		await page.locator('#report-lang').selectOption('en');
+		await expect(dialog.locator('#report-options-copy')).toHaveText('Copy');
+	});
 
-  test('clicking inside the dashboard modal does not close it', async ({ page }) => {
-    await page.locator('#dash-open').click();
-    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
-    await page.locator('.dash-modal').click();
-    await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
-    await page.locator('#dash-close').click();
-  });
+	test('clicking inside the dashboard modal does not close it', async ({ page }) => {
+		await page.locator('#dash-open').click();
+		await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+		await page.locator('.dash-modal').click();
+		await expect(page.locator('#dash-overlay')).toHaveClass(/open/);
+		await page.locator('#dash-close').click();
+	});
 });
 
 test.describe('CV regression lab sequence', () => {
-  test('FN-15 and FN-16 pass after FN-01 to FN-14 in one lab run, and FN-15 leaves no competency pressed', async ({ page }) => {
-    test.setTimeout(240000);
-    await skipSiteTours(page);
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto('/qa-lab.html');
-    await page.evaluate(() => {
-      localStorage.setItem('theme', 'light');
-      localStorage.setItem('cv-preferred-lang', 'en');
-      localStorage.setItem('qa-lab-pace', '0.5');
-    });
-    await page.reload();
-    const ids = Array.from({ length: 16 }, (_, i) => 'FN-' + String(i + 1).padStart(2, '0'));
-    await page.evaluate((list) => { window.QALab.runIds(list); }, ids);
-    await expect(page.locator('#run-log')).toContainText('Finished', { timeout: 220000 });
-    const results = await page.evaluate((list) => window.QALab.results
-      .filter((r) => list.includes(r.id))
-      .map((r) => ({ id: r.id, ok: r.ok, error: r.error || '' })), ids);
-    expect(results.map((r) => r.id)).toEqual(ids);
-    expect(results.filter((r) => !r.ok)).toEqual([]);
-    const pressed = await page.frameLocator('#sut').locator('.competency-item[aria-pressed="true"]').count();
-    expect(pressed).toBe(0);
-  });
+	test('FN-15 and FN-16 pass after FN-01 to FN-14 in one lab run, and FN-15 leaves no competency pressed', async ({
+		page,
+	}) => {
+		test.setTimeout(240000);
+		await skipSiteTours(page);
+		await page.setViewportSize({ width: 1280, height: 720 });
+		await page.goto('/qa-lab.html');
+		await page.evaluate(() => {
+			localStorage.setItem('theme', 'light');
+			localStorage.setItem('cv-preferred-lang', 'en');
+			localStorage.setItem('qa-lab-pace', '0.5');
+		});
+		await page.reload();
+		const ids = Array.from({ length: 16 }, (_, i) => 'FN-' + String(i + 1).padStart(2, '0'));
+		await page.evaluate((list) => {
+			window.QALab.runIds(list);
+		}, ids);
+		await expect(page.locator('#run-log')).toContainText('Finished', { timeout: 220000 });
+		const results = await page.evaluate(
+			(list) =>
+				window.QALab.results
+					.filter((r) => list.includes(r.id))
+					.map((r) => ({ id: r.id, ok: r.ok, error: r.error || '' })),
+			ids
+		);
+		expect(results.map((r) => r.id)).toEqual(ids);
+		expect(results.filter((r) => !r.ok)).toEqual([]);
+		const pressed = await page.frameLocator('#sut').locator('.competency-item[aria-pressed="true"]').count();
+		expect(pressed).toBe(0);
+	});
 });

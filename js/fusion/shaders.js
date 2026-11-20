@@ -197,7 +197,11 @@ vec3 hexBokeh(vec2 f, float r, float b, vec3 tint, out float a){
 	return tint*(.16 + rim*.32) + CORAL*max(fringe, 0.)*.35;
 }`;
 
-const fusion = PYR_LIB + SKY_LIB + BOKEH_LIB + /* glsl */ `
+const fusion =
+	PYR_LIB +
+	SKY_LIB +
+	BOKEH_LIB +
+	/* glsl */ `
 const float RING = 1.45;
 vec3 ot(float k){ k = mod(k, 7.); return k < 1. ? TEAL : k < 2. ? GOLD : k < 3. ? CYAN : k < 4. ? MINT : k < 5. ? VIOLET : k < 6. ? TEAL : CORAL; }
 float orbit(vec3 p, out float id, out vec3 lo){

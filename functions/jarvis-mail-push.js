@@ -20,6 +20,7 @@ const ACTS = {
   notice: ["send", "skip"],
   social: ["approved", "dismissed"],
   engagement: ["approve", "edit", "dismiss"],
+  "engagement-dm": ["approve", "edit", "dismiss"],
   "owner-tags": ["approve", "edit", "dismiss"],
   countdown: ["now", "cancel"],
   pagespeed: ["merge", "close"]
@@ -88,6 +89,31 @@ function ratingMessage(id, data) {
   };
 }
 
+/** URL Review post-report CSAT (#3556). Opens the URL Review product tab; low scores carry a draft reply. */
+function csatMessage(id, data) {
+  const d = data || {};
+  const score = Math.min(5, Math.max(0, Number(d.rating) || 0));
+  const nps = Number.isFinite(Number(d.nps)) ? Math.min(10, Math.max(0, Number(d.nps))) : null;
+  const host = clip(d.host, 80) || "URL Review";
+  const low = d.low === true || score <= 2 || (nps != null && nps <= 6);
+  const title = "URL Review CSAT · " + score + "/5" + (nps != null ? " · NPS " + nps : "") + " · " + host;
+  return {
+    kind: "reviews",
+    title: (low ? "Low · " : "") + title,
+    body: clip(d.draftReply || d.comment, 400) || "(no comment)",
+    lines: [
+      clip(d.email, 120),
+      d.reviewId ? "report:" + clip(d.reviewId, 40) : "",
+      d.quoteOk ? "quote ok" : "",
+      d.comment && d.draftReply ? "note: " + clip(d.comment, 120) : ""
+    ].filter(Boolean),
+    tab: "products:review",
+    tag: "jarvis-csat-" + clip(id, 60),
+    ref: "csat:" + clip(id, 60),
+    actions: d.email ? [REPLY] : []
+  };
+}
+
 // A call booked on book.html (#1971). `when` is the start already written in Bogota time.
 function callMessage(id, b, when) {
   const d = b || {};
@@ -135,10 +161,11 @@ function rerunMessage(done, deskUrl) {
   const held = count("held");
   const swept = count("swept");
   const failed = count("failed");
+  const sent = count("sent");
   return {
     kind: "desk",
     title: held ? plural(held, "re-run") + " held for you" : "URL review re-runs",
-    body: [held ? held + " held: send or drop each" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
+    body: [held ? held + " held: send or drop each" : "", sent ? sent + " sent as promised" : "", swept ? swept + " saved by the sweep" : "", failed ? failed + " failed again" : ""].filter(Boolean).join(", ") + ".",
     lines: list.slice(0, 6).map((row) => clip(row.status + " · " + (row.host || "?") + (row.name ? " for " + row.name : ""), 120)),
     tab: "products:review",
     tag: "jarvis-reruns",
@@ -251,4 +278,4 @@ function socialDue(pending, seen, max) {
   return (pending || []).filter((p) => p && p.id && !known.has(p.id)).slice(0, max || 3);
 }
 
-module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, callMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };
+module.exports = { ACTS, PROBLEMS, parseAct, proposedAddress, messageMessage, ratingMessage, csatMessage, callMessage, ownerReplyMessage, rerunMessage, comparisonMessage, runMessage, backupMessage, opsMessage, noticeMessage, socialMessage, socialDue };

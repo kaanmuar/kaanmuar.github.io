@@ -15,6 +15,7 @@
    start date at most LAUNCH_DAYS away was made after the week's campaigns were activated and would never send. */
 
 const sweep = require("./url-review-sweep");
+const linkedin = require("./engagement-linkedin");
 
 const DAY = 24 * 60 * 60 * 1000;
 const INSTANTLY = "https://api.instantly.ai/api/v2/";
@@ -34,7 +35,7 @@ const listOf = (map) => Object.keys(map).map((label) => ({ label, value: map[lab
 
 // "W1 E-pt Brazil" → { week: "W1", sequence: "E", lang: "pt", region: "Brazil" }; other names keep only the name.
 function parseName(name) {
-  const m = /^(W\d+)\s+([A-Z])-([a-z]{2})\s+(.+)$/.exec(String(name || "").trim());
+  const m = /^(W\d+)\s+([A-Z])-([a-z]{2})\s+(\S.*)$/.exec(String(name || "").trim());
   return m ? { week: m[1], sequence: m[2], lang: m[3], region: m[4] } : { week: "", sequence: "", lang: "", region: "" };
 }
 
@@ -57,6 +58,8 @@ function campaignRows(campaigns, analytics, now, counts) {
     return Object.assign({ id: String(c.id || ""), name: String(c.name || "").slice(0, 80) }, parseName(c.name), {
       status: CAMPAIGN_STATUS[String(c.status)] || "status " + c.status,
       start: schedule.start_date || "",
+      created: String(c.timestamp_created || "").slice(0, 10),
+      updated: String(c.timestamp_updated || "").slice(0, 10),
       window: windowOf(schedule),
       dailyLimit: Number(c.daily_limit) || 0,
       steps: ((c.sequences || [])[0] || {}).steps ? c.sequences[0].steps.length : 0,
@@ -118,6 +121,154 @@ function noteRows(notes, ctx) {
 
 const LEAD_STATUS = { 1: "active", 2: "paused", 3: "completed", "-1": "bounced", "-2": "unsubscribed", "-3": "skipped" };
 const domainOf = (email) => String(email || "").toLowerCase().split("@")[1] || "";
+
+const NO_COLD_RESEND_CC = new Set(["de", "at", "ch"]);
+
+/**
+ * Pure eligibility for auto re-send after 2 days with no open (#3566).
+ * email: Instantly sent row; lead: Instantly lead; campaign: { open_tracking, status? };
+ * dnc: lowercased emails/domains; resendHistory: marketing_resends[id] array; now: ms.
+ * Returns "" when eligible, else a short why-not code.
+ */
+function coldResendSkip(email, lead, campaign, dnc, resendHistory, now) {
+  const e = email || {};
+  const l = lead || {};
+  const c = campaign || {};
+  if (Number(e.ue_type) !== 1) return "not-campaign";
+  if (Number(e.step) !== 1) return "not-step-1";
+  const at = Date.parse(e.timestamp_email || e.timestamp_created || "");
+  if (!Number.isFinite(at)) return "no-sent-at";
+  const age = Number(now) - at;
+  if (age < 2 * 24 * 60 * 60 * 1000) return "too-young";
+  if (age > 4 * 24 * 60 * 60 * 1000) return "too-old";
+  if (c.open_tracking !== true) return "open-tracking-off";
+  if (c.status && !/active|1/i.test(String(c.status))) return "campaign-inactive";
+  if ((Number(l.email_open_count) || 0) > 0) return "opened";
+  if ((Number(l.email_reply_count) || 0) > 0) return "replied";
+  const status = LEAD_STATUS[String(l.status)] || "";
+  if (status === "bounced" || status === "unsubscribed" || status === "skipped") return status || "lead-dead";
+  const to = String(e.lead || String(e.to_address_email_list || "").split(",")[0] || "").trim().toLowerCase();
+  if (!EMAIL.test(to)) return "bad-to";
+  const blocked = (dnc || []).map((d) => String(d || "").toLowerCase());
+  if (blocked.includes(to) || blocked.includes(domainOf(to))) return "dnc";
+  const cc = String(l.country || l.cc || "").trim().toLowerCase();
+  if (NO_COLD_RESEND_CC.has(cc)) return "eu-consent";
+  if (Array.isArray(resendHistory) && resendHistory.length) return "already-resent";
+  return "";
+}
+
+function coldResendEligible(email, lead, campaign, dnc, resendHistory, now) {
+  return !coldResendSkip(email, lead, campaign, dnc, resendHistory, now);
+}
+
+const COLD_RESEND_EMAIL_PAGES = 5;
+const COLD_RESEND_LEAD_PAGES = 5;
+
+function campaignMeta(campaigns) {
+  const out = {};
+  (campaigns || []).forEach((c) => {
+    if (!c || !c.id) return;
+    out[c.id] = { open_tracking: c.open_tracking === true, status: CAMPAIGN_STATUS[String(c.status)] || String(c.status || "") };
+  });
+  return out;
+}
+
+/** Pure: eligible step-1 cold sends, newest eligible first (emails should be newest-first). */
+function pickColdResendCandidates(emails, leads, campaigns, dnc, resends, now, limit) {
+  const byLead = {};
+  (leads || []).forEach((l) => { if (l && l.email) byLead[String(l.email).toLowerCase()] = l; });
+  const camps = campaignMeta(campaigns);
+  const done = resends || {};
+  const cap = Math.max(0, Math.min(Number(limit) ?? 5, 50));
+  const out = [];
+  if (!cap) return out;
+  for (const e of emails || []) {
+    if (out.length >= cap) break;
+    if (!e || Number(e.ue_type) !== 1) continue;
+    const to = String(e.lead || String(e.to_address_email_list || "").split(",")[0] || "").trim().toLowerCase();
+    const lead = byLead[to] || {};
+    const camp = camps[e.campaign_id] || {};
+    const hist = done[e.id];
+    if (!coldResendEligible(e, lead, camp, dnc, hist, now)) continue;
+    out.push({
+      id: String(e.id || ""),
+      to,
+      subject: String(e.subject || "").slice(0, 160),
+      org: String(lead.company_name || "").slice(0, 80) || domainOf(to),
+      at: String(e.timestamp_email || e.timestamp_created || "")
+    });
+  }
+  return out;
+}
+
+async function sentEmails(ctx, maxPages) {
+  const items = [];
+  let after = "";
+  for (let page = 0; page < maxPages; page++) {
+    const path = "emails?email_type=sent&mode=emode_all&preview_only=true&limit=100" + (after ? "&starting_after=" + encodeURIComponent(after) : "");
+    const res = await instantly(ctx, path);
+    const batch = res.items || [];
+    items.push(...batch);
+    after = batch.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return items;
+}
+
+async function contactedLeads(ctx, maxPages) {
+  const items = [];
+  let after = "";
+  for (let page = 0; page < maxPages; page++) {
+    const res = await instantly(ctx, "leads/list", { method: "POST", body: JSON.stringify(Object.assign({ filter: "FILTER_VAL_CONTACTED", limit: 100 }, after ? { starting_after: after } : {})) });
+    const batch = res.items || [];
+    items.push(...batch);
+    after = batch.length ? String(res.next_starting_after || "") : "";
+    if (!after) break;
+  }
+  return items;
+}
+
+async function coldResendSources(ctx, db) {
+  const [syncSnap, resendSnap] = await Promise.all([
+    db.collection("jarvis_settings").doc("marketing_sync").get().catch(() => null),
+    db.collection("jarvis_settings").doc("marketing_resends").get().catch(() => null)
+  ]);
+  const sync = syncSnap && syncSnap.exists ? syncSnap.data() : null;
+  const resends = resendSnap && resendSnap.exists ? resendSnap.data() : {};
+  const dnc = ((sync && (sync.dnc || {}).items) || []).map((d) => String((d && d.value) || "").toLowerCase());
+  const cached = sync && sync.instantly;
+  if (cached && Array.isArray(cached.emails) && Array.isArray(cached.leads) && Array.isArray(cached.campaigns)) {
+    return { emails: cached.emails, leads: cached.leads, campaigns: cached.campaigns, dnc, resends };
+  }
+  needKey(ctx);
+  const [campaigns, emails, leads] = await Promise.all([
+    instantly(ctx, "campaigns?limit=100").then((r) => r.items || []).catch(() => []),
+    sentEmails(ctx, COLD_RESEND_EMAIL_PAGES),
+    contactedLeads(ctx, COLD_RESEND_LEAD_PAGES).catch(() => [])
+  ]);
+  return { emails, leads, campaigns, dnc, resends };
+}
+
+// Step-1 cold emails Jarvis may forward again after 48h with no open (#3566).
+async function listColdResendCandidates(ctx, db, { now, limit }) {
+  const src = await coldResendSources(ctx, db);
+  return pickColdResendCandidates(src.emails, src.leads, src.campaigns, src.dnc, src.resends, now, limit);
+}
+
+async function resendCold(ctx, db, ids) {
+  const launched = [];
+  const left = [];
+  for (const id of ids || []) {
+    try {
+      const r = await resend(ctx, db, { id });
+      launched.push(r.to || id);
+    } catch (error) {
+      left.push(String(id).slice(0, 12) + ": " + clean(error));
+    }
+  }
+  if (!launched.length && left.length) throw new Error(left.join("; "));
+  return { launched, left, count: launched.length };
+}
 
 // Every cold email Instantly sent (campaign steps, ue_type 1) and every resend from Jarvis (manual, ue_type 3), newest
 // first, with what the lead did since: opened, replied, bounced, unsubscribed.
@@ -301,7 +452,7 @@ async function queueProspects(db, body, now) {
 // at once. Replies and blocks go to Instantly at once.
 const WEEK = /^W\d{1,2}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const JOBS = ["prospects", "leads", "replies"];
+const JOBS = ["prospects", "leads", "replies", "companies", "holidays"];
 // Same list as EDITABLE in scripts/marketing-leads-autopilot.js.
 const LEAD_EDITABLE = ["first_name", "last_name", "title", "top_finding", "best_point", "peer_1", "peer_2", "regulation_line", "course_or_programme", "month", "one_line_from_lecture_kit"];
 const STALE = 4 * 3600 * 1000;
@@ -332,7 +483,14 @@ function syncRows(doc, commands, now) {
     at: at ? new Date(at).toISOString() : "", age: at ? now - at : null, stale: !at || now - at > STALE, running: !!d.running,
     leads: { weeks: arr(leads.weeks, 60), rows: arr(leads.rows, 800) },
     replies: arr((d.replies || {}).items, 80),
-    linkedin: { date: str((d.linkedin || {}).date, 10), items: arr((d.linkedin || {}).items, 80) },
+    linkedin: {
+      date: str((d.linkedin || {}).date, 10),
+      items: arr((d.linkedin || {}).items, 80).map((p) => (p ? Object.assign({}, p, { queue: str(p.queue, 12) }) : p)),
+      lastNonEmpty: str((d.linkedin || {}).lastNonEmpty, 10),
+      emptyStreak: Math.max(0, Math.min(90, Number((d.linkedin || {}).emptyStreak) || 0)),
+      left: Math.max(0, Math.min(5000, Number((d.linkedin || {}).left) || 0)),
+      why: str((d.linkedin || {}).why, 80)
+    },
     dnc: arr((d.dnc || {}).items, 400),
     jobs: arr(d.jobs, 10), paused: arr(d.paused, 40), kpis: arr((d.kpis || {}).weeks, 30),
     commands: { pending: items.filter((c) => c.status === "pending").length, items: items.slice(0, 30) }
@@ -344,7 +502,9 @@ async function syncSource(ctx) {
     ctx.db.collection("jarvis_settings").doc("marketing_sync").get(),
     ctx.db.collection("jarvis_commands").orderBy("createdAt", "desc").limit(60).get()
   ]);
-  const out = Object.assign({ ok: true, needs: [] }, syncRows(doc.exists ? doc.data() : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
+  const base = doc.exists ? doc.data() : null;
+  const li = base ? await linkedin.enrichLinkedin(ctx.db, base.linkedin) : { date: "", items: [] };
+  const out = Object.assign({ ok: true, needs: [] }, syncRows(base ? Object.assign({}, base, { linkedin: li }) : null, cmds.docs.map((c) => Object.assign({ id: c.id }, c.data())), ctx.now));
   if (!out.at) out.needs.push("Outreach sync: run the qa-lab-outreach Action's sync so the outreach folder reaches Jarvis.");
   else if (out.stale) out.needs.push("Outreach sync: last synced " + Math.round(out.age / 3600000) + " hours ago; check the qa-lab-outreach Action.");
   return out;
@@ -372,6 +532,14 @@ function commandOf(body) {
     const sent = b.sent !== false;
     return { action, args: { date, name, sent }, label: (sent ? "LinkedIn request sent: " : "LinkedIn request not sent: ") + name };
   }
+  if (action === "linkedin-send") {
+    const date = str(b.date, 10);
+    const name = str(b.name, 120).trim();
+    const profile = str(b.profile, 500).trim();
+    if (!DATE.test(date) || !name) throw new Error("Give the LinkedIn list's date and the person's name.");
+    if (!/^https:\/\/(www\.)?linkedin\.com\//.test(profile)) throw new Error("Give the person's profile URL.");
+    return { action, args: { date, name, profile, note: str(b.note, 280), checkFirst: str(b.checkFirst, 200) }, label: "LinkedIn connect queued: " + name };
+  }
   if (action === "dnc") {
     const value = str(b.value, 200).trim().toLowerCase();
     if (!EMAIL.test(value) && !DOMAIN.test(value)) throw new Error("Give an email address or a domain.");
@@ -394,7 +562,7 @@ function commandOf(body) {
   }
   if (action === "run") {
     const job = str(b.job, 20);
-    if (!JOBS.includes(job)) throw new Error("Run prospects, leads or replies.");
+    if (!JOBS.includes(job)) throw new Error("Run prospects, leads, replies, companies or holidays.");
     return { action, args: { job }, label: "Run the " + job + " job" };
   }
   throw new Error("Unknown marketing command.");
@@ -448,6 +616,11 @@ async function command(ctx, db, body) {
   const now = new Date(ctx.now).toISOString();
   const add = (c) => db.collection("jarvis_commands").add({ kind: "marketing", action: c.action, args: c.args, label: c.label, status: "pending", createdAt: now })
     .then((ref) => ({ queued: ref.id, action: c.action, label: c.label }));
+  if (body && body.action === "linkedin-send") {
+    const c = commandOf(body);
+    const q = await linkedin.queueSend(db, c.args, ctx.now);
+    return Object.assign({ ok: true, action: c.action, label: c.label }, q);
+  }
   if (body && body.action === "reply") {
     const sent = await sendReply(ctx, db, body);
     return Object.assign(await add({ action: "replied", args: { id: sent.id, at: now }, label: "Answered " + sent.to }), { sent, syncing: await startSync(ctx) });
@@ -461,5 +634,6 @@ async function command(ctx, db, body) {
 
 module.exports = {
   marketing, campaignRows, leadCounts, launchReady, launch, LAUNCH_DAYS, prospectRows, noteRows, parseName, windowOf, campaignAct, mailboxAct, block, prospectLines, queueProspects,
-  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, TTL: 10 * 60 * 1000
+  syncRows, syncSource, commandOf, sendReply, command, sentRows, resend, resendCold, listColdResendCandidates, pickColdResendCandidates,
+  coldResendSkip, coldResendEligible, NO_COLD_RESEND_CC, instantly, needKey, startSync, TTL: 10 * 60 * 1000
 };

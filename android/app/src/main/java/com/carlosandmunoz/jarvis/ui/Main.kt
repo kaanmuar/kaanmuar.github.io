@@ -30,6 +30,8 @@ import com.carlosandmunoz.jarvis.home.MarketingWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PipelineWidgetReceiver
 import com.carlosandmunoz.jarvis.home.TrafficWidgetReceiver
 import com.carlosandmunoz.jarvis.home.PickWidgetReceiver
+import com.carlosandmunoz.jarvis.home.MapKind
+import com.carlosandmunoz.jarvis.home.mapReceiver
 import com.carlosandmunoz.jarvis.PickConfigActivity
 import com.carlosandmunoz.jarvis.home.NeedsWidgetReceiver
 import com.carlosandmunoz.jarvis.home.Home
@@ -316,7 +318,14 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
                         val saved = Layouts.read(s.snapshot, layoutTab)
                         LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
-                        CompositionLocalProvider(LocalLayoutTab provides layoutTab, LocalLayout provides saved) {
+                        val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
+                        CompositionLocalProvider(
+                            LocalLayoutTab provides layoutTab,
+                            LocalLayout provides saved,
+                            LocalChartPrefs provides chartPrefs,
+                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) },
+                            LocalCycleStretch provides { id, current, max -> vm.cycleChartStretch(layoutTab, id, current, max) }
+                        ) {
                             Masonry(columns, Modifier.fillMaxWidth()) {
                                 when (shownTab) {
                                     Tab.Overview -> OverviewScreen(s, vm, open)
@@ -547,6 +556,34 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     }
                 }
             }
+            if (settings != null) {
+                var charts by remember(settings) { mutableStateOf(ChartPrefs.clean(settings.obj("charts"))) }
+                fun saveCharts() = vm.market("settings", "settings-save", mapOf("settings" to chartsPayload(settings, charts))) { "Chart settings saved." }
+                Panel("Charts") {
+                    Muted("Grid, fill and default height are shared with Admin › Statistics.")
+                    Text("Grid")
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("micro" to "Micro", "major" to "Major", "off" to "Off").forEach { (k, label) ->
+                            TextButton(onClick = { charts = charts.copy(grid = k); saveCharts() }, enabled = "settings" !in s.running) {
+                                Text(label, color = if (charts.grid == k) J.cyan else J.muted, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) { Text("Fill under lines"); Muted("Area and spark charts.") }
+                        Switch(charts.fill, { on -> charts = charts.copy(fill = on); saveCharts() }, enabled = "settings" !in s.running)
+                    }
+                    Text("Default plot height")
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("s" to "Short", "m" to "Medium", "l" to "Tall").forEach { (k, label) ->
+                            TextButton(onClick = { charts = charts.copy(height = k); saveCharts() }, enabled = "settings" !in s.running) {
+                                Text(label, color = if (charts.height == k) J.cyan else J.muted, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    Muted("Each chart panel’s ↕ button stretches that panel (1–3); saved in the section layout.")
+                }
+            }
             if (settings != null) Panel("Country dates") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -573,6 +610,7 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 }
                 Muted("The Map tab lists the dates ahead per country. The web settings set any number from 1 to 60.")
             }
+            Panel("Outreach costs") { GeoCostSettings(s, vm) }
             if (settings != null) Panel("GitHub repos") {
                 var repos by remember(settings) { mutableStateOf(Github.cleanRepos(settings.obj("github")?.get("repos").strings()).joinToString("\n")) }
                 OutlinedTextField(repos, { repos = it }, label = { Text("Repos the GitHub tab shows, owner/name, one per line") }, minLines = 3, maxLines = 8, modifier = Modifier.fillMaxWidth())
@@ -591,12 +629,15 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                 }
                 if (s.ongoing) {
                     Muted("Show in the notification")
-                    Ongoing.Part.entries.forEach { part ->
+                    Ongoing.Part.SETTINGS.forEach { part ->
                         Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) { Text(part.label, fontSize = 14.sp); Muted(part.hint) }
                             Switch(part in s.ongoingParts, { vm.setOngoingPart(part, it) })
                         }
                     }
+                    Spacer(Modifier.height(8.dp))
+                    Muted("Rings and bars")
+                    StatusSlotsEditor(s.ongoingSlots, vm::setOngoingSlots)
                     Spacer(Modifier.height(12.dp))
                 }
                 mapOf(
@@ -682,6 +723,14 @@ fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (B
                     ActionButton("Traffic", false) { Home.pin(context, TrafficWidgetReceiver::class.java) }
                     ActionButton("Pick a number", false) { Home.pin(context, PickWidgetReceiver::class.java, Intent(context, PickConfigActivity::class.java)) }
                 }
+                if (pinnable) {
+                    Text("Maps: tap a widget's chip to change its range or metric; every one resizes.", color = J.muted, fontSize = 12.sp)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MapKind.entries.forEach { k -> listOf("2x2", "4x2", "4x3", "4x4").forEach { size ->
+                            ActionButton(k.title.substringBefore(' ').substringBefore('-') + " " + size.replace('x', '×'), false) { Home.pin(context, mapReceiver(k, size)) }
+                        } }
+                    }
+                }
                 if (Build.VERSION.SDK_INT >= 33) Row { ActionButton("Add the quick-settings tile", false) { Home.addTile(context) } }
                 Muted(if (pinnable) "Widgets refresh every half hour and whenever the app or a push brings new numbers. Long-press the app icon for shortcuts; share a link to Jarvis to review it."
                     else "Add Jarvis widgets from your launcher's widget list. Long-press the app icon for shortcuts; share a link to Jarvis to review it.")
@@ -719,6 +768,9 @@ private fun Devices(s: UiState) {
 }
 
 // Merged into the saved settings, so what the app does not show (the weekly strategy switch, goals, thresholds) keeps its value.
+private fun chartsPayload(settings: JsonObject, charts: ChartPrefs.Prefs): JsonObject =
+    JsonObject(settings - "layout" + ("charts" to JsonObject(mapOf("grid" to JsonPrimitive(charts.grid), "fill" to JsonPrimitive(charts.fill), "height" to JsonPrimitive(charts.height)))))
+
 private fun edited(settings: JsonObject, mail: Map<String, Boolean>, actions: JsonObject?, calendar: CalendarSettings): JsonObject =
     JsonObject(settings - "layout" + ("mail" to JsonObject((settings.obj("mail") ?: JsonObject(emptyMap())) + mail.mapValues { JsonPrimitive(it.value) })) +
         (actions?.let { mapOf("actions" to it) } ?: emptyMap()) + ("calendar" to calendar.json()))

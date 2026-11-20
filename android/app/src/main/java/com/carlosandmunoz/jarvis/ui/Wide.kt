@@ -3,6 +3,8 @@ package com.carlosandmunoz.jarvis.ui
 import android.provider.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +42,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInWindow
 import kotlinx.coroutines.delay
@@ -176,16 +181,22 @@ fun Hologram(ready: Double?, visits: String, size: Dp = 180.dp) {
     }
 }
 
-/** Several series over the same days, one glowing line each, with a legend. */
+/** Several series over the same days (#2807, #3569): optional title, axes, legend and tap; micro grid when framed. */
 @Composable
-fun LineChart(series: List<Pair<String, List<Double>>>, labels: List<String> = emptyList(), colors: List<Color> = SLICES, height: Int = 150) {
+fun LineChart(series: List<Pair<String, List<Double>>>, labels: List<String> = emptyList(), colors: List<Color> = SLICES, height: Int? = null,
+              title: String? = null, yLabel: String? = null, xLabel: String? = null, unit: String? = null) {
     val shown = series.filter { it.second.isNotEmpty() }
     if (shown.isEmpty()) { Muted("No data in this range."); return }
+    val prefs = LocalChartPrefs.current
+    val stretch = LocalPanelStretch.current
+    val plotH = ChartPrefs.plot(prefs, height, stretch)
+    ChartSeen()
     val max = shown.maxOf { s -> s.second.maxOrNull() ?: 0.0 }.coerceAtLeast(1.0)
+    val framed = title != null || yLabel != null || xLabel != null || unit != null
+    if (framed) { FramedLineChart(shown, labels, colors, plotH, max, title, yLabel, xLabel, unit, prefs); return }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(fmt(max), color = J.dim, fontFamily = Mono, fontSize = 10.sp)
-        Canvas(Modifier.fillMaxWidth().height(height.dp)) {
-            listOf(0.25f, 0.5f, 0.75f).forEach { f -> drawLine(J.line.copy(alpha = 0.25f), Offset(0f, size.height * f), Offset(size.width, size.height * f), 1f) }
+        Canvas(Modifier.fillMaxWidth().height(plotH.dp)) {
             shown.forEachIndexed { i, (_, values) ->
                 if (values.size < 2) return@forEachIndexed
                 val color = colors[i % colors.size]
@@ -201,6 +212,59 @@ fun LineChart(series: List<Pair<String, List<Double>>>, labels: List<String> = e
             Text(labels.last(), color = J.dim, fontFamily = Mono, fontSize = 10.sp)
         }
         Legend(shown.mapIndexed { i, (name, values) -> Triple(name, fmt(values.sum()), colors[i % colors.size]) })
+    }
+}
+
+@Composable
+private fun FramedLineChart(shown: List<Pair<String, List<Double>>>, labels: List<String>, colors: List<Color>, height: Int, max: Double,
+                            title: String?, yLabel: String?, xLabel: String?, unit: String?, prefs: ChartPrefs.Prefs) {
+    var sel by remember(shown) { mutableStateOf<Int?>(null) }
+    val tip = sel?.let { i ->
+        val day = labels.getOrNull(i).orEmpty()
+        day + ": " + shown.joinToString(" · ") { (name, vals) -> "$name ${Charts.withUnit(vals.getOrElse(i) { 0.0 }, unit)}" }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        title?.let { ChartTitle(it) }
+        yLabel?.let { Text("↑ $it", color = J.muted, fontFamily = Mono, fontSize = 10.sp) }
+        ChartTip(tip, "Tap a day for its values")
+        Row {
+            Column(Modifier.height(height.dp).widthIn(min = 28.dp).padding(end = 4.dp), horizontalAlignment = Alignment.End) {
+                Text(fmt(max), color = J.dim, fontFamily = Mono, fontSize = 10.sp)
+                Spacer(Modifier.weight(1f))
+                Text(fmt(max / 2), color = J.dim, fontFamily = Mono, fontSize = 10.sp)
+                Spacer(Modifier.weight(1f))
+                Text("0", color = J.dim, fontFamily = Mono, fontSize = 10.sp)
+            }
+            Canvas(Modifier.weight(1f).height(height.dp).pointerInput(shown) {
+                detectTapGestures { o ->
+                    val n = labels.size.coerceAtLeast(shown.maxOf { it.second.size })
+                    sel = Charts.indexAt(o.x, size.width.toFloat(), n, false)
+                }
+            }) {
+                chartMicroGrid(prefs.grid)
+                val n = labels.size.coerceAtLeast(shown.maxOf { it.second.size })
+                shown.forEachIndexed { i, (_, values) ->
+                    if (values.size < 2) return@forEachIndexed
+                    val color = colors[i % colors.size]
+                    val step = size.width / (values.size - 1).coerceAtLeast(1)
+                    val points = values.mapIndexed { k, v -> Offset(k * step, (size.height - 3f - v / max * (size.height - 6f)).toFloat()) }
+                    val line = Path().apply { points.forEachIndexed { k, p -> if (k == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) } }
+                    if (prefs.fill) {
+                        val area = Path().apply { addPath(line); lineTo(size.width, size.height); lineTo(0f, size.height); close() }
+                        drawPath(area, Brush.verticalGradient(listOf(color.copy(alpha = 0.30f), Color.Transparent)))
+                    }
+                    drawPath(line, color, style = Stroke(2.5f, cap = StrokeCap.Round))
+                }
+                sel?.let { i ->
+                    val step = size.width / (n - 1).coerceAtLeast(1)
+                    val x = i * step
+                    drawLine(Color.White.copy(alpha = 0.5f), Offset(x, 0f), Offset(x, size.height), 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
+                }
+            }
+        }
+        Row { Spacer(Modifier.width(32.dp)); Column(Modifier.weight(1f)) { XTicks(labels) } }
+        xLabel?.let { Text(it, color = J.muted, fontFamily = Mono, fontSize = 10.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
+        Legend(shown.mapIndexed { i, (name, _) -> name to colors[i % colors.size] })
     }
 }
 

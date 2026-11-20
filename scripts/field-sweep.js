@@ -118,7 +118,8 @@ function candidate(source, raw) {
     time,
     summary: short(plain(raw.summary), SUMMARY_MAX),
     image: /^https:\/\/[^\s<>"'`]+$/.test(raw.image || "") ? raw.image : "",
-    signal: Number(raw.signal) || 0
+    signal: Number(raw.signal) || 0,
+    credit: short(plain(raw.credit), 120)
   };
 }
 
@@ -170,7 +171,50 @@ function parseGithub(json, source) {
   })).filter(Boolean);
 }
 
-const PARSE = { feed: parseFeed, hn: parseHn, devto: parseDevto, github: parseGithub };
+// GitHub Advisory Database is CC BY 4.0: the credit travels with every item built from it (#3940).
+const GHSA_CREDIT = "GitHub Advisory Database (CC BY 4.0)";
+const GHSA_SEV = { critical: 120, high: 90, medium: 40, low: 10 };
+
+function parseKev(json, source) {
+  const vulns = ((json && json.vulnerabilities) || []).slice().sort((a, b) => Date.parse(b.dateAdded || "") - Date.parse(a.dateAdded || ""));
+  return vulns.slice(0, PER_FEED).map((row) => {
+    const cve = String(row.cveID || "").trim();
+    const product = plain(row.product || row.vendorProject || "");
+    let title = cve;
+    if (product) title += ": " + product;
+    const name = plain(row.vulnerabilityName || "");
+    if (name && !title.toLowerCase().includes(name.slice(0, 24).toLowerCase())) title += " — " + short(name, 100);
+    return candidate(source, {
+      title,
+      url: cve ? "https://www.cve.org/CVERecord?id=" + encodeURIComponent(cve) : "",
+      date: row.dateAdded,
+      author: plain(row.vendorProject) || "CISA",
+      summary: plain(row.shortDescription) || plain(row.requiredAction),
+      signal: String(row.knownRansomwareCampaignUse || "") === "Known" ? 80 : 50
+    });
+  }).filter(Boolean);
+}
+
+function parseGhsa(json, source) {
+  return (Array.isArray(json) ? json : []).filter((row) => row && !row.withdrawn_at).slice(0, PER_FEED).map((row) => {
+    let title = plain(row.summary);
+    const cve = String(row.cve_id || "").trim();
+    if (cve && !new RegExp(cve.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(title)) title = cve + ": " + title;
+    return candidate(source, {
+      title,
+      url: String(row.html_url || "").trim(),
+      date: row.published_at || row.github_reviewed_at || row.updated_at,
+      author: "GitHub Advisory",
+      summary: plain(row.description) || plain(row.summary),
+      signal: GHSA_SEV[String(row.severity || "").toLowerCase()] || 30,
+      credit: source.credit || GHSA_CREDIT
+    });
+  }).filter(Boolean);
+}
+
+const PARSE = { feed: parseFeed, hn: parseHn, devto: parseDevto, github: parseGithub, kev: parseKev, ghsa: parseGhsa };
+
+const JSON_TYPES = new Set(["hn", "devto", "github", "kev", "ghsa"]);
 
 function requests(source, now) {
   const since = now - MAX_AGE * DAY;
@@ -181,6 +225,8 @@ function requests(source, now) {
     const day = new Date(since).toISOString().slice(0, 10);
     return source.topics.map((topic) => "https://api.github.com/search/repositories?sort=stars&order=desc&per_page=10&q=" + encodeURIComponent("topic:" + topic + " created:>=" + day + " stars:>=20"));
   }
+  if (source.type === "kev") return [source.url];
+  if (source.type === "ghsa") return ["https://api.github.com/advisories?per_page=" + PER_FEED];
   return [];
 }
 
@@ -238,7 +284,7 @@ function rank(candidates, options) {
   const fresh = candidates.filter((item) => item && now - item.time <= MAX_AGE * DAY && item.time - now <= DAY).map((item) => {
     const source = sourceOf(item);
     const topic = relevance(item.title, item.summary);
-    return Object.assign({}, item, { type: source.type, weight: source.weight, topic, strict: !!source.strict, key: admin.canonUrl(item.url), tkey: titleKey(item.title) });
+    return Object.assign({}, item, { type: source.type, weight: source.weight, topic, strict: !!source.strict, discoveryOnly: !!source.discoveryOnly, key: admin.canonUrl(item.url), tkey: titleKey(item.title) });
   }).filter((item) => !item.strict || item.topic.inTitle);
   fresh.sort((a, b) => b.weight - a.weight || b.signal - a.signal);
 
@@ -260,6 +306,7 @@ function rank(candidates, options) {
     const trends = group.map((item) => (SCALE[item.type] ? Math.log2(1 + item.signal / SCALE[item.type]) : 0));
     const best = group[trends.indexOf(Math.max(...trends))];
     const topic = group.map((item) => item.topic).sort((a, b) => b.score - a.score)[0];
+    const credit = lead.credit || (group.find((item) => item.credit) || {}).credit || (before[id] && before[id].credit) || "";
     const proposal = {
       id,
       title: lead.title,
@@ -275,8 +322,10 @@ function rank(candidates, options) {
       weight: lead.weight,
       relevance: Math.max(topic.score, lead.strict ? 0 : 1),
       trend: Math.round(100 * (Math.max(...trends) + group.length - 1)) / 100,
-      firstSeen: (before[id] && before[id].firstSeen) || today
+      firstSeen: (before[id] && before[id].firstSeen) || today,
+      discoveryOnly: !!lead.discoveryOnly
     };
+    if (credit) proposal.credit = credit;
     out.set(id, proposal);
   });
   Object.values(before).forEach((proposal) => {
@@ -308,7 +357,7 @@ async function gather(sources, fetcher, now) {
     const urls = requests(source, now);
     const results = await Promise.allSettled(urls.map(async (url) => {
       const body = await fetcher(url);
-      return PARSE[source.type](source.type === "feed" ? body : JSON.parse(body), source);
+      return PARSE[source.type](JSON_TYPES.has(source.type) ? JSON.parse(body) : body, source);
     }));
     const found = results.filter((result) => result.status === "fulfilled").flatMap((result) => result.value);
     const failed = results.filter((result) => result.status === "rejected");
@@ -375,4 +424,4 @@ async function main() {
 
 if (require.main === module) main().catch((error) => { console.error(error); process.exit(1); });
 
-module.exports = { plain, candidate, parseFeed, parseHn, parseDevto, parseGithub, requests, relevance, titleKey, proposalId, score, rank, gather, sweep };
+module.exports = { plain, candidate, parseFeed, parseHn, parseDevto, parseGithub, parseKev, parseGhsa, requests, relevance, titleKey, proposalId, score, rank, gather, sweep };

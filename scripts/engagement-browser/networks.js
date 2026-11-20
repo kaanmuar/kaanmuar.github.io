@@ -15,7 +15,11 @@
  * adds task.extras (a GIF, a topic, a card image) where the composer has them and returns what came of each (#2710).
  * Telegram and Reddit (#2614) also have groups(page, query) => groups a topic search finds ({ network, id, name, url,
  * members, lang, about, kind, member }), join(page, task) => { members, already }, and places: where the field is read
- * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups).
+ * besides the topic searches (placesOnly: Telegram has no post search, only channels and groups). LinkedIn (#3138) has
+ * groups and join too, as Carlos's personal profile; its join and Reddit's return the group's rules and pending (asked).
+ * Both carry the student routine's approved drafts as Carlos (#3138): publish(page, task) posts task.title and
+ * task.draft in a group or task.sr, dm(page, task) messages task.to, and a LinkedIn reply with task.as "self" skips
+ * acting as the page.
  *
  * The selectors are the networks' own accessibility labels and test ids where they have them; when a network
  * changes its page, `agent.js check --read` shows which reader came back empty and saves a screenshot.
@@ -67,6 +71,25 @@ async function keys(page, text) {
     await page.keyboard.type(part, { delay: rand(35, 85) });
     await pause(80, 400);
   }
+}
+
+/** Replace our own post caption (#3588): open the post, find Edit, swap the text, save; Refused when the network hides edit. */
+async function editCaption(page, net, task) {
+  await go(page, net, task.url);
+  const more = page.locator('[data-testid="caret"], [aria-label*="More" i], [aria-label*="Más" i], [aria-label*="acciones" i]').first();
+  if (await visible(more, 6000)) await click(more);
+  const edit = page.locator('[role="menuitem"], [role="menu"] button, button').filter({ hasText: /^Edit\b|^Editar\b/i }).first();
+  if (!(await visible(edit, 6000))) throw new Refused(net.name + " does not offer caption edit on this post.");
+  await click(edit);
+  const box = page.locator('[data-testid="tweetTextarea_0"], [data-testid="tweetTextarea_1"], [contenteditable="true"][role="textbox"], div[contenteditable="true"]').first();
+  const input = await need(box, "The caption box");
+  await click(input);
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+a" : "Control+a");
+  await type(page, input, task.draft);
+  const save = page.locator('button[data-testid="tweetButton"], button').filter({ hasText: /^(Save|Update|Done|Guardar|Actualizar|Post|Publicar)/i }).last();
+  await click(await need(save, "Save the caption"));
+  await pause(2000, 4000);
+  return { url: task.url };
 }
 
 // end: the box already holds the name of the person answered, so the text goes after it.
@@ -254,7 +277,9 @@ function xTexts(j, into = {}) {
   return into;
 }
 
-const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance"];
+const GENERAL = ["web accessibility", "WCAG", "core web vitals", "technical SEO", "Playwright testing", "test automation", "AI Overviews SEO", "web performance", "GA4", "software testing", "a11y", "Google Search Console", "QA engineer", "Lighthouse performance",
+  // Next to our field and rising (#3814)
+  "ChatGPT search", "vibe coding", "AI agents", "website outage", "data breach", "web dev"];
 
 const x = {
   name: "X", account: "qalaburlreview", home: "https://x.com/home", queries: GENERAL,
@@ -370,6 +395,9 @@ const x = {
     }
     got.forEach((c) => { c.ours = (c.on && texts[c.on]) || ""; });
     return got;
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   async reply(page, task) {
     const art = await this.post(page, task);
@@ -613,6 +641,9 @@ const threads = {
     const p = newest(list, since);
     return p && { id: p.id, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     const main = await this.post(page, task);
     const open = async () => { await click(button(main, SAYS.reply).first()); return page.locator('[role="dialog"]'); };
@@ -650,7 +681,7 @@ function igMedia(o, into) {
 
 const instagram = {
   name: "Instagram", account: "qaurlreview", home: "https://www.instagram.com/",
-  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics"],
+  queries: ["webaccessibility", "accessibility", "seo", "technicalseo", "softwaretesting", "qatesting", "webperformance", "webdevelopment", "wcag", "testautomation", "a11y", "googleanalytics", "chatgpt", "vibecoding", "webdev", "techtok"],
   async signedIn(page) {
     if (!(await visible(page.locator(icon(SAYS.home)), 15000))) return "";
     // This endpoint sometimes answers with an HTML page that still carries the username.
@@ -716,6 +747,9 @@ const instagram = {
     })), since);
     return p && { id: p.url, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   async reply(page, task) {
     await go(page, this, task.url);
     const box = await need(page.locator('textarea[aria-label^="Add a comment"], textarea[aria-label^="Añade un comentario"]'), "The comment box");
@@ -760,7 +794,7 @@ const TT_MENU = '[data-e2e="comment-at-user"], [data-e2e^="comment-at-list"] > d
 
 const tiktok = {
   name: "TikTok", account: "qalaburlreview", home: "https://www.tiktok.com/",
-  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo"],
+  queries: ["seo tips", "web accessibility", "software testing", "qa tester", "website speed", "google analytics 4", "playwright testing", "technical seo", "vibe coding", "chatgpt tips", "website hacked"],
   async signedIn(page) {
     if (await visible(page.locator('[data-e2e="top-login-button"]'), 6000)) return "";
     const me = page.locator('a[data-e2e="nav-profile"]');
@@ -833,6 +867,9 @@ const tiktok = {
       return { url: "https://www.tiktok.com/@" + who + "/video/" + it.id, at: it.createTime ? new Date(it.createTime * 1000).toISOString() : "", pinned: it.isPinnedItem === true, repost: who.toLowerCase() !== me };
     }), since);
     return p && { id: p.url, url: p.url };
+  },
+  async edit(page, task) {
+    return editCaption(page, this, task);
   },
   // Mentions (#2637) are picked from the list that opens on "@", by handle.
   async reply(page, task) {
@@ -910,6 +947,29 @@ const LI_REACT = {
   insightful: ["Insightful", "Interesar"], funny: ["Funny", "Hacer gracia"]
 };
 const liReact = (names) => new RegExp("(^|\\s)(" + names.join("|") + ")$", "i");
+// Group search results and a group's page (#3138). Counts read "12K members", "1.234 miembros"; a group asking for
+// approval shows Requested once joined.
+const LI_MEMBERS = "const members = (t) => { const m = String(t || '').replace(/(\\d)[.,](?=\\d{3}\\b)/g, '$1').match(/([\\d.,]+\\s*[KkMm]?)\\s*(members|miembros|membros|Mitglieder|membres|membri)/i); return m ? num(m[1]) : 0; };";
+const LI_GROUP_CARDS = LI_MEMBERS + `
+  const seen = {};
+  return Array.from(document.querySelectorAll('main a[href*="/groups/"]')).map((a) => {
+    const id = (String(a.href).match(/\\/groups\\/(\\d{3,12})(?:\\/|$|\\?)/) || [])[1];
+    const name = String(a.innerText || '').split('\\n')[0].trim();
+    if (!id || !name || seen[id]) return null;
+    seen[id] = 1;
+    const card = a.closest('li') || a.parentElement;
+    const text = String((card && card.innerText) || '').replace(/\\s+/g, ' ').trim();
+    return { network: 'linkedin', id, name, url: 'https://www.linkedin.com/groups/' + id + '/', members: members(text), lang: '', about: text.replace(name, '').trim().slice(0, 400),
+      kind: 'group', member: /\\b(Joined|Unido|Membro|Mitglied|Membre|Iscritto)\\b/i.test(text), open: true };
+  }).filter(Boolean);`;
+const LI_GROUP_ABOUT = LI_MEMBERS + `
+  const main = document.querySelector('main') || document.body;
+  const heads = Array.from(main.querySelectorAll('h2, h3')).filter((h) => /^(About|Acerca|Sobre|Info|À propos|Informazioni|Rules|Group rules|Reglas|Regras|Regeln|Règles|Regole)/i.test(h.innerText.trim()));
+  const rules = heads.map((h) => String((h.closest('section') || h.parentElement).innerText || '')).join('\\n').trim() || String(main.innerText || '').slice(0, 2000);
+  return { members: members(main.innerText), rules: rules.replace(/[ \\t]+/g, ' ').slice(0, 2000) };`;
+const LI_START = /(Start a post|Comenzar una publicación|Crear publicación|Começar uma publicação|Beitrag beginnen|Commencer un post|Inizia un post)/i;
+const LI_JOIN = /^\s*(Join|Unirse|Participar|Entrar|Beitreten|Rejoindre|Iscriviti|Partecipa)\s*$/i;
+const LI_ASKED = /^\s*(Requested|Request sent|Solicitad[oa]|Pendiente|Solicitação enviada|Angefragt|Demandé|Demande envoyée|Richiesta inviata)\s*$/i;
 
 const linkedin = {
   name: "LinkedIn", home: "https://www.linkedin.com/feed/", queries: GENERAL,
@@ -1018,11 +1078,14 @@ const linkedin = {
     const p = newest(list.map((x) => ({ url: "https://www.linkedin.com/feed/update/" + x.urn + "/", at: liAt(x.urn), pinned: x.pinned, repost: x.repost })), since);
     return p && { id: p.url, url: p.url };
   },
+  async edit(page, task) {
+    return editCaption(page, this, task);
+  },
   // Mentions (#2637) are picked from the menu that opens on "@", by the company's or member's name.
   async reply(page, task) {
     const tags = (task.mentions || []).length ? await named(page, this, task.mentions, (m) => "https://www.linkedin.com/" + m.handle + "/") : null;
     const main = await this.post(page, task);
-    await this.asPage(page, main);
+    if (task.as !== "self") await this.asPage(page, main);
     const box = main.locator('[contenteditable="true"][aria-label*="coment" i], [contenteditable="true"][aria-label*="comment" i]');
     if (!(await visible(box, 4000))) await click(await need(main.locator('button[aria-label="Comentar"], button[aria-label="Comment"]'), "Comment"));
     let mentions = null;
@@ -1068,6 +1131,54 @@ const linkedin = {
     await click(await need(form.locator('button[data-view-name="comment-reply-post"]'), "Reply"));
     await sent(input, task.draft);
     return { url: task.url };
+  },
+  // Groups a keyword search finds (#3138), for joins (functions/engagement-joins.js). Only a member joins a group, not
+  // a company page: these run in Carlos's personal session, and the group's rules come back with the join.
+  async groups(page, q) {
+    await go(page, this, "https://www.linkedin.com/search/results/groups/?keywords=" + enc(q));
+    await pause(2500, 4500);
+    await scroll(page, 1);
+    return evaluate(page, LI_GROUP_CARDS);
+  },
+  async join(page, task) {
+    await go(page, this, "https://www.linkedin.com/groups/" + enc(task.id) + "/");
+    await pause(2500, 4000);
+    const main = page.locator("main").first();
+    if (!(await visible(main, 20000))) throw new Error("LinkedIn did not show the group.");
+    const about = await evaluate(page, LI_GROUP_ABOUT);
+    const join = main.getByRole("button", { name: LI_JOIN });
+    const asked = main.getByRole("button", { name: LI_ASKED });
+    if (await visible(asked, 1500)) return { already: false, pending: true, members: about.members, rules: about.rules };
+    if (!(await visible(join, 6000))) return { already: true, members: about.members, rules: about.rules };
+    await click(join.first());
+    await pause(2500, 4000);
+    if (await visible(asked, 6000)) return { pending: true, members: about.members, rules: about.rules };
+    await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
+    return { members: about.members, rules: about.rules };
+  },
+  // A student community post (#3138) in a group Carlos joined, as himself: title, a blank line, the body.
+  async publish(page, task) {
+    await go(page, this, task.url);
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: LI_START }).or(main.getByText(LI_START)), "Start a post"));
+    const dialog = page.locator('[role="dialog"]').filter({ has: page.locator('[contenteditable="true"]') }).last();
+    await type(page, await need(dialog.locator('[contenteditable="true"]'), "The post box"), [task.title, task.draft].filter(Boolean).join("\n\n"));
+    await click(await need(dialog.getByRole("button", { name: /^\s*(Post|Publicar|Publier|Posten|Veröffentlichen|Pubblica)\s*$/i }), "Post"));
+    await dialog.waitFor({ state: "hidden", timeout: 20000 }).catch(() => { throw new Error("LinkedIn did not take the post."); });
+    return { url: task.url };
+  },
+  // A student invite (#3138) from Carlos's profile: Message on theirs, typed and sent. Members outside his network
+  // without open messages have no Message button, so it fails rather than buy InMail.
+  async dm(page, task) {
+    await go(page, this, "https://www.linkedin.com/" + String(task.to).replace(/^\/+/, "") + "/");
+    const main = page.locator("main").first();
+    await click(await need(main.getByRole("button", { name: /^\s*(Message|Enviar mensaje|Mensaje|Mensagem|Nachricht|Message privé|Messaggio)\b/i }), "Message"));
+    const form = page.locator(".msg-form, form").filter({ has: page.locator('[contenteditable="true"]') }).last();
+    const input = await need(form.locator('[contenteditable="true"]'), "The message box");
+    await type(page, input, task.draft);
+    await click(await need(form.getByRole("button", { name: /^\s*(Send|Enviar|Senden|Envoyer|Invia)\s*$/i }), "Send"));
+    await sent(input, task.draft);
+    return { url: page.url() };
   }
 };
 
@@ -1251,7 +1362,9 @@ const RD_SUBS = ["QualityAssurance", "softwaretesting", "Playwright", "Cypress",
 
 // token_v2 is httpOnly and lasts a day; a www page view renews it.
 async function rdToken(page) {
-  if (!page.url().startsWith(RD)) await go(page, reddit, RD + "/");
+  let host = "";
+  try { host = new URL(page.url()).hostname; } catch (_) { /* ignore */ }
+  if (host !== "www.reddit.com" && host !== "reddit.com") await go(page, reddit, RD + "/");
   const t = (await page.context().cookies(RD)).find((c) => c.name === "token_v2");
   if (!t || !t.value) throw new Refused("Reddit is signed out in the agent's Chrome.");
   return t.value;
@@ -1372,6 +1485,21 @@ const reddit = {
     if (!c.id) throw new Error("The comment did not post.");
     return { url: RD + (c.permalink || new URL(task.url).pathname) };
   },
+  // A student community post (#3138), as Carlos: a text post in task.sr.
+  async publish(page, task) {
+    await go(page, this, RD + "/r/" + enc(task.sr) + "/");
+    await pause(3000, 7000);
+    const d = await rdCall(page, "/api/submit", { kind: "self", sr: task.sr, title: String(task.title || "").slice(0, 300), text: task.draft, sendreplies: "true", resubmit: "true" });
+    if (!d.url) throw new Error("The post did not go up.");
+    return { url: d.url };
+  },
+  // A student invite (#3138) as a private message.
+  async dm(page, task) {
+    await go(page, this, RD + "/user/" + enc(task.to) + "/");
+    await pause(2000, 5000);
+    await rdCall(page, "/api/compose", { to: task.to, subject: String(task.subject || "Your trial").slice(0, 100), text: task.draft });
+    return { url: RD + "/message/sent/" };
+  },
   async join(page, task) {
     await go(page, this, RD + "/r/" + enc(task.id) + "/");
     const before = (await rdJson(page, "/r/" + enc(task.id) + "/about?raw_json=1")).data || {};
@@ -1380,7 +1508,8 @@ const reddit = {
     await pause(2000, 3500);
     const after = (await rdJson(page, "/r/" + enc(task.id) + "/about?raw_json=1")).data || {};
     if (!after.user_is_subscriber) throw new Error("The join did not stick.");
-    return { members: after.subscribers || before.subscribers || 0 };
+    const rules = await rdJson(page, "/r/" + enc(task.id) + "/about/rules?raw_json=1").catch(() => ({}));
+    return { members: after.subscribers || before.subscribers || 0, rules: (rules.rules || []).map((r) => r.short_name + ": " + String(r.description || "").replace(/\s+/g, " ")).join("\n").slice(0, 2000) };
   }
 };
 
@@ -1529,4 +1658,10 @@ const telegram = {
   }
 };
 
-module.exports = { NETWORKS: { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit }, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };
+const NETWORKS = { x, linkedin, facebook, instagram, threads, tiktok, telegram, reddit };
+// dm(page, task) on each network: a 2-day pass DM Carlos approved (#3137, dms.js).
+require("./dms").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused, rdCall });
+// connect(page, task) on LinkedIn: the day's connection requests (#3576, linkedin-connect.js).
+require("./linkedin-connect").install(NETWORKS, { go, click, type, need, visible, has, pause, Refused });
+
+module.exports = { NETWORKS, Refused, checked, pause, rand, sleep, xTexts, rdPosts, splitDraft, pickOption, newest, liAt, fbStories, igMedia, thExtras, downloadImage };

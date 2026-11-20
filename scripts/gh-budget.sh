@@ -10,7 +10,10 @@
 #
 #   scripts/gh-budget.sh project item-edit ...     # any non-interactive gh command; output is printed at the end
 #   scripts/gh-budget.sh --item 1582               # board item ID of an issue or PR in kaanmuar/kaanmuar.github.io
-#   scripts/gh-budget.sh --status                  # GraphQL points left on each account
+#   scripts/gh-budget.sh --status                  # GraphQL points left on each account, then the ETag cache counters
+#   scripts/gh-budget.sh --cached-get <api path>   # REST GET with If-None-Match (#3835): a 304 costs 0 quota; prints JSON
+# --cached-get keeps ETag and body per request in ~/.cache/gh-etag (scripts/gh-etag.js, functions/etag-cache.js);
+# its hit/miss counters show in --status. Pattern from octokit/plugin-throttling.js and steipete/RepoBar (reference only).
 set -uo pipefail
 
 token_for() {
@@ -29,7 +32,19 @@ if [ "${1:-}" = "--status" ]; then
 			echo "$who: $(GH_TOKEN="$token" gh api graphql -f query='{rateLimit{limit remaining resetAt}}' -q "$query" 2>&1)"
 		else echo "$who: no token"; fi
 	done
+	node "$(dirname "$0")/gh-etag.js" --stats 2>/dev/null || true
 	exit 0
+fi
+
+if [ "${1:-}" = "--cached-get" ]; then
+	path=${2:?usage: scripts/gh-budget.sh --cached-get <api path>}
+	for who in me bot; do
+		token=$(token_for "$who")
+		[ -n "$token" ] || continue
+		GH_TOKEN="$token" node "$(dirname "$0")/gh-etag.js" "$path" && exit 0
+		[ "$who" = me ] && echo "gh-budget: $who failed; trying the next account" >&2
+	done
+	exit 1
 fi
 
 # An issue's projectItems, and item-edit --url, come back empty for this org board, so search the board's items.

@@ -1,0 +1,63 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-motives-ai": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "motives.ai: 70.",
+    "title.1": "*The gap: framing.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.",
+    "action": "Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.",
+    "fixLines.0": "// SEC-04: motives.ai sets nosniff and a frame…",
+    "fixLines.1": "expect([headers[\"x-content-type-options\"]].join(\" \")).toMatch(/nosniff/i);",
+    "fixLines.2": "expect([headers[\"x-frame-options\"], headers[\"content-security-policy\"]].join(\" \")).toMat",
+    "caseId": "SEC-04",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 17 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "motives.ai · 20 pages analyzed · 17 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.\n\nWhat to change: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.\n\nOne automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.\n\nThe full report: https://carlosandmunoz.com/qa-review.html?live=u-motives-ai&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-motives-ai\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #SoftwareTesting #DevOps #QA #Clickjacking #HTTPHeaders #LearnOnYouTube #TechTips #OWASP #QAEngineer #DevSecOps #QAlab"
+   }
+  },
+  "u-zegel-edu-pe": {
+   "lang": "de",
+   "strings": {
+    "title.0": "zegel.edu.pe: 67.",
+    "title.1": "*The gap: text contrast.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.",
+    "action": "Keep body text at a 4.5:1 contrast ratio or more against its background.",
+    "fixLines.0": "// A11Y-04: Text contrast and keyboard focus on…",
+    "fixLines.1": "await page.goto(BASE + path);",
+    "fixLines.2": "await page.evaluate(axe);",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 17 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "zegel.edu.pe · 20 pages analyzed · 17 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.\n\nWhat to change: Keep body text at a 4.5:1 contrast ratio or more against its background.\n\nOne automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nReport: https://carlosandmunoz.com/qa-review.html?live=u-zegel-edu-pe&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-zegel-edu-pe\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #SoftwareTesting #DevOps #QA #Contrast #A11y #WebDevelopment #Coding #WCAG #TestAutomation #InclusiveDesign #QAlab"
+   }
+  }
+ }
+}

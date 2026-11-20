@@ -6,7 +6,8 @@
    health       ops_runs, failures, re-runs, alerts, owner notices, rivals, coupons, captures (server-only collections)
    jobs         Cloud Scheduler jobs: schedule, state, last attempt, last status
    github       CI on main, open bugs by area, PRs merged in the last 7 days, the newest issues
-   ga4          sessions, users, views and engagement by content group, country, source and day (property 495572902)
+   ga4          sessions, users, views and engagement by content group, country, source and day (property 495572902);
+                countryRows has every country with engaged sessions and key events (jarvis-geo-ga4.js)
    cloudflare   requests, bytes, cache ratio, threats and uniques for the zone (needs Zone Analytics Read)
    speed        PageSpeed (mobile) for each product page, CrUX history for the origin
    uptime       status, latency and TLS days left for each product page
@@ -29,7 +30,7 @@ const TTL = { health: MINUTE, jobs: MINUTE, github: 5 * MINUTE, ga4: 15 * MINUTE
 const SCHEDULER = "https://cloudscheduler.googleapis.com/v1/projects/" + PROJECT + "/locations/us-central1/jobs";
 const JOB_PREFIX = "firebase-schedule-";
 const METADATA = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
-const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models/";
+const Gemini = require("./gemini");
 const MODEL = "gemini-flash-latest";
 const core = require("./jarvis-core");
 const actions = require("./jarvis-actions");
@@ -454,10 +455,9 @@ async function decideRatings(db, { ids, decision }) {
 
 // --- ga4 ------------------------------------------------------------------------------------------------------
 
-async function ga4(fetchImpl, { days }) {
-  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
-  const span = rangeDays(days);
-  const run = async (body) => {
+// A runReport caller over the last `span` days and the span before (a body's own dateRanges win): rows as {dims, mets}.
+function ga4Runner(fetchImpl, bearer, span) {
+  return async (body) => {
     const data = await readJson(await fetchImpl("https://analyticsdata.googleapis.com/v1beta/properties/" + PROPERTY + ":runReport", {
       method: "POST",
       headers: { Authorization: "Bearer " + bearer, "Content-Type": "application/json" },
@@ -466,10 +466,23 @@ async function ga4(fetchImpl, { days }) {
     }), "GA4");
     return (data.rows || []).map((row) => ({ dims: (row.dimensionValues || []).map((v) => v.value), mets: (row.metricValues || []).map((v) => Number(v.value) || 0) }));
   };
+}
+
+/** GA4 sessions, engaged sessions, users and key events per country per day, from and to as YYYY-MM-DD (#3282). */
+async function ga4Days(fetchImpl, from, to) {
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
+  return require("./jarvis-geo-ga4").fetchDays(ga4Runner(fetchImpl, bearer, 1), from, to);
+}
+
+async function ga4(fetchImpl, { days }) {
+  const bearer = await googleToken(fetchImpl, "https://www.googleapis.com/auth/analytics.readonly");
+  const span = rangeDays(days);
+  const run = ga4Runner(fetchImpl, bearer, span);
+  const geoGa4 = require("./jarvis-geo-ga4");
   const metrics = [{ name: "sessions" }, { name: "totalUsers" }, { name: "screenPageViews" }, { name: "engagementRate" }, { name: "averageSessionDuration" }];
   const [groups, countries, sources, daily] = await Promise.all([
     run({ dimensions: [{ name: "contentGroup" }], metrics }),
-    run({ dimensions: [{ name: "country" }], metrics: [{ name: "sessions" }], limit: 12, orderBys: [{ metric: { metricName: "sessions" }, desc: true }] }),
+    geoGa4.fetchCountries(run),
     run({ dimensions: [{ name: "sessionSource" }, { name: "sessionMedium" }], metrics: [{ name: "sessions" }], limit: 12, orderBys: [{ metric: { metricName: "sessions" }, desc: true }] }),
     run({ dimensions: [{ name: "date" }], metrics: [{ name: "sessions" }, { name: "totalUsers" }], dateRanges: [{ startDate: span + "daysAgo", endDate: "today" }], orderBys: [{ dimension: { dimensionName: "date" } }] })
   ]);
@@ -492,7 +505,10 @@ async function ga4(fetchImpl, { days }) {
       const prior = named[key].prior || [0, 0, 0, 0, 0];
       return { group: key, sessions, users, views, engagement: Math.round(engagement * 1000) / 10, duration: Math.round(duration), priorSessions: prior[0], priorUsers: prior[1] };
     }).sort((a, b) => b.sessions - a.sessions),
-    countries: Object.entries(split(countries)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
+    countries: geoGa4.top(countries.countryRows),
+    countryRows: countries.countryRows,
+    keyEvents: countries.keyEvents,
+    keyEventFallback: countries.keyEventFallback || "",
     sources: Object.entries(split(sources)).map(([label, v]) => ({ label, value: (v.now || [0])[0], prior: (v.prior || [0])[0] })).sort((a, b) => b.value - a.value).slice(0, 12),
     daily: daily.map((row) => ({ date: row.dims[0].replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"), sessions: row.mets[0], users: row.mets[1] }))
   };
@@ -629,17 +645,24 @@ async function uptimeHistory(db, now) {
 
 const VOICE = "You are Jarvis, the analyst for Carlos's sites: the CV (carlosandmunoz.com), QA Studio (a test-sprint simulator), "
   + "QA Lab (a regression lab), QA-lab URL Review (paid website reviews), the Social hub, and the systems behind them. "
+  + "A URL review also checks phishing and malware lists, linked hosts, hacked-site signs, lookalike domains, exposed files, WordPress vulnerabilities and blocklists; "
+  + "a review that fails on our side is re-run and, at the last rung, read from Carlos's Mac, and its asker gets the report by email, usually within 48 hours; past that an apology code goes out and the rescue keeps trying for 14 days, sending the report late or a last note; "
+  + "reviews that already finished are run again, one site at a time, and one mail goes out after the new report; the pace, who is mailed and the 50% code are urlReviewPastRerun in the JSON; "
+  + "clients can ask us to fix findings (fix it yourself with a free re-check, a quote, a fixed-price package paid by PayPal, or a call). "
+  + "Growth locks (#3475): soft gate lets cold visitors paste a URL for a 1-page preview without OAuth; shared links show overall, six areas and the top finding clear; auto Live Reports already ship a 4-slide carousel and LinkedIn PDF via tips-studio. "
+  + "Hashtag caps stay intentional (Instagram 5, LinkedIn 6, X 2). Refuse Claude-for-social, a parallel Telegram /scan bot, 7-second mute gauge loops, 30-tag walls, and opening GitHub issues on third-party OSS. "
+  + "Next builds after Slide 3 + first-comment: money (#3482) white-label PDF + co-brand header, Full Stack Starter $29 and Complete $99, Agency CI HMAC webhook on Team/Pro; then channel-split compare (two-day on X/Telegram/Threads, same-carousel on LinkedIn/Instagram); MCP after money; light DOM-verified specs only. "
   + "Use only the numbers in the JSON you get. Plain English, short sentences, no hype, no markdown tables. "
   + "Name the product, the number and the comparison. Say when a number is too small to mean anything.";
 
 async function gemini(fetchImpl, env, prompt, maxTokens) {
-  if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set.");
+  if (!Gemini.ready(env)) throw new Error("GEMINI_API_KEY is not set and Vertex AI is not reachable.");
   const started = Date.now();
   const what = String(prompt || "").replace(/\s+/g, " ").slice(0, 120);
   try {
-    const text = await geminiCall(fetchImpl, env, prompt, maxTokens);
-    await jarvisLog.log(null, { source: "gemini", level: "info", text: "Gemini ok in " + (Date.now() - started) + " ms, " + text.length + " chars: " + what });
-    return text;
+    const out = await geminiCall(fetchImpl, env, prompt, maxTokens);
+    await jarvisLog.log(null, { source: "gemini", level: "info", text: Gemini.label(out.via) + " ok in " + (Date.now() - started) + " ms, " + out.text.length + " chars: " + what });
+    return out.text;
   } catch (error) {
     await jarvisLog.log(null, { source: "gemini", level: "error", text: "Gemini failed in " + (Date.now() - started) + " ms: " + String(error.message || error).slice(0, 140) + " · " + what });
     throw error;
@@ -647,21 +670,14 @@ async function gemini(fetchImpl, env, prompt, maxTokens) {
 }
 
 async function geminiCall(fetchImpl, env, prompt, maxTokens) {
-  const res = await fetchImpl(GEMINI + (env.GEMINI_MODEL || MODEL) + ":generateContent", {
-    method: "POST",
-    headers: { "x-goog-api-key": env.GEMINI_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: VOICE }] },
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1200, thinkingConfig: { thinkingLevel: "low" } }
-    }),
-    signal: AbortSignal.timeout(60000)
-  });
-  const data = await readJson(res, "Gemini");
-  const candidate = (data.candidates || [])[0] || {};
-  const text = ((candidate.content || {}).parts || []).map((part) => part.text || "").join("").trim();
-  if (!text) throw new Error("Gemini sent no text (" + (candidate.finishReason || "unknown") + ").");
-  return text;
+  const { data, via } = await Gemini.generate(fetchImpl, env, {
+    systemInstruction: { parts: [{ text: VOICE }] },
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens || 1200, thinkingConfig: { thinkingLevel: "low" } }
+  }, { model: env.GEMINI_MODEL || MODEL, timeoutMs: 60000 });
+  const text = Gemini.text(data).trim();
+  if (!text) throw new Error(Gemini.label(via) + " sent no text (" + (((data.candidates || [])[0] || {}).finishReason || "unknown") + ").");
+  return { text, via };
 }
 
 function snapshotText(snapshot) {
@@ -728,7 +744,7 @@ async function ask(fetchImpl, env, question, snapshot, opts) {
 function speakable(text) {
   return String(text || "")
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)(?:\]\(([^)]*)(\))?)?/g, (link, label, target, close) => (target && close ? label : link))
     .replace(/^[\s>*#-]+/gm, "")
     .replace(/[*_`#]/g, "")
     .replace(/\s+/g, " ")
@@ -785,7 +801,8 @@ function normalizeSettings(data) {
   kept.forEach((key) => { if (d.mail && typeof d.mail[key] === "boolean") mail[key] = d.mail[key]; });
   const searchQueries = Array.from(new Set((Array.isArray(d.searchQueries) ? d.searchQueries : []).map((q) => String(q || "").replace(/\s+/g, " ").trim().slice(0, 80)).filter(Boolean))).slice(0, 8);
   const github = { repos: core.githubRepos(d.github && d.github.repos) };
-  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
+  const charts = core.chartPrefs(d.charts);
+  return { goals: core.cleanGoals(d.goals), thresholds: core.thresholds(d.thresholds), mail, mailVersion: MAIL_VERSION, searchQueries, github, charts, actions: actions.cleanSettings(d.actions), calendar: calendar.cleanSettings(d.calendar), layout: core.cleanLayout(d.layout), updatedAt: String(d.updatedAt || "") };
 }
 
 async function readSettings(db) {
@@ -798,7 +815,7 @@ async function saveSettings(db, input, by) {
   const layout = input && input.layout !== undefined ? input.layout : saved.layout;
   const cal = input && input.calendar !== undefined ? input.calendar : saved.calendar;
   const clean = normalizeSettings(Object.assign({}, input, { mailVersion: MAIL_VERSION, layout, calendar: cal }));
-  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
+  const doc = { goals: clean.goals, thresholds: clean.thresholds, mail: clean.mail, mailVersion: MAIL_VERSION, searchQueries: clean.searchQueries, github: clean.github, charts: clean.charts, actions: clean.actions, calendar: clean.calendar, layout: clean.layout, updatedAt: new Date().toISOString(), by: String(by || "") };
   await db.collection("jarvis_settings").doc("main").set(doc);
   return normalizeSettings(doc);
 }
@@ -881,9 +898,10 @@ async function dailyProducts(db, { now, days = 1 }) {
   const window = { start, end, days, prior: { start: priorStart, end: start } };
   const rows = async (q) => (await q.limit(20000).get()).docs.map((doc) => Object.assign({ id: doc.id }, doc.data()));
   const since = (name) => db.collection(name).where("createdAt", ">=", priorStart);
-  const [{ events, opens, reviews }, messages, ratings, pending, hubSnap] = await Promise.all([
+  const [{ events, opens, reviews }, messages, ratings, csatRows, pending, hubSnap] = await Promise.all([
     dayRows.rows(db, ["events", "opens", "reviews"], { from: priorStart.getTime(), now }),
     rows(since("messages")), rows(since("ratings")),
+    rows(since("url_review_csat")),
     pendingRatings(db, now),
     db.collection("socialHubStats").doc("latest").get().catch(() => null)
   ]);
@@ -893,12 +911,14 @@ async function dailyProducts(db, { now, days = 1 }) {
   const keep = (email) => !core.isTestEmail(email);
   const pendingCount = pending + ratings.filter((row) => !row.status && keep(row.email)).length;
   const priorReviews = core.splitReviews(reviews.filter((row) => !inside(row)));
+  const review = core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: priorReviews.people.length, ours: priorReviews.ours.length } }, window);
+  review.csat = core.summarizeCsat(csatRows, window, window.prior);
   const products = {
     inbox: core.summarizeInbox(messages, ratings, window, window.prior, keep, pendingCount),
     cv: core.summarizeSite("cv", now1, was, window),
     studio: core.summarizeSite("studio", now1, was, window),
     lab: core.summarizeSite("lab", now1, was, window),
-    review: core.summarizeReview({ opens: opens.filter(inside), reviews: reviews.filter(inside), events: now1, prior: { opens: opens.filter((row) => !inside(row)).length, reviews: priorReviews.people.length, ours: priorReviews.ours.length } }, window),
+    review,
     hub: core.summarizeHub(hubSnap && hubSnap.exists ? hubSnap.data() : null, now1, window, was)
   };
   const nowOpens = opens.filter(inside), nowReviews = reviews.filter(inside);
@@ -939,15 +959,22 @@ function askSnapshot(snap, days) {
       mailbox: ok(e.mailbox) ? { totals: e.mailbox.totals, smtp: e.mailbox.smtp, canary: e.mailbox.canary && e.mailbox.canary.state, problems: (e.mailbox.problems || []).slice(0, 5).map((m) => m.alias + "@ " + m.outcome + ": " + m.reason) } : null,
       addresses: ok(e.addresses) ? { counts: e.addresses.counts, issues: (e.addresses.issues || []).slice(0, 8).map((i) => i.text + (i.by === "jarvis" ? " (Jarvis fixes it)" : "")) } : null,
       search: ok(e.search) ? { brave: e.search.brave && e.search.brave.queries, console: e.search.console && e.search.console.ok ? { clicks: e.search.console.clicks, impressions: e.search.console.impressions, position: e.search.console.position, queries: (e.search.console.queries || []).slice(0, 8) } : null } : null,
-      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null, postNumbers: (e.social.queue || []).filter((c) => c.numbers && Object.keys(c.numbers).length).map((c) => Object.assign({ channel: c.name, sent: c.sent }, c.numbers)) } : null,
+      social: ok(e.social) ? { sent: e.social.sent, failed: e.social.failed, channels: e.social.channels, youtubeViews: e.social.youtube && e.social.youtube.views, telegramMembers: e.social.telegram ? { now: e.social.telegram.members, change: e.social.telegram.change } : null, redditMembers: e.social.reddit ? { now: e.social.reddit.members, change: e.social.reddit.change } : null, postNumbers: (e.social.queue || []).filter((c) => c.numbers && Object.keys(c.numbers).length).map((c) => Object.assign({ channel: c.name, sent: c.sent }, c.numbers)), needs: (e.social.needs || []).slice(0, 5), assets: e.social.assets || null, shareUnblur: "Shared report links show overall score, six area gauges and the top finding; full table and exports stay gated." } : null,
       safety: ok(e.safety) && e.safety.checks ? e.safety.checks.map((c) => c.level + ": " + c.name + " " + c.detail) : null,
       platform: ok(e.platform) ? { functions: e.platform.functions && { executions: e.platform.functions.executions, failures: e.platform.functions.failures, byFunction: e.platform.functions.byFunction }, gemini: e.platform.gemini, firestore: e.platform.firestore, users: e.platform.users } : null,
       outreach: outreachAsk(e.outreach, s.outreachVisits),
       targets: targetsAsk(e.targets),
+      geoFlow: require("./jarvis-geo-flow").ask(e.geo),
+      mapPlanAndNextActions: require("./jarvis-geo-actions").askOf(e.geo),
       engagement: engagementAsk(e.engagement),
+      geoHeat: require("./jarvis-geo-heat").heatAsk(e.geo),
+      linkClicksByVisitorCountry: require("./jarvis-geo-clicks").ask(e.geo),
+      mapCostAndReturn: require("./jarvis-geo-cost").ask(e.geo),
       signedInPeople: ok(e.people) ? e.people.totals : null,
       googleMapsLocal: ok(e.local) && e.local.totals ? { totals: e.local.totals, issues: e.local.issues, lastError: e.local.lastError } : null,
+      ...require("./jarvis-review-ops").ask(e),
       github: githubAsk(e["github-work"]),
+      mapChange: ok(e.geo) ? require("./jarvis-geo-time").askView(e.geo.time) : null,
       waiting: core.connections(e).filter((c) => c.needs.length).map((c) => c.name + ": " + c.needs.join(" "))
     },
     // Live processes (#2548): what runs now, waits on Carlos or ended in the last day.
@@ -1063,5 +1090,14 @@ async function unsentToday(db, items, { now }) {
   return { day, ref, sent, fresh };
 }
 
-module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, ga4, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
+// Pending URL Review CSAT quotes (#3557): list and approve/dismiss for CV + Social hub publish.
+async function listCsatTestimonials(db, { limit } = {}) {
+  return { items: await require("./url-review-csat-testimonials").listPending(db, limit) };
+}
+
+async function decideCsatTestimonial(db, body, operator) {
+  return require("./url-review-csat-testimonials").decide(db, Object.assign({}, body, { operator }));
+}
+
+module.exports = { PAGES, TTL, ADMIN_URL, rangeDays, askSnapshot, githubAsk, ownerTagsAsk, causeLabel, health, jobs, jobName, runJob, github, rerunCi, stalePrs, refreshPr, refreshPrs, refreshNote, failedRuns, rerunRun, mainSha, dispatchMain, briefItems, decideRatings, listCsatTestimonials, decideCsatTestimonial, ga4, ga4Days, cloudflare, speed, uptime, uptimeTally, uptimeLog, uptimeHistory, tlsDaysLeft, brief, ask, speak, speakable, langCode, VOICES, voiceFor, voiceRate, briefingMail, top,
   MAIL_DEFAULTS, MOVED_MAIL, normalizeSettings, readSettings, saveSettings, saveLayout, goalValue, goals, dailyProducts, mailedReports, compact, dailyMail, watchItems, unsentToday, gemini, googleToken };

@@ -17,7 +17,10 @@ const PAGES = new Set([
   "qa-review-pay-it.html",
   "qa-review-account.html",
   "qa-review-guide.html",
-  "qa-review-legal.html"
+  "qa-review-legal.html",
+  "qa-review-vs.html",
+  "qa-review-explorer.html",
+  "live.html"
 ]);
 
 function clip(value, max) {
@@ -389,8 +392,27 @@ function summarizePeriod(opens, rows, captures, alerts) {
   };
 }
 
-// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, ours: { total, kinds } }.
+// extra: { failures: periodFailures().rows, followUp: { notes, stops, notices, unlisted, replies, redemptions }, ours: { total, kinds }, fixes, promises }.
 // followUp is left out of the quarter-hour report. Reviews are people's runs; ours are the sweeps, Jarvis runs and tests (#3194).
+// Fix requests made in the period (#3082): quotes, packages and free re-checks, what was paid and what we finished.
+function fixLine(rows) {
+  if (!rows.length) return "";
+  const kinds = {};
+  rows.forEach((row) => { const kind = row.kind === "self" ? "free re-check" : row.package || "quote"; kinds[kind] = (kinds[kind] || 0) + 1; });
+  const paid = rows.filter((row) => row.paidAt);
+  const usd = paid.reduce((sum, row) => sum + (Number(row.paid && row.paid.priceUsd) || Number(row.priceUsd) || 0), 0);
+  const done = rows.filter((row) => row.kind !== "self" && (row.status === "done" || row.status === "re-reviewed")).length;
+  return plural(rows.length, "request") + " (" + tally(kinds, 8) + "); " + paid.length + " paid, " + usd + " USD; " + done + " done";
+}
+
+// Failures in the period that promised the asker a report by email (#3079), by where each promise stands.
+function promiseLine(promises) {
+  if (!promises.length) return "";
+  const states = {};
+  promises.forEach((item) => { const state = (item && item.state) || "open"; states[state] = (states[state] || 0) + 1; });
+  return promises.length + " promised (" + tally(states) + ")";
+}
+
 function reportRows(summary, previous, phrase, extra) {
   const prior = previous || { opens: 0, reviews: 0, paidUsd: 0 };
   const more = extra || {};
@@ -417,6 +439,8 @@ function reportRows(summary, previous, phrase, extra) {
     { label: "Owner notices", value: follow ? follow.notices + " sent, " + (summary.claims || 0) + " claimed, " + follow.unlisted + " taken off Live Reports, " + replies : "" },
     { label: "Coupons", value: follow ? follow.redemptions + " redeemed" : "" },
     { label: "Our runs", value: more.ours ? more.ours.total + " not counted above" + (more.ours.total ? " (" + tally(more.ours.kinds || {}) + ")" : "") : "" },
+    { label: "Fix requests", value: more.fixes ? fixLine(more.fixes) : "" },
+    { label: "Promised reports", value: more.promises ? promiseLine(more.promises) : "" },
     { heading: "Failures" }
   ].concat(more.failures || [], [
     { heading: "Where people came from" },
@@ -452,5 +476,7 @@ module.exports = {
   slimReview,
   summarizePeriod,
   reportRows,
-  reportSubject
+  reportSubject,
+  fixLine,
+  promiseLine
 };

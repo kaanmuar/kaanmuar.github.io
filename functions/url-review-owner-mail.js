@@ -19,6 +19,8 @@ const COPY = {
     title: "A public review of {host} is on Live Reports",
     lead: "{host} was reviewed with QA-lab URL Review on {date}, and the scores were published on Live Reports. We never say who asked for a review. This is what the public page shows:",
     critical: "The review found a critical security issue. The report says what to fix first.",
+    attackLead: "A QA-lab URL Review subscriber asked us to tell you about these attack or exploit signals:",
+    attackLine: "{title} ({level}) — source: {source}. {fix}",
     local: {
       status_fail: "Google Maps shows {host} as permanently closed, so people searching for it are told it no longer exists.",
       status_risk: "Google Maps shows {host} as temporarily closed, so people searching for it may think it is not open.",
@@ -49,7 +51,7 @@ const COPY = {
       measured: "Every check was measured from the public response, not guessed.",
       counts: "{fail} fail · {risk} at risk · {pass} pass",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Security", Accessibility: "Accessibility", Performance: "Performance" },
-      about: { SEO: "Indexing, sitemap, titles, structured data", GEO: "How AI answers can read and cite the site", Analytics: "Tags, consent, campaign tracking", Security: "Headers, TLS, DNS, exposure", Accessibility: "Markup, axe-core, and the phone layout", Performance: "Speed, weight, paint, and layout shift" }
+      about: { SEO: "Indexing, sitemap, titles, structured data", GEO: "How AI answers can read and cite the site", Analytics: "Tags, consent, campaign tracking", Security: "Headers, TLS, DNS, malware and phishing lists, signs of a hack", Accessibility: "Markup, axe-core, and the phone layout", Performance: "Speed, weight, paint, and layout shift" }
     },
     page: {
       claimTitle: "Claim the report of {host}",
@@ -77,6 +79,8 @@ const COPY = {
     title: "Hay una revisión pública de {host} en Live Reports",
     lead: "{host} se revisó con QA-lab URL Review el {date} y los puntajes se publicaron en Live Reports. Nunca decimos quién pidió una revisión. Esto es lo que muestra la página pública:",
     critical: "La revisión encontró un problema de seguridad crítico. El informe dice qué arreglar primero.",
+    attackLead: "Un suscriptor de QA-lab URL Review nos pidió contarte estas señales de ataque o explotación:",
+    attackLine: "{title} ({level}) — fuente: {source}. {fix}",
     local: {
       status_fail: "Google Maps muestra {host} como cerrado permanentemente, así que a quien lo busca le dice que ya no existe.",
       status_risk: "Google Maps muestra {host} como cerrado temporalmente, así que quien lo busca puede pensar que no está abierto.",
@@ -107,7 +111,7 @@ const COPY = {
       measured: "Cada control se midió en la respuesta pública, no se adivinó.",
       counts: "{fail} fallan · {risk} en riesgo · {pass} pasan",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analítica", Security: "Seguridad", Accessibility: "Accesibilidad", Performance: "Rendimiento" },
-      about: { SEO: "Indexación, sitemap, títulos, datos estructurados", GEO: "Cómo las respuestas de IA leen y citan el sitio", Analytics: "Etiquetas, consentimiento, seguimiento de campañas", Security: "Cabeceras, TLS, DNS, exposición", Accessibility: "Marcado, axe-core y la vista en el teléfono", Performance: "Velocidad, peso, pintado y saltos de diseño" }
+      about: { SEO: "Indexación, sitemap, títulos, datos estructurados", GEO: "Cómo las respuestas de IA leen y citan el sitio", Analytics: "Etiquetas, consentimiento, seguimiento de campañas", Security: "Cabeceras, TLS, DNS, listas de malware y phishing, señales de hackeo", Accessibility: "Marcado, axe-core y la vista en el teléfono", Performance: "Velocidad, peso, pintado y saltos de diseño" }
     },
     page: {
       claimTitle: "Pedir el informe de {host}",
@@ -135,6 +139,8 @@ const COPY = {
     title: "Há uma revisão pública de {host} no Live Reports",
     lead: "{host} foi revisado com o QA-lab URL Review em {date}, e as notas foram publicadas no Live Reports. Nunca dizemos quem pediu uma revisão. Isto é o que a página pública mostra:",
     critical: "A revisão encontrou um problema de segurança crítico. O relatório diz o que corrigir primeiro.",
+    attackLead: "Um assinante do QA-lab URL Review pediu que contássemos estas sinais de ataque ou exploração:",
+    attackLine: "{title} ({level}) — fonte: {source}. {fix}",
     local: {
       status_fail: "O Google Maps mostra {host} como fechado permanentemente, então quem o procura vê que ele não existe mais.",
       status_risk: "O Google Maps mostra {host} como fechado temporariamente, então quem o procura pode achar que não está aberto.",
@@ -165,7 +171,7 @@ const COPY = {
       measured: "Cada verificação foi medida na resposta pública, sem suposições.",
       counts: "{fail} falham · {risk} em risco · {pass} passam",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Segurança", Accessibility: "Acessibilidade", Performance: "Desempenho" },
-      about: { SEO: "Indexação, sitemap, títulos, dados estruturados", GEO: "Como as respostas de IA leem e citam o site", Analytics: "Tags, consentimento, rastreamento de campanhas", Security: "Cabeçalhos, TLS, DNS, exposição", Accessibility: "Marcação, axe-core e o layout no celular", Performance: "Velocidade, peso, renderização e mudanças de layout" }
+      about: { SEO: "Indexação, sitemap, títulos, dados estruturados", GEO: "Como as respostas de IA leem e citam o site", Analytics: "Tags, consentimento, rastreamento de campanhas", Security: "Cabeçalhos, TLS, DNS, listas de malware e phishing, sinais de invasão", Accessibility: "Marcação, axe-core e o layout no celular", Performance: "Velocidade, peso, renderização e mudanças de layout" }
     },
     page: {
       claimTitle: "Pedir o relatório de {host}",
@@ -193,6 +199,8 @@ const COPY = {
     title: "Eine öffentliche Prüfung von {host} steht auf Live Reports",
     lead: "{host} wurde am {date} mit QA-lab URL Review geprüft, und die Werte wurden auf Live Reports veröffentlicht. Wer eine Prüfung angefordert hat, sagen wir nie. Das zeigt die öffentliche Seite:",
     critical: "Die Prüfung hat ein kritisches Sicherheitsproblem gefunden. Der Bericht sagt, was zuerst zu beheben ist.",
+    attackLead: "Ein QA-lab URL Review-Abonnent bat uns, Ihnen diese Angriffs- oder Exploit-Hinweise mitzuteilen:",
+    attackLine: "{title} ({level}) — Quelle: {source}. {fix}",
     local: {
       status_fail: "Google Maps zeigt {host} als dauerhaft geschlossen, wer danach sucht, liest also, dass es nicht mehr existiert.",
       status_risk: "Google Maps zeigt {host} als vorübergehend geschlossen, wer danach sucht, hält es also womöglich für nicht geöffnet.",
@@ -223,7 +231,7 @@ const COPY = {
       measured: "Jede Prüfung wurde an der öffentlichen Antwort gemessen, nicht geschätzt.",
       counts: "{fail} scheitern · {risk} gefährdet · {pass} bestanden",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicherheit", Accessibility: "Barrierefreiheit", Performance: "Leistung" },
-      about: { SEO: "Indexierung, Sitemap, Titel, strukturierte Daten", GEO: "Wie KI-Antworten die Website lesen und zitieren", Analytics: "Tags, Einwilligung, Kampagnen-Tracking", Security: "Header, TLS, DNS, Angriffsfläche", Accessibility: "Markup, axe-core und die Ansicht am Handy", Performance: "Tempo, Gewicht, Rendering und Layout-Verschiebungen" }
+      about: { SEO: "Indexierung, Sitemap, Titel, strukturierte Daten", GEO: "Wie KI-Antworten die Website lesen und zitieren", Analytics: "Tags, Einwilligung, Kampagnen-Tracking", Security: "Header, TLS, DNS, Malware- und Phishing-Listen, Hinweise auf einen Hack", Accessibility: "Markup, axe-core und die Ansicht am Handy", Performance: "Tempo, Gewicht, Rendering und Layout-Verschiebungen" }
     },
     page: {
       claimTitle: "Bericht zu {host} anfordern",
@@ -251,6 +259,8 @@ const COPY = {
     title: "Une revue publique de {host} est sur Live Reports",
     lead: "{host} a été revu avec QA-lab URL Review le {date}, et les scores ont été publiés sur Live Reports. Nous ne disons jamais qui a demandé une revue. Voici ce que montre la page publique :",
     critical: "La revue a trouvé un problème de sécurité critique. Le rapport indique ce qu'il faut corriger d'abord.",
+    attackLead: "Un abonné QA-lab URL Review nous a demandé de vous signaler ces signaux d'attaque ou d'exploitation :",
+    attackLine: "{title} ({level}) — source : {source}. {fix}",
     local: {
       status_fail: "Google Maps indique {host} comme définitivement fermé : ceux qui le cherchent lisent qu'il n'existe plus.",
       status_risk: "Google Maps indique {host} comme temporairement fermé : ceux qui le cherchent peuvent croire qu'il n'est pas ouvert.",
@@ -281,7 +291,7 @@ const COPY = {
       measured: "Chaque contrôle a été mesuré sur la réponse publique, sans supposition.",
       counts: "{fail} échouent · {risk} à risque · {pass} réussis",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sécurité", Accessibility: "Accessibilité", Performance: "Performance" },
-      about: { SEO: "Indexation, sitemap, titres, données structurées", GEO: "Comment les réponses d'IA lisent et citent le site", Analytics: "Balises, consentement, suivi des campagnes", Security: "En-têtes, TLS, DNS, exposition", Accessibility: "Balisage, axe-core et l'affichage sur téléphone", Performance: "Vitesse, poids, rendu et décalages de mise en page" }
+      about: { SEO: "Indexation, sitemap, titres, données structurées", GEO: "Comment les réponses d'IA lisent et citent le site", Analytics: "Balises, consentement, suivi des campagnes", Security: "En-têtes, TLS, DNS, listes de malware et de phishing, signes de piratage", Accessibility: "Balisage, axe-core et l'affichage sur téléphone", Performance: "Vitesse, poids, rendu et décalages de mise en page" }
     },
     page: {
       claimTitle: "Demander le rapport de {host}",
@@ -309,6 +319,8 @@ const COPY = {
     title: "Una revisione pubblica di {host} è su Live Reports",
     lead: "{host} è stato revisionato con QA-lab URL Review il {date}, e i punteggi sono stati pubblicati su Live Reports. Non diciamo mai chi ha chiesto una revisione. Ecco cosa mostra la pagina pubblica:",
     critical: "La revisione ha trovato un problema di sicurezza critico. Il report dice cosa correggere per primo.",
+    attackLead: "Un abbonato di QA-lab URL Review ci ha chiesto di segnalarti questi segnali di attacco o exploit:",
+    attackLine: "{title} ({level}) — fonte: {source}. {fix}",
     local: {
       status_fail: "Google Maps mostra {host} come chiuso definitivamente, quindi chi lo cerca legge che non esiste più.",
       status_risk: "Google Maps mostra {host} come chiuso temporaneamente, quindi chi lo cerca può pensare che non sia aperto.",
@@ -339,7 +351,7 @@ const COPY = {
       measured: "Ogni controllo è stato misurato sulla risposta pubblica, non indovinato.",
       counts: "{fail} falliscono · {risk} a rischio · {pass} superati",
       areas: { SEO: "SEO", GEO: "GEO", Analytics: "Analytics", Security: "Sicurezza", Accessibility: "Accessibilità", Performance: "Prestazioni" },
-      about: { SEO: "Indicizzazione, sitemap, titoli, dati strutturati", GEO: "Come le risposte dell'IA leggono e citano il sito", Analytics: "Tag, consenso, tracciamento delle campagne", Security: "Header, TLS, DNS, esposizione", Accessibility: "Markup, axe-core e il layout su telefono", Performance: "Velocità, peso, rendering e spostamenti del layout" }
+      about: { SEO: "Indicizzazione, sitemap, titoli, dati strutturati", GEO: "Come le risposte dell'IA leggono e citano il sito", Analytics: "Tag, consenso, tracciamento delle campagne", Security: "Header, TLS, DNS, liste di malware e phishing, segni di violazione", Accessibility: "Markup, axe-core e il layout su telefono", Performance: "Velocità, peso, rendering e spostamenti del layout" }
     },
     page: {
       claimTitle: "Chiedi il report di {host}",
@@ -482,6 +494,16 @@ function whyText(t, notice) {
   return fill(t.why, { email: notice.email, source: sourceText(t, notice) });
 }
 
+function attackBlock(t, notice) {
+  const rows = (notice && notice.attackOffer && Array.isArray(notice.attackFindings)) ? notice.attackFindings : [];
+  if (!rows.length || !t.attackLead) return { html: "", text: "" };
+  const lines = rows.map((row) => fill(t.attackLine, row));
+  return {
+    html: para(t.attackLead) + lines.map((line) => para(line, "font-size:14px;line-height:21px;color:" + TEXT.body + ";")).join(""),
+    text: t.attackLead + "\n" + lines.join("\n") + "\n"
+  };
+}
+
 function footer(t, notice, stopUrl, face) {
   return esc(whyText(t, notice)) + "<br>" +
     "<a href=\"" + esc(stopUrl) + "\" style=\"color:" + TEXT.link + ";\">" + esc(t.stop) + "</a><br>" +
@@ -496,12 +518,14 @@ function noticeMail(notice, card, links, score) {
   const vars = { host: notice.host, domain: notice.domain, date: String(card.read || notice.reviewedAt || "").slice(0, 10) };
   const facts = healthFacts(score, card);
   const callUrl = booking.bookUrl("intro", notice.lang, { host: notice.host, from: "owner-notice" });
+  const attack = attackBlock(t, notice);
   const inner = header(fill(t.title, vars)) +
     "<tr><td bgcolor=\"#ffffff\" style=\"background:#ffffff;border-radius:0 0 16px 16px;padding:22px 24px 22px;\">" +
     (notice.local && t.local[notice.local] ? para(fill(t.local[notice.local], vars), "font-size:16px;line-height:24px;color:" + TEXT.strong + ";font-weight:bold;") : "") +
     para(fill(t.lead, vars)) +
     healthBlock(t, notice.host, facts) +
     (notice.critical ? para(t.critical, "font-size:15px;line-height:23px;color:" + TEXT.critical + ";font-weight:bold;") : "") +
+    attack.html +
     button(links.claim, t.claim, true) + button(links.unlist, fill(t.unlist, vars), false) +
     para(fill(t.claimNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:6px 0 8px;") +
     para(fill(t.unlistNote, vars), "font-size:13px;line-height:19px;color:" + TEXT.muted + ";margin:0 0 12px;") +
@@ -512,8 +536,9 @@ function noticeMail(notice, card, links, score) {
     fill(t.title, vars), "",
     notice.local && t.local[notice.local] ? fill(t.local[notice.local], vars) + "\n" : "",
     fill(t.lead, vars), "",
-    healthText(t, notice.host, facts), "",
+    healthText(t, notice.host, facts), "", 
     notice.critical ? t.critical : "",
+    attack.text,
     t.claim + ": " + links.claim, fill(t.claimNote, vars), "",
     fill(t.unlist, vars) + ": " + links.unlist, fill(t.unlistNote, vars), "",
     t.view + ": " + links.live,

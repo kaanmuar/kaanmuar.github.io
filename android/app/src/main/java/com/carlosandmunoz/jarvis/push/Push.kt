@@ -116,6 +116,29 @@ object Push {
         val patched = "processes" in named && runBlocking { withTimeoutOrNull(8_000) { processes(app) } } == true
         val rest = if (patched) data + ("sections" to named.filter { it != "processes" }.joinToString(",")) else data
         if (Home.pushStale(app, rest)) Home.refreshSections(context, rest)
+        else cancelPeerNotices(app, named)
+    }
+
+    /** After peers act (#3570): drop engagement replies no longer waiting, and the briefing tray item when briefing moved. */
+    fun cancelPeerNotices(app: JarvisApp, sections: List<String>) {
+        val nm = app.getSystemService(NotificationManager::class.java) ?: return
+        if ("marketing" in sections) {
+            val waiting = engageWaitingKeys(app)
+            nm.activeNotifications.filter { it.tag?.startsWith("jarvis-engage-") == true }
+                .filter { n -> n.tag!!.removePrefix("jarvis-engage-") !in waiting }
+                .forEach { nm.cancel(it.tag, it.id) }
+        }
+        if ("briefing" in sections) nm.cancel("jarvis-briefing", 1)
+    }
+
+    fun cancelStaleEngage(app: JarvisApp) = cancelPeerNotices(app, listOf("marketing"))
+
+    private fun engageWaitingKeys(app: JarvisApp): Set<String> {
+        val snap = app.api.saved("snapshot", 1)?.json ?: return emptySet()
+        val waiting = snap.obj("external")?.obj("engagement")?.let { e ->
+            (e["waiting"] as? JsonArray)?.mapNotNull { (it as? JsonObject)?.str("key") }
+        }.orEmpty()
+        return waiting.toSet()
     }
 
     /** A processes push (#2548): one read for the section, put into every kept snapshot and the screen on show, then the

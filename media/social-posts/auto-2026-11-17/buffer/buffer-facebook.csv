@@ -1,0 +1,25 @@
+Text,Image URL,Tags,Posting Time
+"motives.ai: 70. The gap: framing.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+What to change: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-motives-ai
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg","","2026-11-18 17:10"
+"zegel.edu.pe: 67. The gap: text contrast.
+
+Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+What to change: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+https://carlosandmunoz.com/qa-review.html?live=u-zegel-edu-pe
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg","","2026-11-19 15:50"

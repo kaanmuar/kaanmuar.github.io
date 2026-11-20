@@ -13,7 +13,7 @@ function cleanUrl(input) {
   let raw = String(input || "").trim();
   const found = raw.match(/https?:\/\/[^\s<>"']+/i);
   if (found) raw = found[0];
-  raw = raw.replace(/[).,;!?]+$/, "");
+  raw = raw.replace(/(?<![).,;!?])[).,;!?]+$/, "");
   if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
   let url;
   try { url = new URL(raw); } catch (error) { throw new Error("That is not a web address."); }

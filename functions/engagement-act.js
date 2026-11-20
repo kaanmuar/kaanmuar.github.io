@@ -20,12 +20,14 @@
  * the reply turns "replied" with a link to ours and is not sent. A report reply (#2465) carries its mini report card
  * (report-card.js, #2466); when the card cannot be drawn or uploaded, the reply goes as text with its link and
  * actions.reply.card says "text", with cardError saying why. pendingChains reads the comments under the replies
- * we posted in the last CHAIN_DAYS, each reply at most once per CHAIN_EVERY, for jarvis-engagement to like and answer.
+ * we posted in the last CHAIN_DAYS, or until chainUntil while the person there is active (#3137), each reply at most
+ * once per CHAIN_EVERY, for jarvis-engagement to like and answer.
  */
 const crypto = require("crypto");
 const E = require("./engagement");
 const Sources = require("./engagement-sources");
 const Card = require("./report-card");
+const P = require("./engagement-profiles");
 
 const HOUR = 3600000;
 const CHAIN_DAYS = 7;
@@ -75,7 +77,7 @@ async function call(fetchImpl, url, opts) {
     const err = data.error;
     const why = (err && typeof err === "object" ? err.message || (err.errors && err.errors[0] && err.errors[0].reason) : err) || data.message || data.error_description || data.description || "";
     // A Telegram bot's token is part of its URL path.
-    const where = url.replace(/[?#].*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
+    const where = url.replace(/[?#](?<![?#][^\n\r\u2028\u2029?#]*[?#]).*$/, "").replace(/^https:\/\//, "").replace(/\/bot[^/]+/, "/bot…");
     // A post with comments turned off answers 403 too, but only that post is refused.
     const postOnly = res.status === 403 && /commentsDisabled|disabled comments/i.test(JSON.stringify(err || "") + " " + why);
     throw new ActError(where + " answered " + res.status + (why ? ": " + clip(why, 160) : ""), !postOnly && (res.status === 401 || res.status === 403 || res.status === 429));
@@ -87,7 +89,7 @@ async function call(fetchImpl, url, opts) {
 function linkFacets(text) {
   const out = [];
   for (const m of String(text).matchAll(/https?:\/\/[^\s]+/g)) {
-    const uri = m[0].replace(/[.,;:!?)\]"'»”]+$/, "");
+    const uri = m[0].replace(/(?<![.,;:!?)\]"'»”])[.,;:!?)\]"'»”]+$/, "");
     const start = Buffer.byteLength(text.slice(0, m.index));
     out.push({ index: { byteStart: start, byteEnd: start + Buffer.byteLength(uri) }, features: [{ $type: "app.bsky.richtext.facet#link", uri }] });
   }
@@ -111,7 +113,7 @@ function mentionFacets(text, dids) {
 // it; an upload that fails leaves the reply as text and says why in cardError.
 
 async function blueskyClient(cred, f, now) {
-  const service = String(cred.service || "https://bsky.social").replace(/\/+$/, "");
+  const service = String(cred.service || "https://bsky.social").replace(/(?<!\/)\/+$/, "");
   const s = await call(f, service + "/xrpc/com.atproto.server.createSession", { json: { identifier: cred.handle, password: cred.password } });
   const auth = { Authorization: "Bearer " + s.accessJwt };
   const at = new Date(now).toISOString();
@@ -181,12 +183,27 @@ async function blueskyClient(cred, f, now) {
       const facets = (linkFacets(text) || []).concat(mentionFacets(text, dids));
       const out = await create("app.bsky.feed.post", { text, facets: facets.length ? facets : undefined, langs: lang ? [lang] : undefined, reply: { root, parent }, embed });
       return { id: out.uri, uri: out.uri, url: link(out.uri), card: embed ? "attached" : "", cardError };
+    },
+    edit: async (d, text, lang) => {
+      const p = await post(d);
+      const rkey = String(p.uri || d.id || "").split("/").pop();
+      if (!rkey) throw new ActError("The post has no record key.");
+      const dids = {};
+      for (const m of String(text).matchAll(/(?:^|[\s(])@([a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)+)/gi)) {
+        const h = m[1].toLowerCase();
+        if (h in dids) continue;
+        dids[h] = ((await call(f, service + "/xrpc/com.atproto.identity.resolveHandle?handle=" + encodeURIComponent(h), { headers: auth }).catch(() => ({}))).did) || "";
+      }
+      const facets = (linkFacets(text) || []).concat(mentionFacets(text, dids));
+      const record = Object.assign({}, p.record || {}, { text, facets: facets.length ? facets : undefined, langs: lang ? [lang] : (p.record || {}).langs });
+      await call(f, service + "/xrpc/com.atproto.repo.putRecord", { headers: auth, json: { repo: s.did, collection: "app.bsky.feed.post", rkey, record, swapRecord: p.cid } });
+      return { id: p.uri, uri: p.uri, url: d.url || link(p.uri) };
     }
   };
 }
 
 async function mastodonClient(cred, f) {
-  const base = String(cred.base).replace(/\/+$/, "");
+  const base = String(cred.base).replace(/(?<!\/)\/+$/, "");
   const auth = { Authorization: "Bearer " + cred.token };
   // The scout reads posts from every server; ours finds its own copy (and the author's account id) by the post's URI.
   const found = new Map();
@@ -255,6 +272,11 @@ async function mastodonClient(cred, f) {
       }
       const out = await call(f, base + "/api/v1/statuses", { headers: Object.assign({ "Idempotency-Key": "engage-" + d.key }, auth), json: { status: body, in_reply_to_id: st.id, language: lang || undefined, visibility: "public", media_ids: media } });
       return { id: String(out.id || ""), uri: out.uri || "", url: out.url || "", card: media ? "attached" : "", cardError };
+    },
+    edit: async (d, text) => {
+      const st = await status(d);
+      const out = await call(f, base + "/api/v1/statuses/" + st.id, { method: "PUT", headers: auth, json: { status: text } });
+      return { id: String(out.id || st.id), uri: out.uri || st.uri || "", url: out.url || st.url || d.url || "" };
     }
   };
 }
@@ -526,7 +548,7 @@ async function connectUrl(deps, network, redirect, keys) {
     return { url: url.toString() };
   }
   if (network === "mastodon") {
-    const base = String((deps.env || {}).MASTODON_URL || "https://mastodon.social").replace(/\/+$/, "");
+    const base = String((deps.env || {}).MASTODON_URL || "https://mastodon.social").replace(/(?<!\/)\/+$/, "");
     const app = await mastodonApp(deps, base, redirect);
     const url = new URL(base + "/oauth/authorize");
     Object.entries({ client_id: app.clientId, redirect_uri: redirect, response_type: "code", scope: MASTODON_SCOPES, state, force_login: "false" }).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -604,25 +626,55 @@ function cardFields(doc, attached, error) {
   return { "actions.reply.card": attached ? "attached" : "text", "actions.reply.cardError": attached ? "" : clip(error || "The card did not go with it.", 200) };
 }
 
+/** One approved caption edit on our own post (#3588). */
+async function sendEdit(deps, c, task) {
+  const e = task.doc.actions.edit;
+  const tries = (e.tries || 0) + 1;
+  const at = new Date(deps.now).toISOString();
+  try {
+    if (!c.edit) throw new ActError(E.NETWORKS[task.doc.network].name + " does not edit captions here.", true);
+    const out = await c.edit(Object.assign({ key: task.key }, task.doc), e.draft, e.lang || task.doc.lang);
+    await task.ref.update({ "actions.edit.status": "posted", "actions.edit.postedAt": at, "actions.edit.url": out.url || task.doc.url || "", "actions.edit.tries": tries, "actions.edit.error": "", updatedAt: at });
+    await count(deps, task.doc.network, "edit_posted");
+    return { status: "posted", url: out.url || "" };
+  } catch (error) {
+    const last = !error.fatal && tries >= MAX_TRIES;
+    await task.ref.update(Object.assign({ "actions.edit.error": clip(error.message, 200), "actions.edit.tries": error.fatal ? tries - 1 : tries, updatedAt: at }, last ? { "actions.edit.status": "failed" } : {}));
+    if (last) await count(deps, task.doc.network, "edit_failed");
+    return { status: last ? "failed" : "approved", error: error.message, fatal: error.fatal };
+  }
+}
+
 /** One approved reply out, unless our account already answered there. Returns { status, url, error }. */
 async function sendReply(deps, c, task) {
   const r = task.doc.actions.reply;
   const tries = (r.tries || 0) + 1;
   const at = new Date(deps.now).toISOString();
-  const d = Object.assign({ key: task.key }, task.doc);
   try {
-    const had = (task.doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
+    let doc = task.doc;
+    if (P.needsLatest(doc)) {
+      const bound = await P.bindLatest(deps.fetch, doc, deps.now);
+      if (!bound) {
+        await task.ref.update({ "actions.reply.status": "failed", "actions.reply.at": at, "actions.reply.error": "No post of theirs in the last year on their profile.", "actions.reply.tries": tries, updatedAt: at });
+        await count(deps, doc.network, "failed");
+        return { status: "failed", error: "No post of theirs in the last year on their profile." };
+      }
+      await task.ref.update(Object.assign({}, bound.patch, { updatedAt: at }));
+      doc = bound.doc;
+    }
+    const d = Object.assign({ key: task.key }, doc);
+    const had = (doc.ownerTags || {}).kind === "tags" ? null : await c.replied(d);
     if (had) {
       await task.ref.update({ "actions.reply.status": "replied", "actions.reply.at": at, "actions.reply.url": had.url || "", "actions.reply.uri": had.uri || "", "actions.reply.error": "We had already replied there, so this one was not sent.", updatedAt: at });
-      await count(deps, task.doc.network, "already");
+      await count(deps, doc.network, "already");
       return { status: "replied", url: had.url || "" };
     }
-    const card = await drawCard(deps, task.doc);
-    const out = await c.reply(d, r.draft, r.lang || task.doc.lang, card.card);
+    const card = await drawCard(deps, doc);
+    const out = await c.reply(d, r.draft, r.lang || doc.lang, card.card);
     await task.ref.update(Object.assign({ "actions.reply.status": "posted", "actions.reply.postedAt": at, "actions.reply.url": out.url || "", "actions.reply.uri": out.uri || "", "actions.reply.id": out.id || "", "actions.reply.tries": tries, "actions.reply.error": "", updatedAt: at },
-      cardFields(task.doc, out.card === "attached", card.error || out.cardError)));
-    await count(deps, task.doc.network, "posted");
-    if (task.doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
+      cardFields(doc, out.card === "attached", card.error || out.cardError)));
+    await count(deps, doc.network, "posted");
+    if (doc.campaign === "report-reply") await deps.db.collection("engagement_daily").doc(E.bogotaDay(deps.now)).set({ report: { posted: deps.inc(1) } }, { merge: true });
     return { status: "posted", url: out.url || "" };
   } catch (error) {
     const last = !error.fatal && tries >= MAX_TRIES;
@@ -668,6 +720,7 @@ async function carryOut(deps, conf) {
   const planned = (await Promise.all(CARRIED.map((a) => db.collection("engagement_posts").where("actions." + a + ".status", "==", "planned").limit(300).get().then((s) => docs(s).map((t) => Object.assign(t, { action: a }))))))
     .flat().sort((a, b) => (b.doc.score || 0) - (a.doc.score || 0));
   const replies = docs(await db.collection("engagement_posts").where("actions.reply.status", "==", "approved").limit(50).get());
+  const edits = docs(await db.collection("engagement_posts").where("actions.edit.status", "==", "approved").limit(20).get());
   const creds = await readCreds(db);
 
   for (const network of API) {
@@ -679,13 +732,13 @@ async function carryOut(deps, conf) {
       else if (!conf.live) { await mark(deps, t, "dry"); tally.dry += 1; }
       else fresh.push(t);
     }
-    const waiting = replies.filter((t) => t.doc.network === network);
+    const waiting = replies.filter((t) => t.doc.network === network).concat(edits.filter((t) => t.doc.network === network));
     if (!creds[network] || (!fresh.length && !waiting.length)) continue;
     const got = await client(deps, network, creds[network]);
     if (got.error) { tally.error = got.error; await noteError(db, network, got.error, now); continue; }
     let sent = 0;
     for (const t of waiting) {
-      const r = await sendReply(deps, got.c, t);
+      const r = (((t.doc.actions || {}).edit || {}).status === "approved" ? await sendEdit(deps, got.c, t) : await sendReply(deps, got.c, t));
       if (r.status === "posted") tally.posted += 1;
       else if (r.status === "replied") tally.already += 1;
       else if (r.status === "failed") tally.failed += 1;
@@ -732,7 +785,7 @@ async function pendingChains(deps) {
   const recheck = new Date(now - CHAIN_EVERY).toISOString();
   const snap = await db.collection("engagement_posts").where("actions.reply.status", "==", "posted").limit(300).get();
   const posted = snap.docs.map((d) => ({ key: d.id, ref: d.ref, doc: d.data() }))
-    .filter((t) => API.includes(t.doc.network) && String(t.doc.actions.reply.postedAt || "") >= since && String(t.doc.chainAt || "") < recheck)
+    .filter((t) => API.includes(t.doc.network) && (String(t.doc.actions.reply.postedAt || "") >= since || String(t.doc.chainUntil || "") > at) && String(t.doc.chainAt || "") < recheck)
     .sort((a, b) => String(b.doc.actions.reply.postedAt).localeCompare(String(a.doc.actions.reply.postedAt)));
   const out = { found: [], checked: 0, errors: {} };
   if (!posted.length) return out;

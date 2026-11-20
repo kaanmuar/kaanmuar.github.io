@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,10 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.net.Uri
 import com.carlosandmunoz.jarvis.JarvisViewModel
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.CardImages
 import com.carlosandmunoz.jarvis.data.ago
+import com.carlosandmunoz.jarvis.data.bool
 import com.carlosandmunoz.jarvis.data.fmt
 import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
@@ -64,6 +68,24 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
         if (picked != null) context.startActivity(Intent(context, SharePostActivity::class.java).setAction(Intent.ACTION_SEND)
             .putExtra(Intent.EXTRA_STREAM, picked).setDataAndType(picked, context.contentResolver.getType(picked)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     }
+    // Soft gate (#3533): same paste → frost → Unlock path as the web Social hub / Jarvis Hub form.
+    var softUrl by rememberSaveable { mutableStateOf("") }
+    Panel("Soft preview", id = "hub-soft") {
+        Muted("Paste a public URL for a 1-page soft preview (#3478): real gauges + the top finding without an account. Unlock on the site runs OAuth + the ten terms, then queues a full crawl.")
+        OutlinedTextField(
+            softUrl,
+            { softUrl = it },
+            label = { Text("https://your-site.com") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        ActionButton("Soft preview", false) {
+            val host = softUrl.trim().removePrefix("https://").removePrefix("http://").trimStart('/')
+            if (host.isBlank()) return@ActionButton
+            runCatching { uri.openUri("https://carlosandmunoz.com/qa-review.html?url=${Uri.encode(host)}&from=hub") }
+        }
+    }
+
     Panel("Share a post", id = "hub-share") {
         Muted("A photo or a video with sound and one caption. Gemini drafts each network's post; you check them, then LinkedIn, X and the Facebook Page (plus TikTok and YouTube for video) get it about 30 minutes later. Sharing from the gallery works too: Post with Jarvis.")
         ActionButton("Choose a photo or video", false) { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
@@ -83,6 +105,24 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
     val social = s.snapshot.obj("external").obj("social")
     val queue = social.objs("queue")
     val counts = mapOf("telegram" to social.obj("telegram"), "reddit" to social.obj("reddit"))
+    val velocity = social.obj("replyVelocity")
+    val hot = velocity.objs("hot").ifEmpty { velocity.objs("top") }
+    val within = velocity.num("withinHours")?.toInt() ?: 24
+    Panel("Reply velocity (first ${within}h)", id = "hub-velocity") {
+        if (hot.isEmpty()) Muted("No comment velocity yet in the first ${within}h after send.")
+        else Muted("Comments vs hours since first send. Hot = comments inside the window — reply early.")
+        hot.take(8).forEach { row ->
+            val key = row.str("key").orEmpty().substringAfterLast('/')
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(key, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Muted("${fmt(row.num("comments"))} comments · ${fmt(row.num("hours"))} h")
+                }
+                Text(fmt(row.num("velocity")), color = if (row.bool("early") == true) J.green else J.muted, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        }
+    }
+
     Panel("Queue by channel", id = "hub-queue") {
         if (queue.isEmpty()) Muted("Pull down to read the social ledgers.")
         queue.forEach { c -> Channel(c, counts[c.str("channel")]?.let { ChannelMembers.members(it) }) }
@@ -108,7 +148,7 @@ fun SocialHub(s: UiState, vm: JarvisViewModel) {
                 }
             }
         }
-        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task.")
+        Muted("Post now runs the Buffer queue (batches a spent daily limit held back) and the Facebook Page queue instead of waiting for tonight. Auto Live Report posts also render a 4-slide carousel and a LinkedIn document PDF (Buffer attaches it when present; Instagram prefers the four stills). The Reddit app run is shown only: the app posts each batch in r/QALabLiveReports on its own daily task. Growth (#3475): keep hashtag caps (IG 5 / LI 6 / X 2); put UTMs in the first comment where the network supports it; refuse a parallel Telegram /scan bot and 7s mute gauge loops; next carousel work is Slide 3 with case id + Playwright + DOM crop.")
         ActionButton("Post now", "post-now" in s.running) { confirm = true }
     }
     if (confirm) AlertDialog(

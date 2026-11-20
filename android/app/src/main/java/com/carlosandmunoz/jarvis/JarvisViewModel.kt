@@ -14,9 +14,11 @@ import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
 import com.carlosandmunoz.jarvis.data.strings
+import com.carlosandmunoz.jarvis.ui.Arrange
 import com.carlosandmunoz.jarvis.ui.Layouts
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
+import com.carlosandmunoz.jarvis.home.StatusSlot
 import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.ui.Github
 import com.carlosandmunoz.jarvis.voice.Heard
@@ -61,6 +63,7 @@ data class UiState(
     val push: Map<String, Boolean> = emptyMap(),
     val ongoing: Boolean = true,
     val ongoingParts: Set<Ongoing.Part> = Ongoing.Part.DEFAULT,
+    val ongoingSlots: List<StatusSlot> = StatusSlot.DEFAULT,
     val heard: Heard = Heard(),
     val handsFree: Boolean = false,
     val speaking: String? = null,
@@ -71,6 +74,7 @@ data class UiState(
     val notices: JsonObject? = null,
     val noticeErrors: Map<String, String> = emptyMap(),
     val proposals: List<JsonObject>? = null,
+    val csatQuotes: List<JsonObject>? = null,
     val runs: List<JsonObject>? = null,
     val shares: List<JsonObject>? = null,
     val devices: List<JsonObject>? = null,
@@ -88,7 +92,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val jarvis = app as JarvisApp
     private val auth = jarvis.auth
     private val api = jarvis.api
-    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), speak = Voice.speakOn(app),
+    private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), ongoingSlots = Ongoing.slots(app), speak = Voice.speakOn(app),
         voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
     private val listener = Listener(app) { ask(it, spoken = true) }
@@ -130,7 +134,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelCode() = _state.update { it.copy(pendingCode = null, authError = null) }
 
     fun signOut() {
-        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing, ongoingParts = _state.value.ongoingParts)
+        _state.value = UiState(email = auth.email, push = _state.value.push, ongoing = _state.value.ongoing, ongoingParts = _state.value.ongoingParts, ongoingSlots = _state.value.ongoingSlots)
         viewModelScope.launch {
             runCatching { Push.forget(jarvis) }
             runCatching { api.call("device", 1, mapOf("gone" to JsonPrimitive(true))) }
@@ -152,6 +156,12 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val parts = if (on) _state.value.ongoingParts + part else _state.value.ongoingParts - part
         Ongoing.setParts(jarvis, parts)
         _state.update { it.copy(ongoingParts = parts) }
+        viewModelScope.launch { Ongoing.show(jarvis, Home.today(jarvis)) }
+    }
+
+    fun setOngoingSlots(slots: List<StatusSlot>) {
+        Ongoing.setSlots(jarvis, slots)
+        _state.update { it.copy(ongoingSlots = slots) }
         viewModelScope.launch { Ongoing.show(jarvis, Home.today(jarvis)) }
     }
 
@@ -307,6 +317,17 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** One tab's section layout (#2809), shown at once and saved through settings-save; a failed save puts the old one back. */
+    /** Cycle a chart panel's stretch 1→2→3 (#3569), saved in layout.stretch like the web. */
+    fun cycleChartStretch(tab: String, id: String, current: Int? = null, max: Int = 3) {
+        val before = Layouts.read(_state.value.snapshot, tab) ?: Layouts.Saved()
+        val ids = Arrange.defaults[tab].orEmpty().ifEmpty { before.order }
+        val stretch = before.stretch.toMutableMap()
+        // #3978: [current] is what the panel shows when nothing is saved (a 3×2 plate starts at 2); max 2 cycles 3×1 and 3×2.
+        stretch[id] = Layouts.nextStretch(stretch[id] ?: current ?: 1, max)
+        val next = Layouts.keep(before, before.order.ifEmpty { ids }, before.hidden, ids).copy(stretch = Layouts.cleanStretch(stretch))
+        saveLayout(tab, next)
+    }
+
     fun saveLayout(tab: String, layout: Layouts.Saved?) {
         val before = Layouts.read(_state.value.snapshot, tab)
         _state.update { it.copy(snapshot = Layouts.patch(it.snapshot, tab, layout)) }
@@ -317,6 +338,15 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
                 .onFailure { e -> fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") } }
             told()
         }
+    }
+
+    /** Continuous panel size (#3611): updates layout[tab].size[id] and keeps order/hidden/stretch. */
+    fun savePanelSize(tab: String, id: String, size: Layouts.Size) {
+        val shown = Arrange.defaults[tab].orEmpty()
+        val before = Layouts.read(_state.value.snapshot, tab)
+        val next = Layouts.withSize(before, id, size, shown.ifEmpty { listOf(id) })
+        val cleaned = if (next.order.isEmpty() && next.hidden.isEmpty() && next.size.isEmpty() && next.stretch.isEmpty()) null else next
+        saveLayout(tab, cleaned)
     }
 
     /** A Marketing button (#1729): like act, then the snapshot is read again so the screen shows the command waiting for the outreach sync. */
@@ -480,6 +510,30 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
             runCatching { if (fixture == null) api.call("social-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
                 .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, proposals = s.proposals?.filter { it.str("id") != id },
                     toast = if (decision == "approved") "Approved. The next daily hub build publishes it." else "Dismissed.") } }
+                .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
+            told()
+        }
+    }
+
+    /** Pending URL Review CSAT quotes (#3557): approve → CV testimonial + Social hub pick. */
+    fun loadCsatQuotes() {
+        if (fixture != null) return
+        if (!auth.signedIn || "csat-quotes" in _state.value.running) return
+        _state.update { it.copy(running = it.running + "csat-quotes") }
+        viewModelScope.launch {
+            val items = runCatching { api.call("csat-testimonials", _state.value.days).objs("items") }
+            _state.update { it.copy(running = it.running - "csat-quotes", csatQuotes = items.getOrNull() ?: it.csatQuotes,
+                toast = items.exceptionOrNull()?.message?.let { m -> "CSAT quotes: $m" } ?: it.toast) }
+        }
+    }
+
+    fun decideCsatQuote(id: String, decision: String) {
+        val key = "csat:$id"
+        _state.update { it.copy(running = it.running + key) }
+        keep("Saving your decision") {
+            runCatching { if (fixture == null) api.call("csat-testimonial-decide", _state.value.days, mapOf("id" to JsonPrimitive(id), "decision" to JsonPrimitive(decision))) }
+                .onSuccess { _ -> _state.update { s -> s.copy(running = s.running - key, csatQuotes = s.csatQuotes?.filter { it.str("id") != id },
+                    toast = if (decision == "approved") "Approved. CV testimonial + hub pick saved." else "Dismissed.") } }
                 .onFailure { e -> fail(e) { it.copy(running = it.running - key, toast = e.message ?: "Failed.") } }
             told()
         }

@@ -1,0 +1,426 @@
+package com.carlosandmunoz.jarvis.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import android.provider.Settings
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.carlosandmunoz.jarvis.data.fmt
+import com.carlosandmunoz.jarvis.data.num
+import com.carlosandmunoz.jarvis.data.obj
+import com.carlosandmunoz.jarvis.data.objs
+import com.carlosandmunoz.jarvis.data.str
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToLong
+import kotlin.math.sqrt
+
+/** The Map tab over time (#3109), twin of js/admin-jarvis-geo-time.js: 7, 30 or 90 days against the span before and the
+ *  last 13 weeks played as a continuous blend between weeks (#3710), from the geo source's `time`
+ *  (functions/jarvis-geo-time.js). Rows built here have the geo rows' fields, so Geo.value, Geo.fills and the map draw
+ *  them as they draw today's. */
+object GeoTime {
+    val SPANS = listOf(0 to "Now", 7 to "7 days", 30 to "30 days", 90 to "90 days")
+    /** The history's fields, FIELDS in functions/jarvis-geo-time.js. */
+    val FIELDS = listOf("sent", "opened", "replies", "interested", "bounced", "answered", "positive", "prospects", "swept", "left", "reviewed", "social", "visitors", "visits", "reviews", "paid", "usd", "clicks", "engaged", "users", "keyEvents")
+    private val KEYS = setOf("light", "activity", "sent", "replies", "replyRate", "positive", "openRate", "bounceRate", "prospects", "left", "saturation", "reviewed", "social", "visitors", "engaged", "keyEvents", "visits", "reviews", "paid", "usd", "clicks") + GeoCost.KEYS
+    private val WORSE_UP = setOf("bounceRate", "cost") + GeoCost.LOWER
+    val UP = Color(0xFF38E1FF)
+    val DOWN = Color(0xFFFF4D8D)
+    const val STEP_MS = 2000L
+    const val TWEEN_MS = 900
+    const val STEP_REDUCE_MS = 1600L
+    private val DAY = DateTimeFormatter.ofPattern("MMM d", Locale.US)
+
+    fun short(day: String?): String = day?.let { runCatching { LocalDate.parse(it).format(DAY) }.getOrNull() } ?: ""
+    private fun plus(day: String, n: Long) = runCatching { LocalDate.parse(day).plusDays(n).toString() }.getOrDefault(day)
+    private fun round1(n: Double) = Math.round(n * 10) / 10.0
+    private fun lerpNum(a: Double?, b: Double?, t: Double): Double? = when {
+        a == null && b == null -> null
+        a == null -> b
+        b == null -> a
+        else -> a + (b - a) * t
+    }
+
+    fun weeks(g: JsonObject?): Int = (g.obj("time").obj("weeks")?.get("start") as? JsonArray)?.size ?: 0
+
+    /** Whether the history can draw this metric; bounce rate only once Instantly sends bounces per day. */
+    fun canShow(time: JsonObject?, key: String): Boolean {
+        if (time == null || key !in KEYS) return false
+        if (key != "bounceRate") return true
+        return time.obj("ranges").obj("7").obj("c")?.values?.any { (it as? JsonObject)?.containsKey("bounced") == true } == true
+    }
+
+    // A row with the geo row's fields: name and target from today's row, numbers from get(field), rounded as geoRows rounds.
+    private fun rowOf(base: Map<String, JsonObject>, cc: String, get: (String) -> Double?): JsonObject {
+        val b = base[cc]
+        val m = linkedMapOf<String, JsonElement>(
+            "cc" to JsonPrimitive(cc), "name" to JsonPrimitive(b?.str("name") ?: Locale("", cc).getDisplayCountry(Locale.ENGLISH).ifBlank { cc }),
+            "target" to JsonPrimitive(b?.get("target")?.let { (it as? JsonPrimitive)?.content == "true" } ?: false),
+            "langs" to (b?.get("langs") ?: JsonArray(emptyList())), "gaps" to JsonArray(emptyList()), "camps" to JsonArray(emptyList()), "sectors" to JsonArray(emptyList())
+        )
+        val nums = FIELDS.associateWith { f -> get(f)?.let { if (f == "usd") Math.round(it * 100) / 100.0 else it.roundToLong().toDouble() } }
+        nums.forEach { (f, v) -> m[f] = if (v == null) JsonNull else JsonPrimitive(v) }
+        val sent = nums["sent"] ?: 0.0
+        m["replyRate"] = if (sent > 0) JsonPrimitive(round1((nums["replies"] ?: 0.0) / sent * 100)) else JsonNull
+        m["openRate"] = if (sent > 0) JsonPrimitive(round1((nums["opened"] ?: 0.0) / sent * 100)) else JsonNull
+        if (nums["bounced"] == null) m["bounced"] = JsonPrimitive(0)
+        val row = JsonObject(m)
+        return JsonObject(m + ("light" to JsonPrimitive(Geo.lightOf(row))))
+    }
+
+    private fun rowsFrom(g: JsonObject, byCc: JsonObject?, pick: (JsonArray) -> Double?): List<JsonObject> {
+        val base = g.objs("countries").associateBy { it.str("cc").orEmpty() }
+        val ccs = LinkedHashSet(base.keys + (byCc?.keys ?: emptySet()))
+        return ccs.map { cc ->
+            val fields = byCc?.get(cc) as? JsonObject
+            rowOf(base, cc) { f -> (fields?.get(f) as? JsonArray)?.let { list -> pick(list) } }
+        }
+    }
+
+    private fun blendCost(a: JsonObject?, b: JsonObject?, t: Double): JsonObject? {
+        if (a == null) return b
+        if (b == null || t < 1e-4) return a
+        if (t > 1 - 1e-4) return b
+        val ca = a.obj("c")
+        val cb = b.obj("c")
+        val ccs = LinkedHashSet((ca?.keys ?: emptySet()) + (cb?.keys ?: emptySet()))
+        val c = buildMap {
+            ccs.forEach { cc ->
+                val ra = ca?.get(cc) as? JsonArray
+                val rb = cb?.get(cc) as? JsonArray
+                if (ra == null && rb == null) return@forEach
+                val n = maxOf(ra?.size ?: 0, rb?.size ?: 0)
+                put(cc, JsonArray((0 until n).map { i ->
+                    val v = lerpNum((ra?.getOrNull(i) as? JsonPrimitive)?.doubleOrNull, (rb?.getOrNull(i) as? JsonPrimitive)?.doubleOrNull, t)
+                    if (v == null) JsonNull else JsonPrimitive(v)
+                }))
+            }
+        }
+        return JsonObject(a + ("c" to JsonObject(c)))
+    }
+
+    /** Every country over a range: which 0 is the last n days to yesterday, 1 the n days before. */
+    fun spanRows(g: JsonObject, n: Int, which: Int) = GeoCost.join(rowsFrom(g, g.obj("time").obj("ranges").obj("$n").obj("c")) { (it.getOrNull(which) as? JsonPrimitive)?.doubleOrNull }, GeoCost.range(g, n, which))
+    /** Every country at week index t (0 the oldest). Fractional t blends between floor and ceil (#3710). */
+    fun weekRows(g: JsonObject, t: Double): List<JsonObject> {
+        val n = weeks(g).coerceAtLeast(1)
+        val x = t.coerceIn(0.0, (n - 1).toDouble())
+        val i = kotlin.math.floor(x + 1e-9).toInt()
+        val f = x - i
+        val byCc = g.obj("time").obj("weeks").obj("c")
+        if (f < 1e-4 || i >= n - 1) {
+            return GeoCost.join(rowsFrom(g, byCc) { (it.getOrNull(i) as? JsonPrimitive)?.doubleOrNull }, GeoCost.week(g, i))
+        }
+        return GeoCost.join(
+            rowsFrom(g, byCc) { list ->
+                lerpNum((list.getOrNull(i) as? JsonPrimitive)?.doubleOrNull, (list.getOrNull(i + 1) as? JsonPrimitive)?.doubleOrNull, f)
+            },
+            blendCost(GeoCost.week(g, i), GeoCost.week(g, i + 1), f)
+        )
+    }
+    fun weekRows(g: JsonObject, k: Int) = weekRows(g, k.toDouble())
+
+    /** A row's number for a metric, null where the history has none (Geo.value reads a missing count as 0). */
+    fun valueOf(r: JsonObject?, key: String): Double? = if (r == null || (key in FIELDS && r[key] is JsonNull)) null else Geo.value(r, key)
+
+    /** The change in a metric between two rows, null when either has no number. */
+    fun deltaOf(now: JsonObject?, before: JsonObject?, key: String): Double? {
+        val a = valueOf(now, key) ?: return null
+        val b = valueOf(before, key) ?: return null
+        return if (key in GeoCost.KEYS) Math.round((a - b) * 10000) / 10000.0 else round1(a - b)
+    }
+
+    data class View(val mode: String, val rows: List<JsonObject>, val delta: Map<String, Double?>? = null, val before: Map<String, JsonObject> = emptyMap(),
+                    val fills: Map<String, Color>? = null, val label: String = "", val note: String = "", val span: Int = 0, val week: Double? = null)
+
+    /** What the map shows for the time controls, as view() in js/admin-jarvis-geo-time.js. week may be fractional while playing. */
+    fun view(g: JsonObject, span: Int, week: Double?, shade: Boolean, key: String): View {
+        val now = View("now", g.objs("countries"))
+        val time = g.obj("time")
+        if (time?.obj("ranges") == null) {
+            return if (span > 0 || week != null) now.copy(note = "No history yet: the daily briefing run records the countries each morning, and backfills 13 weeks of Instantly email the first time.") else now
+        }
+        if (!canShow(time, key) && (span > 0 || week != null)) return now.copy(note = "${Geo.metric(key).label} has no history; the map shows it now. Pick another metric to compare.")
+        var out: View
+        val before: List<JsonObject>?
+        if (week != null) {
+            val n = maxOf(1, weeks(g))
+            val t = week.coerceIn(0.0, (n - 1).toDouble())
+            val k = kotlin.math.floor(t + 1e-9).toInt()
+            val start = time.obj("weeks")?.get("start")?.jsonArray?.getOrNull(k)?.jsonPrimitive?.content.orEmpty()
+            val recorded = (time.obj("weeks")?.get("days") as? JsonArray)?.getOrNull(k)?.jsonPrimitive?.doubleOrNull ?: 0.0
+            out = View("week", weekRows(g, t), label = "Week of ${short(start)} – ${short(plus(start, 6))}", week = t, note = if (recorded > 0) "" else "Nothing recorded that week.")
+            before = if (t > 0) weekRows(g, maxOf(0.0, t - 1)) else null
+        } else if (span > 0 && time.obj("ranges").obj("$span") != null) {
+            val r = time.obj("ranges").obj("$span")
+            val prevDays = r.num("prevDays")?.toInt() ?: 0
+            val note = when { prevDays >= span -> ""; prevDays == 0 -> "The $span days before are not recorded yet, so there is no change to show."
+                else -> "Only $prevDays of the $span days before ${if (prevDays == 1) "is" else "are"} recorded, so the change is partial." }
+            out = View("span", spanRows(g, span, 0), label = "${short(r.str("from"))} – ${short(r.str("to"))} against ${short(r.str("prevFrom"))} – ${short(r.str("prevTo"))}", span = span, note = note)
+            before = spanRows(g, span, 1)
+        } else return now
+        if (before != null) {
+            val prev = before.associateBy { it.str("cc").orEmpty() }
+            val delta = out.rows.associate { (it.str("cc").orEmpty()) to deltaOf(it, prev[it.str("cc")], key) }
+            out = out.copy(delta = delta, before = prev, fills = if (shade) changeFills(delta, key) else null)
+        }
+        return out
+    }
+
+    fun good(d: Double, key: String) = (d > 0) != (key in WORSE_UP)
+
+    /** Cyan where the metric rose, pink where it fell (flipped for bounce rate), by the square root of the largest change. */
+    fun changeFills(delta: Map<String, Double?>, key: String): Map<String, Color> {
+        val max = delta.values.maxOfOrNull { abs(it ?: 0.0) } ?: 0.0
+        if (max <= 0) return emptyMap()
+        return delta.mapNotNull { (cc, d) -> if (d == null || d == 0.0) null else cc to (if (good(d, key)) UP else DOWN).copy(alpha = (0.18 + 0.82 * sqrt(abs(d) / max)).toFloat()) }.toMap()
+    }
+
+    /** "▲ +12", "▼ −3.5 pts" or "= 0"; "—" without a number. */
+    fun arrow(d: Double?, key: String): String {
+        if (d == null) return "—"
+        if (d == 0.0) return "= 0"
+        val unit = if (key != "light" && Geo.metric(key).unit == "%") " pts" else ""
+        // en-US like the web arrow (toLocaleString('en-US')), so decimals stay "0.5" on every device locale.
+        val n = abs(d).let { v ->
+            if (v == v.roundToLong().toDouble() && abs(v) < 1e15) "%,d".format(Locale.US, v.roundToLong())
+            else "%,.1f".format(Locale.US, v)
+        }
+        return (if (d > 0) "▲ +" else "▼ −") + if (key in GeoCost.KEYS) GeoCost.show(abs(d), key) else (if (key == "usd") "$" else "") + n + unit
+    }
+    fun arrowColor(d: Double?, key: String): Color = if (d == null || d == 0.0) J.muted else if (good(d, key)) UP else DOWN
+
+    data class PlayStats(val total: Double?, val totalKey: String, val up: List<Mover>, val down: List<Mover>, val upN: Int, val downN: Int)
+    data class Mover(val cc: String, val name: String, val d: Double, val good: Boolean)
+
+    /** Totals and movers for the week playback side rail (twin of playStatsData in admin-jarvis-geo-time.js). */
+    fun playStatsData(tv: View, key: String): PlayStats? {
+        if (tv.mode != "week") return null
+        val withVal = tv.rows.mapNotNull { r ->
+            val v = valueOf(r, key) ?: return@mapNotNull null
+            r.str("cc").orEmpty() to Triple(r.str("name").orEmpty(), v, r)
+        }
+        val total = when (key) {
+            "light" -> withVal.size.toDouble()
+            "replyRate", "openRate", "bounceRate" -> {
+                var sent = 0.0
+                var w = 0.0
+                tv.rows.forEach { r ->
+                    val s = valueOf(r, "sent") ?: return@forEach
+                    val v = valueOf(r, key) ?: return@forEach
+                    sent += s
+                    w += v * s
+                }
+                if (sent > 0) round1(w / sent) else null
+            }
+            in GeoCost.KEYS -> Math.round(withVal.sumOf { it.second.second } * 100) / 100.0
+            else -> {
+                val sum = withVal.sumOf { it.second.second }
+                if (key == "usd") Math.round(sum * 100) / 100.0 else sum.roundToLong().toDouble()
+            }
+        }
+        val movers = tv.delta.orEmpty().mapNotNull { (cc, d) ->
+            if (d == null || d == 0.0) return@mapNotNull null
+            val row = tv.rows.firstOrNull { it.str("cc") == cc } ?: return@mapNotNull null
+            Mover(cc, row.str("name").orEmpty(), d, good(d, key))
+        }
+        return PlayStats(total, key, movers.filter { it.good }.sortedByDescending { it.d }.take(3),
+            movers.filter { !it.good }.sortedBy { it.d }.take(3), movers.count { it.d > 0 }, movers.count { it.d < 0 })
+    }
+}
+
+/** The controls' state: a range to compare, a week to play, and value or change shading. */
+@Stable
+class GeoTimeState(span: Int, week: Float, shade: Boolean) {
+    var span by mutableStateOf(span)
+    /** -1 is now; 0 to 12 a week (fractional while Play runs). */
+    var weekAt by mutableStateOf(week)
+    var shade by mutableStateOf(shade)
+    var playing by mutableStateOf(false)
+    val week: Float? get() = weekAt.takeIf { it >= 0f }
+}
+
+@Composable
+fun rememberGeoTime(): GeoTimeState {
+    var span by rememberSaveable { mutableStateOf(0) }
+    var week by rememberSaveable { mutableStateOf(-1f) }
+    var shade by rememberSaveable { mutableStateOf(false) }
+    val st = remember { GeoTimeState(span, week, shade) }
+    LaunchedEffect(st.span, st.weekAt, st.shade) { span = st.span; week = st.weekAt; shade = st.shade }
+    return st
+}
+
+/** The range picker, change shading and week player; Play advances continuously between weeks (#3710). */
+@Composable
+fun GeoTimeControls(g: JsonObject, st: GeoTimeState, v: GeoTime.View) {
+    val weeks = GeoTime.weeks(g)
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    LaunchedEffect(st.playing, reduceMotion) {
+        if (!st.playing || weeks <= 0) return@LaunchedEffect
+        val step = if (reduceMotion) GeoTime.STEP_REDUCE_MS else GeoTime.STEP_MS
+        var last = 0L
+        while (st.playing && weeks > 0) {
+            withFrameMillis { now ->
+                val dt = if (last == 0L) 0L else (now - last).coerceAtMost(80L)
+                last = now
+                var w = if (st.weekAt < 0f) 0f else st.weekAt
+                w += dt.toFloat() / step
+                if (w >= weeks - 1) {
+                    st.weekAt = (weeks - 1).toFloat()
+                    st.playing = false
+                } else st.weekAt = w
+            }
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        GeoTime.SPANS.forEach { (n, label) ->
+            val on = st.week == null && st.span == n
+            TextButton({ st.playing = false; st.weekAt = -1f; st.span = n }) { Text(label, color = if (on) J.cyan else J.muted, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal, fontSize = 13.sp) }
+        }
+    }
+    if (v.delta != null) Row(Modifier.clickable { st.shade = !st.shade }, verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(st.shade, { st.shade = it }, colors = CheckboxDefaults.colors(checkedColor = J.cyan))
+        Text("Shade the change", fontSize = 13.sp, color = J.muted)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        TextButton({
+            if (st.playing) st.playing = false
+            else if (weeks > 0) { if (st.weekAt < 0f || st.weekAt >= weeks - 1) st.weekAt = 0f; st.playing = true }
+        }, enabled = weeks > 0) { Text(if (st.playing) "❚❚ Pause" else "▶ Play 13 weeks", color = J.cyan, fontSize = 13.sp) }
+        Slider(
+            if (st.weekAt < 0f) weeks.toFloat() else st.weekAt,
+            { st.playing = false; st.weekAt = if (it >= weeks - 0.01f) -1f else it },
+            onValueChangeFinished = { if (st.weekAt >= 0f) st.weekAt = Math.round(st.weekAt).toFloat() },
+            valueRange = 0f..maxOf(1, weeks).toFloat(),
+            enabled = weeks > 0,
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(thumbColor = J.cyan, activeTrackColor = J.cyan, inactiveTrackColor = J.line)
+        )
+    }
+    Text(if (v.mode == "now") "Now" else v.label, color = J.amber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    if (v.note.isNotEmpty()) Muted(v.note)
+}
+
+/** The tap card's change line: the metric in the range or week, before it, and the arrow. */
+@Composable
+fun GeoChangeLine(v: GeoTime.View, cc: String, key: String) {
+    val r = v.rows.firstOrNull { it.str("cc") == cc } ?: return
+    val d = v.delta?.get(cc)
+    Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("${Geo.metric(key).label} ${Geo.show(GeoTime.valueOf(r, key), key)} · before ${Geo.show(GeoTime.valueOf(v.before[cc], key), key)} ", fontSize = 11.sp, color = J.text, modifier = Modifier.weight(1f, fill = false))
+        Text(GeoTime.arrow(d, key), fontSize = 11.sp, color = GeoTime.arrowColor(d, key), fontWeight = FontWeight.Bold)
+    }
+}
+
+/** Side map statistics while Play is on (#3568). */
+@Composable
+fun GeoPlayStats(tv: GeoTime.View, key: String, playing: Boolean, modifier: Modifier = Modifier) {
+    if (!playing) return
+    val s = GeoTime.playStatsData(tv, key) ?: return
+    val totalShow = s.total?.let { Geo.show(it, s.totalKey) } ?: "—"
+    val animateKey = tv.week?.toInt()
+    Column(
+        modifier
+            .widthIn(min = 152.dp, max = 200.dp)
+            .background(J.panel.copy(alpha = 0.92f), RoundedCornerShape(10.dp))
+            .border(1.dp, J.line, RoundedCornerShape(10.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text("TOTAL · ${Geo.metric(key).label.uppercase()}", color = J.amber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        CountUp(totalShow, animateKey, GeoTime.TWEEN_MS) { Text(it, color = J.text, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        Muted("${s.upN} up · ${s.downN} down vs last week")
+        @Composable
+        fun block(head: String, rows: List<GeoTime.Mover>, empty: String) {
+            Text(head.uppercase(), color = J.amber, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            if (rows.isEmpty()) Muted(empty)
+            else rows.forEach { m ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(m.name, fontSize = 12.sp, color = J.text, modifier = Modifier.weight(1f))
+                    Text(GeoTime.arrow(m.d, key), fontSize = 11.sp, color = GeoTime.arrowColor(m.d, key), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        block("Biggest rise", s.up, "No country rose")
+        block("Biggest drop", s.down, "No country fell")
+    }
+}
+
+/** The change legend: pink to cyan, the largest change each way, how many rose and fell. */
+@Composable
+fun GeoChangeLegend(v: GeoTime.View, key: String) {
+    val ds = v.delta.orEmpty().values.filterNotNull().filter { it != 0.0 }
+    val max = ds.maxOfOrNull { abs(it) } ?: 0.0
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
+        Muted(if (max > 0) "−" + fmt(max) else "0")
+        Box(Modifier.width(120.dp).height(8.dp).background(Brush.horizontalGradient(listOf(GeoTime.DOWN, GeoTime.DOWN.copy(alpha = 0.18f), Geo.TARGET, GeoTime.UP.copy(alpha = 0.18f), GeoTime.UP)), RoundedCornerShape(4.dp)))
+        Muted(if (max > 0) "+" + fmt(max) else "0")
+    }
+    Muted("${ds.count { it > 0 }} up · ${ds.count { it < 0 }} down · against the ${if (v.mode == "week") "week" else "span"} before")
+}
+
+/** The country sheet's changes over the picked range (30 days when none): sent, replies, positive, reply rate, GA4 visitors, engaged sessions and key events, prospects left and reviewed. */
+@Composable
+fun GeoTimeSheet(g: JsonObject, cc: String, span: Int) {
+    val n = if (span > 0) span else 30
+    if (g.obj("time").obj("ranges").obj("$n") == null) return
+    val now = GeoTime.spanRows(g, n, 0).firstOrNull { it.str("cc") == cc } ?: return
+    val was = GeoTime.spanRows(g, n, 1).firstOrNull { it.str("cc") == cc }
+    Text("LAST $n DAYS AGAINST THE $n BEFORE", color = J.amber, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
+    Column {
+        listOf("sent", "replies", "positive", "replyRate", "visitors", "engaged", "keyEvents", "left", "reviewed").forEach { k ->
+            val d = GeoTime.deltaOf(now, was, k)
+            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(Geo.metric(k).label, fontSize = 13.sp, color = J.text, modifier = Modifier.weight(1f))
+                Text("${Geo.show(GeoTime.valueOf(now, k), k)} · before ${Geo.show(GeoTime.valueOf(was, k), k)}", fontSize = 12.sp, color = J.muted)
+                Text(GeoTime.arrow(d, k), fontSize = 12.sp, color = GeoTime.arrowColor(d, k), fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+    }
+}

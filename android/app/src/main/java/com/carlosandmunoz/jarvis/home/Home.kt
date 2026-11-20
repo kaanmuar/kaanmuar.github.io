@@ -103,7 +103,8 @@ object Home {
             return Cell(label, k?.prim("value").text(), delta, dirOf(delta), p.obj("series").at("values").doubles())
         }
         val pipe = snap.obj("external").obj("outreach").obj("pipeline")?.takeIf { it.isOk() }
-        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), null, 0, pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
+        val reviewedDelta = change(pipe?.num("reviews"), pipe?.num("priorReviews"))
+        val outreach = Cell("Outreach · reviewed", pipe?.prim("reviews").text(), reviewedDelta, dirOf(reviewedDelta), pipe.objs("daily").map { it.num("reviews") ?: 0.0 })
         return listOf(revenue, product("review", "Reviews"), product("cv", "CV"), outreach)
     }
 
@@ -369,6 +370,7 @@ object Home {
         runCatching { StatusWidget().updateAll(context) }
         runCatching { NumbersWidget().updateAll(context) }
         runCatching { GoalsWidget().updateAll(context) }
+        MapKind.entries.forEach { k -> runCatching { mapWidget(k).updateAll(context) } }
         runCatching { TileService.requestListeningState(context, ComponentName(context, StatusTile::class.java)) }
         val today = today(context.applicationContext as JarvisApp)
         Ongoing.show(context, today)
@@ -425,7 +427,10 @@ object Home {
             val only = Sections.toFetch(data, app.api.saved("snapshot", d)?.json, d)
             if (only.isEmpty()) true else runCatching { app.api.snapshot(d, only) }.isSuccess.also { fetched = true }
         }.all { it }
-        if (fetched) redraw(context)
+        if (fetched) {
+            redraw(context)
+            com.carlosandmunoz.jarvis.push.Push.cancelPeerNotices(app, data["sections"].orEmpty().split(","))
+        }
         return ok
     }
 
