@@ -28,7 +28,7 @@ const TYPES = ["plugin", "theme", "core"];
 const SEVERITY = [[9, "critical", "fail", "high"], [7, "high", "risk", "high"], [4, "medium", "risk", "medium"], [0, "low", "risk", "low"]];
 
 const ASSET = /\/wp-content\/(plugins|themes)\/([a-z0-9][a-z0-9_.-]{0,80})\//i;
-const GENERATOR = /<meta\b[^>]*name\s*=\s*["']?generator["']?[^>]*>/gi;
+const GENERATOR = /<meta\b(?=[^<>]*?name\s*=\s*["']?generator)[^<>]*>/gi;
 // Gutenberg serves the block library under the same path with its own version (10 and up), so only 3.x-9.x reads as core.
 const CORE_ASSET = /\/wp-includes\/(?:css\/dist\/block-library\/style|js\/wp-emoji-release)(?:\.min)?\.(?:css|js)\?ver=([3-9]\.\d{1,2}(?:\.\d{1,2})?)\b/i;
 const PLAUSIBLE = /^\d{1,3}(?:\.\d{1,4}){0,3}(?:[-.]?(?:alpha|beta|rc|pre|dev|a|b|p)\.?\d*)?$/i;

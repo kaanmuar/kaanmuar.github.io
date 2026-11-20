@@ -50,7 +50,7 @@ function emailOf(raw, host) {
 /** Every JSON-LD object in a page, @graph members included. */
 function jsonLd(html) {
   const out = [];
-  const re = /<script[^>]+type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script[^>]*>/gi;
+  const re = /<script(?=[^<>]+?type\s*=\s*["']application\/ld\+json["'])[^<>]*>((?:[^<]|<(?!\/?script))*)<\/script[^<>]*>/gi;
   let m;
   const walk = (x) => {
     if (Array.isArray(x)) return x.forEach(walk);
@@ -103,7 +103,7 @@ function contactLinks(html, base) {
   let home;
   try { home = new URL(base); } catch (error) { return []; }
   const out = [];
-  const re = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
+  const re = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
   let m;
   while ((m = re.exec(String(html || ""))) && out.length < CONTACT_PAGES) {
     let u;

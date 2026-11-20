@@ -35,7 +35,7 @@ const listOf = (map) => Object.keys(map).map((label) => ({ label, value: map[lab
 
 // "W1 E-pt Brazil" → { week: "W1", sequence: "E", lang: "pt", region: "Brazil" }; other names keep only the name.
 function parseName(name) {
-  const m = /^(W\d+)\s+([A-Z])-([a-z]{2})\s+(.+)$/.exec(String(name || "").trim());
+  const m = /^(W\d+)\s+([A-Z])-([a-z]{2})\s+(\S.*)$/.exec(String(name || "").trim());
   return m ? { week: m[1], sequence: m[2], lang: m[3], region: m[4] } : { week: "", sequence: "", lang: "", region: "" };
 }
 
