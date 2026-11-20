@@ -3722,6 +3722,15 @@
 			document.getElementById('batch-error').textContent = msg;
 			return;
 		}
+		// Every row's run is checked against these fields; one missing would fail all of them (#3975).
+		const fieldErrors = clientErrors().filter((item) => item.field !== 'url' && item.field !== 'email');
+		if (fieldErrors.length) {
+			markFields(fieldErrors);
+			setStatus(fieldErrors[0].message, true);
+			const first = document.getElementById(fieldErrors[0].field + '-error');
+			if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			return;
+		}
 		if (!standing) await loadStanding();
 		// A free-runs address runs every review free, so its batch needs no pass (#3972).
 		const free = !!(standing && standing.free);
@@ -3821,6 +3830,17 @@
 						setStatus(batchCopy('needCreditsNone'), true);
 						break;
 					}
+					if (formError(error)) {
+						if (window.ReviewProgress) ReviewProgress.reset();
+						markFields(error.fields.filter((item) => item.field !== 'url'));
+						setStatus(error.message, true);
+						try {
+							pool.batch = await batchPost('/account/batch/stop', { id: pool.batch.id });
+						} catch (stopError) {
+							/* the rows left waiting reopen with the batch */
+						}
+						break;
+					}
 					throw error;
 				}
 				if (bc) bc.paintPanel(pool.batch);
@@ -3844,6 +3864,11 @@
 	}
 
 	const BATCH_ROW_TRIES = 3;
+
+	// A field of the form (not the row's URL) was refused: every row would fail the same way, so the batch stops.
+	function formError(error) {
+		return !!(error && error.fields && error.fields.some((item) => item.field !== 'url'));
+	}
 
 	async function runBulkRow(pool, index) {
 		const batch = pool.batch;
@@ -3917,6 +3942,7 @@
 				lastError = error;
 				if (error.body && error.body.signIn) throw error;
 				if (error.paymentRequired) throw error;
+				if (formError(error)) throw error;
 				if (pool.stopping) return;
 				if (tryN < BATCH_ROW_TRIES) continue;
 			}

@@ -12,7 +12,7 @@ const SHOTS = !!process.env.BATCH_SHOTS;
 
 test.use({ viewport: { width: 1280, height: 900 }, video: SHOTS ? 'on' : 'off' });
 
-async function open(page, { runsLeft = 10, free = false } = {}) {
+async function open(page, { runsLeft = 10, free = false, refuseReason = false } = {}) {
 	const store = auth.memoryStore();
 	const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: ANA, ip: '1.1.1.1' });
 	const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: ANA });
@@ -84,6 +84,8 @@ async function open(page, { runsLeft = 10, free = false } = {}) {
 		}
 		if (p.endsWith('/account/batch/open')) return json(200, batch.payloadOf('batch1', doc));
 		if (p.endsWith('/review')) {
+			if (refuseReason)
+				return json(400, { error: 'Pick a reason.', fields: [{ field: 'reason', message: 'Pick a reason.' }] });
 			await new Promise((r) => setTimeout(r, 2500));
 			const host = new URL(body.url.indexOf('://') === -1 ? 'https://' + body.url : body.url).hostname;
 			const report = Object.assign({}, sample.report, { id: 'r' + host.replace(/\W/g, ''), host, requestedUrl: body.url });
@@ -104,6 +106,10 @@ async function open(page, { runsLeft = 10, free = false } = {}) {
 	return calls;
 }
 
+async function pickReason(page) {
+	await page.locator('input[name="reasonCode"][value="redesign"]').check({ force: true });
+}
+
 async function shot(page, name) {
 	if (!SHOTS) return;
 	fs.mkdirSync(OUT, { recursive: true });
@@ -116,6 +122,7 @@ async function runAll(page, name, count, fill, opts) {
 	await fill();
 	await expect(page.locator('#batch-preview li')).toHaveCount(count);
 	await page.locator('#name').fill('Ana');
+	await pickReason(page);
 	await expect(page.locator('#review-needs button[data-step="page"]')).toHaveCount(0);
 	await expect(page.locator('#review-btn')).not.toContainText('left');
 	await page.locator('#review-btn').click();
@@ -166,6 +173,7 @@ test('without a pass, Run says so beside the list instead of looking frozen', as
 	await page.locator('[data-url-mode="many"]').click();
 	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/\nhttps://c.example/\nhttps://d.example/\nhttps://e.example/');
 	await page.locator('#name').fill('Ana');
+	await pickReason(page);
 	await expect(page.locator('#review-btn')).not.toContainText('left');
 	await page.locator('#review-btn').click();
 	await expect(page.locator('#batch-error')).toContainText(/pass|credits/i);
@@ -178,4 +186,31 @@ test('a free-runs account starts a bulk review with no pass (#3972)', async ({ p
 	test.setTimeout(120000);
 	const urls = ['a', 'b', 'c', 'd', 'e'].map((x) => 'https://' + x + '.example/');
 	await runAll(page, 'free', 5, () => page.locator('#batch-text').fill(urls.join('\n')), { free: true });
+});
+
+test('Start without a reason asks for it and starts nothing (#3975)', async ({ page }) => {
+	const calls = await open(page);
+	await page.locator('[data-url-mode="many"]').click();
+	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/\nhttps://c.example/');
+	await page.locator('#name').fill('Ana');
+	await page.locator('#review-btn').click();
+	await expect(page.locator('#reason-error')).not.toHaveText('');
+	await expect(page.locator('#reason-error')).toBeInViewport();
+	await expect(page.locator('#gate')).toBeHidden();
+	expect(calls.filter((c) => /batch|review$/.test(c[1]))).toEqual([]);
+});
+
+test('a form field the server refuses stops the batch after one try (#3975)', async ({ page }) => {
+	const calls = await open(page, { refuseReason: true });
+	await page.locator('[data-url-mode="many"]').click();
+	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/\nhttps://c.example/');
+	await page.locator('#name').fill('Ana');
+	await pickReason(page);
+	await page.locator('#review-btn').click();
+	await page.locator('#gate input[type=checkbox]').first().check();
+	await page.locator('#accept').click();
+	await expect(page.locator('#review-btn')).toBeEnabled({ timeout: 15000 });
+	await expect(page.locator('#reason-error')).not.toHaveText('');
+	expect(calls.filter((c) => c[1].endsWith('/review')).length).toBe(1);
+	expect(calls.some((c) => c[1].endsWith('/account/batch/stop'))).toBe(true);
 });

@@ -125,6 +125,7 @@ test('a short pass blocks starting a bulk review', async ({ page }) => {
 	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/');
 	await expect(page.locator('#batch-preview li')).toHaveCount(2);
 	await page.locator('#name').fill('Ana');
+	await page.locator('input[name="reasonCode"][value="redesign"]').check({ force: true });
 	await page.locator('#review-btn').click();
 	await expect(page.locator('#form-status')).toContainText(
 		/credits|pass|ejecuciones|créditos|crédits|Credits|Läufe|passe/i,
@@ -139,6 +140,7 @@ test('pressing Start shows the panel, the meter, and a held button before the se
 	await page.locator('#batch-text').fill('https://a.example/\nhttps://b.example/');
 	await expect(page.locator('#batch-preview li')).toHaveCount(2);
 	await page.locator('#name').fill('Ana');
+	await page.locator('input[name="reasonCode"][value="redesign"]').check({ force: true });
 	await page.locator('#review-btn').click();
 	await expect(page.locator('#batch-panel')).toBeVisible({ timeout: 2000 });
 	await expect(page.locator('#batch-panel-rows li')).toHaveCount(2);
