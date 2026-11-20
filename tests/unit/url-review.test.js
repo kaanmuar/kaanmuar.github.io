@@ -2381,6 +2381,29 @@ test.describe('pricing', () => {
 		assert.ok(offers.ADDONS.includes('fixlist'));
 	});
 
+	test('the Deep attack-source check is 19 USD flat, its own add-on, never a discount or a credit', () => {
+		assert.deepEqual(core.priceForDeep(), { usd: 19, cents: 1900, count: 1, frameworks: [], layers: [] });
+		assert.equal(core.DEEP_CENTS, 1900);
+		assert.equal(core.chargedUsd({ purpose: 'deep', priceUsd: 19 }).usd, 19);
+		assert.throws(() => core.chargedUsd({ purpose: 'deep', priceUsd: 14, listUsd: 19 }), /out of range/);
+		assert.throws(() => core.chargedUsd({ purpose: 'deep', priceUsd: 19, listUsd: 29 }), /does not match/);
+		assert.equal(core.priceMatches(19), true);
+		assert.equal(offers.paidPurpose('deep'), 'deep');
+		assert.ok(offers.ADDONS.includes('deep'));
+		assert.equal(core.productName('deep', []), 'QA-lab URL Review Deep attack-source check');
+		// It credits nothing off the report unlock, unlike a fix list.
+		assert.equal(core.creditFor({ addons: ['deep'] }), 0);
+	});
+
+	test('refunding the Deep check takes the add-on off its report and nothing else', () => {
+		const updates = offers.reversalUpdates(
+			[{ id: 'paid-deep-x', status: 'paid-addon', purpose: 'deep', reportId: 'abc123' }],
+			{ kind: 'refund' }
+		);
+		assert.ok(updates.some((u) => u.id === 'abc123' && u.removeAddon === 'deep'));
+		assert.ok(updates.some((u) => u.id === 'paid-deep-x' && u.set && u.set.refunded === true));
+	});
+
 	test("a fix list bought on a report takes 5 USD off that report's full unlock", () => {
 		assert.equal(core.creditFor({ addons: ['fixlist'] }), 500);
 		assert.equal(core.creditFor({ addons: ['alerts'] }), 0);
