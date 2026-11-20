@@ -6211,6 +6211,7 @@ exports.reviewUrl = functions.runWith({ timeoutSeconds: 180, memory: "512MB", ma
       free,
       addons: data.addons || [],
       addonLayers: data.addonLayers || [],
+      deep: data.deep || null,
       attackOwnerNoticeSentAt: data.attackOwnerNoticeSentAt || "",
       ownerNoticeOffer: ownerNoticeOffer.showOffer(data.report, { paid: true }),
       branding: brand ? { companyName: brand.companyName, logoDataUrl: brand.logoDataUrl || "" } : null

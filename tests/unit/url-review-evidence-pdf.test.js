@@ -91,3 +91,44 @@ test("a run where no source answered says so in the report's language", () => {
   assert.ok(evidencePdf.page(none, { lang: "en" }).html.includes("No source answered in time."));
   assert.ok(evidencePdf.page(none, { lang: "fr" }).html.includes("Aucune source n’a répondu à temps."));
 });
+
+const DEEP = {
+  checkedAt: "2026-11-19T15:30:00.000Z",
+  sourcesRead: ["CertSpotter CT", "GDELT Project"],
+  sourcesSkipped: [],
+  attributions: ["GDELT Project (https://www.gdeltproject.org/)"],
+  breachNews: [{ date: "2026-11-18", source: "News", url: "https://news.example.net/x" }],
+  certCheck: { anomalies: [{ kind: "issuance-spike", detail: "30 unexpired certificates issued in the last 7 days for example.com" }], ctChecked: true, ctIssuances: 30 },
+  findings: [
+    { key: "sec-cert-anomaly", verdict: "risk", severity: "medium", title: "Certificate anomaly", evidence: "30 certificates in 7 days",
+      msg: { title: { id: "sec-cert-anomaly.title", vars: { n: 1 } }, evidence: { id: "sec-cert-anomaly.evidence", vars: { details: "30 unexpired certificates issued in the last 7 days for example.com" } } } },
+    { key: "sec-targeted", verdict: "pass", severity: "info", title: "pass", evidence: "ok" }
+  ]
+};
+
+test("a bought Deep check adds tagged rows, its sources and its attribution to the PDF; a pass adds no row (#3946)", () => {
+  const record = Object.assign({}, PAID_RECORD, { deep: DEEP });
+  const list = evidencePdf.rows(record, "en");
+  const deepRows = list.filter((row) => row.deep);
+  assert.equal(deepRows.length, 1);
+  assert.match(deepRows[0].title, /^Deep check: /);
+  assert.equal(deepRows[0].source, "CertSpotter CT");
+  assert.equal(deepRows[0].time, "2026-11-19 15:30");
+  const html = evidencePdf.page(record, { lang: "en" }).html;
+  assert.ok(html.includes("Deep check · Read: CertSpotter CT, GDELT Project."));
+  assert.ok(html.includes("GDELT Project (https://www.gdeltproject.org/)"));
+  const de = evidencePdf.page(record, { lang: "de" }).html;
+  assert.ok(de.includes("Tiefenprüfung: "));
+  assert.ok(de.includes("Tiefenprüfung · Gelesen: CertSpotter CT, GDELT Project."));
+  assert.equal(evidencePdf.rows(PAID_RECORD, "en").filter((row) => row.deep).length, 0);
+});
+
+test("a report with only a Deep result still lists it", () => {
+  const record = JSON.parse(JSON.stringify(PAID_RECORD));
+  delete record.report.targeted;
+  record.report.insights.findings = [];
+  record.deep = DEEP;
+  const gate = evidencePdf.meta(record);
+  assert.equal(gate.ok, true);
+  assert.equal(gate.rows.length, 1);
+});
