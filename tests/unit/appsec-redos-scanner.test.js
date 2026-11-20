@@ -2,8 +2,18 @@
 // #3953: the ReDoS scanner must collect regex literals in every expression position, not just `= /re/` assignments.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const acorn = require('acorn');
 const { collectPatterns } = require('../../scripts/appsec-redos.js');
+
+// acorn is a transitive dev dependency of the root lockfile; jobs that run tests without a root install skip this file.
+// The appsec-gates ReDoS job (which installs the root tree) runs it before the scan.
+let acorn = null;
+try {
+	acorn = require('acorn');
+} catch {}
+if (!acorn) {
+	test('appsec-redos scanner tests need acorn (root npm install)', { skip: 'acorn not installed' }, () => {});
+	return;
+}
 
 const found = (code) => collectPatterns(code, acorn);
 const sources = (code) => found(code).patterns.map((p) => `${p.source}/${p.flags}`);
