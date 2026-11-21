@@ -98,9 +98,9 @@
 		{ re: /^Searching for public write-ups/, stage: 'security', pose: 'work', status: 'wip' },
 
 		// —— Crawl / pages ——
-		{ re: /^Reading robots\.txt/, stage: 'robots', pose: 'work', status: 'wip' },
+		{ re: /^Checking robots\.txt/, stage: 'robots', pose: 'work', status: 'wip' },
 		{
-			re: /^robots\.txt was read|^robots\.txt returned|^robots\.txt could not/,
+			re: /^robots\.txt was checked|^robots\.txt returned|^robots\.txt could not/,
 			stage: 'robots',
 			pose: 'work',
 			status: 'done',

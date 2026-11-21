@@ -37,7 +37,7 @@ const STRATEGIES = {
 const MAC_STEPS = {
 	'mac-plain': "The review's own read from a home connection",
 	'mac-chrome-headers': "A person's Chrome headers from a home connection",
-	'mac-chrome-window': 'A real Chrome window that clears the challenge before the review reads it',
+	'mac-chrome-window': 'A real Chrome window that clears the challenge before the review analyzes it',
 };
 const BLOCKERS = {
 	'waf-ip': 'A bot wall that refuses data-center addresses',

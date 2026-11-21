@@ -9,7 +9,7 @@
   "maxDepth": 2,
   "pagesRead": 10,
   "robotsBlocked": 1,
-  "robotsNote": "robots.txt was read (1 rules). Linked pages that disallow this agent are skipped.",
+  "robotsNote": "robots.txt was checked (1 rules). Linked pages that disallow this agent are skipped.",
   "timedOut": true
  },
  "pages": [
@@ -4521,7 +4521,7 @@
   },
   {
    "at": "2026-10-19T15:28:25.133Z",
-   "text": "robots.txt was read (1 rules). Linked pages that disallow this agent are skipped."
+   "text": "robots.txt was checked (1 rules). Linked pages that disallow this agent are skipped."
   },
   {
    "at": "2026-10-19T15:28:25.133Z",

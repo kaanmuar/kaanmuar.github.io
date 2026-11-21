@@ -517,7 +517,14 @@ function analyzedWording(text) {
 		.replace(/\bwere read([.;])/g, 'were analyzed$1')
 		.replace(/\b(pages?) read\b(?! well| without)/g, '$1 analyzed')
 		.replace(/\bthis read\b/g, 'this review')
-		.replace(/\b([aA]|[oO]ne|The) public read\b/g, '$1 public analysis');
+		.replace(/\b([aA]|[oO]ne|The) public read\b/g, '$1 public analysis')
+		.replace(/\brobots\.txt was read\b/g, 'robots.txt was checked')
+		.replace(/\brobots\.txt was not read\b/g, 'robots.txt was not checked')
+		.replace(/\brobots\.txt could not be read\b/g, 'robots.txt could not be checked')
+		.replace(/\bwhat was read\b/g, 'what was analyzed')
+		.replace(/\bthe page read\b/g, 'the page analyzed')
+		.replace(/\bthis run reads\b/g, 'this run analyzes')
+		.replace(/\bQA-lab URL Review reads\b/g, 'QA-lab URL Review analyzes');
 }
 
 function scrubValues(value) {

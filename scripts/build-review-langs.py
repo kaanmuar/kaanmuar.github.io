@@ -451,7 +451,7 @@ BOOK = {
     "fr": "Réserver un appel de 15 min",
     "it": "Prenota una chiamata di 15 minuti",
 }
-FACT_LABELS = ["kinds of cases", "frameworks you already know", "address to begin", "pages read so far", "reviews run so far"]
+FACT_LABELS = ["kinds of cases", "frameworks you already know", "address to begin", "pages analyzed so far", "reviews run so far"]
 
 
 def facts(s, code):

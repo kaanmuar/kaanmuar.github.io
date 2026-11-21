@@ -3446,6 +3446,18 @@ test.describe('publishing user reviews to Live Reports', () => {
 		assert.equal(live.msgOf({ title: 'x' }, ['title']), undefined);
 	});
 
+	test('analyzedWording rewrites review-as-read verbs in scrubbed Live Report text (#281)', () => {
+		const live = require('../../scripts/build-live-reports');
+		assert.equal(
+			live.scrub('robots.txt was read (3 rules). 4 pages read before the stop.'),
+			'robots.txt was checked (3 rules). 4 pages analyzed before the stop.'
+		);
+		assert.equal(
+			live.scrub('It proposes test cases from a public read of a page.'),
+			'It proposes test cases from a public analysis of a page.'
+		);
+	});
+
 	test('one review per host, the newest, oldest host first', () => {
 		const { reports, held } = publish.selectPublishable(
 			[

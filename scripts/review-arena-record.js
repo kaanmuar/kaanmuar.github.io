@@ -18,7 +18,7 @@ const FRONT = [
   [1000, 'The server sent its certificate and the chain was verified.'],
   [800, 'First page answered with 200 in 0.4 s.'],
   [900, 'Reading robots.txt.'],
-  [1000, 'robots.txt was read.'],
+  [1000, 'robots.txt was checked.'],
   [900, 'In the background: crawl, security, mail, DNS and web risk reads.'],
   [1100, '12 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.']
 ];
@@ -58,7 +58,7 @@ const plan = {
     script: FRONT.concat(BROWSER, DETOUR.slice(0, 3), MIDDLE.slice(0, 9), [[900, 'The browser pass finished.']], [[900, 'Asking PageSpeed Insights for the speed lab data.']], DETOUR.slice(3), MIDDLE.slice(12)),
     end: 'ready'
   },
-  stop: { script: FRONT.concat(BROWSER, [[1200, 'Stop requested.'], [1200, 'Stopped. The report keeps what was read so far.']]), end: 'stopped' }
+  stop: { script: FRONT.concat(BROWSER, [[1200, 'Stop requested.'], [1200, 'Stopped. The report keeps what was analyzed so far.']]), end: 'stopped' }
 }[scenario];
 
 (async () => {

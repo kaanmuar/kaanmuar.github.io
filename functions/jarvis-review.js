@@ -75,7 +75,7 @@ function doneMessage(report, link) {
 			(score.overall != null ? ' scored ' + score.overall + (score.grade ? ' (' + score.grade + ')' : '') : ''),
 		body:
 			plural(pages, 'page') +
-			' read: ' +
+			' analyzed: ' +
 			(Number(totals.fail) || 0) +
 			' failing, ' +
 			(Number(totals.risk) || 0) +

@@ -58,7 +58,7 @@ const EN = {
 	'reason.botCheck': '{vendor} bot check',
 	'reason.googlebot': 'Blocked for Googlebot in robots.txt',
 	'reason.canonical': 'Canonical points to {url}',
-	'reason.notRead': 'Not read',
+	'reason.notRead': 'Not analyzed',
 
 	'seo-unanswered-links.title_one': '{n} internal link did not answer in time',
 	'seo-unanswered-links.title_other': '{n} internal links did not answer in time',
@@ -1044,7 +1044,7 @@ const EN = {
 	'sec-dkim.pass.title_one': 'A DKIM key is published',
 	'sec-dkim.pass.title_other': '{n} DKIM keys are published',
 	'sec-dkim.pass.evidence':
-		'DNS publishes {list}. The review reads the keys in DNS; it does not see the signatures on your mail.',
+		'DNS publishes {list}. The review checks the keys in DNS; it does not see the signatures on your mail.',
 	'sec-dkim-weak.title_one': 'A DKIM key is too short for receivers to accept',
 	'sec-dkim-weak.title_other': '{n} DKIM keys are too short for receivers to accept',
 	'sec-dkim-weak.evidence':
