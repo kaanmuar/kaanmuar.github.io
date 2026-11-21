@@ -1858,11 +1858,11 @@
 			"notice": "national",
 			"language": "en",
 			"jurisdiction": "CO",
-			"text": "Operator tools. The operator runs Jarvis, a private console that gathers the figures, queues, and drafts above, on the web and on a phone. Only the operator signs in to it. It is where approvals are made, where a take-down or a stop is applied, and where the do-not-contact list is kept.",
+			"text": "Operator tools. The operator runs a private review monitor that gathers the figures, queues, and drafts above, on the web and on a phone. Only the operator signs in to it. It is where approvals are made, where a take-down or a stop is applied, and where the do-not-contact list is kept.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "counsel-approved",
-			"counselReviewedOn": "2026-11-19"
+			"status": "draft",
+			"counselReviewedOn": null
 		},
 		{
 			"id": "national.contact.heading",
