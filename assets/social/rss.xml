@@ -5,9 +5,201 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 20 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 21 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>enae.es: 71. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-04/17-u-enae-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-04/17-u-enae-es</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 20 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-enae-es&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-enae-es
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" length="230472" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>aegas247.co.uk: 72. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/03-u-aegas247-co-uk.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/03-u-aegas247-co-uk</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+What to change: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-aegas247-co-uk
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #Automation #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/03-u-aegas247-co-uk.jpg" length="231708" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/03-u-aegas247-co-uk.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Scored 79 of 100. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/42-u-aireacondicionadointegral-com-mx.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/42-u-aireacondicionadointegral-com-mx</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-aireacondicionadointegral-com-mx
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/42-u-aireacondicionadointegral-com-mx.jpg" length="240595" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/42-u-aireacondicionadointegral-com-mx.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>airequipo.com: 71. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/48-u-airequipo-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/48-u-airequipo-com</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-airequipo-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" length="235201" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alpenverein.li: 57. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/02-u-alpenverein-li.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/02-u-alpenverein-li</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 31 form controls have no label.
+
+Takeaway: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-alpenverein-li
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" length="236984" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>artedentalmvd.com: 54. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/01-u-artedentalmvd-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/01-u-artedentalmvd-com</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+Takeaway: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-artedentalmvd-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" length="233433" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Apache.org runs without descriptions.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/22-apache.html</link>
+      <guid isPermaLink="false">runs-100/22-apache</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages analyzed, the home page included, has a meta description.
+
+The lesson for every team: Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=apache
+
+#SEO #MetaDescription #OpenSource #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" length="245653" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>The Linux Foundation never states a language.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/23-linuxfoundation.html</link>
+      <guid isPermaLink="false">runs-100/23-linuxfoundation</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed. But the &lt;html&gt; tag has no lang attribute, so screen readers guess which voice to use.
+
+The lesson for every team: Add lang=&quot;en&quot; to the html tag in the site template. One attribute fixes every page at once.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=linuxfoundation
+
+#Accessibility #A11y #i18n #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg" length="252145" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>GitHub Docs sets no canonical link.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/25-githubdocs.html</link>
+      <guid isPermaLink="false">runs-100/25-githubdocs</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages analyzed has a canonical link, so URL variants compete in search.
+
+The lesson for every team: Add a self-referencing canonical to every docs page. Versioned and translated docs need it most.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=githubdocs
+
+#SEO #Canonical #Docs #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg" length="247486" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Stripe Docs skips the main landmark.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/26-stripedocs.html</link>
+      <guid isPermaLink="false">runs-100/26-stripedocs</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages analyzed marks that content with a &lt;main&gt; landmark, which screen-reader users jump to directly.
+
+The lesson for every team: Wrap the primary content in one &lt;main&gt; element. Screen readers list it as a landmark you can jump to.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=stripedocs
+
+#Accessibility #A11y #Docs #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg" length="251031" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>ispgaya.pt: 67. The gap: cookie flags.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/16-u-ispgaya-pt.html</link>
@@ -705,172 +897,6 @@ Via Search Engine Journal, by Harry Clarkson-Bennett, 2026-11-18.
 
 https://www.searchenginejournal.com/how-im-approaching-ai-search-and-how-you-should-to/597775/</description>
       <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/approach-to-ai-search-7.png" medium="image"/>
-    </item>
-    <item>
-      <title>How To Find The Questions Your Customers Ask AI (And Your Keyword Tools Miss)</title>
-      <link>https://carlosandmunoz.com/social/pick/how-to-find-the-questions-your-customers-ask-ai-and-your-key.html</link>
-      <guid isPermaLink="false">pick/how-to-find-the-questions-your-customers-ask-ai-and-your-key</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Turn sales calls, support tickets, and forum threads into a content plan built around the questions your customers ask AI. The post How To Find The Questions Your Customers Ask AI (And Your Keyword Tools Miss) appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Itamar Blauer, 2026-11-18.
-
-https://www.searchenginejournal.com/how-to-find-the-questions-your-customers-ask-ai-and-your-keyword-tools-miss/596522/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/questions-customers-ask-ai-sej.webp" medium="image"/>
-    </item>
-    <item>
-      <title>HTML Character Encoding and SEO: Repair the Text Before Rewriting the Answer</title>
-      <link>https://carlosandmunoz.com/social/pick/html-character-encoding-and-seo-repair-the-text-before-rewri.html</link>
-      <guid isPermaLink="false">pick/html-character-encoding-and-seo-repair-the-text-before-rewri</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>When a public page displays broken accented letters or replacement symbols, check character encoding...
-
-Via DEV, by Uriel Bitton, 2026-11-13.
-
-https://dev.to/urielbitton/html-character-encoding-and-seo-repair-the-text-before-rewriting-the-answer-31c2</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Flv6h03ic6i951ai6y1pr.png" medium="image"/>
-    </item>
-    <item>
-      <title>HyunSeob/iphone-cli: Let AI agents read and operate any app on a real iPhone through the accessibility tree. No XCUITest, WebDriverAgent or Xcode signing.</title>
-      <link>https://carlosandmunoz.com/social/pick/hyunseob-iphone-cli-let-ai-agents-read-and-operate-any-app-o.html</link>
-      <guid isPermaLink="false">pick/hyunseob-iphone-cli-let-ai-agents-read-and-operate-any-app-o</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Let AI agents read and operate any app on a real iPhone through the accessibility tree. No XCUITest, WebDriverAgent or Xcode signing.
-
-Via GitHub, by HyunSeob, 2026-11-10.
-
-https://github.com/HyunSeob/iphone-cli</description>
-      <media:content url="https://opengraph.githubassets.com/1/HyunSeob/iphone-cli" medium="image"/>
-    </item>
-    <item>
-      <title>I turned an Arabic SEO knowledge base into a remote MCP server (no SDK, ~140 lines on Cloudflare Workers)</title>
-      <link>https://carlosandmunoz.com/social/pick/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-serv.html</link>
-      <guid isPermaLink="false">pick/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-serv</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>How I exposed 86 step-by-step SEO fixes to Claude, Cursor and any MCP client with a stateless, read-only Streamable HTTP endpoint, plus what Glama's tool-quality score taught me.
-
-Via DEV, by Mohamed Eid, 2026-11-14.
-
-https://dev.to/designermohamedeid/i-turned-an-arabic-seo-knowledge-base-into-a-remote-mcp-server-no-sdk-140-lines-on-cloudflare-1cn5</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fkibxrzj40t5br6l92kpv.png" medium="image"/>
-    </item>
-    <item>
-      <title>Robots.txt Guide – Best Practices For Search &amp; AI Crawlers via @sejournal, @vahandev</title>
-      <link>https://carlosandmunoz.com/social/pick/robots-txt-guide-best-practices-for-search-ai-crawlers-via-s.html</link>
-      <guid isPermaLink="false">pick/robots-txt-guide-best-practices-for-search-ai-crawlers-via-s</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Learn how to configure robots.txt, avoid crawl and indexing mistakes, and manage AI training, search crawlers, and user-requested visits separately. The post Robots.txt Guide – Best Practices For Search &amp; AI Crawlers appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Vahan Petrosyan, 2026-11-18.
-
-https://www.searchenginejournal.com/technical-seo/robots-txt-guide-best-practices-for-search-ai-crawlers/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2024/09/best-practices-for-setting-up-meta-robots-tags-robots.txt-584-e1726145406885.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>MIT's canonical tags point to its CMS.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/16-mit.html</link>
-      <guid isPermaLink="false">runs-100/16-mit</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Pages declare their language and load fast for real visitors. But canonical links point to tlecms.mit.edu, a host that did not answer our request, and the home page names a news story as its canonical.
-
-The lesson for every team: Canonical URLs must be public, live, and the page itself. Check them after every CMS or domain change.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=mit
-
-#SEO #Canonical #HigherEd #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" length="248347" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/16-mit.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Stanford's canonical leads to a 404.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/17-stanford.html</link>
-      <guid isPermaLink="false">runs-100/17-stanford</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Preloaded HSTS, a nonce-based content security policy, a Permissions-Policy, and framing denied: Security 86. But the home page names stanford.edu/home as canonical, and that URL answers 404.
-
-The lesson for every team: Fetch every canonical URL in your test suite. It should answer 200 and name itself as canonical.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=stanford
-
-#SEO #Canonical #HigherEd #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" length="245447" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/17-stanford.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>unillanos.edu.co: 49. The gap: alt text.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/13-u-unillanos-edu-co.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/13-u-unillanos-edu-co</guid>
-      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 160 images have no alt attribute.
-
-The lesson for every team: Describe what each image shows in its alt attribute, and use alt=&quot;&quot; on purely decorative ones.
-
-One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-unillanos-edu-co&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-unillanos-edu-co
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #WebDev #QA #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/13-u-unillanos-edu-co.jpg" length="230130" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/13-u-unillanos-edu-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>newsandstar.co.uk: 58. The gap: AI crawler access.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/12-u-newsandstar-co-uk.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/12-u-newsandstar-co-uk</guid>
-      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>National</category>
-      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 9 AI answer or search crawlers are blocked.
-
-The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
-
-One automated analysis of public pages on 5 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-newsandstar-co-uk&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-newsandstar-co-uk
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#GEO #DevOps #SEO #QA #AISearch #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/12-u-newsandstar-co-uk.jpg" length="243757" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/12-u-newsandstar-co-uk.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. tomorrow.io leads: 69.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-14/03-vs-foreca-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-14/03-vs-foreca-com</guid>
-      <pubDate>Tue, 17 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>tomorrow.io leads in SEO, GEO, Security; fastweather.com leads in Analytics, Performance; weather.com leads in Accessibility. foreca.com leads in none of the six areas.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 14 Nov 2026 of foreca.com, tomorrow.io, fastweather.com, weather.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-foreca-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-foreca-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #SoftwareTesting #WebPerformance #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/03-vs-foreca-com.jpg" length="268098" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/03-vs-foreca-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
