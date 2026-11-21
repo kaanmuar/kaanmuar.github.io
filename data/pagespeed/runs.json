@@ -1,6 +1,345 @@
 {
  "runs": [
   {
+   "at": "2026-11-21T15:04:01.037Z",
+   "run": {
+    "id": 44910932880,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/44910932880"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2516,
+   "scored": 2507,
+   "failed": 9,
+   "below": 1085,
+   "avg": {
+    "mobile": 89,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-21",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "social/runs-100/100-bucaramanga-de.html",
+     "social/runs-100/100-bucaramanga-es.html",
+     "social/runs-100/100-bucaramanga-fr.html",
+     "social/runs-100/100-bucaramanga-it.html",
+     "social/runs-100/100-bucaramanga-pt.html",
+     "social/runs-100/100-bucaramanga.html",
+     "social/runs-100/101-metrolinea-de.html",
+     "social/runs-100/101-metrolinea-es.html",
+     "social/runs-100/101-metrolinea-fr.html",
+     "social/runs-100/101-metrolinea-it.html",
+     "social/runs-100/101-metrolinea-pt.html",
+     "social/runs-100/101-metrolinea.html",
+     "social/runs-100/102-pereira-de.html",
+     "social/runs-100/102-pereira-es.html",
+     "social/runs-100/102-pereira-fr.html",
+     "social/runs-100/102-pereira-it.html",
+     "social/runs-100/102-pereira-pt.html",
+     "social/runs-100/102-pereira.html",
+     "social/runs-100/103-manizales-de.html",
+     "social/runs-100/103-manizales-es.html",
+     "social/runs-100/103-manizales-fr.html",
+     "social/runs-100/103-manizales-it.html",
+     "social/runs-100/103-manizales-pt.html",
+     "social/runs-100/103-manizales.html",
+     "social/runs-100/104-santamarta-de.html",
+     "social/runs-100/104-santamarta-es.html",
+     "social/runs-100/104-santamarta-fr.html",
+     "social/runs-100/104-santamarta-it.html",
+     "social/runs-100/104-santamarta-pt.html",
+     "social/runs-100/104-santamarta.html",
+     "social/runs-100/29-louvre-de.html",
+     "social/runs-100/29-louvre-es.html",
+     "social/runs-100/29-louvre-fr.html",
+     "social/runs-100/29-louvre-it.html",
+     "social/runs-100/29-louvre-pt.html",
+     "social/runs-100/29-louvre.html",
+     "social/runs-100/30-rijksmuseum-de.html",
+     "social/runs-100/30-rijksmuseum-es.html",
+     "social/runs-100/30-rijksmuseum-fr.html",
+     "social/runs-100/30-rijksmuseum-it.html",
+     "social/runs-100/30-rijksmuseum-pt.html",
+     "social/runs-100/30-rijksmuseum.html",
+     "social/runs-100/31-lonelyplanet-de.html",
+     "social/runs-100/31-lonelyplanet-es.html",
+     "social/runs-100/31-lonelyplanet-fr.html",
+     "social/runs-100/31-lonelyplanet-it.html",
+     "social/runs-100/31-lonelyplanet-pt.html",
+     "social/runs-100/31-lonelyplanet.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "qa-review-social-es.html",
+      "mobile": {
+       "before": 74,
+       "after": 74,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 72,
+       "after": 72,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-es.html"
+     },
+     {
+      "file": "qa-review-social-fr.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 71,
+       "after": 71,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-fr.html"
+     },
+     {
+      "file": "qa-review-social-de.html",
+      "mobile": {
+       "before": 75,
+       "after": 74,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-de.html"
+     },
+     {
+      "file": "qa-review-social-it.html",
+      "mobile": {
+       "before": 74,
+       "after": 74,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-it.html"
+     },
+     {
+      "file": "qa-review-social.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 82,
+       "after": 82,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social.html"
+     },
+     {
+      "file": "qa-review-social-pt.html",
+      "mobile": {
+       "before": 74,
+       "after": 99,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 73,
+       "after": 73,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-pt.html"
+     }
+    ],
+    "verdict": {
+     "up": true,
+     "reason": "Rose on qa-review-social-pt.html (mobile 74 → 99); nothing fell more than 2.",
+     "drops": 0,
+     "rises": 1,
+     "missing": 0
+    },
+    "note": "3 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": "pagespeed/ai-2026-11-21",
+    "files": [
+     "assets/social/captions-de.json",
+     "assets/social/captions-es.json",
+     "assets/social/captions-fr.json",
+     "assets/social/captions-it.json",
+     "assets/social/captions-pt.json",
+     "assets/social/captions.json",
+     "assets/social/feed-de.json",
+     "assets/social/feed-es.json",
+     "assets/social/feed-fr.json",
+     "assets/social/feed-it.json",
+     "assets/social/feed-pt.json",
+     "assets/social/feed.json",
+     "social/runs-100/100-bucaramanga-de.html",
+     "social/runs-100/100-bucaramanga-es.html",
+     "social/runs-100/100-bucaramanga-fr.html",
+     "social/runs-100/100-bucaramanga-it.html",
+     "social/runs-100/100-bucaramanga-pt.html",
+     "social/runs-100/100-bucaramanga.html",
+     "social/runs-100/101-metrolinea-de.html",
+     "social/runs-100/101-metrolinea-es.html",
+     "social/runs-100/101-metrolinea-fr.html",
+     "social/runs-100/101-metrolinea-it.html",
+     "social/runs-100/101-metrolinea-pt.html",
+     "social/runs-100/101-metrolinea.html",
+     "social/runs-100/102-pereira-de.html",
+     "social/runs-100/102-pereira-es.html",
+     "social/runs-100/102-pereira-fr.html",
+     "social/runs-100/102-pereira-it.html",
+     "social/runs-100/102-pereira-pt.html",
+     "social/runs-100/102-pereira.html",
+     "social/runs-100/103-manizales-de.html",
+     "social/runs-100/103-manizales-es.html",
+     "social/runs-100/103-manizales-fr.html",
+     "social/runs-100/103-manizales-it.html",
+     "social/runs-100/103-manizales-pt.html",
+     "social/runs-100/103-manizales.html",
+     "social/runs-100/104-santamarta-de.html",
+     "social/runs-100/104-santamarta-es.html",
+     "social/runs-100/104-santamarta-fr.html",
+     "social/runs-100/104-santamarta-it.html",
+     "social/runs-100/104-santamarta-pt.html",
+     "social/runs-100/104-santamarta.html",
+     "social/runs-100/29-louvre-de.html",
+     "social/runs-100/29-louvre-es.html",
+     "social/runs-100/29-louvre-fr.html",
+     "social/runs-100/29-louvre-it.html",
+     "social/runs-100/29-louvre-pt.html",
+     "social/runs-100/29-louvre.html",
+     "social/runs-100/30-rijksmuseum-de.html",
+     "social/runs-100/30-rijksmuseum-es.html",
+     "social/runs-100/30-rijksmuseum-fr.html",
+     "social/runs-100/30-rijksmuseum-it.html",
+     "social/runs-100/30-rijksmuseum-pt.html",
+     "social/runs-100/30-rijksmuseum.html",
+     "social/runs-100/31-lonelyplanet-de.html",
+     "social/runs-100/31-lonelyplanet-es.html",
+     "social/runs-100/31-lonelyplanet-fr.html",
+     "social/runs-100/31-lonelyplanet-it.html",
+     "social/runs-100/31-lonelyplanet-pt.html",
+     "social/runs-100/31-lonelyplanet.html"
+    ],
+    "fixes": [],
+    "pages": [
+     {
+      "file": "qa-review-social-es.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 72,
+       "after": 73,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-es.html"
+     },
+     {
+      "file": "qa-review-social-fr.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 71,
+       "after": 71,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-fr.html"
+     },
+     {
+      "file": "qa-review-social-de.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-de.html"
+     },
+     {
+      "file": "qa-review-social-it.html",
+      "mobile": {
+       "before": 74,
+       "after": 74,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 74,
+       "after": 75,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-it.html"
+     },
+     {
+      "file": "qa-review-social.html",
+      "mobile": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 82,
+       "after": 82,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social.html"
+     },
+     {
+      "file": "qa-review-social-pt.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 73,
+       "after": 73,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/qa-review-social-pt.html"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-20T15:33:41.320Z",
    "run": {
     "id": 44754604937,
