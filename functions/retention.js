@@ -1,6 +1,7 @@
 'use strict';
 /*
- * Retention (#3823): deletes what has outlived its period, so the Retention paragraphs of qa-review-legal.html are true.
+ * Retention (#3823, #4026): deletes what has outlived its period, so the Retention paragraphs of
+ * qa-review-legal.html are true.
  *
  *   outreach_people   12 months after its last contact (the latest thread, DM, offer, history entry, next step or update).
  *                     A person who declined or is blocked keeps a stub only: address, handle, domain, network, stage.
@@ -9,18 +10,36 @@
  *   messages          24 months after createdAt (contact-form and CV messages).
  *   ratings           24 months after createdAt.
  *   bookings          24 months after the latest of createdAt, start and end (the call and its follow-up).
- *   url_review_fix_requests  12 months after the last change, unless paid: a paid request is kept with its payment
- *                     record for the tax period (not deleted automatically yet).
+ *   url_review_fix_requests  unpaid: 12 months after the last change; paid: until January 1 of the sixth year
+ *                     after the payment (same tax period as the payment record), unless taxHold is set.
+ *   url_reviews       payment rows only (report payments, credits, passes): until expireAt, or January 1 of the
+ *                     sixth year after the payment when expireAt is missing; taxHold keeps the row. Review runs
+ *                     themselves stay on Firestore TTL (12 months).
+ *   url_review_redemptions  coupon redemptions: same tax period as payment rows.
  *
- * A row with no readable date is kept and counted as "undated". sweep() is a dry run unless apply is true; the
- * scheduled job (functions/index.js, retentionSweep) applies only when RETENTION_APPLY=on. Each run writes its counts,
- * never a person's name or text, to retention_runs/<time>.
+ * A row with no readable date is kept and counted as "undated". A taxHold flag keeps a payment-related row past
+ * its date while the income-tax return it supports is not final (legal page). sweep() is a dry run unless apply
+ * is true; the scheduled job (functions/index.js, retentionSweep) applies only when RETENTION_APPLY=on. Each run
+ * writes its counts, never a person's name or text, to retention_runs/<time>.
  */
+
+const { paymentExpireAt } = require('./url-review-core');
 
 const STOPPED = ['declined', 'blocked'];
 const STUB_FIELDS = ['id', 'kind', 'network', 'handle', 'domain', 'email', 'stage'];
 const PAGE = 300; // documents read per page; a page's deletes fit one batch (limit 500)
 const MAX_WRITES = 5000; // deletes or stubs per run; the rest wait for the next run
+
+// Payment records in url_reviews (not a paid run's report doc, which keeps paid:true with a 12-month retain).
+const PAYMENT_STATUSES = new Set([
+	'paid-report',
+	'paid-addon',
+	'run-credit',
+	'run-credit-used',
+	'run-credit-returned',
+	'run-credit-refunded',
+	'monthly-pass',
+]);
 
 const toMs = (v) => {
 	if (v == null || v === '') return NaN;
@@ -41,6 +60,13 @@ function addMonths(ms, months) {
 	const d = new Date(ms);
 	d.setUTCMonth(d.getUTCMonth() + months);
 	return d.getTime();
+}
+
+/** January 1 of the sixth year after the payment, or the row's expireAt when already set (#4026). */
+function taxUntil(data, at) {
+	const fromExpire = toMs(data && data.expireAt);
+	if (Number.isFinite(fromExpire)) return fromExpire;
+	return paymentExpireAt(at).getTime();
 }
 
 const entries = (list, key) =>
@@ -64,9 +90,22 @@ const POLICY = [
 	{ collection: 'bookings', months: 24, dates: (d) => [d.createdAt, d.start, d.end] },
 	{
 		collection: 'url_review_fix_requests',
-		months: 12,
-		dates: (d) => [d.createdAt, d.updatedAt],
-		keep: (d) => !!(d.paid || d.paidAt),
+		dates: (d) => (d.paid || d.paidAt ? [d.paidAt, d.createdAt] : [d.createdAt, d.updatedAt]),
+		until: (d, at) => (d.paid || d.paidAt ? taxUntil(d, at) : addMonths(at, 12)),
+		keep: (d) => !!d.taxHold,
+	},
+	{
+		collection: 'url_reviews',
+		only: (d) => PAYMENT_STATUSES.has(d && d.status),
+		dates: (d) => [d.createdAt, d.at],
+		until: taxUntil,
+		keep: (d) => !!d.taxHold,
+	},
+	{
+		collection: 'url_review_redemptions',
+		dates: (d) => [d.at, d.createdAt],
+		until: taxUntil,
+		keep: (d) => !!d.taxHold,
 	},
 ];
 
@@ -74,9 +113,11 @@ const POLICY = [
 function decide(policy, data, now) {
 	if (policy.stopped && data.trimmed) return 'keep';
 	if (policy.keep && policy.keep(data)) return 'keep';
+	if (policy.only && !policy.only(data)) return 'keep';
 	const at = latest(policy.dates(data));
 	if (!Number.isFinite(at)) return 'undated';
-	if (addMonths(at, policy.months) > now) return 'keep';
+	const until = typeof policy.until === 'function' ? policy.until(data, at) : addMonths(at, policy.months);
+	if (!Number.isFinite(until) || until > now) return 'keep';
 	return policy.stopped && STOPPED.includes(data.stage) ? 'trim' : 'delete';
 }
 
@@ -135,4 +176,15 @@ async function sweep(db, { now = Date.now(), apply = false, maxWrites = MAX_WRIT
 	return report;
 }
 
-module.exports = { POLICY, STOPPED, decide, stubOf, latest, addMonths, sweep, MAX_WRITES };
+module.exports = {
+	POLICY,
+	STOPPED,
+	PAYMENT_STATUSES,
+	decide,
+	stubOf,
+	latest,
+	addMonths,
+	taxUntil,
+	sweep,
+	MAX_WRITES,
+};

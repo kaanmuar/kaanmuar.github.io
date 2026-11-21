@@ -3795,7 +3795,7 @@ exports.sweepReviews = require('firebase-functions/v2/scheduler').onSchedule(
 	() => track('sweepReviews', () => sweepReviews())
 );
 
-// Retention (#3823): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
+// Retention (#3823 #4026): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
 exports.retentionSweep = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('retentionSweep'),
