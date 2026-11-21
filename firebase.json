@@ -8,7 +8,9 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       { "source": "/desk", "function": "reviewUrl" },
-      { "source": "/desk/**", "function": "reviewUrl" }
+      { "source": "/desk/**", "function": "reviewUrl" },
+      { "source": "/.well-known/webfinger", "function": "webfinger" },
+      { "source": "/users/**", "function": "socialActor" }
     ]
   },
   "firestore": {
