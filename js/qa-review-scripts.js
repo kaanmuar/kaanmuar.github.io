@@ -213,6 +213,57 @@
 		return target;
 	}
 
+	// CSS attribute value in double quotes (for selectors passed to Cypress/Selenium/querySelector).
+	function cssQ(value) {
+		return '"' + String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+	}
+
+	// Landmark HTML tags that stand in for a role when the framework only speaks CSS.
+	const LANDMARK_TAG = {
+		main: 'main',
+		navigation: 'nav',
+		banner: 'header',
+		contentinfo: 'footer',
+		complementary: 'aside',
+		form: 'form',
+	};
+
+	// One ranked candidate as a CSS selector. Text/XPath cannot be expressed as CSS — return "".
+	function cssLocator(candidate) {
+		if (!candidate) return '';
+		switch (candidate.kind) {
+			case 'role': {
+				const role = candidate.role;
+				const name = candidate.name;
+				const level = Number(candidate.level) || 0;
+				if (role === 'heading' && level) {
+					const h = 'h' + level;
+					const aria = '[role="heading"][aria-level="' + level + '"]';
+					if (name) {
+						return h + '[aria-label=' + cssQ(name) + '], ' + aria + '[aria-label=' + cssQ(name) + ']';
+					}
+					return h + ', ' + aria;
+				}
+				const tag = LANDMARK_TAG[role];
+				if (name) {
+					const named = '[role=' + cssQ(role) + '][aria-label=' + cssQ(name) + ']';
+					return tag ? tag + '[aria-label=' + cssQ(name) + '], ' + named : named;
+				}
+				if (tag) return tag + ', [role=' + cssQ(role) + ']';
+				return '[role=' + cssQ(role) + ']';
+			}
+			case 'testId':
+				return '[data-testid=' + cssQ(candidate.value) + ']';
+			case 'label':
+				return '[aria-label=' + cssQ(candidate.value) + ']';
+			case 'text':
+			case 'xpath':
+				return '';
+			default:
+				return oneLine(candidate.value) || '';
+		}
+	}
+
 	// Best Playwright locator for a check, plus a comment naming the next ones to try.
 	function rankedLocator(check) {
 		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
@@ -223,6 +274,30 @@
 		return {
 			locator: playwrightLocator(ranked[0]),
 			fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '',
+		};
+	}
+
+	// Best CSS selector for frameworks without Playwright locators (Cypress, Selenium, …).
+	// mark is the line-comment prefix: "//" for JS, "#" for Python/Robot/Ruby.
+	function rankedCss(check, mark) {
+		const prefix = mark == null ? '//' : mark;
+		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
+		const seen = {};
+		const cssList = [];
+		ranked.forEach((candidate) => {
+			const css = cssLocator(candidate);
+			if (css && !seen[css]) {
+				seen[css] = true;
+				cssList.push(css);
+			}
+		});
+		if (!cssList.length) {
+			return { selector: check.selector || '', fallbacks: '' };
+		}
+		const spare = cssList.slice(1);
+		return {
+			selector: cssList[0],
+			fallbacks: spare.length ? prefix + ' Fallback locators, best first: ' + spare.join(', ') : '',
 		};
 	}
 
@@ -988,21 +1063,31 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'cy.document().then((doc) => {',
-					'  expect(doc.querySelectorAll(' +
-						q(check.selector) +
-						').length).to.' +
-						OPS_CHAI[check.op] +
-						'(' +
-						check.n +
-						');',
-					'});'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'cy.document().then((doc) => {',
+						'  expect(doc.querySelectorAll(' +
+							q(found.selector) +
+							').length).to.' +
+							OPS_CHAI[check.op] +
+							'(' +
+							check.n +
+							');',
+						'});'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push('cy.get(' + q(check.selector) + ').should("have.attr", ' + q(check.attr) + ').and("match", /\\S/);');
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'cy.get(' + q(found.selector) + ').should("have.attr", ' + q(check.attr) + ').and("match", /\\S/);'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1236,20 +1321,28 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'found = len(driver.find_elements(By.CSS_SELECTOR, ' + q(check.selector) + '))',
-					'assert found ' + OPS_PY[check.op] + ' ' + check.n
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'found = len(driver.find_elements(By.CSS_SELECTOR, ' + q(found.selector) + '))',
+						'assert found ' + OPS_PY[check.op] + ' ' + check.n
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'assert (driver.find_element(By.CSS_SELECTOR, ' +
-						q(check.selector) +
-						').get_attribute(' +
-						q(check.attr) +
-						') or "").strip()'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'assert (driver.find_element(By.CSS_SELECTOR, ' +
+							q(found.selector) +
+							').get_attribute(' +
+							q(check.attr) +
+							') or "").strip()'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1460,18 +1553,26 @@
 				break;
 			case 'count':
 				open(check.path);
-				lines.push(
-					'    ${found}=    Get Element Count    css:' + check.selector,
-					'    Should Be True    ${found} ' + opRobot[check.op] + ' ' + check.n
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) lines.push('    ' + found.fallbacks);
+					lines.push(
+						'    ${found}=    Get Element Count    css:' + found.selector,
+						'    Should Be True    ${found} ' + opRobot[check.op] + ' ' + check.n
+					);
+				}
 				close();
 				break;
 			case 'attr':
 				open(check.path);
-				lines.push(
-					'    ${value}=    Get Element Attribute    css:' + check.selector + '    ' + check.attr,
-					'    Should Not Be Empty    ${value}'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) lines.push('    ' + found.fallbacks);
+					lines.push(
+						'    ${value}=    Get Element Attribute    css:' + found.selector + '    ' + check.attr,
+						'    Should Not Be Empty    ${value}'
+					);
+				}
 				close();
 				break;
 			case 'metaLength':
@@ -1687,19 +1788,27 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'const found = await browser.execute((selector) => document.querySelectorAll(selector).length, ' +
-						q(check.selector) +
-						');',
-					'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const found = await browser.execute((selector) => document.querySelectorAll(selector).length, ' +
+							q(found.selector) +
+							');',
+						'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'const value = await $(' + q(check.selector) + ').getAttribute(' + q(check.attr) + ');',
-					'expect((value || "").trim()).not.toBe("");'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const value = await $(' + q(found.selector) + ').getAttribute(' + q(check.attr) + ');',
+						'expect((value || "").trim()).not.toBe("");'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1992,7 +2101,11 @@
 					const found = rankedLocator(check);
 					if (found.fallbacks) body.push(found.fallbacks);
 					body.push('const found = await ' + found.locator + '.count();', A[check.op]('found', check.n));
-				} else body.push('const found = ' + D.count(check.selector) + ';', A[check.op]('found', check.n));
+				} else {
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const found = ' + D.count(found.selector) + ';', A[check.op]('found', check.n));
+				}
 				break;
 			case 'attr':
 				go(check.path);
@@ -2003,7 +2116,11 @@
 						'const value = ((await ' + found.locator + '.first().getAttribute(' + q(check.attr) + ')) || "").trim();',
 						A.filled('value')
 					);
-				} else body.push('const value = ' + D.attr(check.selector, check.attr) + ';', A.filled('value'));
+				} else {
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const value = ' + D.attr(found.selector, check.attr) + ';', A.filled('value'));
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -2243,14 +2360,22 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'int found = ' + D.count(check.selector) + ';',
-					ok('found ' + OPS_PY[check.op] + ' ' + check.n, '"found " + found')
-				);
+				{
+					const found = rankedCss(check, '//');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'int found = ' + D.count(found.selector) + ';',
+						ok('found ' + OPS_PY[check.op] + ' ' + check.n, '"found " + found')
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(ok('!' + D.attr(check.selector, check.attr) + '.isEmpty()', q(check.selector + ' ' + check.attr)));
+				{
+					const found = rankedCss(check, '//');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(ok('!' + D.attr(found.selector, check.attr) + '.isEmpty()', q(found.selector + ' ' + check.attr)));
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -2507,20 +2632,28 @@
 				break;
 			case 'count':
 				go(rb(check.path));
-				body.push(
-					'found = @browser.elements(css: ' + rb(check.selector) + ').count',
-					'expect(found).to ' + opRuby[check.op] + check.n + (check.op === 'eq' ? ')' : '')
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'found = @browser.elements(css: ' + rb(found.selector) + ').count',
+						'expect(found).to ' + opRuby[check.op] + check.n + (check.op === 'eq' ? ')' : '')
+					);
+				}
 				break;
 			case 'attr':
 				go(rb(check.path));
-				body.push(
-					'expect(@browser.element(css: ' +
-						rb(check.selector) +
-						').attribute_value(' +
-						rb(check.attr) +
-						').to_s.strip).not_to be_empty'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'expect(@browser.element(css: ' +
+							rb(found.selector) +
+							').attribute_value(' +
+							rb(check.attr) +
+							').to_s.strip).not_to be_empty'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(rb(check.path));
@@ -2731,11 +2864,17 @@
 				break;
 			case 'count':
 				open(check.path);
-				steps.push('Then the count of ' + gq(check.selector) + ' elements is ' + OPS_WORD[check.op] + ' ' + check.n);
+				{
+					const found = rankedCss(check, '#');
+					steps.push('Then the count of ' + gq(found.selector) + ' elements is ' + OPS_WORD[check.op] + ' ' + check.n);
+				}
 				break;
 			case 'attr':
 				open(check.path);
-				steps.push('Then the ' + gq(check.selector) + ' element has a ' + gq(check.attr) + ' attribute');
+				{
+					const found = rankedCss(check, '#');
+					steps.push('Then the ' + gq(found.selector) + ' element has a ' + gq(check.attr) + ' attribute');
+				}
 				break;
 			case 'metaLength':
 				open(check.path);
@@ -4956,8 +5095,10 @@ namespace QaLab
 		README_COPY,
 		rankLocators,
 		playwrightLocator,
+		cssLocator,
 		checkTarget,
 		rankedLocator,
+		rankedCss,
 		LOCATOR_KINDS,
 	};
 	if (typeof module === 'object' && module.exports) module.exports = api;

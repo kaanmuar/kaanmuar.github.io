@@ -208,13 +208,64 @@ test('Playwright count/attr prefer role locators; plain CSS stays when nothing r
 	assert.match(testId, /page\.getByTestId\("card-list"\)\.count\(\)/);
 });
 
-test('Jest and Vitest count checks use the same ranked locator; Cypress keeps CSS', () => {
+test('Jest and Vitest count checks use the same ranked locator', () => {
 	['Jest', 'Vitest', 'Mocha'].forEach((framework) => {
 		const code = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, framework);
 		assert.match(code, /page\.getByRole\("heading", \{ level: 1 \}\)\.count\(\)/, framework);
 	});
-	assert.match(
-		emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Cypress'),
-		/querySelectorAll\("h1"\)/
+});
+
+test('cssLocator maps role/testId/label; text and xpath stay empty', () => {
+	assert.equal(
+		scripts.cssLocator({ kind: 'role', role: 'heading', level: 1 }),
+		'h1, [role="heading"][aria-level="1"]'
 	);
+	assert.equal(scripts.cssLocator({ kind: 'role', role: 'main' }), 'main, [role="main"]');
+	assert.equal(scripts.cssLocator({ kind: 'testId', value: 'card-list' }), '[data-testid="card-list"]');
+	assert.equal(scripts.cssLocator({ kind: 'label', value: 'Email' }), '[aria-label="Email"]');
+	assert.equal(scripts.cssLocator({ kind: 'text', value: 'Hello' }), '');
+	assert.equal(scripts.cssLocator({ kind: 'xpath', value: '//h1' }), '');
+	assert.equal(scripts.cssLocator({ kind: 'css', value: '.cards' }), '.cards');
+});
+
+test('Cypress and Selenium count/attr prefer role/testId/label CSS when available', () => {
+	const cyH1 = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Cypress');
+	assert.match(cyH1, /querySelectorAll\("h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"\)/);
+	assert.match(cyH1, /Fallback locators, best first: h1/);
+	const cyMain = emitCheck(
+		{ kind: 'count', path: '/', selector: 'main, [role="main"]', op: 'gte', n: 1 },
+		'Cypress'
+	);
+	assert.match(cyMain, /querySelectorAll\("main, \[role=\\"main\\"\]"\)/);
+	const cyTestId = emitCheck(
+		{ kind: 'count', path: '/', selector: '.cards', op: 'gte', n: 1, testId: 'card-list' },
+		'Cypress'
+	);
+	assert.match(cyTestId, /querySelectorAll\("\[data-testid=\\"card-list\\"\]"\)/);
+	const cyLabel = emitCheck(
+		{ kind: 'attr', path: '/', selector: '#mail', attr: 'type', label: 'Email' },
+		'Cypress'
+	);
+	assert.match(cyLabel, /cy\.get\("\[aria-label=\\"Email\\"\]"\)/);
+
+	const seH1 = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Selenium');
+	assert.match(seH1, /By\.CSS_SELECTOR, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
+	assert.match(seH1, /# Fallback locators, best first: h1/);
+	const seTestId = emitCheck(
+		{ kind: 'count', path: '/', selector: '.cards', op: 'gte', n: 1, testId: 'card-list' },
+		'Selenium'
+	);
+	assert.match(seTestId, /By\.CSS_SELECTOR, "\[data-testid=\\"card-list\\"\]"/);
+	const seLabel = emitCheck(
+		{ kind: 'attr', path: '/', selector: '#mail', attr: 'type', label: 'Email' },
+		'Selenium'
+	);
+	assert.match(seLabel, /By\.CSS_SELECTOR, "\[aria-label=\\"Email\\"\]"/);
+});
+
+test('WebdriverIO and CodeceptJS count checks use the same ranked CSS', () => {
+	const wdio = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'WebdriverIO');
+	assert.match(wdio, /querySelectorAll\(selector\)\.length, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
+	const codecept = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'CodeceptJS');
+	assert.match(codecept, /querySelectorAll\(selector\)\.length, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
 });
