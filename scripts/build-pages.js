@@ -31,7 +31,7 @@ const ROOT_FILES = [
 	'c1ab1d693aa44efeae5463b429a4813e.txt',
 ];
 const ROOT_PATTERNS = [/^[^/]+\.html$/, /^[^/]+\.webmanifest$/, /^sitemap[^/]*\.xml$/, /^llms[^/]*\.txt$/];
-const DIRS = ['.well-known', 'assets', 'css', 'js', 'media', 'social'];
+const DIRS = ['.well-known', 'assets', 'css', 'js', 'media', 'presentation', 'social'];
 const MEDIA_CSV = ['calendar.csv', 'plan.csv'];
 
 function wanted(file) {

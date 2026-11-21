@@ -27,3 +27,14 @@ test('an untracked file outside the hub stays out even when it sits in a publish
 	);
 	assert.deepEqual(files, ['css/site-look.css']);
 });
+
+test('the living feature deck under presentation/ ships on Pages (#4117)', () => {
+	const files = selectPagesFiles(
+		['presentation/index.html', 'presentation/deck.css', 'presentation/faces/bulk.svg', 'scripts/feature-deck/changes.js'],
+		[]
+	);
+	assert.ok(files.includes('presentation/index.html'));
+	assert.ok(files.includes('presentation/deck.css'));
+	assert.ok(files.includes('presentation/faces/bulk.svg'));
+	assert.equal(files.includes('scripts/feature-deck/changes.js'), false);
+});
