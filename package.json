@@ -91,6 +91,7 @@
     }
   },
   "dependencies": {
+    "@atproto/lex-client": "^0.6.1",
     "@atproto/lex-password-session": "^0.3.5",
     "masto": "^8.0.1"
   }

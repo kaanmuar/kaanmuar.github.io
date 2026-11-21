@@ -4,6 +4,7 @@
    An edit lands only when its text occurs once in a file it was shown. Its branch always goes to Proposals. */
 const { ORIGIN } = require('./pages');
 const routine = require('./routine');
+const { parseJson, pageSpeedEdits } = require('../llm-contract');
 
 const API = 'https://generativelanguage.googleapis.com/v1beta/models/';
 const MODEL = 'gemini-flash-latest';
@@ -125,14 +126,12 @@ function prompt(page, files) {
 }
 
 function parse(text) {
-	const body = String(text || '')
-		.replace(/^```(?:json)?\s*/i, '')
-		.replace(/```\s*$/, '')
-		.trim();
-	const a = body.indexOf('{');
-	const b = body.lastIndexOf('}');
-	if (a < 0 || b <= a) throw new Error('Gemini did not answer in JSON.');
-	return JSON.parse(body.slice(a, b + 1));
+	try {
+		return parseJson(text, pageSpeedEdits);
+	} catch (error) {
+		if (error && error.code === 'LLM_CONTRACT') throw error;
+		throw new Error('Gemini did not answer in JSON.');
+	}
 }
 
 const count = (hay, needle) => (needle ? hay.split(needle).length - 1 : 0);
