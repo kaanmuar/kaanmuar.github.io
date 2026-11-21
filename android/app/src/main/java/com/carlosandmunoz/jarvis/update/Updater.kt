@@ -26,6 +26,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.carlosandmunoz.jarvis.BuildConfig
 import com.carlosandmunoz.jarvis.R
+import com.carlosandmunoz.jarvis.telemetry.Telemetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -102,6 +103,7 @@ object Updater {
             "Installing Jarvis ${rel.name}."
         } catch (e: Exception) {
             val msg = "The update failed: ${e.message ?: e.javaClass.simpleName}"
+            Telemetry.log("Updater").e(e) { msg }
             context.getSharedPreferences("updates", Context.MODE_PRIVATE).edit { putString(PENDING_WORKER_ISSUE, "err:$msg") }
             msg
         } finally {
