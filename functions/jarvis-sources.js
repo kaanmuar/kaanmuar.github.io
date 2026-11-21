@@ -65,6 +65,7 @@ const jarvisPeople = require('./jarvis-people');
 const jarvisLocal = require('./jarvis-local');
 const jarvisReviewOps = require('./jarvis-review-ops');
 const jarvisSocial = require('./jarvis-social');
+const jarvisMedia = require('./jarvis-media');
 const jarvisPageSpeed = require('./jarvis-pagespeed');
 const mailHealth = require('./mail-health');
 const jarvisAddresses = require('./jarvis-addresses');
@@ -840,6 +841,7 @@ async function social(ctx) {
 			hours: 24,
 			limit: 8,
 		}),
+		media: jarvisMedia.mediaStats([buffer, facebook, open], metrics, videos),
 		telegram: tgMembers,
 		reddit: rdMembers,
 		youtube: {
