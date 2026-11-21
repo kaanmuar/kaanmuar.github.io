@@ -259,11 +259,11 @@
 			"cites": [
 				{
 					"name": "Ley 29733, Ley de Protección de Datos Personales",
-					"url": "https://www.gob.pe/anpd",
-					"urlVerified": null
+					"url": "https://leyes.congreso.gob.pe/DetLeyNume_1p.aspx?xNorma=6&xNumero=29733&xTipoNorma=0",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "counsel-approved",
 			"counselReviewedOn": "2026-11-19"
 		},
@@ -379,11 +379,11 @@
 			"cites": [
 				{
 					"name": "Protection of Personal Information Act 4 of 2013",
-					"url": "https://popia.co.za/",
-					"urlVerified": null
+					"url": "https://justice.gov.za/legislation/acts/2013-004.pdf",
+					"urlVerified": "2026-11-20"
 				}
 			],
-			"lastChecked": "2026-10-25",
+			"lastChecked": "2026-11-20",
 			"status": "counsel-approved",
 			"counselReviewedOn": "2026-11-19"
 		},
