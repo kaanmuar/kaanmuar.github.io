@@ -121,6 +121,9 @@ const breakers = {
 	webrisk: createBreaker({ name: 'webrisk', threshold: 5, coolDownMs: 30000 }),
 	crux: createBreaker({ name: 'crux', threshold: 5, coolDownMs: 30000 }),
 	places: createBreaker({ name: 'places', threshold: 5, coolDownMs: 30000 }),
+	urlhaus: createBreaker({ name: 'urlhaus', threshold: 5, coolDownMs: 30000 }),
+	phishstats: createBreaker({ name: 'phishstats', threshold: 5, coolDownMs: 30000 }),
+	cloudflare: createBreaker({ name: 'cloudflare', threshold: 5, coolDownMs: 30000 }),
 };
 
 const isTimeout = (error) => !!error && (error.name === 'TimeoutError' || error.name === 'AbortError');
