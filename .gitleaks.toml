@@ -66,3 +66,10 @@ regexTarget = "line"
 regexes = [
   '''qlat_aabbccddeeff0011_''',
 ]
+
+# Public Android Auth REST client key introduced then split in the same PR (#3971).
+[[allowlists]]
+description = "Android Auth REST key contiguous literal in first #3971 commit (replaced by split literal)"
+commits = [
+  '''644c52cf8e936eec41801dbdfe49c1f7033468ba''',
+]
