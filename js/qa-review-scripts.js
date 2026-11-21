@@ -174,6 +174,137 @@
 		}
 	}
 
+	// Escape a value for use inside a double-quoted CSS attribute selector.
+	function cssAttrValue(value) {
+		return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	}
+
+	function elementTag(el) {
+		return String((el && el.tagName) || '')
+			.toLowerCase()
+			.replace(/^#/, '');
+	}
+
+	function elementAttrs(el) {
+		const attrs = {};
+		if (!el || typeof el.getAttribute !== 'function') return attrs;
+		['href', 'type', 'alt', 'role', 'aria-label', 'aria-level', 'for', 'id', 'data-testid'].forEach((name) => {
+			const value = el.getAttribute(name);
+			if (value != null && value !== '') attrs[name] = value;
+		});
+		return attrs;
+	}
+
+	function elementRole(el) {
+		const attrs = elementAttrs(el);
+		return oneLine(attrs.role) || implicitRole(elementTag(el), attrs);
+	}
+
+	function elementText(el) {
+		return oneLine((el && (el.textContent || el.innerText)) || '');
+	}
+
+	// Accessible name as codegen ranking sees it: aria-label, else own text for named-by-text roles.
+	function elementName(el, role) {
+		const labelled = oneLine(el && typeof el.getAttribute === 'function' ? el.getAttribute('aria-label') : '');
+		if (labelled) return labelled;
+		if (NAMED_BY_TEXT.indexOf(role) !== -1) return elementText(el);
+		return '';
+	}
+
+	function elementHeadingLevel(el) {
+		const tagLevel = HEADING_LEVEL[elementTag(el)] || 0;
+		if (tagLevel) return tagLevel;
+		const aria = Number(el && typeof el.getAttribute === 'function' ? el.getAttribute('aria-level') : 0);
+		return aria || 0;
+	}
+
+	function safeQueryAll(doc, selector) {
+		if (!doc || typeof doc.querySelectorAll !== 'function' || !selector) return null;
+		try {
+			return Array.prototype.slice.call(doc.querySelectorAll(selector));
+		} catch (error) {
+			return null;
+		}
+	}
+
+	// How many elements each locator kind would hit on a live (or jsdom-like) document.
+	// XPath is not evaluated: untrusted expressions and document.evaluate are unsafe under CSP / in unit hosts.
+	// Kinds we cannot query are omitted so rankLocators keeps its default tier for them.
+	function countLocatorMatches(doc, target) {
+		const t = target || {};
+		const matches = {};
+		if (!doc || typeof doc.querySelectorAll !== 'function') return matches;
+
+		const css = oneLine(t.css);
+		if (css) {
+			const found = safeQueryAll(doc, css);
+			if (found) matches.css = found.length;
+		}
+
+		const testId = oneLine(t.testId);
+		if (testId) {
+			const found = safeQueryAll(doc, '[data-testid="' + cssAttrValue(testId) + '"]');
+			if (found) matches.testId = found.length;
+		}
+
+		const all = safeQueryAll(doc, '*') || [];
+		const text = oneLine(t.text);
+		const role = oneLine(t.role) || implicitRole(t.tag, t.attrs);
+		const level = Number(t.level) || HEADING_LEVEL[String(t.tag || '').toLowerCase()] || 0;
+		const name = oneLine(t.name) || (NAMED_BY_TEXT.indexOf(role) !== -1 ? text : '');
+		const roleHit = roleCandidate(role, name, level || undefined);
+
+		if (roleHit) {
+			matches.role = all.filter((el) => {
+				const elRole = elementRole(el);
+				if (elRole !== role) return false;
+				if (role === 'heading' && level && elementHeadingLevel(el) !== level) return false;
+				if (name && elementName(el, elRole) !== name) return false;
+				return true;
+			}).length;
+		}
+
+		if (text && text.length <= MAX_TEXT_LOCATOR) {
+			matches.text = all.filter((el) => elementText(el) === text).length;
+		}
+
+		const label = oneLine(t.label);
+		if (label) {
+			const byAria = all.filter((el) => oneLine(el.getAttribute && el.getAttribute('aria-label')) === label);
+			const labelNodes = all.filter((el) => elementTag(el) === 'label' && elementText(el) === label);
+			const byFor = [];
+			labelNodes.forEach((node) => {
+				const id = oneLine(node.getAttribute && node.getAttribute('for'));
+				if (!id || typeof doc.getElementById !== 'function') return;
+				const control = doc.getElementById(id);
+				if (control) byFor.push(control);
+			});
+			const seen = [];
+			byAria.concat(byFor).forEach((el) => {
+				if (seen.indexOf(el) === -1) seen.push(el);
+			});
+			matches.label = seen.length;
+		}
+
+		return matches;
+	}
+
+	// Attach match counts from a live document when the target did not already carry them.
+	function withMatchCounts(doc, target) {
+		const t = target || {};
+		if (!doc || t.matches) return t;
+		return Object.assign({}, t, { matches: countLocatorMatches(doc, t) });
+	}
+
+	// Copy match counts onto a check so every emitter's rankedLocator(check) sees them without a live doc arg.
+	function checkWithMatches(check, doc) {
+		if (!check || !doc || check.matches) return check;
+		const base = check.kind === 'journey' ? journeyTarget(check) : checkTarget(check);
+		const counted = withMatchCounts(doc, base);
+		return counted.matches ? Object.assign({}, check, { matches: counted.matches }) : check;
+	}
+
 	// The element a journey clicks, as the review saw it: a link with its text, and a test id or aria-label when it had one.
 	function journeyTarget(check) {
 		return {
@@ -183,6 +314,7 @@
 			text: check.text,
 			testId: check.testId,
 			css: check.selector,
+			matches: check.matches,
 		};
 	}
 
@@ -214,8 +346,10 @@
 	}
 
 	// Best Playwright locator for a check, plus a comment naming the next ones to try.
-	function rankedLocator(check) {
-		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
+	// Pass a live (or jsdom-like) document as the second arg to demote ambiguous / drop zero-match kinds.
+	function rankedLocator(check, doc) {
+		const base = check.kind === 'journey' ? journeyTarget(check) : checkTarget(check);
+		const ranked = rankLocators(withMatchCounts(doc, base));
 		if (!ranked.length) {
 			return { locator: 'page.locator(' + q(check.selector) + ')', fallbacks: '' };
 		}
@@ -227,8 +361,8 @@
 	}
 
 	// The lines that find and click a journey link: the best locator, then a comment naming the next ones to try.
-	function journeyLocatorLines(check) {
-		const found = rankedLocator(Object.assign({}, check, { kind: 'journey' }));
+	function journeyLocatorLines(check, doc) {
+		const found = rankedLocator(Object.assign({}, check, { kind: 'journey' }), doc);
 		return {
 			lines: [
 				'const link = ' + found.locator + '.first();',
@@ -3912,9 +4046,11 @@ namespace QaLab
 		return row;
 	}
 
-	function snippets(report, item, chosen) {
+	// Optional 4th arg: a live (or jsdom-like) document. When present, match counts are captured onto the
+	// check before ranking so ambiguous role/text locators demote and zero-match kinds drop.
+	function snippets(report, item, chosen, doc) {
 		const ctx = context(report);
-		const check = checkFor(item, ctx);
+		const check = checkWithMatches(checkFor(item, ctx), doc);
 		const parts = splitWhy(item.why);
 		const verified = verifiedFor(report, item);
 		return frameworksFor(item, chosen)
@@ -4557,9 +4693,11 @@ namespace QaLab
 		return lines.filter((line, index, all) => !(line === '' && all[index - 1] === '')).join('\n');
 	}
 
+	// options.doc: optional live document for match-count capture (same as snippets' 4th arg).
 	function bundle(report, cases, chosen, options) {
 		const ctx = context(report);
 		const words = wordsFor(report, options);
+		const doc = options && options.doc;
 		const sign = report.signature || {};
 		const blocks = {};
 		const counts = {};
@@ -4568,7 +4706,7 @@ namespace QaLab
 		const k6Entries = [];
 		const maestroFiles = [];
 		(cases || []).forEach((item) => {
-			const check = checkFor(item, ctx);
+			const check = checkWithMatches(checkFor(item, ctx), doc);
 			const parts = splitWhy(item.why);
 			frameworksFor(item, chosen).forEach((framework) => {
 				if (framework === 'k6') {
@@ -4958,6 +5096,9 @@ namespace QaLab
 		playwrightLocator,
 		checkTarget,
 		rankedLocator,
+		countLocatorMatches,
+		withMatchCounts,
+		checkWithMatches,
 		LOCATOR_KINDS,
 	};
 	if (typeof module === 'object' && module.exports) module.exports = api;

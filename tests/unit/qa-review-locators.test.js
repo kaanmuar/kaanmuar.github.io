@@ -218,3 +218,116 @@ test('Jest and Vitest count checks use the same ranked locator; Cypress keeps CS
 		/querySelectorAll\("h1"\)/
 	);
 });
+
+// Match-count capture (#3832): count how many elements each locator kind would hit on a live / jsdom-like document.
+// No XPath evaluation (unsafe under CSP). Minimal stub — no new DOM deps.
+function stubEl(tag, attrs, text) {
+	const store = Object.assign({}, attrs || {});
+	return {
+		tagName: String(tag || '').toUpperCase(),
+		textContent: text || '',
+		innerText: text || '',
+		getAttribute(name) {
+			return store[name] != null ? String(store[name]) : null;
+		},
+		_css: store._css || [],
+	};
+}
+
+function stubDoc(nodes) {
+	const all = nodes.slice();
+	return {
+		getElementById(id) {
+			return all.find((el) => el.getAttribute('id') === id) || null;
+		},
+		querySelectorAll(selector) {
+			if (selector === '*') return all.slice();
+			const testId = /^\[data-testid="((?:\\.|[^"\\])*)"\]$/.exec(selector);
+			if (testId) {
+				const want = testId[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+				return all.filter((el) => el.getAttribute('data-testid') === want);
+			}
+			return all.filter((el) => (el._css || []).indexOf(selector) !== -1 || String(el.tagName).toLowerCase() === selector);
+		},
+	};
+}
+
+test('countLocatorMatches counts css, testId, role, text, and label; omits xpath', () => {
+	const unique = stubEl('a', { href: '/more', 'data-testid': 'more', _css: ['#more'] }, 'More');
+	const twin = stubEl('a', { href: '/other' }, 'More');
+	const labelled = stubEl('button', { 'aria-label': 'Save form' }, 'Save');
+	const doc = stubDoc([unique, twin, labelled]);
+	const counts = scripts.countLocatorMatches(doc, {
+		tag: 'a',
+		attrs: { href: '/more' },
+		text: 'More',
+		testId: 'more',
+		css: '#more',
+		xpath: '//a',
+		label: 'Save form',
+	});
+	assert.equal(counts.css, 1);
+	assert.equal(counts.testId, 1);
+	assert.equal(counts.role, 2);
+	assert.equal(counts.text, 2);
+	assert.equal(counts.label, 1);
+	assert.equal(counts.xpath, undefined);
+});
+
+test('withMatchCounts and rankedLocator demote ambiguous role; drop zero-match kinds', () => {
+	const keep = stubEl('a', { href: '/a', 'data-testid': 'more', _css: ['#more'] }, 'More');
+	const other = stubEl('a', { href: '/b' }, 'More');
+	const ghost = stubEl('span', { _css: ['.gone'] }, 'Gone');
+	const doc = stubDoc([keep, other, ghost]);
+
+	const target = {
+		tag: 'a',
+		attrs: { href: '/a' },
+		text: 'More',
+		testId: 'more',
+		css: '#more',
+	};
+	const counted = scripts.withMatchCounts(doc, target);
+	assert.deepEqual(counted.matches, { css: 1, testId: 1, role: 2, text: 2 });
+	assert.deepEqual(
+		scripts.rankLocators(counted).map((c) => c.kind),
+		['testId', 'css', 'role', 'text']
+	);
+
+	const zeroed = scripts.rankedLocator(
+		{ kind: 'count', path: '/', selector: '.gone', text: 'Nope', op: 'eq', n: 0 },
+		doc
+	);
+	assert.match(zeroed.locator, /page\.locator\("\.gone"\)/);
+	assert.equal(zeroed.fallbacks, '');
+});
+
+test('snippets(..., doc) prefer unique testId over ambiguous role for Playwright count', () => {
+	const keep = stubEl('a', { href: '/a', 'data-testid': 'more', _css: ['#more', 'a'] }, 'More');
+	const other = stubEl('a', { href: '/b' }, 'More');
+	const doc = stubDoc([keep, other]);
+	const report = { host: 'example.com', finalUrl: 'https://example.com/' };
+	const item = {
+		id: 'FN-03',
+		title: 'More link',
+		why: 'One More link.',
+		fw: ['Playwright'],
+		check: {
+			kind: 'count',
+			path: '/',
+			selector: '#more',
+			op: 'eq',
+			n: 1,
+			testId: 'more',
+			text: 'More',
+			tag: 'a',
+			attrs: { href: '/a' },
+		},
+	};
+	const without = scripts.snippets(report, item, ['Playwright'])[0].code;
+	assert.match(without, /page\.getByRole\("link", \{ name: "More", exact: true \}\)\.count\(\)/);
+
+	const withDoc = scripts.snippets(report, item, ['Playwright'], doc)[0].code;
+	assert.match(withDoc, /page\.getByTestId\("more"\)\.count\(\)/);
+	assert.match(withDoc, /Fallback locators, best first: page\.locator\("#more"\)/);
+});
