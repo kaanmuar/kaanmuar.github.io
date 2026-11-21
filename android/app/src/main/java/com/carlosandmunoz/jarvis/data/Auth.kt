@@ -14,6 +14,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.carlosandmunoz.jarvis.BuildConfig
 
 /**
  * Firebase Auth over its REST API, as the owner account admin.html uses: password, then the TOTP code.
@@ -108,10 +109,7 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
     }
 
     companion object {
-        // Identity Toolkit + Secure Token only (#3971). Not the Browser key (HTTP referrers)
-        // and not the Firebase Android key (needs Play Services headers OkHttp does not send).
-        // Split so gitleaks does not treat the public client key as a new secret.
-        val KEY = "AIza" + "SyBICNxsUsVHUZ2GO2fXHwgHGC7my6NyQ4M"
+        private val KEY = BuildConfig.FIREBASE_AUTH_KEY
         private const val IDT = "https://identitytoolkit.googleapis.com"
         private const val STS = "https://securetoken.googleapis.com"
         val JSON_TYPE = "application/json".toMediaType()
