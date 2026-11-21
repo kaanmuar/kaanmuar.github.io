@@ -11,6 +11,7 @@
 #   scripts/ticket.sh done <n> <pr>                             "Fixed in #pr.", close, Done; refused until #pr has merged
 #   scripts/ticket.sh log start|end <n> [title]                 Cursor usage log row
 #   scripts/ticket.sh log sweep                                 close open rows older than 24h (end = start + 12h)
+#   scripts/ticket.sh log prune [--dry-run] [--keep-days N] [--max-bytes N]   bounded prune of the work log (#3836)
 # new and bug first list open issues that may be the same ticket (scripts/open-work.js dups, #2969), on stderr.
 # In a terminal they ask before filing; without one (agents) they file anyway and name the candidates in the body.
 #   --dry-run        (new, bug, design) print the duplicate check and the issue it would file; writes nothing
@@ -187,7 +188,7 @@ child) child "${1:?parent}" "${2:?child}" ;;
 "done") close_when_merged "${1:?n}" "${2:?pr}" ;;
 log)
 	now=$(date -u +%FT%TZ)
-	case "${1:?start|end|sweep}" in
+	case "${1:?start|end|sweep|prune}" in
 	start) echo "$now,,${2:?n},${3:-},${CURSOR_CONVERSATION_ID:-chat}," >>"$LOG" ;;
 	end)
 		python3 - "$LOG" "${2:?n}" "$now" "${CURSOR_CONVERSATION_ID:-chat}" <<'PY'
@@ -201,6 +202,7 @@ if mine or open_rows:
 csv.writer(open(path, "w", newline="")).writerows(rows)
 PY
 		;;
+	prune) shift; node "$(dirname "$0")/usage-prune.js" csv "$LOG" "$@" ;;
 	# Stale open rows inflate attribution; close ones older than 24h at start+12h (#3545).
 	sweep)
 		python3 - "$LOG" <<'PY'
