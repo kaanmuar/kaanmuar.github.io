@@ -124,6 +124,8 @@ const breakers = {
 	urlhaus: createBreaker({ name: 'urlhaus', threshold: 5, coolDownMs: 30000 }),
 	phishstats: createBreaker({ name: 'phishstats', threshold: 5, coolDownMs: 30000 }),
 	cloudflare: createBreaker({ name: 'cloudflare', threshold: 5, coolDownMs: 30000 }),
+	'doh-cloudflare': createBreaker({ name: 'doh-cloudflare', threshold: 5, coolDownMs: 30000 }),
+	'doh-google': createBreaker({ name: 'doh-google', threshold: 5, coolDownMs: 30000 }),
 };
 
 const isTimeout = (error) => !!error && (error.name === 'TimeoutError' || error.name === 'AbortError');
