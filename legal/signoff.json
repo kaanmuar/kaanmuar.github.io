@@ -343,10 +343,10 @@
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.personal-data.12": {
-			"sha256": "7d21377b280140d736c37ea3e6a293a07ac5b3b90ff218390ebeb769fd0ed4e1",
-			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"sha256": "0711ba17d82090df7f584e2b2f22f68975a86fda4130a770827c55fc22b31341",
+			"signedOffBy": "Carlos Muñoz",
 			"signedOffOn": "2026-11-20",
-			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
+			"note": "#4026: remove stale 'not deleted automatically yet' now that paid fix requests follow the payment tax period",
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.personal-data.13": {
