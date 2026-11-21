@@ -1054,3 +1054,19 @@ test('quarantine and security tickets are in the AI catalog and pickable from gi
 	assert.ok(!actions.GH_CLICK_ONLY.includes('gh-quarantine'));
 	assert.ok(!actions.GH_CLICK_ONLY.includes('gh-security-ticket'));
 });
+
+test("mergePr leaves a visible worker PR for Carlos's Approve even when labelled and green (#2959)", async () => {
+  const R = "/repos/kaanmuar/kaanmuar.github.io";
+  const db = fakeDb();
+  await db.collection("jarvis_worker").doc("wabc").set({ id: "wabc", state: "done", title: "Fix the header", prNumber: 3100, branch: "jarvis/wabc-fix", gate: { level: "visible", decision: null } });
+  const pr = { number: 3100, state: "open", mergeable_state: "clean", head: { ref: "jarvis/wabc-fix", sha: "sha1" }, labels: [{ name: "jarvis-merge" }], html_url: "u" };
+  const f = fakeFetch([
+    ["GET", R + "/pulls/3100", () => pr],
+    ["GET", R + "/pulls/3100/files?per_page=100", () => [{ filename: "css/site.css", status: "modified" }]],
+    ["GET", R + "/commits/sha1/check-runs?per_page=100", () => ({ check_runs: [{ name: "ci", status: "completed", conclusion: "success" }] })]
+  ]);
+  const out = await fix.mergePr(ctxOf(f, { db }), { pr: 3100 });
+  assert.equal(out.ok, false);
+  assert.match(out.message, /#3100 is waiting for Carlos's Approve \(visible: css\/site\.css\); not merged/);
+  assert.ok(!f.calls.some((c) => c.method === "PUT"));
+});
