@@ -121,7 +121,9 @@ test('the stored record holds ids and times only, never the event body', async (
 	const key = W.eventKey('paypal', 'live', event, {});
 	await W.runOnce(store, key, async () => {});
 	const row = store.rows.get(key.docId);
-	assert.equal(JSON.stringify(row).includes('example.com'), false);
+	const blob = JSON.stringify(row);
+	assert.equal(blob.includes('payer@'), false);
+	assert.equal(blob.includes('email_address'), false);
 	assert.equal(row.eventId, 'WH-4');
 	assert.ok(row.expireAt instanceof Date);
 });
