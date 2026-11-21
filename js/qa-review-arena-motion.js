@@ -184,11 +184,17 @@
 			o.y = 2 * (1 - exp(-age * 6));
 			o.a = 0.92;
 		} else if (status === 'risk') {
-			o.r = sin(tt * 5) * 0.05;
-			o.x = sin(tt * 11) * 0.8;
+			// Nervous wobble — stronger than idle, distinct from fail's slump (#4106).
+			o.r = sin(tt * 7) * 0.09;
+			o.x = sin(tt * 14) * 1.6;
+			o.y = sin(tt * 9) * 0.8;
+			o.sx = o.sy = 1 + 0.04 * sin(tt * 6);
 		} else if (status === 'skip') {
-			o.sy = 0.96;
-			o.a = 0.5;
+			// Stand down: smaller and faded, not shaken (#4106).
+			o.sy = 0.9;
+			o.sx = 0.94;
+			o.a = 0.42;
+			o.y = 1.5;
 		} else {
 			o.y = sin(tt * 1.3) * 0.5;
 			o.a = 0.5;

@@ -422,9 +422,15 @@
 .lab-stage .ra-canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; pointer-events: none; }
 .lab-stage .ra-lab-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .lab-stage .ra-lab-tools { display: none; }
-.lab-stage .ra-lab-ui, .lab-stage .ra-lab-hit, .lab-stage .ra-lab-tip { pointer-events: auto; }
-.lab-stage .ra-lab-ui { pointer-events: none; }
 .lab-stage .ra-lab-hit, .lab-stage .ra-lab-tip { pointer-events: auto; }
+/* Hits are <button>s; without this they paint UA white/gray over the baked scene. */
+.lab-stage .ra-lab-hit {
+	appearance: none; -webkit-appearance: none; margin: 0; padding: 0; border: 0; border-radius: 8px;
+	background: transparent; color: transparent; box-shadow: none; cursor: pointer;
+}
+.lab-stage .ra-lab-hit:focus-visible { outline: 2px solid #5ec8d4; outline-offset: 2px; }
+.lab-stage .ra-lab-hit.is-on { box-shadow: inset 0 0 0 2px rgba(94,200,212,.75), 0 0 16px rgba(94,200,212,.35); }
+.lab-stage .ra-lab-hit[data-kind="bay"].is-on { box-shadow: inset 0 0 0 2px rgba(255,154,74,.85), 0 0 16px rgba(255,90,74,.35); }
 
 /* ---------------------------------------------------------------- motion */
 @keyframes rc-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }

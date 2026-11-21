@@ -42,14 +42,15 @@
 	// `pass` = stages to mark done only after this fact (passed). Never tick on wip.
 	const FACTS = [
 		// —— Unexpected / control → robot pods ——
-		{ re: /^Stop requested/, anomaly: 'stop', pose: 'stop' },
+		{ re: /^Stop requested|^Stop was requested/, anomaly: 'stop', pose: 'stop' },
 		{
-			re: /^Stopped before|^Stopped\. The report keeps/,
+			re: /^Stopped before|^Stopped\. The report keeps|^Stopped\. The report uses/,
 			anomaly: 'stop',
 			pose: 'stop',
 			stage: 'pages',
 			status: 'fail',
 		},
+		{ re: /^The stop was refused/, anomaly: 'stop', pose: 'stop', status: 'risk' },
 		{ re: /^The time budget ended/, anomaly: 'timeout', pose: 'timeout', stage: 'pages', status: 'fail' },
 		// Stage-specific timeouts first: the generic rule below has no stage, so a line that matches it would hide which check failed (#3862).
 		{
@@ -99,8 +100,9 @@
 
 		// —— Crawl / pages ——
 		{ re: /^Reading robots\.txt/, stage: 'robots', pose: 'work', status: 'wip' },
+		{ re: /^robots\.txt could not|^robots\.txt was not read/, stage: 'robots', pose: 'fail', anomaly: 'fail', status: 'risk' },
 		{
-			re: /^robots\.txt was read|^robots\.txt returned|^robots\.txt could not/,
+			re: /^robots\.txt was read|^robots\.txt returned/,
 			stage: 'robots',
 			pose: 'work',
 			status: 'done',
@@ -144,7 +146,8 @@
 		// —— Background / security / mail ——
 		{ re: /^In the background:/, stages: ['crawl', 'security', 'mail', 'dns', 'webrisk'], pose: 'work', status: 'wip' },
 		{ re: /^The TLS certificate/, stage: 'dns', pose: 'work', status: 'done' },
-		{ re: /^The sitemap at |^No sitemap with URLs/, stage: 'crawl', pose: 'work', status: 'done' },
+		{ re: /^The sitemap at /, stage: 'crawl', pose: 'work', status: 'done' },
+		{ re: /^No sitemap with URLs/, stage: 'crawl', pose: 'work', status: 'skip' },
 		{ re: /^DNS for /, stage: 'mail', pose: 'work', status: 'done', pass: ['dns'] },
 		{ re: /^The DNS records could not be read/, stage: 'dns', pose: 'fail', anomaly: 'fail', status: 'fail' },
 		{ re: /^Spam blocklists:/, stage: 'blocklist', pose: 'work', status: 'done' },
@@ -169,9 +172,14 @@
 		// The attack and exploit sources (#3848) ride the radar until the art of #3826 gives them their own item.
 		{ re: /^Reading attack and exploit sources/, stage: 'malware', pose: 'work', status: 'wip' },
 		{ re: /^Attack and exploit sources read:/, stage: 'malware', pose: 'work', status: 'done' },
+		{ re: /^Attack and exploit source checks were switched off/, stage: 'malware', pose: 'work', status: 'skip' },
+		{ re: /^The agent markdown check was skipped/, stage: 'robots', pose: 'work', status: 'skip' },
+		{ re: /^Plain http could not/, stage: 'https', pose: 'fail', anomaly: 'fail', status: 'risk' },
 		{ re: /^Plain http /, stage: 'https', pose: 'work', status: 'done' },
 		{ re: /^RDAP for /, stage: 'dns', pose: 'work', status: 'done' },
+		{ re: /^The RDAP registration did not answer/, stage: 'dns', pose: 'fail', anomaly: 'timeout', status: 'fail' },
 		{ re: /^The RDAP registration/, stage: 'dns', pose: 'work', status: 'skip' },
+		{ re: /^Google Maps did not answer/, stage: 'security', pose: 'work', status: 'skip' },
 		{ re: /^Google Maps /, stage: 'security', pose: 'work', status: 'done' },
 		{
 			re: /^\/llms|^\/\.well-known\/security\.txt|^The start page with UTM|^The made-up path|^The 404 check|^The UTM check/,
@@ -214,6 +222,12 @@
 		},
 		{ re: /^\d+ public write-ups|^No public write-up/, stage: 'security', pose: 'work', status: 'done' },
 		{ re: /^\d+ public signals|^No leak or missing control/, stage: 'security', pose: 'work', status: 'done' },
+
+		// —— Soft preview / payment / UI chrome (keep doctor calm; mark risk only when the run itself failed) ——
+		{ re: /^The preview failed/, pose: 'fail', anomaly: 'fail', status: 'fail' },
+		{ re: /^The bot check did not load/, pose: 'fail', anomaly: 'fail', status: 'fail' },
+		{ re: /^Soft preview quota reached|^Opening this report again waits on payment/, pose: 'work', status: 'skip' },
+		{ re: /^Report ready\. Cases are proposed/, stage: 'cases', pose: 'cheer', status: 'done' },
 	];
 
 	function matchFact(text) {

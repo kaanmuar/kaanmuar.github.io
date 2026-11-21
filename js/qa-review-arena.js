@@ -9,8 +9,8 @@
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
-	const VER = '?v=20261120e';
-	const CONSOLE_VER = '?v=20261120e';
+	const VER = '?v=20261120g';
+	const CONSOLE_VER = '?v=20261120g';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -56,7 +56,7 @@
 		{ id: 'save', kind: 'send' },
 	];
 	const BACKGROUND = { https: 1, dns: 1, robots: 1, webrisk: 1, lookalike: 1, wordpress: 1, mail: 1, lighthouse: 1 };
-	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow' };
+	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow', retry: 'retry' };
 	// Lab gaming scene cast (atlas-aligned). The art stays; these names drive hit-targets, tips and live reactions.
 	const LAB_STATION = {
 		dns: 'DNS/TLS', robots: 'robots.txt', crawl: 'Crawl', browser: 'Browser', axe: 'Axe', security: 'Security', a11y: 'A11y',
@@ -216,6 +216,16 @@
 				mark(id, fact.status || 'wip');
 			});
 		if (fact.stage) mark(fact.stage, fact.status || 'wip');
+		// Generic timeout/fail with no stage still fails the active station (#4107).
+		if (
+			!fact.stage &&
+			!(fact.stages && fact.stages.length) &&
+			state.activeId &&
+			(fact.anomaly === 'timeout' || fact.anomaly === 'fail') &&
+			(fact.status === 'fail' || fact.status === 'risk' || !fact.status)
+		) {
+			mark(state.activeId, fact.status === 'risk' ? 'risk' : 'fail');
+		}
 		if (fact.anomaly) setAnomaly(fact.anomaly);
 		else if ((fact.status === 'done' || fact.status === 'wip') && state.anomaly === 'slow' && fact.pose !== 'slow')
 			setAnomaly('');
@@ -249,8 +259,23 @@
 
 	function line(text) {
 		if (state.run !== 'running' && state.run !== 'stopping') return;
-		const fact = facts().matchFact(text);
-		if (/^Stop requested/.test(String(text || ''))) state.run = 'stopping';
+		let fact = facts().matchFact(text);
+		// Unmapped failure-shaped copy still drives a reaction on the active station (#4108).
+		if (
+			!fact &&
+			/\b(could not|did not answer|did not finish|timed out|no answer in time)\b/i.test(String(text || ''))
+		) {
+			fact = {
+				anomaly: /timed out|no answer in time|did not (answer|finish) in time/i.test(String(text || ''))
+					? 'timeout'
+					: 'fail',
+				pose: /timed out|no answer in time|did not (answer|finish) in time/i.test(String(text || ''))
+					? 'timeout'
+					: 'fail',
+				status: 'fail',
+			};
+		}
+		if (/^Stop requested|^Stop was requested/.test(String(text || ''))) state.run = 'stopping';
 		pushLog(text, fact);
 		if (fact) applyFact(fact);
 		else if (!state.anomaly) setPose('work');
@@ -662,6 +687,25 @@
 		const root = document.createElement('div');
 		root.className = 'ra-lab-ui';
 		root.setAttribute('aria-label', 'Lab Tries controls');
+		// Hits live inside the console shadow root, so page CSS cannot reach them — style here.
+		const style = document.createElement('style');
+		style.textContent =
+			'.ra-lab-ui{position:absolute;inset:0;z-index:2;pointer-events:none;}' +
+			'.ra-lab-hit{position:absolute;pointer-events:auto;cursor:pointer;margin:0;padding:0;border:0;border-radius:8px;' +
+			'background:transparent!important;color:transparent;appearance:none;-webkit-appearance:none;box-shadow:none;}' +
+			'.ra-lab-hit:focus-visible{outline:2px solid #5ec8d4;outline-offset:2px;}' +
+			'.ra-lab-hit.is-on{box-shadow:inset 0 0 0 2px rgba(94,200,212,.75),0 0 16px rgba(94,200,212,.35);}' +
+			'.ra-lab-hit[data-kind="bay"].is-on{box-shadow:inset 0 0 0 2px rgba(255,154,74,.85),0 0 16px rgba(255,90,74,.35);}' +
+			'.ra-lab-tip{position:absolute;left:12px;bottom:12px;z-index:4;max-width:min(420px,70%);padding:10px 12px;' +
+			'border-radius:11px;border:1px solid rgba(94,200,212,.4);background:rgba(5,13,17,.92);color:#e8f3f4;' +
+			'pointer-events:auto;box-shadow:0 12px 28px rgba(0,0,0,.45);font:400 12.5px/1.4 Inter,system-ui,sans-serif;}' +
+			'.ra-lab-tip[hidden]{display:none!important;}' +
+			'.ra-lab-tip b{display:block;font:700 12px/1.2 Inter,system-ui,sans-serif;letter-spacing:.08em;color:#5ec8d4;}' +
+			'.ra-lab-tip strong{display:block;margin-top:4px;font:600 15px/1.25 Inter,system-ui,sans-serif;color:#fff;}' +
+			'.ra-lab-tip p{margin:6px 0 0;color:#b7c9ce;}' +
+			'.ra-lab-tip .ra-lab-st{display:inline-flex;margin-top:8px;padding:3px 8px;border-radius:999px;' +
+			'font:700 10px/1 Inter,sans-serif;letter-spacing:.1em;border:1px solid rgba(94,200,212,.35);}';
+		root.appendChild(style);
 		// Console chrome already has Update / full screen when the scene is embedded in .lab-stage.
 		if (!wrap.hasAttribute('data-lab-stage')) {
 			const tools = document.createElement('div');
