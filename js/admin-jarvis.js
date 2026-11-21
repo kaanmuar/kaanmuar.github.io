@@ -1529,7 +1529,8 @@ export function mountJarvis({
 								tags: e.engagement.report.tags.slice(0, 10),
 								networks: e.engagement.report.networks,
 								waiting: e.engagement.waiting.length,
-								scoutDrafts: e.engagement.scoutDrafts || e.engagement.waiting.filter((d) => d.campaign === 'scout-trend').length,
+								scoutDrafts:
+									e.engagement.scoutDrafts || e.engagement.waiting.filter((d) => d.campaign === 'scout-trend').length,
 								topPosts: e.engagement.posts
 									.slice(0, 5)
 									.map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`),

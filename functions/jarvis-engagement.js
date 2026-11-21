@@ -1367,12 +1367,7 @@ async function loadScoutDrafts(fetchImpl, decisions, now) {
 		const decided = decisions || {};
 		return (Array.isArray(data) ? data : [])
 			.filter(
-				(r) =>
-					r &&
-					r.status === 'draft' &&
-					r.noPost === true &&
-					SCOUT_ID.test(String(r.id || '')) &&
-					!decided[r.id]
+				(r) => r && r.status === 'draft' && r.noPost === true && SCOUT_ID.test(String(r.id || '')) && !decided[r.id]
 			)
 			.map((r) => scoutBrief(r, now))
 			.sort((a, b) => b.score - a.score || String(a.key).localeCompare(String(b.key)));
@@ -1818,8 +1813,7 @@ async function source(ctx) {
 	const byScore = (a, b) => b.score - a.score;
 	const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
 	const joins = await Joins.summary(db, conf, mac, used, now);
-	const scoutDecided =
-		scoutDecisionsSnap && scoutDecisionsSnap.exists ? scoutDecisionsSnap.data().decisions || {} : {};
+	const scoutDecided = scoutDecisionsSnap && scoutDecisionsSnap.exists ? scoutDecisionsSnap.data().decisions || {} : {};
 	const scoutWaiting = await loadScoutDrafts(ctx.fetch, scoutDecided, now);
 	const fieldWaiting = waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data())));
 	return {

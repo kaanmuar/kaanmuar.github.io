@@ -16,7 +16,7 @@ const ROW = {
 	score: 2.4,
 	hits: 1,
 	fit: 0.5,
-	draft: '#WebSecurity is trending. Quick check that costs nothing: look at your own site\'s response headers.',
+	draft: "#WebSecurity is trending. Quick check that costs nothing: look at your own site's response headers.",
 	lang: 'en',
 	status: 'draft',
 	noPost: true,
@@ -35,7 +35,11 @@ test('scoutBrief keeps noPost and waiting status, never trendSafe', () => {
 });
 
 test('loadScoutDrafts drops decided, non-draft and posting rows', async () => {
-	const payload = [ROW, Object.assign({}, ROW, { id: 'scout-a11y-bluesky-2026-11-20', tag: 'a11y', network: 'bluesky' }), Object.assign({}, ROW, { id: 'scout-bad-x-2026-11-20', status: 'approved', noPost: false })];
+	const payload = [
+		ROW,
+		Object.assign({}, ROW, { id: 'scout-a11y-bluesky-2026-11-20', tag: 'a11y', network: 'bluesky' }),
+		Object.assign({}, ROW, { id: 'scout-bad-x-2026-11-20', status: 'approved', noPost: false }),
+	];
 	const fetchImpl = async () => ({ ok: true, json: async () => payload });
 	const list = await J.loadScoutDrafts(fetchImpl, { [ROW.id]: { status: 'dismissed' } }, NOW);
 	assert.equal(list.length, 1);
@@ -45,7 +49,11 @@ test('loadScoutDrafts drops decided, non-draft and posting rows', async () => {
 
 test('decideScout records approve or dismiss and never calls a network', async () => {
 	const db = fakeDb();
-	const out = await J.decideScout({ db, now: NOW }, { key: ROW.id, decision: 'approve', text: 'Edited #WebSecurity take.' }, 'carlos');
+	const out = await J.decideScout(
+		{ db, now: NOW },
+		{ key: ROW.id, decision: 'approve', text: 'Edited #WebSecurity take.' },
+		'carlos'
+	);
 	assert.equal(out.status, 'approved');
 	assert.match(out.message, /Nothing was posted/);
 	const doc = db.doc('jarvis_settings', 'scout-drafts');
@@ -65,7 +73,10 @@ test('the workflow commits only scout-drafts.json and never posts', () => {
 	assert.ok(flow.includes(`cron: '${row.cron}'`));
 	assert.match(flow, /scout-trending-drafts\.js/);
 	assert.match(flow, /git add assets\/social\/scout-drafts\.json/);
-	assert.doesNotMatch(flow, /open-social\.yml|buffer-batch\.yml|facebook-page\.yml|social-inbox\.yml|engagement-act|replyNow|trendSafe\s*:/);
+	assert.doesNotMatch(
+		flow,
+		/open-social\.yml|buffer-batch\.yml|facebook-page\.yml|social-inbox\.yml|engagement-act|replyNow|trendSafe\s*:/
+	);
 	assert.match(flow, /NEVER posts/);
 	assert.match(flow, /NEVER auto-approves/);
 });
