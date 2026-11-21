@@ -16,6 +16,7 @@
  *                     sixth year after the payment when expireAt is missing; taxHold keeps the row. Review runs
  *                     themselves stay on Firestore TTL (12 months).
  *   url_review_redemptions  coupon redemptions: same tax period as payment rows.
+ *   webhook_events    payment-webhook claim records (event id, status, times; no body): 3 months after the last touch.
  *
  * A row with no readable date is kept and counted as "undated". A taxHold flag keeps a payment-related row past
  * its date while the income-tax return it supports is not final (legal page). sweep() is a dry run unless apply
@@ -107,6 +108,8 @@ const POLICY = [
 		until: taxUntil,
 		keep: (d) => !!d.taxHold,
 	},
+	// Webhook idempotency claims (ids and status only): longer than any provider retry window (#3837).
+	{ collection: 'webhook_events', months: 3, dates: (d) => [d.firstSeenAt, d.lastSeenAt, d.finishedAt, d.claimedAt] },
 ];
 
 /** What happens to one document: keep, delete, trim (stop-list stub), or undated (kept). */
