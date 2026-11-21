@@ -5,6 +5,7 @@
  * The account (keyed by email) is where a paid plan will hang.
  */
 const crypto = require("crypto");
+const resilience = require("./http-resilience");
 
 const PROVIDERS = [
   { id: "email", label: "Email" },
@@ -494,14 +495,26 @@ async function dropAuthUsers(authApi, email) {
 
 // For the local server, which has no Admin SDK credentials: Identity Toolkit
 // answers with the user the ID token belongs to, or an error if it is not valid.
+// Retries 5xx/429 with backoff and pauses after repeated failures (#3838); permanent 4xx auth
+// failures return at once and never count against the breaker. Answer shapes stay the same.
 function lookupIdToken(apiKey) {
   return async (idToken) => {
-    const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(apiKey), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ idToken }),
-      signal: AbortSignal.timeout(10000)
-    });
+    const res = await resilience.resilientFetch(
+      "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + encodeURIComponent(apiKey),
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idToken })
+      },
+      {
+        retries: 2,
+        baseMs: 300,
+        maxMs: 2000,
+        maxRetryAfterMs: 3000,
+        timeoutMs: 10000,
+        breaker: resilience.breakers.identitytoolkit
+      }
+    );
     const body = await res.json();
     const user = body && body.users && body.users[0];
     if (!res.ok || !user) throw new Error("The sign-in token was not accepted.");
