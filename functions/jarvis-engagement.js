@@ -1316,20 +1316,26 @@ const SCOUT_TTL_MS = 3 * DAY;
 function scoutBrief(row, now) {
 	const created = Date.parse(row.createdAt) || now;
 	const tag = String(row.tag || '').slice(0, 40);
+	// The real thread the draft would answer (Mastodon only, read from the public tag timeline); https links only.
+	const th = row.thread && /^https:\/\//.test(String(row.thread.url || '')) ? row.thread : null;
 	return {
 		key: row.id,
 		network: row.network,
-		url: '',
-		author: { handle: '#' + tag, name: '#' + tag },
-		title: 'Trending #' + tag,
-		text: String(row.draft || '').slice(0, 600),
+		url: th ? String(th.url).slice(0, 500) : '',
+		author: th
+			? { handle: String(th.author || '').slice(0, 80), name: String(th.author || '').slice(0, 80) }
+			: { handle: '#' + tag, name: '#' + tag },
+		title: th ? 'Thread under #' + tag : 'Trending #' + tag,
+		text: th ? String(th.excerpt || '').slice(0, 600) : String(row.draft || '').slice(0, 600),
 		lang: row.lang || 'en',
 		topic: row.topic || '',
 		words: [],
 		score: Number(row.score) || 0,
 		trend: null,
-		metrics: { likes: 0, replies: 0, reposts: 0, views: 0 },
-		about: 'Trending-tag draft · review only · never posts on its own',
+		metrics: { likes: th ? Number(th.likes) || 0 : 0, replies: th ? Number(th.replies) || 0 : 0, reposts: 0, views: 0 },
+		about: th
+			? 'Trending-tag draft under a real thread · review only · never posts on its own'
+			: 'Trending-tag draft · review only · never posts on its own',
 		why: 'Ride #' + tag,
 		sentiment: '',
 		worth: null,

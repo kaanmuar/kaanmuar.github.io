@@ -10,13 +10,19 @@
    assets/social/scout-drafts.json with status "draft" and noPost: true; Carlos reviews them in Jarvis. Nothing here sets
    trendSafe or an approved status, so no draft can go out on its own.
 
-     node scripts/scout-trending-drafts.js [--tags "A,B"] [--file f.json] [--networks x,bluesky] [--keep 5] [--out f.json] [--dry-run] */
+   Threads (#3814): a Mastodon row also carries the real thread it would answer, read from the instance's public tag
+   timeline (no key): a recent English post under the tag that already has replies, not a reply itself, not sensitive,
+   not drama. It is stored as row.thread (a link and a short excerpt) for review. Other networks have no free,
+   keyless read, so their drafts stay tag-level. Reading never writes to a network; --no-threads skips the read.
+
+     node scripts/scout-trending-drafts.js [--tags "A,B"] [--file f.json] [--networks x,bluesky] [--keep 5] [--out f.json] [--dry-run] [--no-threads] */
 "use strict";
 
 const fs = require("fs");
 const path = require("path");
 const E = require("../functions/engagement.js");
 const T = require("../functions/engagement-trends.js");
+const Sources = require("../functions/engagement-sources.js");
 
 const ROOT = path.resolve(__dirname, "..");
 const TRENDING_FILE = path.join(__dirname, "trending-tags.json");
@@ -24,6 +30,9 @@ const CAPTIONS_FILE = path.join(ROOT, "assets/social/captions.json");
 const QUEUE_FILE = path.join(ROOT, "assets/social/scout-drafts.json");
 const MAX_AGE_DAYS = 3;
 const MAX_QUEUE = 200;
+const THREAD_NETWORK = "mastodon";
+const THREAD_MAX_AGE_MS = 2 * 86400000;
+const THREAD_TIMEOUT_MS = 10000;
 
 // Playful, short, no link, no pitch: a tag's draft gives a light take on the topic. The soft tool mention is added by
 // Carlos at review (engagement.js SOFT: only when it flows, never twice in a thread).
@@ -88,6 +97,44 @@ function draftText(tag, topic, network) {
 }
 
 /**
+ * The real thread under a tag to answer, from Mastodon statuses (the raw timeline), or null. A thread is a recent English
+ * original post (not a reply, not a bot) that carries the tag, already has replies, and is neither sensitive nor drama.
+ * Busiest first (replies count double). Pure: no network.
+ */
+function pickThread(tag, statuses, now) {
+  const at = now || Date.now();
+  const want = String(tag).toLowerCase();
+  const found = (Array.isArray(statuses) ? statuses : []).filter((s) => s && !(s.account || {}).bot).map((s) => ({ raw: s, post: Sources.mastodonPost(s) })).filter(({ raw, post }) => {
+    const lang = String((raw.reblog || raw).language || "").toLowerCase();
+    const age = at - Date.parse(post.createdAt);
+    return !post.isReply && lang === "en" && /^https:\/\//.test(post.url) && age >= 0 && age <= THREAD_MAX_AGE_MS
+      && post.metrics.replies >= 1 && post.text.length >= 20
+      && post.tags.some((t) => String(t).toLowerCase() === want)
+      && !E.SENSITIVE.test(post.text) && !T.drama({ text: post.text });
+  }).map(({ post }) => post);
+  found.sort((a, b) => (b.metrics.replies * 2 + b.metrics.likes + b.metrics.reposts) - (a.metrics.replies * 2 + a.metrics.likes + a.metrics.reposts) || a.url.localeCompare(b.url));
+  const best = found[0];
+  if (!best) return null;
+  return { network: THREAD_NETWORK, url: best.url, author: best.author.handle, excerpt: best.text.replace(/\s+/g, " ").slice(0, 200), replies: best.metrics.replies, likes: best.metrics.likes, createdAt: best.createdAt };
+}
+
+/** { tag: statuses[] } read from the instance's public tag timelines (GET only, no key). A failing tag gives no thread. */
+async function readThreads(tags, opts) {
+  const o = opts || {};
+  const fetchImpl = o.fetch || fetch;
+  const base = String(o.base || process.env.MASTODON_URL || "https://mastodon.social").replace(/\/+$/, "");
+  const out = {};
+  await Promise.all(tags.map(async (tag) => {
+    try {
+      const res = await fetchImpl(base + "/api/v1/timelines/tag/" + encodeURIComponent(tag) + "?limit=40", { signal: AbortSignal.timeout(THREAD_TIMEOUT_MS) });
+      const list = res.ok ? await res.json() : [];
+      out[tag] = Array.isArray(list) ? list : [];
+    } catch (e) { out[tag] = []; }
+  }));
+  return out;
+}
+
+/**
  * Draft queue rows (never posted): the best `keep` scored tags, one per network in `networks`. A row has
  * status "draft", noPost true, and no trendSafe flag, so Jarvis shows it for review and nothing sends it.
  */
@@ -100,24 +147,35 @@ function buildDrafts(trends, own, opts) {
   scored.forEach((s) => nets.forEach((network) => {
     const draft = draftText(s.tag, s.topic, network);
     if (!draft || E.SENSITIVE.test(draft) || T.drama({ text: draft })) return;
-    rows.push({
+    const thread = network === THREAD_NETWORK && o.threads ? pickThread(s.tag, o.threads[s.tag], now) : null;
+    const row = {
       id: "scout-" + s.tag.toLowerCase() + "-" + network + "-" + E.bogotaDay(now), kind: "scout-trend", network, tag: s.tag, topic: s.topic,
       score: s.score, hits: s.hits, fit: s.fit, draft, lang: "en", status: "draft", noPost: true, createdAt: new Date(now).toISOString()
-    });
+    };
+    if (thread) row.thread = thread;
+    rows.push(row);
   }));
   return rows;
 }
 
-/** The queue with rows added; a row already there (same id) is kept as Carlos left it. Newest first, bounded. */
+/**
+ * The queue with rows added; a row already there (same id) is kept as Carlos left it, except that a still-undecided draft
+ * with no thread gains the thread a later run found (its text is never touched). Newest first, bounded.
+ */
 function mergeQueue(queue, rows) {
-  const have = new Set((queue || []).map((r) => r.id));
-  return rows.filter((r) => !have.has(r.id)).concat(queue || []).slice(0, MAX_QUEUE);
+  const fresh = new Map(rows.map((r) => [r.id, r]));
+  const kept = (queue || []).map((r) => {
+    const f = fresh.get(r.id);
+    return f && f.thread && !r.thread && r.status === "draft" ? Object.assign({}, r, { thread: f.thread }) : r;
+  });
+  const have = new Set(kept.map((r) => r.id));
+  return rows.filter((r) => !have.has(r.id)).concat(kept).slice(0, MAX_QUEUE);
 }
 
 const readJson = (file, fallback) => { try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { return fallback; } };
 const arg = (argv, name) => { const i = argv.indexOf("--" + name); return i > -1 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : ""; };
 
-function main(argv) {
+async function main(argv) {
   const manual = arg(argv, "tags");
   const file = arg(argv, "file") || TRENDING_FILE;
   let source = manual;
@@ -129,14 +187,21 @@ function main(argv) {
   }
   const own = ownTopics(Object.values(readJson(CAPTIONS_FILE, {})).flatMap((v) => (v && typeof v === "object" ? Object.values(v) : [v])));
   const nets = arg(argv, "networks");
-  const rows = buildDrafts(source, own, { keep: Number(arg(argv, "keep")) || 5, networks: nets ? nets.split(",") : undefined });
+  const keep = Number(arg(argv, "keep")) || 5;
+  const networks = nets ? nets.split(",") : undefined;
+  let threads;
+  if (!argv.includes("--no-threads") && (networks || SCOUT_NETWORKS).includes(THREAD_NETWORK)) {
+    const tags = [...new Set(buildDrafts(source, own, { keep, networks: [THREAD_NETWORK] }).map((r) => r.tag))];
+    threads = await readThreads(tags);
+  }
+  const rows = buildDrafts(source, own, { keep, networks, threads });
   const out = arg(argv, "out") || QUEUE_FILE;
-  if (argv.includes("--dry-run")) { rows.forEach((r) => console.log(r.network + " #" + r.tag + " (" + r.topic + ", " + r.score + "): " + r.draft)); console.log("scout drafts: " + rows.length + " drafts, dry run, nothing written"); return 0; }
+  if (argv.includes("--dry-run")) { rows.forEach((r) => console.log(r.network + " #" + r.tag + " (" + r.topic + ", " + r.score + "): " + r.draft + (r.thread ? " [thread " + r.thread.url + "]" : ""))); console.log("scout drafts: " + rows.length + " drafts, dry run, nothing written"); return 0; }
   fs.writeFileSync(out, JSON.stringify(mergeQueue(readJson(out, []), rows), null, 1) + "\n");
-  console.log("scout drafts: " + rows.length + " drafts in " + path.relative(ROOT, out) + "; none posted");
+  console.log("scout drafts: " + rows.length + " drafts (" + rows.filter((r) => r.thread).length + " with a thread) in " + path.relative(ROOT, out) + "; none posted");
   return 0;
 }
 
-if (require.main === module) process.exit(main(process.argv.slice(2)));
+if (require.main === module) main(process.argv.slice(2)).then((code) => process.exit(code), (e) => { console.error("scout drafts: " + (e && e.message)); process.exit(1); });
 
-module.exports = { parseTrends, ownTopics, scoreTrend, draftText, buildDrafts, mergeQueue, TAKES, SCOUT_NETWORKS };
+module.exports = { pickThread, readThreads, parseTrends, ownTopics, scoreTrend, draftText, buildDrafts, mergeQueue, TAKES, SCOUT_NETWORKS };
