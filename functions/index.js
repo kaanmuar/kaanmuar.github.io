@@ -3859,6 +3859,65 @@ exports.legalWatch = require('firebase-functions/v2/scheduler').onSchedule(
 		})
 );
 
+
+const checkoutReconcile = require('./checkout-reconcile');
+
+// Checkout reconcile (#3837): daily compare of recent PayPal payment rows vs provider captures.
+async function runCheckoutReconcile() {
+	const keys = paypalKeys('live');
+	let ready = false;
+	try {
+		urlReview.paypalCredentials(keys);
+		ready = true;
+	} catch (error) {
+		ready = false;
+	}
+	const provider = ready
+		? {
+				ready: true,
+				async getCapture(captureId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/payments/captures/' + captureId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+				async getOrder(orderId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/checkout/orders/' + orderId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+			}
+		: { ready: false };
+	return checkoutReconcile.run({
+		store: checkoutReconcile.firestoreStore(getFirestore()),
+		provider,
+		log: (text) => console.log(text),
+	});
+}
+
+exports.checkoutReconcile = require('firebase-functions/v2/scheduler').onSchedule(
+	{
+		schedule: ops.cron('checkoutReconcile'),
+		timeZone: ops.TIME_ZONE,
+		timeoutSeconds: 300,
+		memory: '512MiB',
+		maxInstances: 1,
+		retryConfig: { retryCount: 0 },
+		secrets: SECRETS.checkoutReconcile,
+	},
+	() => track('checkoutReconcile', () => runCheckoutReconcile())
+);
+
+
 exports.outreachSweep = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('outreachSweep'),
