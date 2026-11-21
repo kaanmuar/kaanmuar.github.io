@@ -1512,6 +1512,50 @@ const EN = {
 	'a11y-linktext.pass.evidence': 'None of the {n} links checked is named only “read more”, “click here” or the like.',
 	'a11y-linktext.name': '“{text}” ({count}×)',
 	'a11y-linktext.name.many': '“{text}” ({count}×, going to {targets} different pages)',
+	'a11y-axtree.pass.title': 'The accessibility tree shows no issues we check for',
+	'a11y-axtree.pass.evidence':
+		'Read {n} nodes from the browser’s own accessibility tree (out-of-band CDP). Automated tree checks catch only some real issues.',
+	'a11y-axtree.example': 'role {role}',
+	'a11y-axtree.example.named': 'role {role} named “{name}”',
+	'a11y-axtree.example.named.detail': 'role {role} named “{name}” ({detail})',
+	'a11y-axtree.example.detail': 'role {role} ({detail})',
+	'a11y-axtree-title.title': 'The page has no accessible title in the accessibility tree',
+	'a11y-axtree-title.evidence':
+		'The browser’s accessibility tree reports an empty document title ({examples}). Read out of band over CDP, so a strict Content-Security-Policy cannot block it (WCAG 2.4.2).',
+	'a11y-axtree-title.fix': 'Give the page a <title> that says what it is.',
+	'a11y-axtree-link-name.title': 'A link has no accessible name in the accessibility tree',
+	'a11y-axtree-link-name.evidence':
+		'{n} link(s) in the accessibility tree have no name ({examples}). Read out of band over CDP (WCAG 2.4.4, 4.1.2).',
+	'a11y-axtree-link-name.fix': 'Give each link text, an image with alt text, or an aria-label.',
+	'a11y-axtree-link-generic.title': 'A link in the accessibility tree is named only “read more” or “click here”',
+	'a11y-axtree-link-generic.evidence':
+		'{n} link(s) in the accessibility tree are named only a generic phrase ({examples}). Read out of band over CDP (WCAG 2.4.4, failure F84).',
+	'a11y-axtree-link-generic.fix':
+		'Name each link for its destination, or add an aria-label that says it. Keep the visible words inside the accessible name.',
+	'a11y-axtree-button-name.title': 'A button has no accessible name in the accessibility tree',
+	'a11y-axtree-button-name.evidence':
+		'{n} button(s) in the accessibility tree have no name ({examples}). Read out of band over CDP (WCAG 4.1.2).',
+	'a11y-axtree-button-name.fix': 'Give each button text or an aria-label that says what it does.',
+	'a11y-axtree-image-name.title': 'An image has no text alternative in the accessibility tree',
+	'a11y-axtree-image-name.evidence':
+		'{n} image(s) in the accessibility tree have no name ({examples}). Read out of band over CDP (WCAG 1.1.1).',
+	'a11y-axtree-image-name.fix': 'Add an alt that says what the image shows, or alt="" when it is decoration.',
+	'a11y-axtree-field-name.title': 'A form field has no accessible name in the accessibility tree',
+	'a11y-axtree-field-name.evidence':
+		'{n} form field(s) in the accessibility tree have no name ({examples}). Read out of band over CDP (WCAG 1.3.1, 4.1.2).',
+	'a11y-axtree-field-name.fix': 'Tie each field to a visible <label> or give it an aria-label.',
+	'a11y-axtree-heading-skip.title': 'A heading level is skipped in the accessibility tree',
+	'a11y-axtree-heading-skip.evidence':
+		'{n} heading skip(s) in the accessibility tree ({examples}). Read out of band over CDP (WCAG 1.3.1, technique G141).',
+	'a11y-axtree-heading-skip.fix': 'Keep heading levels in order (an h2 is followed by an h3, not an h4).',
+	'a11y-axtree-heading-h1.title': 'The accessibility tree does not have exactly one level-1 heading',
+	'a11y-axtree-heading-h1.evidence':
+		'The accessibility tree’s outline is off ({examples}). Read out of band over CDP (WCAG 1.3.1, 2.4.6).',
+	'a11y-axtree-heading-h1.fix': 'Start the outline with one h1 that names the page.',
+	'a11y-axtree-landmark-main.title': 'The accessibility tree does not have exactly one main landmark',
+	'a11y-axtree-landmark-main.evidence':
+		'The accessibility tree reports the wrong number of main landmarks ({examples}). Read out of band over CDP (WCAG 2.4.1).',
+	'a11y-axtree-landmark-main.fix': 'Wrap the page’s own content in one <main>.',
 	'a11y-zoom.title': 'The viewport stops people from zooming',
 	'a11y-zoom.evidence': 'The viewport tag sets user-scalable=no or maximum-scale=1.',
 	'a11y-zoom.fix': 'Remove user-scalable=no and maximum-scale from the viewport tag.',

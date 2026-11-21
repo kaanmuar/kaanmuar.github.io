@@ -8,17 +8,23 @@
  *   node scripts/axtree-audit.js <url>                       prints a summary, exits 1 when any error-level rule fails
  *   node scripts/axtree-audit.js <url> --earl out.json       also writes W3C EARL 1.0 (JSON-LD)
  *   node scripts/axtree-audit.js <url> --sarif out.sarif     also writes SARIF 2.1.0
+ *   node scripts/axtree-audit.js <url> --json out.json       also writes the reduce() report (attach as extras.axtree)
  *   node scripts/axtree-audit.js --file tree.json [--url u]  reduces a saved getFullAXTree response, no browser
+ *
+ * URL Review findings: attach the reduce() report or the raw CDP `{ nodes }` response on the review as
+ * `extras.axtree` (or pass `axtree` into insights.analyze). Cloud Functions only call findings()/reduce(); capture
+ * stays here.
  */
 const fs = require('fs');
 const axtree = require('../functions/url-review-axtree');
 
 function args(argv) {
-	const out = { target: '', earl: '', sarif: '', file: '', url: '' };
+	const out = { target: '', earl: '', sarif: '', json: '', file: '', url: '' };
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
 		if (arg === '--earl') out.earl = argv[++i] || '';
 		else if (arg === '--sarif') out.sarif = argv[++i] || '';
+		else if (arg === '--json') out.json = argv[++i] || '';
 		else if (arg === '--file') out.file = argv[++i] || '';
 		else if (arg === '--url') out.url = argv[++i] || '';
 		else if (!arg.startsWith('--')) out.target = arg;
@@ -44,13 +50,16 @@ async function capture(url) {
 async function main() {
 	const opts = args(process.argv.slice(2));
 	if (!opts.target && !opts.file) {
-		console.error('Usage: node scripts/axtree-audit.js <url> [--earl out.json] [--sarif out.sarif] | --file tree.json');
+		console.error(
+			'Usage: node scripts/axtree-audit.js <url> [--earl out.json] [--sarif out.sarif] [--json out.json] | --file tree.json'
+		);
 		process.exit(2);
 	}
 	const tree = opts.file ? JSON.parse(fs.readFileSync(opts.file, 'utf8')) : await capture(opts.target);
 	const report = axtree.reduce(tree, { url: opts.target || opts.url });
 	if (opts.earl) fs.writeFileSync(opts.earl, JSON.stringify(axtree.earl(report), null, 2) + '\n');
 	if (opts.sarif) fs.writeFileSync(opts.sarif, JSON.stringify(axtree.sarif(report), null, 2) + '\n');
+	if (opts.json) fs.writeFileSync(opts.json, JSON.stringify(report, null, 2) + '\n');
 	console.log(report.total + ' accessibility nodes (' + report.ignored + ' ignored), ' + report.issues.length + ' problems');
 	Object.keys(report.counts).forEach((rule) => console.log('  ' + rule + ': ' + report.counts[rule]));
 	process.exit(Object.keys(report.counts).some((rule) => axtree.RULES[rule].level === 'error') ? 1 : 0);

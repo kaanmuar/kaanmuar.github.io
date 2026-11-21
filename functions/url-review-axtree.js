@@ -8,10 +8,12 @@
 
    Pure and offline: it takes the `nodes` array a CDP session returned and never opens a browser, runs a page or
    requests anything, so it is safe to load in Cloud Functions. The capture lives out of band in
-   scripts/axtree-audit.js (Playwright), whose output is fed to reduce() here, and then to earl() or sarif().
+   scripts/axtree-audit.js (Playwright). Attach the raw CDP `{ nodes }` response or a reduce() report on the review as
+   `extras.axtree` (or pass `axtree` into insights.analyze); findings() maps problems into Accessibility findings.
    Every walk is iterative and bounded, so a hostile tree cannot make it slow or recurse deeply. */
 
 const { isGeneric } = require('./url-review-link-text');
+const { say, some } = require('./url-review-findings-en');
 
 const MAX_NODES = 60000;
 const MAX_PER_RULE = 100;
@@ -359,4 +361,109 @@ function sarif(report) {
 	};
 }
 
-module.exports = { reduce, earl, sarif, RULES, ruleList, ordered, MAX_NODES, MAX_PER_RULE };
+/* Finding keys stay under a11y-axtree-* so they never collide with axe-core's ax-* findings. When the same gap was
+   already reported (HTML pass or axe), the tree finding is skipped. */
+const FINDING = {
+	'ax-document-title': { key: 'a11y-axtree-title', overlap: [] },
+	'ax-link-name': { key: 'a11y-axtree-link-name', overlap: ['ax-link-name'] },
+	'ax-link-generic': { key: 'a11y-axtree-link-generic', overlap: ['a11y-linktext'] },
+	'ax-button-name': { key: 'a11y-axtree-button-name', overlap: ['ax-button-name'] },
+	'ax-image-name': { key: 'a11y-axtree-image-name', overlap: ['ax-image-alt', 'a11y-alt'] },
+	'ax-field-name': { key: 'a11y-axtree-field-name', overlap: ['ax-label', 'a11y-labels'] },
+	'ax-heading-skip': { key: 'a11y-axtree-heading-skip', overlap: ['ax-heading-order'] },
+	'ax-heading-h1': { key: 'a11y-axtree-heading-h1', overlap: ['ax-page-has-heading-one', 'a11y-h1'] },
+	'ax-landmark-main': { key: 'a11y-axtree-landmark-main', overlap: ['ax-landmark-one-main', 'a11y-main'] },
+};
+
+const LEVEL = {
+	error: { verdict: 'fail', severity: 'low' },
+	warning: { verdict: 'risk', severity: 'low' },
+	note: { verdict: 'risk', severity: 'low' },
+};
+
+/* Accepts a reduce() report, a raw CDP `{ nodes }` / nodes array, or `{ tree|nodes, url }`. Missing or empty input
+   stays silent: the tree is optional and out of band. */
+function normalize(input, options) {
+	if (input == null) return null;
+	if (typeof input !== 'object') return null;
+	if (Array.isArray(input.issues) && input.counts && typeof input.total === 'number') return input;
+	if (input.report && Array.isArray(input.report.issues) && input.report.counts) return input.report;
+	const url = (options && options.url) || input.url || '';
+	if (Array.isArray(input)) return reduce(input, { url });
+	if (Array.isArray(input.nodes) || Array.isArray(input.tree)) {
+		return reduce(Array.isArray(input.nodes) ? input : { nodes: input.tree }, { url });
+	}
+	return null;
+}
+
+function example(issue) {
+	const role = issue.role || 'node';
+	if (issue.name && issue.detail)
+		return say('a11y-axtree.example.named.detail', { role, name: issue.name, detail: issue.detail });
+	if (issue.name) return say('a11y-axtree.example.named', { role, name: issue.name });
+	if (issue.detail) return say('a11y-axtree.example.detail', { role, detail: issue.detail });
+	return say('a11y-axtree.example', { role });
+}
+
+function alreadyReported(ctx, keys) {
+	const list = (ctx && ctx.findings) || [];
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i];
+		for (let j = 0; j < list.length; j++) {
+			if (list[j].key === key && list[j].verdict !== 'pass') return true;
+		}
+	}
+	return false;
+}
+
+function findings(input, add, ctx) {
+	const report = normalize(input);
+	if (!report || !(report.total > 0)) return null;
+	const hit = ruleList().filter((id) => report.counts[id] > 0);
+	if (!hit.length) {
+		add(
+			'Accessibility',
+			'pass',
+			'info',
+			'a11y-axtree',
+			say('a11y-axtree.pass.title'),
+			say('a11y-axtree.pass.evidence', { n: report.total }),
+			'',
+			{ effort: 'hours' }
+		);
+		return report;
+	}
+	hit.forEach((ruleId) => {
+		const meta = FINDING[ruleId];
+		const rule = RULES[ruleId];
+		if (!meta || !rule) return;
+		if (alreadyReported(ctx, meta.overlap)) return;
+		const level = LEVEL[rule.level] || LEVEL.warning;
+		const samples = report.issues.filter((issue) => issue.rule === ruleId).slice(0, 3).map(example);
+		add(
+			'Accessibility',
+			level.verdict,
+			level.severity,
+			meta.key,
+			say(meta.key + '.title'),
+			say(meta.key + '.evidence', { n: report.counts[ruleId], examples: some(samples, 3) }),
+			say(meta.key + '.fix'),
+			{ effort: 'hours', count: report.counts[ruleId] }
+		);
+	});
+	return report;
+}
+
+module.exports = {
+	reduce,
+	earl,
+	sarif,
+	findings,
+	normalize,
+	RULES,
+	FINDING,
+	ruleList,
+	ordered,
+	MAX_NODES,
+	MAX_PER_RULE,
+};
