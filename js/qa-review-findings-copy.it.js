@@ -1273,7 +1273,7 @@
       "a11y-linktext.name": "«{text}» ({count}×)",
       "a11y-linktext.name.many": "«{text}» ({count}×, verso {targets} pagine diverse)",
       "a11y-axtree.pass.title": "L’albero di accessibilità non mostra problemi che controlliamo",
-      "a11y-axtree.pass.evidence": "Lettura di {n} nodi dall’albero di accessibilità del browser (CDP fuori banda). I controlli automatici sull’albero intercettano solo una parte dei problemi reali.",
+      "a11y-axtree.pass.evidence": "Analizzati {n} nodi dall’albero di accessibilità del browser (CDP fuori banda). I controlli automatici sull’albero intercettano solo una parte dei problemi reali.",
       "a11y-axtree.example": "ruolo {role}",
       "a11y-axtree.example.named": "ruolo {role} chiamato «{name}»",
       "a11y-axtree.example.named.detail": "ruolo {role} chiamato «{name}» ({detail})",
