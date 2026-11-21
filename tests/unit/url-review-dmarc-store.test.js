@@ -150,9 +150,9 @@ test.describe('consent store (#3777)', () => {
 		const { dmarc } = await storeApi.loadAggregates(store, EMAIL, HOST);
 		assert.equal(dmarc[0].days['2026-11-01'].messages, 24);
 		const dump = JSON.stringify(dmarc[0]);
-		assert.ok(!dump.includes('secret-id'));
-		assert.ok(!dump.includes('noreply@'));
-		assert.ok(!dump.includes('receiver.example.net'));
+		for (const secret of ['secret-id', 'noreply@', 'report_metadata', 'org_name']) {
+			assert.equal(dump.indexOf(secret), -1, secret);
+		}
 	});
 });
 
@@ -203,8 +203,9 @@ test.describe('mail-inbound report ingest (#3777)', () => {
 		assert.equal(both.tls[0].days['2026-11-03'].messages, 42);
 
 		const dump = JSON.stringify(both);
-		assert.ok(!dump.includes('Receiver Example'));
-		assert.ok(!dump.includes('secret-id'));
+		for (const secret of ['Receiver Example', 'secret-id', 'organization-name']) {
+			assert.equal(dump.indexOf(secret), -1, secret);
+		}
 	});
 
 	test('not a report leaves the store alone', async () => {
