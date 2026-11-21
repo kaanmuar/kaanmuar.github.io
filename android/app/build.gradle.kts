@@ -19,6 +19,9 @@ android {
         targetSdk = 35
         versionCode = build
         versionName = "2.1.$build"
+        // Sentry DSN (#3836) comes from the environment at build time and is never committed. Empty (the default,
+        // and always in debug builds and unit tests) leaves Sentry off.
+        buildConfigField("String", "SENTRY_DSN", "\"${System.getenv("JARVIS_SENTRY_DSN") ?: ""}\"")
     }
 
     signingConfigs {
@@ -108,6 +111,9 @@ dependencies {
     implementation(libs.work.runtime)
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
+    // getsentry/sentry-java (MIT) crash capture + touchlab/Kermit (Apache-2.0) logging facade (#3836).
+    implementation(libs.sentry.android)
+    implementation(libs.kermit)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
 }

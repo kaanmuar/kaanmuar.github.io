@@ -8,6 +8,7 @@ import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.home.Shortcuts
 import com.carlosandmunoz.jarvis.push.Push
+import com.carlosandmunoz.jarvis.telemetry.Telemetry
 import com.carlosandmunoz.jarvis.background.Keep
 import com.carlosandmunoz.jarvis.update.Updater
 import com.carlosandmunoz.jarvis.voice.HandsFree
@@ -41,6 +42,7 @@ class JarvisApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Telemetry.init(this)
         val http = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS).readTimeout(200, TimeUnit.SECONDS).build()
         vault = Vault(this)
         auth = Auth(http, vault)
