@@ -82,10 +82,12 @@ const BY_FUNCTION = {
 	jarvisWatch: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, [
 		'GOOGLE_CALENDAR_CLIENT_SECRET',
 		'CURSOR_API_KEY',
+		'FIREBASE_WEB_KEY',
 	]),
 	jarvisCountdowns: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, [
 		'GOOGLE_CALENDAR_CLIENT_SECRET',
 		'CURSOR_API_KEY',
+		'FIREBASE_WEB_KEY',
 	]),
 	// jarvisGithub (#2526): the app token for the day docs and the run logs, Gemini for the diagnoses and the retro.
 	// GITHUB_BUDGET_TOKEN (#3759): kaanmuar's own read-only token, for the budget copy when the Mac sleeps.
