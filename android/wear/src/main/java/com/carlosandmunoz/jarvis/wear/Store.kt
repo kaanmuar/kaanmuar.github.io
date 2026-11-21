@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.wear.tiles.TileService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
 import kotlinx.coroutines.tasks.await
+import com.carlosandmunoz.jarvis.wear.telemetry.Telemetry
 import java.io.ByteArrayInputStream
 
 /** The last summary the phone sent (#1419 / #3836). The watch never signs in; everything it shows comes through Horologist's Data Layer. */
@@ -76,6 +77,7 @@ object Store {
     /** Reads the summary already in the Data Layer, then asks the phone for a fresh one. */
     suspend fun pull(context: Context) {
         val app = context.applicationContext
+        val log = Telemetry.log("Store")
         val registry = DataLayer.registry(app)
         runCatching {
             val items = registry.dataClient.dataItems.await()
@@ -87,12 +89,12 @@ object Store {
             } finally {
                 items.release()
             }
-        }
+        }.onFailure { log.e(it) { "Data Layer status read failed" } }
         runCatching {
             registry.nodeClient.connectedNodes.await().forEach {
                 registry.messageClient.sendMessage(it.id, SYNC, null).await()
             }
-        }
+        }.onFailure { log.e(it) { "Phone sync request failed" } }
     }
 
     fun ago(at: Long, now: Long = System.currentTimeMillis()): String {
