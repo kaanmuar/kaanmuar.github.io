@@ -11,6 +11,7 @@
    A confirm link is only taken from a checked sender, so a forged mail cannot push a phishing link. */
 const crypto = require('crypto');
 const mailBounce = require('./mail-bounce');
+const mailAuth = require('./mail-auth');
 
 const KEEP_MS = 24 * 3600 * 1000;
 
@@ -312,6 +313,11 @@ function bounceLabel(payload) {
 	);
 }
 
+/** Auth-results label of one webhook payload (#3837): "spf=pass dkim=pass", "spf=fail", or "". Headers only; no body stored. */
+function authLabel(payload) {
+	return mailAuth.label(mailAuth.classify({ headers: (payload || {}).headers }));
+}
+
 /** SPF and DKIM results from the Authentication-Results ImprovMX adds, in the form SendGrid's fields use. */
 function replyAuth(headers) {
 	const auth = header(headers, 'Authentication-Results');
@@ -344,4 +350,5 @@ module.exports = {
 	replyAuth,
 	fromUs,
 	bounceLabel,
+	authLabel,
 };

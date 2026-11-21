@@ -12268,9 +12268,11 @@ exports.mailInbound = functions
 				return;
 			}
 			const row = mailInbound.codeOf(mail);
-			// A bounce, auto-reply or complaint is named in the answer and the log (class and code only), never stored or acted on here (#3837).
+			// Bounce class and auth-results are named in the answer and the log (labels only), never stored or acted on here (#3837).
 			const bounce = row ? '' : mailInbound.bounceLabel(req.body);
-			if (bounce) console.log('mailInbound: ' + bounce + ' to ' + (mail.alias || '?'));
+			const auth = row ? '' : mailInbound.authLabel(req.body);
+			const named = [bounce, auth].filter(Boolean).join(', ');
+			if (named) console.log('mailInbound: ' + named + ' to ' + (mail.alias || '?'));
 			if (!row && (mail.alias === 'qa' || mailFace.isFaceAlias(mail.alias)) && !mailInbound.fromUs(mail.fromEmail)) {
 				const out = await takeOwnerReply(
 					mailInbound.replyMail(req.body),
@@ -12284,12 +12286,12 @@ exports.mailInbound = functions
 							? 'owner reply ' + out.id
 							: out.outcome === 'seen'
 								? 'seen'
-								: 'no code, ' + out.outcome) + (bounce ? ', ' + bounce : '')
+								: 'no code, ' + out.outcome) + (named ? ', ' + named : '')
 					);
 				return;
 			}
 			if (!row) {
-				res.status(200).send(bounce ? 'no code, ' + bounce : 'no code');
+				res.status(200).send(named ? 'no code, ' + named : 'no code');
 				return;
 			}
 			const now = Date.now();

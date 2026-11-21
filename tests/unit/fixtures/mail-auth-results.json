@@ -1,0 +1,24 @@
+{
+	"improvmxPass": {
+		"Authentication-Results": [
+			"mx1.improvmx.com; spf=pass (improvmx.com: domain of bounce@mail.tiktok.com designates 1.2.3.4 as permitted sender) smtp.mailfrom=bounce@mail.tiktok.com; dkim=pass header.d=tiktok.com header.s=s1; dmarc=pass (p=reject) header.from=tiktok.com"
+		]
+	},
+	"spfFailDkimPass": {
+		"Authentication-Results": "mx1.improvmx.com; spf=fail smtp.mailfrom=spoof@evil.example; dkim=pass header.d=linkedin.com; dmarc=fail header.from=linkedin.com"
+	},
+	"softfailOnly": {
+		"Authentication-Results": "mx.example.net; spf=softfail smtp.mailfrom=a@b.example.org"
+	},
+	"arcChain": {
+		"Authentication-Results": "mx1.improvmx.com; spf=pass smtp.mailfrom=bounce@accounts.google.com; dkim=pass header.i=@accounts.google.com",
+		"ARC-Authentication-Results": "i=1; mx.google.com; arc=pass; spf=pass smtp.mailfrom=bounce@accounts.google.com"
+	},
+	"folded": {
+		"Authentication-Results": "mx1.improvmx.com;\r\n\tspf=pass smtp.mailfrom=noreply@github.com;\r\n\tdkim=pass header.d=github.com"
+	},
+	"empty": {},
+	"noise": {
+		"Authentication-Results": "not-a-host spf=pass smtp.mailfrom=x@y.z; unknown=pass; dkim=weird header.d=bad.example"
+	}
+}
