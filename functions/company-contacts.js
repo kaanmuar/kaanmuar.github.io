@@ -220,7 +220,8 @@ function contactLinks(html, base) {
 		return [];
 	}
 	const out = [];
-	const re = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
+	// Lookahead keeps [^<>]* from backtracking into href (recheck timed out as unknown; #4110).
+	const re = /<a\b(?=[^<>]*\bhref\s*=)[^<>]*\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
 	let m;
 	while ((m = re.exec(String(html || ''))) && out.length < CONTACT_PAGES) {
 		let u;

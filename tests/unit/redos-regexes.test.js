@@ -37,11 +37,16 @@ test('company-contacts JSON-LD blocks', () => {
 });
 
 test('company-contacts contact links', () => {
-	const OLD = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
-	same(OLD, fromSource('company-contacts.js', 'const re = /<a\\b'), [
+	// Previous form timed out as recheck "unknown" (#4110). Lookahead form stays linear and prefers real href over data-href.
+	const OLD = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
+	const NEW = fromSource('company-contacts.js', 'const re = /<a\\b');
+	same(OLD, NEW, [
 		'<a href="/contact">Contact</a> <a class="x" href=\'/about#team\'>A</a> <A HREF="https://x.com/kontakt">K</A>',
-		'<a href="#top">t</a> <a name=x>n</a> <a data-href="/a" href="/b">b</a> <abbr href="/no">no</abbr>',
+		'<a href="#top">t</a> <a name=x>n</a> <abbr href="/no">no</abbr>',
 	]);
+	NEW.lastIndex = 0;
+	const dataHref = NEW.exec('<a data-href="/a" href="/b">b</a>');
+	assert.equal(dataHref && dataHref[1], '/b');
 });
 
 test('engagement-profiles Mastodon hosts', () => {
