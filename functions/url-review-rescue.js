@@ -29,13 +29,13 @@ const HINT_DAYS = 60;
 const AI_LINES = 30;
 
 const STRATEGIES = {
-	'chrome-headers': { where: 'cloud', label: "Read as a person's Chrome from the cloud" },
-	'alt-host': { where: 'cloud', label: 'Read the other host name (with or without www)' },
-	mac: { where: 'mac', label: "Read from Carlos's Mac on a home connection, up to a real Chrome window" },
+	'chrome-headers': { where: 'cloud', label: "Check as a person's Chrome from the cloud" },
+	'alt-host': { where: 'cloud', label: 'Check the other host name (with or without www)' },
+	mac: { where: 'mac', label: "Check from Carlos's Mac on a home connection, up to a real Chrome window" },
 };
-// What the Mac tries, in order; the step that read the page is kept on the hint.
+// What the Mac tries, in order; the step that checked the page is kept on the hint.
 const MAC_STEPS = {
-	'mac-plain': "The review's own read from a home connection",
+	'mac-plain': "The review's own pass from a home connection",
 	'mac-chrome-headers': "A person's Chrome headers from a home connection",
 	'mac-chrome-window': 'A real Chrome window that clears the challenge before the review analyzes it',
 };

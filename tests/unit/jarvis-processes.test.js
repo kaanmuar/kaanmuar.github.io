@@ -604,7 +604,7 @@ test('the snapshot carries the processes doc as its own section, and Ask sees it
 	const db = fakeDb();
 	await proc.report(
 		deps(db),
-		proc.deskRow('d1', 'running', { url: 'https://www.example.com/x', step: 'Reading the site' })
+		proc.deskRow('d1', 'running', { url: 'https://www.example.com/x', step: 'Analyzing the site' })
 	);
 	const value = (await proc.read(db)).value;
 	const ask = jarvis.askSnapshot({ processes: value }, 1);

@@ -9796,7 +9796,7 @@ exports.jarvisReviewRun = functions
 					Object.assign({ url: row.url, startedAt: new Date(startedAt).toISOString() }, extra)
 				)
 			);
-		await desk('running', { step: 'Reading the site' });
+		await desk('running', { step: 'Analyzing the site' });
 		try {
 			const value = jarvisReview.intake(row);
 			const report = await urlReview.reviewTarget(value.url, {

@@ -4568,7 +4568,7 @@ const failedAt = (at, extra) =>
 				cause: 'timeout',
 				cleared: true,
 				rerun: true,
-				summary: 'The site took too long. Cleared: The plain read gets the page now (status 200).',
+				summary: 'The site took too long. Cleared: The plain request gets the page now (status 200).',
 			},
 			options: { pages: 10, depth: 1, frameworks: ['playwright'] },
 			intake: { lang: 'es', reason: 'QA' },

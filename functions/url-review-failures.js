@@ -247,10 +247,10 @@ const CAUSES = [
 ];
 
 const READABLE = {
-	readable: 'The plain read gets the page now',
-	'browser-read': 'The plain read is refused, and headless Chrome reads the page',
-	'browser-untagged': 'The plain read and tagged Chrome are refused, and plain Chrome reads the page',
-	'browser-unread': 'The plain read fails, and headless Chrome reads the page',
+	readable: 'The plain request gets the page now',
+	'browser-read': 'The plain request is refused, and headless Chrome checks the page',
+	'browser-untagged': 'The plain request and tagged Chrome are refused, and plain Chrome checks the page',
+	'browser-unread': 'The plain request fails, and headless Chrome checks the page',
 };
 
 // Chrome reached the host, and the host cut the connection or never answered it (not Chrome's own navigation timeout).

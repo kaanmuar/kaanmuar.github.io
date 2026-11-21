@@ -91,7 +91,7 @@ async function open(page, { runsLeft = 10, free = false, refuseReason = false } 
 			const report = Object.assign({}, sample.report, { id: 'r' + host.replace(/\W/g, ''), host, requestedUrl: body.url });
 			const lines = [
 				'Checking that the address is public https.',
-				'Reading robots.txt.',
+				'Checking robots.txt.',
 				'Opening /.',
 				'Analyzed 3 pages. Writing the proposed cases now.',
 			]

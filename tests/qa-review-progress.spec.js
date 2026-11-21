@@ -44,7 +44,7 @@ test.describe('Review progress', () => {
 		await expect(page.locator('.rp-phase')).toHaveText('Connecting');
 		await feed(page, [
 			'Checking that the address is public https.',
-			'Reading robots.txt.',
+			'Checking robots.txt.',
 			'9 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.',
 			'Opening /a.',
 			'Opening /b.',
@@ -96,7 +96,7 @@ test.describe('Review progress', () => {
 		).toBe(
 			'Presencia en el mercado: a.com ocupa el puesto #1234 en Tranco, presencia 80/100; b.com está fuera del millón principal de Tranco.'
 		);
-		expect(await say('Reading robots.txt.')).toBe('Reading robots.txt.');
+		expect(await say('Checking robots.txt.')).toBe('Checking robots.txt.');
 		await page.goto('/qa-review-de.html');
 		expect(await say('Report saved. Emailing a copy to ana@example.com.')).toBe(
 			'Bericht gespeichert. Eine Kopie geht an ana@example.com.'

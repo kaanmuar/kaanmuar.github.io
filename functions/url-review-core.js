@@ -3743,7 +3743,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		layer: 'Security',
 		title: 'http://' + host + '/ redirects to https://' + host + '/',
 		why:
-			'The review read ' +
+			'The review analyzed ' +
 			home.url +
 			' over https. A browser case would request http://' +
 			host +
@@ -4023,7 +4023,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		title: 'A sitemap for ' + host + ' is advertised in robots.txt',
 		why:
 			(sig.sitemap ? 'The word sitemap appears on ' + here + '.' : 'No sitemap reference was seen on ' + here + '.') +
-			' The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it read.',
+			' The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it analyzed.',
 		fw: browser,
 	});
 	const types = [].concat.apply(
@@ -4260,7 +4260,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		why:
 			(failed.length
 				? 'This review already saw a non-success status on ' + on(failed[0].path) + '.'
-				: 'This review did not see a 404 among the pages it read.') +
+				: 'This review did not see a 404 among the pages it analyzed.') +
 			' A later case would request one unknown path on ' +
 			host +
 			' and expect status 404 with a branded page, not a stack trace or a 200.',
@@ -5857,7 +5857,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 					' listed ' +
 					map.urls.length +
 					' URLs' +
-					(map.partial ? ', read in part' : '') +
+					(map.partial ? ', fetched in part' : '') +
 					'.'
 				: 'No sitemap with URLs was found (status ' + (map.status || 'none') + ').'
 		),

@@ -762,7 +762,7 @@ const EN = {
 		'NordSpam DBL: find why {target} appeared in spam, such as a hacked page, a misused form or an open redirect, fix it, then ask for delisting at https://www.nordspam.com/delist/.',
 	'sec-blocklist.pass.title': 'Not on the spam blocklists checked',
 	'sec-blocklist.pass.evidence': '{lists} answered for {targets} and list none of them.{unread}',
-	'sec-blocklist.unread': ' {lists} did not answer, so they were not read.',
+	'sec-blocklist.unread': ' {lists} did not answer, so they were not checked.',
 
 	'sec-spread.all': ' Missing on all {n} pages analyzed.',
 	'sec-spread.some': ' Missing on {missing} of {n} pages analyzed.',
@@ -1465,7 +1465,7 @@ const EN = {
 	'a11y-chat-trap.exit.escape': 'Escape',
 	'a11y-chat-trap.pass.evidence': 'After opening {it}{enter}, focus left it by {exit}.',
 	'a11y-chat-trap.person.title': 'Keyboard focus in the open chat needs a person',
-	'a11y-chat-trap.person.frame': 'Focus went into a frame of {it} that this review cannot read',
+	'a11y-chat-trap.person.frame': 'Focus went into a frame of {it} that this review cannot check',
 	'a11y-chat-trap.person.blocked': 'Focus could not be moved into {it}',
 	'a11y-chat-trap.person.noEnter': ', and Enter on the launcher did not open it',
 	'a11y-chat-trap.person.evidence': '{why}{enter}, so the trap check could not finish.',

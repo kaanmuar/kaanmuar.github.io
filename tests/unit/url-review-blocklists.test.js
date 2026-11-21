@@ -150,7 +150,7 @@ test('refusals and bogus answers are unread, never listed (#3087)', async () => 
 	assert.equal(pass.verdict, 'pass');
 	assert.match(
 		pass.evidence,
-		/^Barracuda, NordSpam and NordSpam DBL answered for .* SpamCop, Mailspike, PSBL and 0spam did not answer, so they were not read\.$/
+		/^Barracuda, NordSpam and NordSpam DBL answered for .* SpamCop, Mailspike, PSBL and 0spam did not answer, so they were not checked\.$/
 	);
 });
 
@@ -248,7 +248,7 @@ test('nothing read gives no finding, and the review log names what answered', as
 	});
 	assert.equal(
 		blocklists.note(result),
-		'Spam blocklists: SpamCop, Barracuda, Mailspike, PSBL, NordSpam, NordSpam DBL answered; 0spam not read; listed: 198.51.200.10 on SpamCop.'
+		'Spam blocklists: SpamCop, Barracuda, Mailspike, PSBL, NordSpam, NordSpam DBL answered; 0spam not checked; listed: 198.51.200.10 on SpamCop.'
 	);
 	assert.equal(blocklists.note(null), 'The spam blocklists could not be read.');
 });

@@ -90,7 +90,7 @@
 		{ re: /^Soft preview:/, stage: 'https', pose: 'work', status: 'wip' },
 		{ re: /^Pages are requested in /, stage: 'open', pose: 'work', status: 'wip' },
 		{ re: /^This is a competitor run/, stage: 'browser', pose: 'work', status: 'wip' },
-		{ re: /^This rescue reads the site/, stage: 'browser', pose: 'work', status: 'wip' },
+		{ re: /^This rescue checks the site/, stage: 'browser', pose: 'work', status: 'wip' },
 		{ re: /^Opening the first page/, stage: 'open', pose: 'work', status: 'wip', pass: ['https'] },
 		{ re: /^The server sent its certificate|verified the chain/, stage: 'dns', pose: 'work', status: 'done' },
 		{ re: /^Asking PageSpeed Insights/, stage: 'psi-ask', pose: 'work', status: 'wip', pass: ['open'] },
