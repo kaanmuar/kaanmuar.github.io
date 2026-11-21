@@ -41,8 +41,9 @@ test('createCall retries 503 then returns JSON', async () => {
 	const me = await call('GET', 'me', { fields: 'id,username' });
 	assert.equal(me.username, 'qa');
 	assert.equal(r.calls.length, 2);
-	assert.ok(r.calls[0].url.includes('graph.threads.net'));
-	assert.ok(r.calls[0].url.includes('access_token=tok'));
+	const first = new URL(r.calls[0].url);
+	assert.equal(first.hostname, 'graph.threads.net');
+	assert.equal(first.searchParams.get('access_token'), 'tok');
 	assert.ok(r.waits.length >= 1);
 });
 
