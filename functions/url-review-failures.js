@@ -764,6 +764,7 @@ const SITE_REASONS = {
 	'bot-wall': 'behind a bot wall that refuses headless Chrome too',
 	cert: 'with a certificate that is expired, self-signed or for another name',
 	'5xx': 'answering every client with a 5xx',
+	'not-html': 'serving no HTML page',
 };
 const SITE_CERT =
 	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed/i;
@@ -785,6 +786,7 @@ function siteReason(lead) {
 		if (plain.error && browser && browser.ok && browser.docStatus >= 500) return '5xx';
 		if (SITE_ERROR.test(lead.message || '')) return '5xx';
 	}
+	if (lead.cause === 'not-html' && plain.status >= 200 && plain.status < 300 && !plain.html) return 'not-html';
 	return '';
 }
 

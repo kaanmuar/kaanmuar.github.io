@@ -1395,6 +1395,7 @@ exports.emailQuarterSiteReport = scheduled(withMail, 'emailQuarterSiteReport', a
 );
 
 const reviewMail = require('./url-review-mail');
+const webhookIdem = require('./webhook-idempotency');
 
 async function loadBound(name, field, startVal, endVal, options) {
 	const pageSize = (options && options.pageSize) || 400;
@@ -5885,7 +5886,9 @@ async function handlePayPalWebhook(req, res, mode) {
 		return;
 	}
 	const ids = urlReview.paypalEventIds(event);
-	try {
+	// PayPal delivers at least once. Each verified event id is applied once (#3837): a repeat answers 200 and does
+	// nothing, a second delivery while the first runs answers 409 so PayPal retries, a failed apply is retried.
+	const apply = async () => {
 		if (ids.type === 'CHECKOUT.ORDER.APPROVED' || ids.type === 'PAYMENT.CAPTURE.COMPLETED') {
 			let orderId = ids.orderId;
 			if (!orderId && ids.captureId)
@@ -5901,6 +5904,17 @@ async function handlePayPalWebhook(req, res, mode) {
 			ids.type.indexOf('CUSTOMER.DISPUTE.') === 0
 		) {
 			await reversePayment(ids, keys, testRun);
+		}
+	};
+	try {
+		const outcome = await webhookIdem.runOnce(
+			webhookIdem.firestoreStore(getFirestore()),
+			webhookIdem.eventKey('paypal', mode, event, req.headers),
+			apply
+		);
+		if (outcome.state === 'busy') {
+			res.status(409).json({ error: 'This event is being applied.' });
+			return;
 		}
 	} catch (error) {
 		console.error('PayPal webhook ' + ids.type + ' failed:', error);
@@ -10010,6 +10024,28 @@ exports.webfinger = functions
 		} catch (error) {
 			console.error('webfinger failed:', error);
 			res.status(500).json({ error: 'WebFinger failed.' });
+		}
+	});
+
+// Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
+// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; does not Accept Follows automatically.
+const socialInbox = require('./social-inbox');
+exports.socialInbox = functions
+	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = await socialInbox.handleRequest(req, {
+				db: socialInbox.enabled() ? getFirestore() : null,
+				fetchImpl: fetch,
+			});
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('socialInbox failed:', error);
+			res.status(500).json({ error: 'Inbox failed.' });
 		}
 	});
 
