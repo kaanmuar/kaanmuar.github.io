@@ -27,6 +27,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Jarvis">
 
+        <!-- Sentry starts from JarvisApp via Telemetry.init, and only when a DSN is configured (#3836). -->
+        <meta-data android:name="io.sentry.auto-init" android:value="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
