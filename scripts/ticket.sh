@@ -202,7 +202,10 @@ if mine or open_rows:
 csv.writer(open(path, "w", newline="")).writerows(rows)
 PY
 		;;
-	prune) shift; node "$(dirname "$0")/usage-prune.js" csv "$LOG" "$@" ;;
+	prune)
+		shift
+		node "$(dirname "$0")/usage-prune.js" csv "$LOG" "$@"
+		;;
 	# Stale open rows inflate attribution; close ones older than 24h at start+12h (#3545).
 	sweep)
 		python3 - "$LOG" <<'PY'
