@@ -1334,11 +1334,13 @@
         .report-top .btn[hidden] { display: none; }
         .report-top .btn::before { content: ""; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--arrow-up) center / contain no-repeat; mask: var(--arrow-up) center / contain no-repeat; }
         .dash-overlay { --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 19V5M5.5 11.5 12 5l6.5 6.5' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-        /* Open report sheet stays opaque under every site look (#4202, #2796). */
-        html[data-look] .dash-overlay.open .dash-modal {
-            background: var(--bg);
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
+        /* Open report sheet stays opaque under every site look (#4202, #2796). Screen only: print keeps #fff below. */
+        @media screen {
+            html[data-look] .dash-overlay.open .dash-modal {
+                background: var(--bg);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
         }
         @media screen and (min-width: 801px) {
             .dash-overlay .dash-modal { padding-left: 36px; padding-right: 36px; }

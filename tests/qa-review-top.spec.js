@@ -1109,12 +1109,10 @@ test.describe('Report section index (#2770)', () => {
 			expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
 		}
 		await page.emulateMedia({ media: 'print' });
+		expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
 		expect(
-			await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
-				const style = getComputedStyle(el);
-				return { bg: style.backgroundColor, filter: style.backdropFilter };
-			})
-		).toEqual({ bg: 'rgb(255, 255, 255)', filter: 'none' });
+			await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)
+		).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
 	});
 
 	test('each language page labels the index and its groups in its language', async ({ page }) => {
