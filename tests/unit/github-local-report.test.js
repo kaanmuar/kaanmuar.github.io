@@ -169,6 +169,59 @@ test('rateFrom maps gh api rate_limit with ISO reset times', () => {
 	assert.deepEqual(r.rateFrom({}), { graphql: null, core: null });
 });
 
+test('maybePruneWorkLog skips under size+age caps; dry-runs when over bytes or keep-days', () => {
+	const fs = require('fs');
+	const os = require('os');
+	const path = require('path');
+	const prune = require('../../scripts/usage-prune');
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'glr-prune-'));
+	const small = path.join(dir, 'small.csv');
+	fs.writeFileSync(small, 'start_utc,end_utc,ticket,title,chat_id,notes\n2026-01-01T00:00:00Z,,1,t,c,\n');
+	const under = r.maybePruneWorkLog({ logPath: small, maxBytes: 1024, keepDays: 365, nearRatio: 0.8, dryRun: true, now: Date.parse('2026-11-03T20:00:00Z') });
+	assert.equal(under.skipped, 'under threshold');
+	assert.ok(under.bytes < under.threshold);
+	assert.equal(r.maybePruneWorkLog({ pruneModule: null }).skipped, 'usage-prune absent');
+	assert.equal(r.maybePruneWorkLog({ logPath: path.join(dir, 'missing.csv') }).skipped, 'no log');
+
+	// Age over keep-days even when well under the byte near-cap.
+	const aged = path.join(dir, 'aged.csv');
+	fs.writeFileSync(
+		aged,
+		'start_utc,end_utc,ticket,title,chat_id,notes\n2020-01-01T00:00:00Z,2020-01-01T01:00:00Z,1,old,c,\n2026-11-01T00:00:00Z,,2,new,c,\n'
+	);
+	const ageDry = r.maybePruneWorkLog({
+		logPath: aged,
+		pruneModule: prune,
+		maxBytes: 1024 * 1024,
+		keepDays: 30,
+		nearRatio: 0.8,
+		dryRun: true,
+		now: Date.parse('2026-11-03T20:00:00Z'),
+	});
+	assert.equal(ageDry.dryRun, true);
+	assert.ok(ageDry.removedAge > 0);
+
+	const fat = path.join(dir, 'fat.csv');
+	let body = 'start_utc,end_utc,ticket,title,chat_id,notes\n';
+	for (let i = 0; i < 200; i += 1) {
+		body += `2020-01-01T00:00:00Z,2020-01-01T01:00:00Z,${i},old,c,\n`;
+	}
+	fs.writeFileSync(fat, body);
+	const dry = r.maybePruneWorkLog({
+		logPath: fat,
+		pruneModule: prune,
+		maxBytes: Buffer.byteLength(body),
+		keepDays: 30,
+		nearRatio: 0.5,
+		dryRun: true,
+		now: Date.parse('2026-11-03T20:00:00Z'),
+	});
+	assert.equal(dry.dryRun, true);
+	assert.ok(dry.removedAge > 0);
+	assert.equal(fs.readFileSync(fat, 'utf8'), body);
+	assert.equal(r.WORK_LOG_PRUNE_NEAR, 0.8);
+});
+
 test('safeToRemove only allows a clean, unlocked worktree under .worktrees', () => {
 	const wt = { path: ROOT + '/.worktrees/feat-1-x', branch: 'feat/1-x', dirty: false, alive: false, chat: '' };
 	assert.equal(r.safeToRemove({ target: wt.path }, wt, ROOT).ok, true);
