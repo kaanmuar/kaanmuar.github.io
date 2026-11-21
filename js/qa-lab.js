@@ -2600,6 +2600,8 @@
 		},
 	];
 	const FW_KEY = 'qa-lab-frameworks';
+	const TREE_GRID_KEY = 'qa-lab-runner-tree-grid';
+	const TREE_GRID_SRC = 'js/runner-tree-grid.js?v=20261121b';
 
 	function runnersFor(c) {
 		const list = c.fw.slice();
@@ -6144,13 +6146,39 @@
 						);
 					})
 					.join('') || '<span class="muted">Pick at least one runner.</span>';
+			const grid = this.treeGridOn();
+			if (chosen.length)
+				tabs.insertAdjacentHTML(
+					'beforeend',
+					'<button type="button" class="runner-grid-toggle' +
+						(grid ? ' on' : '') +
+						'" data-treegrid aria-pressed="' +
+						(grid ? 'true' : 'false') +
+						'" title="Filterable tree grid of every runner (#3832)">Tree grid</button>'
+				);
+			const gridBtn = tabs.querySelector('[data-treegrid]');
+			if (gridBtn)
+				gridBtn.onclick = () => {
+					this.setTreeGrid(!this.treeGridOn());
+					this.renderRunners(this.runnerTab);
+				};
 			tabs.querySelectorAll('[data-runner]').forEach((btn) => {
 				btn.onclick = () => {
 					const name = btn.dataset.runner;
 					this.runnerPinned = true;
+					if (this.treeGridInst) {
+						// In grid mode a framework tab narrows the grid to that framework.
+						this.treeGridState = Object.assign({}, this.treeGridInst.state(), { framework: name });
+						this.treeGridInst = null;
+					}
 					this.renderRunners(name);
 				};
 			});
+			if (grid && current && this.renderTreeGrid(stage, chosen, tabs)) {
+				this.paintRunnerMarks();
+				return;
+			}
+			this.treeGridInst = null;
 			stage.innerHTML = current ? this.runnerBanner(current) + this.runnerSkin(current) : '';
 			const log = stage.querySelector('.runner-console');
 			if (log) log.scrollTop = log.scrollHeight;
@@ -6158,6 +6186,114 @@
 			if (tab && tab.scrollIntoView && tabs.closest('.runner-drawer.open'))
 				tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 			this.paintRunnerMarks();
+		},
+
+		treeGridOn() {
+			try {
+				return localStorage.getItem(TREE_GRID_KEY) === '1' || /[?&]treegrid=1(&|$)/.test(location.search);
+			} catch (e) {
+				return /[?&]treegrid=1(&|$)/.test(location.search);
+			}
+		},
+
+		setTreeGrid(on) {
+			try {
+				localStorage.setItem(TREE_GRID_KEY, on ? '1' : '0');
+			} catch (e) {
+				/* private mode: the toggle just does not persist */
+			}
+			if (!on) {
+				this.treeGridInst = null;
+				this.syncTreeGridQuery('');
+				if (/[?&]treegrid=1(&|$)/.test(location.search) && global.history && history.replaceState) {
+					history.replaceState(null, '', location.pathname + location.search.replace(/([?&])treegrid=1(&|$)/, '$1').replace(/[?&]$/, '').replace(/\?&/, '?').replace(/\?$/, '') + location.hash);
+				}
+			}
+		},
+
+		// ?tgq= persists the Tree-Grid text filter next to ?treegrid=1 (shareable deep link).
+		readTreeGridQuery() {
+			try {
+				const m = /[?&]tgq=([^&]*)/.exec(location.search);
+				if (!m) return '';
+				return decodeURIComponent(m[1].replace(/\+/g, ' '));
+			} catch (e) {
+				return '';
+			}
+		},
+
+		syncTreeGridQuery(text) {
+			if (!global.history || !history.replaceState) return;
+			const q = String(text == null ? '' : text).trim();
+			let search = location.search;
+			const has = /[?&]tgq=/.test(search);
+			if (!q) {
+				if (!has) return;
+				search = search.replace(/([?&])tgq=[^&]*/g, '$1').replace(/[?&]$/, '').replace(/\?&/, '?').replace(/\?$/, '');
+			} else {
+				const enc = encodeURIComponent(q);
+				if (has) search = search.replace(/([?&]tgq=)[^&]*/, '$1' + enc);
+				else search += (search && search !== '?' ? '&' : '?') + 'tgq=' + enc;
+				// Keep treegrid=1 alongside tgq so the link opens the grid.
+				if (!/[?&]treegrid=1(&|$)/.test(search)) search += (search && search !== '?' ? '&' : '?') + 'treegrid=1';
+			}
+			if (search !== location.search) history.replaceState(null, '', location.pathname + search + location.hash);
+		},
+
+		// Loads js/runner-tree-grid.js on demand (only while the runner drawer is open and the grid is on).
+		loadTreeGrid() {
+			if (global.RunnerTreeGrid) return Promise.resolve(true);
+			if (this.treeGridLoad) return this.treeGridLoad;
+			this.treeGridLoad = new Promise((resolve) => {
+				const s = document.createElement('script');
+				s.src = TREE_GRID_SRC;
+				s.onload = () => resolve(!!global.RunnerTreeGrid);
+				s.onerror = () => resolve(false);
+				document.head.appendChild(s);
+			});
+			return this.treeGridLoad;
+		},
+
+		// Returns true when the grid owns the stage; false means "draw the classic split view" (module not ready).
+		renderTreeGrid(stage, chosen, tabs) {
+			if (!tabs.closest('.runner-drawer.open')) return false;
+			if (!global.RunnerTreeGrid) {
+				this.loadTreeGrid().then((ok) => {
+					if (ok) this.renderRunners(this.runnerTab);
+				});
+				return false;
+			}
+			const groups = chosen.map((name) => ({
+				name,
+				label: this.fwLabel(name),
+				running: !!this.runningRunners[name],
+				rows: this.runnerRows(name),
+				log: this.nativeLogs[name] || [],
+			}));
+			if (this.treeGridInst && stage.contains(this.treeGridHost)) {
+				this.treeGridInst.update(groups);
+				return true;
+			}
+			stage.innerHTML = '';
+			const host = document.createElement('div');
+			host.className = 'runner-treegrid';
+			host.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0';
+			stage.appendChild(host);
+			this.treeGridHost = host;
+			if (!this.treeGridState) this.treeGridState = {};
+			if (!this.treeGridState.text) {
+				const fromUrl = this.readTreeGridQuery();
+				if (fromUrl) this.treeGridState.text = fromUrl;
+			}
+			this.treeGridInst = global.RunnerTreeGrid.mount(host, {
+				groups,
+				state: this.treeGridState,
+				onState: (state) => {
+					this.treeGridState = state;
+					this.syncTreeGridQuery(state && state.text);
+				},
+			});
+			return true;
 		},
 
 		runnerBanner() {

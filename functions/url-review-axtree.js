@@ -14,6 +14,7 @@
 
 const { isGeneric } = require('./url-review-link-text');
 const { say, some } = require('./url-review-findings-en');
+const standards = require('./url-review-a11y-standards');
 
 const MAX_NODES = 60000;
 const MAX_PER_RULE = 100;
@@ -250,6 +251,14 @@ function ruleList() {
 	return Object.keys(RULES);
 }
 
+// The EARL test case for a rule; `dct:references` lists the ACT / RGAA / eMAG / markuplint pages it maps to (#3831).
+function testCase(id) {
+	const test = { '@id': 'urn:url-review:' + id, '@type': 'earl:TestCase', 'dct:title': RULES[id].title };
+	const refs = standards.urls(id);
+	if (refs.length) test['dct:references'] = refs.map((url) => ({ '@id': url }));
+	return test;
+}
+
 // W3C EARL 1.0 as JSON-LD: one failed assertion per problem and one passed assertion per rule that found nothing.
 function earl(report, options) {
 	const at = (options && options.date) || new Date().toISOString();
@@ -258,12 +267,11 @@ function earl(report, options) {
 	const assertor = { '@id': TOOL.uri, '@type': 'earl:Assertor', 'dct:title': TOOL.name };
 	const graph = [];
 	report.issues.forEach((issue) => {
-		const rule = RULES[issue.rule];
 		graph.push({
 			'@type': 'earl:Assertion',
 			'earl:assertedBy': assertor,
 			'earl:subject': subject,
-			'earl:test': { '@id': 'urn:url-review:' + issue.rule, '@type': 'earl:TestCase', 'dct:title': rule.title },
+			'earl:test': testCase(issue.rule),
 			'earl:mode': { '@id': 'earl:automatic' },
 			'earl:result': {
 				'@type': 'earl:TestResult',
@@ -283,7 +291,7 @@ function earl(report, options) {
 			'@type': 'earl:Assertion',
 			'earl:assertedBy': assertor,
 			'earl:subject': subject,
-			'earl:test': { '@id': 'urn:url-review:' + id, '@type': 'earl:TestCase', 'dct:title': RULES[id].title },
+			'earl:test': testCase(id),
 			'earl:mode': { '@id': 'earl:automatic' },
 			'earl:result': {
 				'@type': 'earl:TestResult',
@@ -332,6 +340,8 @@ function sarif(report) {
 							properties: {
 								tags: RULES[id].sc.map((sc) => 'wcag' + sc.replace(/\./g, '')),
 								severity: RULES[id].severity,
+								standards: standards.ids(id),
+								standardTags: standards.tags(id),
 							},
 						})),
 					},
@@ -365,9 +375,9 @@ function sarif(report) {
    already reported (HTML pass or axe), the tree finding is skipped. */
 const FINDING = {
 	'ax-document-title': { key: 'a11y-axtree-title', overlap: [] },
-	'ax-link-name': { key: 'a11y-axtree-link-name', overlap: ['ax-link-name'] },
+	'ax-link-name': { key: 'a11y-axtree-link-name', overlap: ['ax-link-name', 'a11y-focus-noname'] },
 	'ax-link-generic': { key: 'a11y-axtree-link-generic', overlap: ['a11y-linktext'] },
-	'ax-button-name': { key: 'a11y-axtree-button-name', overlap: ['ax-button-name'] },
+	'ax-button-name': { key: 'a11y-axtree-button-name', overlap: ['ax-button-name', 'a11y-focus-noname'] },
 	'ax-image-name': { key: 'a11y-axtree-image-name', overlap: ['ax-image-alt', 'a11y-alt'] },
 	'ax-field-name': { key: 'a11y-axtree-field-name', overlap: ['ax-label', 'a11y-labels'] },
 	'ax-heading-skip': { key: 'a11y-axtree-heading-skip', overlap: ['ax-heading-order'] },
