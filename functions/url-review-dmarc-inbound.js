@@ -2,9 +2,9 @@
 
 /* Reduce DMARC aggregate / TLS-RPT mail that arrives at mailInbound (#3777 slice 2).
    Only counts when an owner-verified domain has consent on. Keeps aggregate counts only; the raw report is discarded.
-   Supports plain XML/JSON, gzip, and zip (fflate 0.8.3, 50 MiB uncompressed cap). No DNS and no outbound mail. */
+   Supports plain XML/JSON, gzip, and zip (local-file DEFLATE/store via zlib; 50 MiB uncompressed cap). No DNS and no outbound mail.
+   Dependency-free so url-review-unit CI (no functions/node_modules) can load this module. */
 const zlib = require('zlib');
-const { unzipSync } = require('fflate');
 const proof = require('./url-review-owner-proof');
 const reports = require('./url-review-dmarc-reports');
 const consent = require('./url-review-dmarc-consent');
@@ -49,28 +49,40 @@ function gunzipSafe(buf) {
 	}
 }
 
+// Local-file headers only (PK\x03\x04), store (0) or deflate (8). Skips Zip64 and encrypted entries.
 function unzipSafe(buf) {
-	try {
-		const files = unzipSync(new Uint8Array(buf), {
-			filter: (file) =>
-				!!file &&
-				Number(file.originalSize || 0) <= MAX_BYTES &&
-				!/(^|\/)\./.test(String(file.name || '')),
-		});
-		const names = Object.keys(files || {});
-		if (names.length > MAX_ZIP_FILES) return [];
-		let total = 0;
-		const out = [];
-		for (const name of names) {
-			const bytes = Buffer.from(files[name]);
-			total += bytes.length;
-			if (total > MAX_ZIP) return [];
-			out.push({ name: clipName(name), bytes });
+	const out = [];
+	let at = 0;
+	let total = 0;
+	while (out.length < MAX_ZIP_FILES && at + 30 <= buf.length) {
+		if (buf[at] !== 0x50 || buf[at + 1] !== 0x4b || buf[at + 2] !== 0x03 || buf[at + 3] !== 0x04) break;
+		const method = buf.readUInt16LE(at + 8);
+		const flags = buf.readUInt16LE(at + 6);
+		if (flags & 0x1 || flags & 0x8) return []; // encrypted or data-descriptor: refuse
+		const comp = buf.readUInt32LE(at + 18);
+		const uncomp = buf.readUInt32LE(at + 22);
+		const nameLen = buf.readUInt16LE(at + 26);
+		const extraLen = buf.readUInt16LE(at + 28);
+		const nameStart = at + 30;
+		const dataStart = nameStart + nameLen + extraLen;
+		if (dataStart + comp > buf.length) return [];
+		if (uncomp > MAX_BYTES || total + uncomp > MAX_ZIP) return [];
+		const name = clipName(buf.slice(nameStart, nameStart + nameLen).toString('utf8'));
+		const data = buf.subarray(dataStart, dataStart + comp);
+		let plain = null;
+		try {
+			if (method === 0) plain = Buffer.from(data);
+			else if (method === 8) plain = zlib.inflateRawSync(data, { maxOutputLength: MAX_BYTES });
+			else return [];
+		} catch (error) {
+			return [];
 		}
-		return out;
-	} catch (error) {
-		return [];
+		if (!plain || plain.length > MAX_BYTES) return [];
+		total += plain.length;
+		if (!/(^|\/)\./.test(name)) out.push({ name, bytes: plain });
+		at = dataStart + comp;
 	}
+	return out;
 }
 
 // Open one attachment (or body blob) into zero or more plain text payloads ready for the parsers.
@@ -197,5 +209,6 @@ module.exports = {
 	openBlob,
 	parseBodies,
 	ingest,
+	unzipSafe,
 	REPORT_SUBJECT,
 };

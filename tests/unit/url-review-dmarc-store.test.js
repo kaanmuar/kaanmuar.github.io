@@ -5,9 +5,7 @@
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const path = require('path');
 const zlib = require('zlib');
-const { zipSync, strToU8 } = require(require.resolve('fflate', { paths: [path.join(__dirname, '../../functions')] }));
 
 const auth = require('../../functions/url-review-auth');
 const proof = require('../../functions/url-review-owner-proof');
@@ -53,6 +51,53 @@ function tlsJson() {
 
 function siteProof(email, host) {
 	return proof.siteRecord({ email, host, how: 'dns' }, NOW);
+}
+
+// Minimal stored (method 0) zip with one local-file entry + empty central directory + end record.
+function zipStore(name, body) {
+	const nameBuf = Buffer.from(name, 'utf8');
+	const data = Buffer.from(body, 'utf8');
+	const local = Buffer.alloc(30);
+	local.writeUInt32LE(0x04034b50, 0);
+	local.writeUInt16LE(20, 4);
+	local.writeUInt16LE(0, 6);
+	local.writeUInt16LE(0, 8); // store
+	local.writeUInt16LE(0, 10);
+	local.writeUInt16LE(0, 12);
+	const crc = zlib.crc32(data) >>> 0;
+	local.writeUInt32LE(crc, 14);
+	local.writeUInt32LE(data.length, 18);
+	local.writeUInt32LE(data.length, 22);
+	local.writeUInt16LE(nameBuf.length, 26);
+	local.writeUInt16LE(0, 28);
+	const central = Buffer.alloc(46);
+	central.writeUInt32LE(0x02014b50, 0);
+	central.writeUInt16LE(20, 4);
+	central.writeUInt16LE(20, 6);
+	central.writeUInt16LE(0, 8);
+	central.writeUInt16LE(0, 10);
+	central.writeUInt16LE(0, 12);
+	central.writeUInt16LE(0, 14);
+	central.writeUInt32LE(crc, 16);
+	central.writeUInt32LE(data.length, 20);
+	central.writeUInt32LE(data.length, 24);
+	central.writeUInt16LE(nameBuf.length, 28);
+	central.writeUInt16LE(0, 30);
+	central.writeUInt16LE(0, 32);
+	central.writeUInt16LE(0, 34);
+	central.writeUInt16LE(0, 36);
+	central.writeUInt32LE(0, 38);
+	central.writeUInt32LE(0, 42);
+	const end = Buffer.alloc(22);
+	end.writeUInt32LE(0x06054b50, 0);
+	end.writeUInt16LE(0, 4);
+	end.writeUInt16LE(0, 6);
+	end.writeUInt16LE(1, 8);
+	end.writeUInt16LE(1, 10);
+	end.writeUInt32LE(46 + nameBuf.length, 12);
+	end.writeUInt32LE(30 + nameBuf.length + data.length, 16);
+	end.writeUInt16LE(0, 20);
+	return Buffer.concat([local, nameBuf, data, central, nameBuf, end]);
 }
 
 test.describe('consent store (#3777)', () => {
@@ -116,9 +161,12 @@ test.describe('mail-inbound report ingest (#3777)', () => {
 		const store = auth.memoryStore();
 		const xml = dmarcXml();
 		const gz = zlib.gzipSync(Buffer.from(xml));
-		const zip = Buffer.from(zipSync({ 'google.com!shop.example.com!1!2.xml': strToU8(xml) }));
+		const zip = zipStore('google.com!shop.example.com!1!2.xml', xml);
 		assert.equal(inbound.looksLikeReport({ subject: 'Report Domain: shop.example.com', text: '' }), true);
-		assert.equal(inbound.looksLikeReport({ subject: 'Hello', attachments: [{ filename: 'a.xml.gz', content: gz.toString('base64') }] }), true);
+		assert.equal(
+			inbound.looksLikeReport({ subject: 'Hello', attachments: [{ filename: 'a.xml.gz', content: gz.toString('base64') }] }),
+			true
+		);
 
 		const noConsent = await inbound.ingest(
 			{ subject: 'DMARC Aggregate Report', attachments: [{ filename: 'r.xml.gz', content: gz.toString('base64') }] },
