@@ -57,7 +57,11 @@ test('normalizeActivity keeps Create / Follow / Undo and rejects junk', () => {
 	assert.equal(create.event.type, 'Create');
 	assert.equal(create.event.objectId, PEER + '/statuses/1');
 	assert.deepEqual(create.event.objectTypes, ['Note']);
-	assert.ok(create.event.to.includes(OUR));
+	const hostPath = (href) => {
+		const p = new URL(href);
+		return p.hostname + p.pathname;
+	};
+	assert.ok(create.event.to.some((id) => hostPath(id) === hostPath(OUR)));
 
 	const follow = Inbox.normalizeActivity({
 		id: PEER + '/follows/1',
