@@ -103,3 +103,23 @@ test("linked Safe Browsing read maps webrisk (#4108)", () => {
 	assert.equal(fact.stage, "webrisk");
 	assert.equal(fact.status, "done");
 });
+
+test("truncated start page paints open risk (#4108)", () => {
+	const fact = matchFact("The start page was still arriving after 8 s, so the review analyzed the part that had arrived.");
+	assert.equal(fact.stage, "open");
+	assert.equal(fact.status, "risk");
+	assert.equal(fact.anomaly, "slow");
+});
+
+test("Cloudflare URL Scanner timeout marks malware (#4108)", () => {
+	const fact = matchFact("Cloudflare's URL Scanner had not finished its scan in time.");
+	assert.equal(fact.stage, "malware");
+	assert.equal(fact.status, "fail");
+	assert.equal(fact.anomaly, "timeout");
+});
+
+test("linked Safe Browsing flagged paints risk (#4108)", () => {
+	const fact = matchFact("Google's Safe Browsing lists were read for 3 of 5 hosts; evil.com flagged.");
+	assert.equal(fact.stage, "webrisk");
+	assert.equal(fact.status, "risk");
+});
