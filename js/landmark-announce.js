@@ -7,7 +7,8 @@
    landmark rules for tags, explicit roles and accessible names only. It does not evaluate CSS, so an element
    hidden by a stylesheet is still announced; `hidden` and `aria-hidden="true"` are honoured.
 
-   Opt-in: no page loads it. To try it, load the file and run in the console:
+   Opt-in on qa-lab.html / qa-review.html via js/landmark-preview-ui.js (?landmarks=1 or localStorage
+   qa-landmarks=1). Or load this file and run in the console:
        LandmarkAnnounce.preview(document)          // array of spoken lines
        LandmarkAnnounce.speak(document)            // reads them aloud (speechSynthesis), returns the lines
    Layers: announce(tree) works on a plain tree { tag, attrs, text, children } (unit-tested without a DOM);
