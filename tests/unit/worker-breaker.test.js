@@ -105,7 +105,8 @@ test('resilientCall retries only errors the caller marks transient', async () =>
 	assert.equal(m, 1);
 });
 
-test('the outreach clock and the pre-flight brain still load with the shared module', async () => {
+test('the outreach clock, pre-flight brain and uptime-check still load with the shared module', async () => {
 	assert.ok((await import('../../workers/outreach-cron/src/index.js')).MODES);
 	assert.equal(typeof (await import('../../workers/preflight/src/index.js')).default.fetch, 'function');
+	assert.equal(typeof (await import('../../workers/uptime-check/src/index.js')).default.scheduled, 'function');
 });
