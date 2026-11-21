@@ -25,12 +25,19 @@ const rig = (responses) => {
 };
 
 // The functions' Node port must behave like the Workers module on every scenario both support.
-const both = async () => [['functions', node], ['workers', await loadWorker()]];
+const both = async () => [
+	['functions', node],
+	['workers', await loadWorker()],
+];
 
 test('Retry-After on 429/503 is honored (seconds and HTTP date) and capped, same as the Workers module', async () => {
 	for (const [name, m] of await both()) {
 		assert.equal(m.parseRetryAfter('7'), 7000, name);
-		assert.equal(m.parseRetryAfter('Wed, 21 Oct 2015 07:28:10 GMT', Date.parse('Wed, 21 Oct 2015 07:28:00 GMT')), 10000, name);
+		assert.equal(
+			m.parseRetryAfter('Wed, 21 Oct 2015 07:28:10 GMT', Date.parse('Wed, 21 Oct 2015 07:28:00 GMT')),
+			10000,
+			name
+		);
 		assert.equal(m.parseRetryAfter('soon'), null, name);
 		const r = rig([() => res(429, { 'retry-after': '3' }), () => res(503, { 'retry-after': '999' }), () => res(200)]);
 		const out = await m.resilientFetch('https://x.test', {}, { ...r.opts, maxRetryAfterMs: 20000 });
@@ -64,7 +71,11 @@ test('the breaker opens after the threshold, fails fast, then lets one probe thr
 		assert.equal(out.status, 500, name);
 		assert.equal(breaker.state, 'open', name);
 		assert.equal(r.calls.length, 2, name);
-		await assert.rejects(m.resilientFetch('https://x.test', {}, { ...r.opts, breaker }), (e) => e.name === 'BreakerOpenError', name);
+		await assert.rejects(
+			m.resilientFetch('https://x.test', {}, { ...r.opts, breaker }),
+			(e) => e.name === 'BreakerOpenError',
+			name
+		);
 		assert.equal(r.calls.length, 2, name);
 		t = 1500;
 		assert.equal(breaker.state, 'half-open', name);
@@ -86,13 +97,25 @@ test('functions only: noRetryStatuses return at once and stay neutral for the br
 test('functions only: retryErrors can stop a retry, and timeoutMs gives every attempt a fresh signal', async () => {
 	const timeout = Object.assign(new Error('late'), { name: 'TimeoutError' });
 	const r = rig([timeout]);
-	await assert.rejects(node.resilientFetch('https://x.test', {}, { ...r.opts, retries: 3, retryErrors: (e) => !node.isTimeout(e) }), /late/);
+	await assert.rejects(
+		node.resilientFetch('https://x.test', {}, { ...r.opts, retries: 3, retryErrors: (e) => !node.isTimeout(e) }),
+		/late/
+	);
 	assert.equal(r.calls.length, 1);
 	const signals = [];
-	await node.resilientFetch('https://x.test', {}, {
-		retries: 1, sleep: async () => {}, timeoutMs: 5000,
-		fetchImpl: async (url, init) => { signals.push(init.signal); return res(signals.length === 1 ? 500 : 200); },
-	});
+	await node.resilientFetch(
+		'https://x.test',
+		{},
+		{
+			retries: 1,
+			sleep: async () => {},
+			timeoutMs: 5000,
+			fetchImpl: async (url, init) => {
+				signals.push(init.signal);
+				return res(signals.length === 1 ? 500 : 200);
+			},
+		}
+	);
 	assert.equal(signals.length, 2);
 	assert.notEqual(signals[0], signals[1]);
 });
@@ -104,14 +127,24 @@ test('url review: Web Risk and PageSpeed keep their answer shapes through retrie
 	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
 	try {
 		let n = 0;
-		global.fetch = async () => (++n === 1 ? res(503, { 'retry-after': '1' }) : new Response(JSON.stringify({ threat: { threatTypes: ['MALWARE'] } }), { status: 200 }));
-		assert.deepEqual(await core.webRisk('https://bad.example/', 'k'), { ok: true, url: 'https://bad.example/', threats: ['MALWARE'] });
+		global.fetch = async () =>
+			++n === 1
+				? res(503, { 'retry-after': '1' })
+				: new Response(JSON.stringify({ threat: { threatTypes: ['MALWARE'] } }), { status: 200 });
+		assert.deepEqual(await core.webRisk('https://bad.example/', 'k'), {
+			ok: true,
+			url: 'https://bad.example/',
+			threats: ['MALWARE'],
+		});
 		assert.equal(n, 2);
 		global.fetch = async () => res(403);
 		assert.deepEqual(await core.webRisk('https://bad.example/', 'k'), { ok: false, error: 'status 403' });
 		n = 0;
 		global.fetch = async () => (n++, res(429));
-		assert.deepEqual(await core.pageSpeed('https://x.example/', 'k'), { ok: false, error: 'the daily quota is used up' });
+		assert.deepEqual(await core.pageSpeed('https://x.example/', 'k'), {
+			ok: false,
+			error: 'the daily quota is used up',
+		});
 		assert.equal(n, 1);
 		n = 0;
 		global.fetch = async () => (n++, res(500));
@@ -146,7 +179,10 @@ test('url review: CrUX History and Places keep their answer shapes through retri
 		assert.ok(n >= 1 && n <= 2, 'CrUX does not retry a spent quota (forms may race)');
 		assert.ok(n < 4, 'no Retry-After loop on CrUX 429');
 		n = 0;
-		global.fetch = async () => (++n === 1 ? res(503, { 'retry-after': '1' }) : new Response(JSON.stringify({ places: [{ id: 'p1' }] }), { status: 200 }));
+		global.fetch = async () =>
+			++n === 1
+				? res(503, { 'retry-after': '1' })
+				: new Response(JSON.stringify({ places: [{ id: 'p1' }] }), { status: 200 });
 		assert.deepEqual(await local.placesSearch({ textQuery: 'cafe' }, 'k'), { ok: true, places: [{ id: 'p1' }] });
 		assert.equal(n, 2);
 		n = 0;
@@ -162,5 +198,118 @@ test('url review: CrUX History and Places keep their answer shapes through retri
 		global.setTimeout = slept;
 		node.breakers.crux.success();
 		node.breakers.places.success();
+	}
+});
+
+test('url review: threat lists keep their answer shapes through retries and the breaker', async () => {
+	const lists = require('../../functions/url-review-threat-lists.js');
+	const slept = global.setTimeout;
+	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
+	const env = {
+		URLHAUS_AUTH_KEY: 'uh',
+		PHISHSTATS_KEY: 'psk_x',
+		CLOUDFLARE_URLSCAN_TOKEN: 'cf',
+		CLOUDFLARE_ACCOUNT_ID: 'acc',
+	};
+	const cleanCf = [
+		[/urlscanner\/v2\/search/, () => new Response(JSON.stringify({ results: [] }), { status: 200 })],
+		[/urlscanner\/v2\/scan$/, () => new Response(JSON.stringify({ uuid: 's1' }), { status: 200 })],
+		[
+			/urlscanner\/v2\/result\/s1/,
+			() =>
+				new Response(
+					JSON.stringify({
+						task: {
+							uuid: 's1',
+							url: 'https://shop.example.com/',
+							time: '2026-11-09T10:00:00Z',
+							reportURL: 'https://radar.cloudflare.com/scan/s1',
+						},
+						verdicts: { overall: { malicious: false, categories: [] } },
+					}),
+					{ status: 200 }
+				),
+		],
+	];
+	const route = (table) => async (url) => {
+		for (const [match, answer] of table) if (match.test(String(url))) return answer();
+		throw new Error('unexpected ' + url);
+	};
+	const run = (fetch) => {
+		lists._cache.clear();
+		return lists.check('https://shop.example.com/', {
+			env,
+			fetch,
+			now: Date.parse('2026-11-09T12:00:00Z'),
+			pause: async () => {},
+		});
+	};
+	try {
+		let n = 0;
+		const result = await run(
+			route([
+				[
+					/urlhaus-api/,
+					() =>
+						++n === 1
+							? res(503, { 'retry-after': '1' })
+							: new Response(JSON.stringify({ query_status: 'no_results' }), { status: 200 }),
+				],
+				[/phishstats/, () => new Response(JSON.stringify([]), { status: 200 })],
+				...cleanCf,
+			])
+		);
+		assert.equal(result.sources[0].ok, true);
+		assert.equal(result.sources[0].listed, false);
+		assert.ok(n >= 2, 'URLhaus retries a 503 before succeeding (host + registrable)');
+		n = 0;
+		const failed = await run(
+			route([
+				[/urlhaus-api/, () => (n++, res(500))],
+				[/phishstats/, () => new Response(JSON.stringify([]), { status: 200 })],
+				...cleanCf,
+			])
+		);
+		assert.deepEqual([failed.sources[0].ok, failed.sources[0].error], [false, 'status 500']);
+		assert.equal(n, 3, 'URLhaus retries 5xx twice then returns the last status');
+		let p = 0;
+		let cfn = 0;
+		const retried = await run(
+			route([
+				[/urlhaus-api/, () => new Response(JSON.stringify({ query_status: 'no_results' }), { status: 200 })],
+				[/phishstats/, () => (++p === 1 ? res(502) : new Response(JSON.stringify([]), { status: 200 }))],
+				[
+					/urlscanner\/v2\/search/,
+					() => (++cfn === 1 ? res(503) : new Response(JSON.stringify({ results: [] }), { status: 200 })),
+				],
+				...cleanCf.slice(1),
+			])
+		);
+		assert.ok(p >= 2, 'PhishStats retries a 502');
+		assert.ok(cfn >= 2, 'Cloudflare scanner retries a 503');
+		assert.equal(retried.sources.length >= 2, true);
+		assert.equal(retried.sources[1].ok, true);
+		n = 0;
+		node.breakers.urlhaus.failure();
+		node.breakers.urlhaus.failure();
+		node.breakers.urlhaus.failure();
+		node.breakers.urlhaus.failure();
+		node.breakers.urlhaus.failure();
+		assert.equal(node.breakers.urlhaus.state, 'open');
+		const paused = await run(
+			route([
+				[/urlhaus-api/, () => (n++, res(200))],
+				[/phishstats/, () => new Response(JSON.stringify([]), { status: 200 })],
+				...cleanCf,
+			])
+		);
+		assert.deepEqual([paused.sources[0].ok, paused.sources[0].error], [false, 'paused after repeated failures']);
+		assert.equal(n, 0, 'open breaker does not call URLhaus');
+	} finally {
+		global.setTimeout = slept;
+		node.breakers.urlhaus.success();
+		node.breakers.phishstats.success();
+		node.breakers.cloudflare.success();
+		lists._cache.clear();
 	}
 });

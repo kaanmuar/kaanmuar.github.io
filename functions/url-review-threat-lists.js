@@ -14,6 +14,7 @@
 
 const { registrable } = require('./url-review-suffix');
 const { say, some } = require('./url-review-findings-en');
+const resilience = require('./http-resilience');
 
 const URLHAUS_API = 'https://urlhaus-api.abuse.ch/v1/host/';
 const PHISHSTATS_API = 'https://api.phishstats.info/api/phishing';
@@ -96,8 +97,23 @@ const day = (value) => {
 	return isNaN(parsed) ? '' : new Date(parsed).toISOString().slice(0, 10);
 };
 
-async function getJson(fetchImpl, url, init) {
-	const res = await fetchImpl(url, Object.assign({ signal: AbortSignal.timeout(CALL_MS) }, init));
+// Retries 5xx/429 with backoff and pauses after repeated failures (#3838); answer shapes stay the same.
+async function getJson(fetchImpl, url, init, breaker) {
+	let res;
+	try {
+		res = await resilience.resilientFetch(url, init || {}, {
+			retries: 2,
+			baseMs: 300,
+			maxMs: 2000,
+			maxRetryAfterMs: 3000,
+			timeoutMs: CALL_MS,
+			breaker,
+			fetchImpl: fetchImpl || ((...args) => fetch(...args)),
+		});
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) throw new Error('paused after repeated failures');
+		throw error;
+	}
 	if (!res.ok) {
 		const error = new Error('status ' + res.status);
 		error.status = res.status;
@@ -136,11 +152,16 @@ async function urlhaus(host, key, fetchImpl) {
 	let reference = 'https://urlhaus.abuse.ch/host/' + host + '/';
 	let named = false;
 	for (const name of hostsOf(host)) {
-		const data = await getJson(fetchImpl, URLHAUS_API, {
-			method: 'POST',
-			headers: { 'Auth-Key': key, 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: 'host=' + encodeURIComponent(name),
-		});
+		const data = await getJson(
+			fetchImpl,
+			URLHAUS_API,
+			{
+				method: 'POST',
+				headers: { 'Auth-Key': key, 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: 'host=' + encodeURIComponent(name),
+			},
+			resilience.breakers.urlhaus
+		);
 		const status = data && (data.query_status || data.query_staus);
 		if (status !== 'ok' && status !== 'no_results' && status !== 'invalid_host')
 			throw new Error(String(status || 'no answer'));
@@ -180,7 +201,8 @@ async function phishstats(host, key, fetchImpl, now) {
 	const data = await getJson(
 		fetchImpl,
 		PHISHSTATS_API + '?_where=' + encodeURIComponent(where) + '&_sort=-date&_size=20',
-		{ headers: { 'X-API-Key': key } }
+		{ headers: { 'X-API-Key': key } },
+		resilience.breakers.phishstats
 	);
 	const rows = Array.isArray(data) ? data : [];
 	const recent = rows.filter(
@@ -229,14 +251,16 @@ function scanVerdict(result, host) {
 async function cloudflare(url, host, token, account, fetchImpl, opts) {
 	const base = CLOUDFLARE_API + encodeURIComponent(account) + '/urlscanner/v2/';
 	const headers = { Authorization: 'Bearer ' + token };
-	const result = (uuid) => getJson(fetchImpl, base + 'result/' + encodeURIComponent(uuid), { headers });
+	const breaker = resilience.breakers.cloudflare;
+	const result = (uuid) => getJson(fetchImpl, base + 'result/' + encodeURIComponent(uuid), { headers }, breaker);
 	const pendingKey = 'cloudflare-pending ' + host;
 	let uuid = recall(pendingKey);
 	if (!uuid) {
 		const found = await getJson(
 			fetchImpl,
 			base + 'search?size=5&q=' + encodeURIComponent('page.domain:"' + host + '" AND date:>now-1d'),
-			{ headers }
+			{ headers },
+			breaker
 		);
 		const done = ((found && found.results) || []).filter(
 			(row) => row.task && row.task.success !== false && row.task.uuid && hostOf(row.page && row.page.url) === host
@@ -244,11 +268,16 @@ async function cloudflare(url, host, token, account, fetchImpl, opts) {
 		const pick = done.find((row) => row.verdicts && row.verdicts.malicious === true) || done[0];
 		if (pick) return scanVerdict(await result(pick.task.uuid), host);
 		if (!url) throw new Error('not an http address');
-		const asked = await getJson(fetchImpl, base + 'scan', {
-			method: 'POST',
-			headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-			body: JSON.stringify({ url, visibility: 'Unlisted' }),
-		});
+		const asked = await getJson(
+			fetchImpl,
+			base + 'scan',
+			{
+				method: 'POST',
+				headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+				body: JSON.stringify({ url, visibility: 'Unlisted' }),
+			},
+			breaker
+		);
 		uuid = asked && asked.uuid;
 		if (!uuid) throw new Error('no scan id');
 		if (opts.onScan) opts.onScan();
