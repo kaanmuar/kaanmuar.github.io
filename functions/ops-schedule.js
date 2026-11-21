@@ -317,6 +317,13 @@ const JOBS = [
 		what: 'Propose standout items from the field for the social hub (the owner approves them in admin)',
 	},
 	{
+		job: 'scout-trending-drafts.yml',
+		host: 'github',
+		cron: '41 14 * * *',
+		gap: 50,
+		what: 'Trending-tag scout drafts (#3814): write assets/social/scout-drafts.json only (status draft, noPost); Jarvis Engagement review; never posts or auto-approves',
+	},
+	{
 		job: 'tool-scout.yml',
 		host: 'github',
 		cron: '37 15 * * 3',

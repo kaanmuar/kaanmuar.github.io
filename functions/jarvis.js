@@ -1785,6 +1785,7 @@ function engagementAsk(g) {
 		tags: (g.report.tags || []).slice(0, 10),
 		networks: g.report.networks,
 		waiting: (g.waiting || []).length,
+		scoutDrafts: g.scoutDrafts || (g.waiting || []).filter((d) => d.campaign === 'scout-trend').length,
 		topPosts: (g.posts || [])
 			.slice(0, 5)
 			.map((d) => d.network + ': ' + (d.title || String(d.text || '').slice(0, 100)) + ' (score ' + d.score + ')'),

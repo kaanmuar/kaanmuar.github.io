@@ -113,6 +113,9 @@ object Engagement {
     /** Report replies (#2465, #2471): invites under posts that name a site we reviewed. */
     fun isReport(post: JsonObject?): Boolean = post.str("campaign") == "report-reply"
 
+    /** Trending-tag drafts from scout-drafts.json (#3814): Save never posts. */
+    fun isScout(post: JsonObject?): Boolean = post.str("campaign") == "scout-trend" || post.bool("noPost") == true
+
     /** The filter over the reply lists: every reply, report replies only, or the others. */
     val ONLY = listOf("all" to "All", "report" to "Report replies", "field" to "Other replies")
     fun keep(post: JsonObject, only: String): Boolean = only == "all" || (only == "report") == isReport(post)
@@ -142,6 +145,12 @@ object Engagement {
 private fun ReportBadge() {
     Text("Report reply", color = J.violet, fontSize = 11.sp, fontWeight = FontWeight.Medium,
         modifier = Modifier.background(J.violet.copy(alpha = 0.14f), RoundedCornerShape(50)).border(1.dp, J.violet.copy(alpha = 0.6f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 2.dp))
+}
+
+@Composable
+private fun TrendBadge() {
+    Text("Trend draft", color = J.amber, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+        modifier = Modifier.background(J.amber.copy(alpha = 0.14f), RoundedCornerShape(50)).border(1.dp, J.amber.copy(alpha = 0.6f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 2.dp))
 }
 
 @Composable
@@ -197,7 +206,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
         if (kept.isEmpty()) Muted("None of the waiting replies is of this kind.")
         (if (all) kept else kept.take(Engagement.SHOWN)).forEach { p -> Draft(p, names, s, vm, ::ask) }
         if (kept.size > Engagement.SHOWN) TextButton({ all = !all }) { Text(if (all) "Show fewer" else "Show all ${kept.size}", color = J.cyan, fontSize = 13.sp) }
-        Muted("Approve tells Jarvis to send it (never a clipboard paste). An approved reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent. A profile message with no fresh post goes under their latest post of the last year (#3461).")
+        Muted("Approve sends a field reply (never a clipboard paste). Trend drafts use Save (no post): the decision is stored and nothing goes to any network (#3814). An approved field reply posts at once on Bluesky, Mastodon and YouTube; on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent. A profile message with no fresh post goes under their latest post of the last year (#3461).")
     }
 
     g.obj("metaScout")?.let { meta ->
@@ -371,6 +380,7 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
             Text(names[p.str("network")] ?: "", color = J.cyan, fontSize = 12.sp)
         }
         if (Engagement.isReport(p)) ReportBadge()
+        if (Engagement.isScout(p)) TrendBadge()
         Muted(listOfNotNull(Engagement.author(p).ifEmpty { null }, p.str("topic"), p.str("lang")).joinToString(" · ") + " · " + Engagement.metrics(p))
         p.str("about")?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 13.sp) }
         Engagement.reportLine(p)?.let { Text(it, color = J.violet, fontSize = 12.sp) }
@@ -384,19 +394,20 @@ private fun Draft(p: JsonObject, names: Map<String, String>, s: UiState, vm: Jar
         if (open) Text(p.str("text").orEmpty(), color = J.muted, fontSize = 12.sp)
         OutlinedTextField(text, { text = it.take(limit) }, label = { Text("Reply · ${text.length}/$limit") }, minLines = 3, modifier = Modifier.fillMaxWidth())
         Engagement.english(reply, text)?.let { Text(it, color = J.muted, fontSize = 12.sp) }
+        val scout = Engagement.isScout(p)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            ActionButton("Approve", busy) {
+            ActionButton(if (scout) "Save (no post)" else "Approve", busy) {
                 val decision = Engagement.decision(draft, text, true)
                 vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json(decision), "text" to json(text.trim()))) { out ->
-                    out.str("message") ?: "Approved."
+                    out.str("message") ?: if (scout) "Saved. Nothing was posted." else "Approved."
                 }
             }
-            TextButton({ ask("dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {
+            TextButton({ ask(if (scout) "dismiss this trend draft (nothing posts)" else "dismiss this reply draft") { vm.market("eg:$key", "engagement-decide", mapOf("key" to json(key), "decision" to json("dismiss"))) { "Dismissed." } } }, enabled = !busy) {
                 Text("Dismiss", color = J.muted, fontSize = 13.sp)
             }
             p.str("url")?.takeIf { it.startsWith("https://") }?.let { url -> TextButton({ uri.openUri(url) }) { Text("Open", color = J.cyan, fontSize = 13.sp) } }
         }
-        Muted("Expires ${ago(reply.str("expiresAt"))?.replaceFirstChar { it.lowercase() } ?: reply.str("expiresAt").orEmpty()}")
+        Muted((if (scout) "Never posts automatically · " else "") + "Expires ${ago(reply.str("expiresAt"))?.replaceFirstChar { it.lowercase() } ?: reply.str("expiresAt").orEmpty()}")
     }
 }
 

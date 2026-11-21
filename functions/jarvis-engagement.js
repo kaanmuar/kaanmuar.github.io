@@ -1306,10 +1306,129 @@ async function promoteCopies(db, now) {
 	return snap.docs.length;
 }
 
-/** Approve, edit or dismiss a waiting reply, or a waiting DM (what: "dm"). Approve always queues or sends; never copies to paste (#3461). */
+const SCOUT_SITE = 'https://carlosandmunoz.com';
+// scout-<tag>-<network>-YYYY-MM-DD from scripts/scout-trending-drafts.js (#3814).
+const SCOUT_ID = /^scout-[a-z0-9]{1,40}-[a-z]{1,20}-\d{4}-\d{2}-\d{2}$/;
+const SCOUT_CAMPAIGN = 'scout-trend';
+const SCOUT_TTL_MS = 3 * DAY;
+
+/** A scout-drafts.json row as an engagement waiting brief. noPost stays true; Approve never posts. */
+function scoutBrief(row, now) {
+	const created = Date.parse(row.createdAt) || now;
+	const tag = String(row.tag || '').slice(0, 40);
+	return {
+		key: row.id,
+		network: row.network,
+		url: '',
+		author: { handle: '#' + tag, name: '#' + tag },
+		title: 'Trending #' + tag,
+		text: String(row.draft || '').slice(0, 600),
+		lang: row.lang || 'en',
+		topic: row.topic || '',
+		words: [],
+		score: Number(row.score) || 0,
+		trend: null,
+		metrics: { likes: 0, replies: 0, reposts: 0, views: 0 },
+		about: 'Trending-tag draft · review only · never posts on its own',
+		why: 'Ride #' + tag,
+		sentiment: '',
+		worth: null,
+		verdict: 'engage',
+		skip: '',
+		actions: {
+			reply: {
+				status: 'waiting',
+				draft: String(row.draft || ''),
+				expiresAt: new Date(created + SCOUT_TTL_MS).toISOString(),
+				noPost: true,
+			},
+		},
+		seenAt: row.createdAt || new Date(now).toISOString(),
+		createdAt: row.createdAt || new Date(now).toISOString(),
+		chain: null,
+		campaign: SCOUT_CAMPAIGN,
+		report: null,
+		noPost: true,
+		kind: SCOUT_CAMPAIGN,
+		tag,
+	};
+}
+
+/** Undecided draft rows from the live scout-drafts.json (#3814). Missing file → []. */
+async function loadScoutDrafts(fetchImpl, decisions, now) {
+	if (!fetchImpl) return [];
+	try {
+		const res = await fetchImpl(SCOUT_SITE + '/assets/social/scout-drafts.json?t=' + encodeURIComponent(now), {
+			signal: AbortSignal.timeout(10000),
+			cache: 'no-store',
+		});
+		if (!res.ok) return [];
+		const data = await res.json();
+		const decided = decisions || {};
+		return (Array.isArray(data) ? data : [])
+			.filter(
+				(r) =>
+					r &&
+					r.status === 'draft' &&
+					r.noPost === true &&
+					SCOUT_ID.test(String(r.id || '')) &&
+					!decided[r.id]
+			)
+			.map((r) => scoutBrief(r, now))
+			.sort((a, b) => b.score - a.score || String(a.key).localeCompare(String(b.key)));
+	} catch (error) {
+		return [];
+	}
+}
+
+/**
+ * Approve/edit/dismiss a trending-tag scout draft (#3814). Writes only to jarvis_settings/scout-drafts.
+ * Never calls a network, never sets trendSafe, never posts.
+ */
+async function decideScout(deps, body, by) {
+	const { db, now } = deps;
+	const key = String((body && (body.key || body.id)) || '');
+	if (!SCOUT_ID.test(key)) throw new Error('That is not a scout trend draft.');
+	const decision = String((body && body.decision) || '');
+	if (!/^(approve|edit|dismiss)$/.test(decision)) throw new Error('Decide approve, edit or dismiss.');
+	const status = decision === 'dismiss' ? 'dismissed' : 'approved';
+	const text = String((body && body.text) || '')
+		.trim()
+		.slice(0, 2000);
+	const ref = db.collection('jarvis_settings').doc('scout-drafts');
+	await db.runTransaction(async (tx) => {
+		const snap = await tx.get(ref);
+		const cur = snap.exists ? snap.data() : {};
+		const next = Object.assign({}, cur.decisions || {});
+		next[key] = {
+			status,
+			draft: status === 'approved' ? text : '',
+			at: new Date(now).toISOString(),
+			by: String(by || '').slice(0, 80),
+		};
+		const keys = Object.keys(next)
+			.sort((a, b) => String((next[b] && next[b].at) || '').localeCompare(String((next[a] && next[a].at) || '')))
+			.slice(0, 500);
+		const decisions = {};
+		keys.forEach((k) => {
+			decisions[k] = next[k];
+		});
+		tx.set(ref, { decisions, updatedAt: new Date(now).toISOString() }, { merge: true });
+	});
+	await clearCache(db);
+	if (status === 'dismissed') return { key, status: 'dismissed', message: 'Dismissed. Nothing was posted.' };
+	return {
+		key,
+		status: 'approved',
+		message: 'Saved. Nothing was posted (trending-tag draft stays noPost).',
+	};
+}
+
+/** Approve, edit or dismiss a waiting reply, or a waiting DM (what: "dm"). Approve always queues or sends; never copies to paste (#3461). Scout trend drafts (#3814) only record a decision and never post. */
 async function decide(deps, body, by) {
 	const { db, now, inc } = deps;
 	const key = String((body && (body.key || body.id)) || '');
+	if (SCOUT_ID.test(key)) return decideScout(deps, body, by);
 	if (!/^[a-z]+_[a-f0-9]{20}$/.test(key)) throw new Error('That is not a post of the engagement list.');
 	if (body.what === 'dm') return decideDm(deps, key, body, by);
 	const ref = db.collection('engagement_posts').doc(key);
@@ -1507,6 +1626,7 @@ async function source(ctx) {
 		creds,
 		macSnap,
 		redditSnap,
+		scoutDecisionsSnap,
 	] = await Promise.all([
 		readSettings(db),
 		db.collection('engagement_runs').orderBy('at', 'desc').limit(12).get(),
@@ -1525,6 +1645,7 @@ async function source(ctx) {
 		Act.readCreds(db),
 		db.collection('engagement_private').doc('mac').get(),
 		db.collection('engagement_private').doc('reddit').get(),
+		db.collection('jarvis_settings').doc('scout-drafts').get(),
 	]);
 	const mac = macSnap.exists && macSnap.data().at ? macSnap.data() : null;
 	const ownerTags = await OwnerTags.status(db, now).catch(() => null);
@@ -1697,6 +1818,10 @@ async function source(ctx) {
 	const byScore = (a, b) => b.score - a.score;
 	const used = usedToday(cur.find((d) => d.day === E.bogotaDay(now)));
 	const joins = await Joins.summary(db, conf, mac, used, now);
+	const scoutDecided =
+		scoutDecisionsSnap && scoutDecisionsSnap.exists ? scoutDecisionsSnap.data().decisions || {} : {};
+	const scoutWaiting = await loadScoutDrafts(ctx.fetch, scoutDecided, now);
+	const fieldWaiting = waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data())));
 	return {
 		ok: true,
 		settings: conf,
@@ -1708,7 +1833,8 @@ async function source(ctx) {
 		runs,
 		accounts,
 		ownerTags,
-		waiting: waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data()))).sort(byScore),
+		waiting: fieldWaiting.concat(scoutWaiting).sort(byScore),
+		scoutDrafts: scoutWaiting.length,
 		approved: approvedSnap.docs
 			.map((d) => brief(Object.assign({ key: d.id }, d.data())))
 			.sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt)))
@@ -1784,6 +1910,11 @@ module.exports = {
 	resultsTicket,
 	windowOf,
 	decide,
+	decideScout,
+	scoutBrief,
+	loadScoutDrafts,
+	SCOUT_ID,
+	SCOUT_CAMPAIGN,
 	connect,
 	saveSettings,
 	readSettings,
