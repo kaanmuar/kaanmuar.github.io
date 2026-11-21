@@ -1115,6 +1115,51 @@ test.describe('Report section index (#2770)', () => {
 		).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
 	});
 
+	test('a long page path cannot crush the Why or cookie columns in report tables (#4202)', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await openSample(page);
+		const long =
+			'/v3/signin/identifier?opparams=' +
+			encodeURIComponent('https://accounts.google.com/' + 'x'.repeat(180));
+		const sizes = await page.evaluate((path) => {
+			const host = document.querySelector('#report') || document.body;
+			const seo = document.createElement('table');
+			seo.className = 'mini-table';
+			seo.innerHTML =
+				'<thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody><tr><td class="notranslate">' +
+				path +
+				'</td><td>noindex</td></tr></tbody>';
+			host.appendChild(seo);
+			const matrix = document.createElement('table');
+			matrix.className = 'mini-table sec-matrix';
+			matrix.innerHTML =
+				'<thead><tr><th>Page</th><th>HSTS</th><th>CSP</th><th>Cookies</th></tr></thead><tbody><tr><td class="notranslate">' +
+				path +
+				'</td><td class="ok">✓</td><td class="no">✗</td><td>1, 1 without Secure</td></tr></tbody>';
+			const wrap = document.createElement('div');
+			wrap.className = 'table-scroll';
+			wrap.appendChild(matrix);
+			host.appendChild(wrap);
+			const measure = (table) => {
+				const first = table.querySelector('td');
+				const last = table.querySelector('tr td:last-child');
+				return {
+					tableW: Math.round(table.getBoundingClientRect().width),
+					firstW: Math.round(first.getBoundingClientRect().width),
+					lastW: Math.round(last.getBoundingClientRect().width),
+					lastH: Math.round(last.getBoundingClientRect().height),
+				};
+			};
+			return { seo: measure(seo), matrix: measure(matrix) };
+		}, long);
+		expect(sizes.seo.lastW).toBeGreaterThan(80);
+		expect(sizes.seo.firstW).toBeLessThan(sizes.seo.tableW * 0.85);
+		expect(sizes.seo.lastH).toBeLessThan(80);
+		expect(sizes.matrix.lastW).toBeGreaterThan(80);
+		expect(sizes.matrix.firstW).toBeLessThan(sizes.matrix.tableW * 0.5);
+		expect(sizes.matrix.lastH).toBeLessThan(80);
+	});
+
 	test('each language page labels the index and its groups in its language', async ({ page }) => {
 		const copy = {
 			es: ['En este informe', 'Resumen', 'De un vistazo'],

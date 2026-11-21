@@ -886,7 +886,7 @@
         .gauge-bar i:nth-child(2) { background: var(--amber); }
         .gauge-bar i:nth-child(3) { flex: 1; background: var(--red); border-radius: 0 999px 999px 0; }
         .gauge-bar u { position: absolute; top: -4px; width: 3px; height: 16px; margin-left: -1.5px; background: var(--text); border-radius: 2px; }
-        .table-scroll { overflow-x: auto; }
+        .table-scroll { overflow-x: auto; max-width: 100%; }
         .sec-matrix td.ok { color: var(--green); text-align: center; }
         .sec-matrix td.no { color: var(--red); text-align: center; font-weight: 700; }
         .sec-matrix th:not(:first-child) { text-align: center; }
@@ -972,9 +972,16 @@
         .shots figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
         .shots-3 { grid-template-columns: minmax(0, 1fr) 190px 120px; }
         @media (max-width: 640px) { .shots { grid-template-columns: minmax(0, 1fr) 110px; } .shots-3 { grid-template-columns: 1fr 1fr; } .shots-3 figure:first-child { grid-column: 1 / -1; } }
-        .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+        .mini-table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+        .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; min-width: 0; overflow-wrap: anywhere; }
         .mini-table th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+        /* Keep Why / trailing labels readable when a path is a long query string (#4202). */
+        .mini-table th:last-child, .mini-table td:last-child { width: 28%; }
+        .mini-table.sec-matrix { min-width: 640px; }
+        .mini-table.sec-matrix th:first-child, .mini-table.sec-matrix td:first-child { width: 26%; }
+        .mini-table.sec-matrix th:not(:first-child):not(:last-child),
+        .mini-table.sec-matrix td:not(:first-child):not(:last-child) { width: 3.2rem; white-space: nowrap; }
+        .mini-table.sec-matrix th:last-child, .mini-table.sec-matrix td:last-child { width: 7.5rem; }
         .stat-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
         .stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
         .stat b { display: block; font-size: 1.5rem; font-family: "Source Serif 4", Georgia, serif; }
