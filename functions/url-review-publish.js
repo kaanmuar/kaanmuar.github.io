@@ -112,7 +112,7 @@ function publicReport(report) {
 	const findings = (ins.findings || [])
 		.filter(
 			(f) =>
-				!/^(talk-|sec-exposed|sec-kev$|sec-osv$|sec-drop$|sec-feodo$|sec-breach-news$|sec-cert-anomaly$|sec-targeted$)/.test(
+				!/^(talk-|sec-exposed|sec-kev$|sec-osv$|sec-drop$|sec-feodo$|sec-breach-news$|sec-cert-anomaly$|sec-targeted$|sec-dmarc-data$|sec-tlsrpt-data$)/.test(
 					String(f.key || '')
 				)
 		)

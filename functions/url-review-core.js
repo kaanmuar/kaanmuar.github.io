@@ -3203,14 +3203,20 @@ function journeys(pages, dom) {
 				((a.page ? 2 : 0) + (a.link.where === 'navigation' ? 1 : 0))
 		)
 		.slice(0, 4)
-		.map((row) => ({
-			path: start,
-			selector: row.link.selector,
-			text: row.link.text,
-			target: row.link.target,
-			h1: heading(row.page),
-			where: row.link.where,
-		}));
+		.map((row) =>
+			Object.assign(
+				{
+					path: start,
+					selector: row.link.selector,
+					text: row.link.text,
+					target: row.link.target,
+					h1: heading(row.page),
+					where: row.link.where,
+				},
+				row.link.testId ? { testId: clean(row.link.testId, 80) } : {},
+				row.link.ariaLabel ? { ariaLabel: clean(row.link.ariaLabel, 80) } : {}
+			)
+		);
 }
 
 // A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
@@ -6863,6 +6869,21 @@ async function reviewTarget(rawUrl, hooks) {
 	} catch (error) {
 		extras = {};
 	}
+	// Owner-verified DMARC / TLS-RPT verdicts (#3777): only for a proven owner, never a competitor run, and only the verdicts
+	// (never stored counts) go on extras.dns, where mail-auth turns them into the sec-dmarc-data / sec-tlsrpt-data findings.
+	if (
+		proof &&
+		proof.kind &&
+		!passive &&
+		extras.dns &&
+		extras.dns.domain &&
+		controls.asker &&
+		typeof controls.asker.ownerReports === 'function'
+	) {
+		extras.dns.ownerReports = await Promise.resolve()
+			.then(() => controls.asker.ownerReports(ownerProofs.hostOf(origin.hostname), proof.kind))
+			.catch(() => null);
+	}
 	extras.linkedRisk = await linkedPromise;
 	if (extras.linkedRisk && extras.linkedRisk.found) note(linkedRisk.note(extras.linkedRisk));
 	extras.outbound = await outboundPromise;
@@ -8575,7 +8596,8 @@ function previewReport(report, options) {
 	const ins = copy.insights || {};
 	if (Array.isArray(ins.findings)) {
 		ins.findings = ins.findings.filter(
-			(item) => !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String((item && item.key) || ''))
+			(item) =>
+				!/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted|dmarc-data|tlsrpt-data)$/.test(String((item && item.key) || ''))
 		);
 	}
 	// Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).
