@@ -66,6 +66,116 @@
 		return { step: text.slice(0, cut + 1), expected: text.slice(cut + 2) };
 	}
 
+	// Locator ranking (#3832). Clean-room: the idea that a generated test should find an element the way a person or a
+	// screen reader would (role and name, then a test id, then a label, then visible text) and fall back to CSS or XPath
+	// last. No code from any outside package. Pure: a plain description of one element in, ranked candidates out.
+	const LOCATOR_KINDS = ['role', 'testId', 'label', 'text', 'css', 'xpath'];
+	const MAX_TEXT_LOCATOR = 80;
+	// Roles that take their accessible name from their own text, so the visible text can stand in for a missing name.
+	const NAMED_BY_TEXT = ['link', 'button', 'heading', 'tab', 'menuitem', 'option'];
+	const IMPLICIT_ROLES = {
+		a: (attrs) => (attrs.href ? 'link' : ''),
+		button: () => 'button',
+		select: () => 'combobox',
+		textarea: () => 'textbox',
+		img: () => 'img',
+		nav: () => 'navigation',
+		main: () => 'main',
+		h1: () => 'heading',
+		h2: () => 'heading',
+		h3: () => 'heading',
+		h4: () => 'heading',
+		h5: () => 'heading',
+		h6: () => 'heading',
+		input: (attrs) => {
+			const type = String(attrs.type || 'text').toLowerCase();
+			if (type === 'checkbox' || type === 'radio') return type;
+			if (type === 'button' || type === 'submit' || type === 'reset') return 'button';
+			return /^(text|email|search|tel|url|password|number|)$/.test(type) ? 'textbox' : '';
+		},
+	};
+
+	function implicitRole(tag, attrs) {
+		const rule = IMPLICIT_ROLES[String(tag || '').toLowerCase()];
+		return rule ? rule(attrs || {}) : '';
+	}
+
+	// target: { tag, attrs, role, name, testId, label, text, css, xpath, matches }. Every field is optional.
+	// matches is how many elements each kind finds on the page, when known: 0 drops the kind, more than 1 demotes it
+	// below every kind that is unique, so a unique CSS selector beats an ambiguous role. Order inside each group is the
+	// fixed LOCATOR_KINDS order, so the result is the same for the same input.
+	function rankLocators(target) {
+		const t = target || {};
+		const text = oneLine(t.text);
+		const role = oneLine(t.role) || implicitRole(t.tag, t.attrs);
+		const name = oneLine(t.name) || (NAMED_BY_TEXT.indexOf(role) !== -1 ? text : '');
+		const found = {
+			role: role && name ? { role, name } : null,
+			testId: oneLine(t.testId) ? { value: oneLine(t.testId) } : null,
+			label: oneLine(t.label) ? { value: oneLine(t.label) } : null,
+			text: text && text.length <= MAX_TEXT_LOCATOR ? { value: text } : null,
+			css: oneLine(t.css) ? { value: oneLine(t.css) } : null,
+			xpath: oneLine(t.xpath) ? { value: oneLine(t.xpath) } : null,
+		};
+		const matches = t.matches || {};
+		return LOCATOR_KINDS.filter((kind) => found[kind] && matches[kind] !== 0)
+			.map((kind, tier) =>
+				Object.assign({ kind, ambiguous: matches[kind] > 1, tier }, found[kind], {
+					value: found[kind].value !== undefined ? found[kind].value : found[kind].name,
+				})
+			)
+			.sort((a, b) => Number(a.ambiguous) - Number(b.ambiguous) || a.tier - b.tier)
+			.map((candidate, index) => ({
+				kind: candidate.kind,
+				role: candidate.role,
+				name: candidate.name,
+				value: candidate.value,
+				ambiguous: candidate.ambiguous,
+				rank: index,
+			}));
+	}
+
+	// One candidate as a Playwright locator expression on `page`.
+	function playwrightLocator(candidate) {
+		switch (candidate.kind) {
+			case 'role':
+				return 'page.getByRole(' + q(candidate.role) + ', { name: ' + q(candidate.name) + ', exact: true })';
+			case 'testId':
+				return 'page.getByTestId(' + q(candidate.value) + ')';
+			case 'label':
+				return 'page.getByLabel(' + q(candidate.value) + ', { exact: true })';
+			case 'text':
+				return 'page.getByText(' + q(candidate.value) + ', { exact: true })';
+			case 'xpath':
+				return 'page.locator(' + q('xpath=' + candidate.value) + ')';
+			default:
+				return 'page.locator(' + q(candidate.value) + ')';
+		}
+	}
+
+	// The element a journey clicks, as the review saw it: a link with its text, and a test id or aria-label when it had one.
+	function journeyTarget(check) {
+		return {
+			tag: 'a',
+			attrs: { href: check.target || true },
+			name: check.ariaLabel,
+			text: check.text,
+			testId: check.testId,
+			css: check.selector,
+		};
+	}
+
+	// The lines that find and click a journey link: the best locator, then a comment naming the next ones to try.
+	function journeyLocatorLines(check) {
+		const ranked = rankLocators(journeyTarget(check));
+		const lines = [
+			'const link = ' + playwrightLocator(ranked[0]) + '.first();',
+			'const label = ((await link.textContent()) || "").replace(/\\s+/g, " ").trim();',
+		];
+		const spare = ranked.slice(1).map(playwrightLocator);
+		return { lines, fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '' };
+	}
+
 	function context(report) {
 		let start;
 		try {
@@ -696,10 +806,16 @@
 			case 'journey':
 				body.push('await page.setViewportSize({ width: 1280, height: 800 });');
 				go(check.path);
+				{
+					const found = journeyLocatorLines(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						...found.lines,
+						'expect(label).toContain(' + q(check.text) + ');',
+						'await link.click();'
+					);
+				}
 				body.push(
-					'const link = page.locator(' + q(check.selector) + ').first();',
-					'expect(await page.evaluate(' + LABEL_JS + ', ' + q(check.selector) + ')).toContain(' + q(check.text) + ');',
-					'await link.click();',
 					'await page.waitForURL((url) => url.pathname === ' + q(check.target) + ');'
 				);
 				if (check.h1) body.push('expect(await page.evaluate(' + H1_JS + ')).toContain(' + q(check.h1) + ');');
@@ -1747,6 +1863,7 @@
 	};
 
 	const PAGE_DOM = {
+		ranked: true,
 		go: (url) => 'await page.goto(BASE + ' + url + ');',
 		count: (selector) => 'await page.locator(' + q(selector) + ').count()',
 		title: '(await page.title()).trim()',
@@ -1875,12 +1992,22 @@
 			case 'journey':
 				body.push(D.size(1280, 800));
 				go(check.path);
-				body.push(
-					'const label = ' + D.run(LABEL_JS, q(check.selector)) + ';',
-					A.match('label', 'new RegExp(' + q(regexText(check.text)) + ')'),
-					D.click(check.selector),
-					D.waitPath(check.target)
-				);
+				if (D.ranked) {
+					const found = journeyLocatorLines(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						...found.lines,
+						A.match('label', 'new RegExp(' + q(regexText(check.text)) + ')'),
+						'await link.click();',
+						D.waitPath(check.target)
+					);
+				} else
+					body.push(
+						'const label = ' + D.run(LABEL_JS, q(check.selector)) + ';',
+						A.match('label', 'new RegExp(' + q(regexText(check.text)) + ')'),
+						D.click(check.selector),
+						D.waitPath(check.target)
+					);
 				if (check.h1)
 					body.push(
 						'const heading = ' + D.run(H1_JS) + ';',
@@ -4738,7 +4865,18 @@ namespace QaLab
 		return new Blob(locals.concat(centrals, [end.buffer]), { type: 'application/zip' });
 	}
 
-	const api = { snippets, bundle, zip, checkFor, context, headerFiles, README_COPY };
+	const api = {
+		snippets,
+		bundle,
+		zip,
+		checkFor,
+		context,
+		headerFiles,
+		README_COPY,
+		rankLocators,
+		playwrightLocator,
+		LOCATOR_KINDS,
+	};
 	if (typeof module === 'object' && module.exports) module.exports = api;
 	else root.QAReviewScripts = api;
 })(typeof window !== 'undefined' ? window : globalThis);
