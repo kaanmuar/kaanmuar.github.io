@@ -22,6 +22,7 @@ Artifacts land as `lighthouse-results`. A private LHCI server is optional: set r
 1. Copy `.github/workflows/lighthouse-budget.yml` and this `lighthouse/` folder into the customer repo.
 2. Widen `on.pull_request.paths` if you want budgets on CSS/JS/HTML changes; keep it narrow to avoid burning CI minutes.
 3. Tighten `budget.json` and the assert scores in `lighthouserc*.json` to the customer’s SLOs.
+   Defaults are loose enough for live `qa-lab` / `qa-review` (many third-party scripts); agencies should cut them.
 4. Pin stays on the SHA comment in the workflow (`# 12.6.2`); bump when treosh releases.
 
 Daily PageSpeed (#1978) stays separate; this workflow is a lightweight budget gate for webhooks and selective PRs.

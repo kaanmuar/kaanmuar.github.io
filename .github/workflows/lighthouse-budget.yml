@@ -40,7 +40,8 @@ jobs:
     env:
       TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'live' }}
       URLS_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.urls || '' }}
-      RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.runs || '1' }}
+      # LH_RUNS (not RUNS): actionlint/shellcheck SC2153 treats RUNS as a misspelling of runs.
+      LH_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.runs || '1' }}
       LHCI_SERVER_URL: ${{ secrets.LHCI_SERVER_URL }}
       LHCI_SERVER_TOKEN: ${{ secrets.LHCI_SERVER_TOKEN }}
     steps:
@@ -60,7 +61,7 @@ jobs:
         id: prep
         run: |
           set -euo pipefail
-          runs="$RUNS"
+          runs="$LH_RUNS"
           case "$runs" in
             1|2|3) ;;
             *) echo "::error::runs must be 1, 2, or 3"; exit 1 ;;

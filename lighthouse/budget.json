@@ -6,11 +6,11 @@
       { "resourceType": "script", "budget": 800 },
       { "resourceType": "stylesheet", "budget": 200 },
       { "resourceType": "image", "budget": 1500 },
-      { "resourceType": "font", "budget": 200 },
+      { "resourceType": "font", "budget": 300 },
       { "resourceType": "total", "budget": 2500 }
     ],
     "resourceCounts": [
-      { "resourceType": "third-party", "budget": 15 }
+      { "resourceType": "third-party", "budget": 150 }
     ]
   }
 ]
