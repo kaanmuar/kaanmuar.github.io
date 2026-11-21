@@ -79,6 +79,13 @@ test("RDAP timeout marks dns before generic timeout (#4107)", () => {
 	assert.equal(fact.anomaly, "timeout");
 });
 
+test("DNS records could not maps to dns, not pages (#4045)", () => {
+	const fact = matchFact("The DNS records could not be read.");
+	assert.equal(fact.stage, "dns");
+	assert.equal(fact.status, "fail");
+	assert.equal(fact.anomaly, "fail");
+});
+
 test("URLhaus could not maps to malware, not pages (#4106)", () => {
 	const fact = matchFact("URLhaus could not be read (timeout).");
 	assert.equal(fact.stage, "malware");
