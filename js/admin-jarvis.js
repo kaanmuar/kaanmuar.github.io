@@ -1529,6 +1529,8 @@ export function mountJarvis({
 								tags: e.engagement.report.tags.slice(0, 10),
 								networks: e.engagement.report.networks,
 								waiting: e.engagement.waiting.length,
+								scoutDrafts:
+									e.engagement.scoutDrafts || e.engagement.waiting.filter((d) => d.campaign === 'scout-trend').length,
 								topPosts: e.engagement.posts
 									.slice(0, 5)
 									.map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`),
@@ -7665,7 +7667,9 @@ export function mountJarvis({
 				? ' <span class="jv-chip">trend only</span>'
 				: '');
 	// Report replies (#2465, #2471): invites under posts that name a site we reviewed.
+	// Scout trend drafts (#3814): assets/social/scout-drafts.json rows merged into waiting; Approve never posts.
 	const egIsReport = (d) => d.campaign === 'report-reply';
+	const egIsScout = (d) => d.campaign === 'scout-trend' || d.noPost === true;
 	const EG_ONLY = [
 		['all', 'All'],
 		['report', 'Report replies'],
@@ -7675,7 +7679,9 @@ export function mountJarvis({
 	const egReportChip = (d) =>
 		egIsReport(d)
 			? ` <span class="jv-chip c-report" title="An invite to the free report we ran on ${esc((d.report || {}).host || 'the site')}">Report reply</span>`
-			: '';
+			: egIsScout(d)
+				? ' <span class="jv-chip" title="Trending-tag draft from scout-drafts.json; Save records your edit and never posts">Trend draft</span>'
+				: '';
 	const egReportLine = (d) => {
 		const x = d.report;
 		if (!egIsReport(d) || !x) return '';
@@ -7856,11 +7862,11 @@ export function mountJarvis({
             <details><summary>${d.chain ? 'Show the comment' : 'Show the post'}</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
             <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
             ${d.actions.reply.english ? `<p class="jv-prop-why jv-eg-english"><strong>In English${draftOf(d) === d.actions.reply.draft ? '' : ' (the original draft)'}:</strong> ${esc(d.actions.reply.english)}</p>` : ''}
-            <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
-            <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`
+            <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>${egIsScout(d) ? 'Save (no post)' : 'Approve'}</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
+            <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}${egIsScout(d) ? ' · never posts automatically' : ''}</span></div></div></li>`
 						)
 						.join('')}</ol>${more}`
-				: `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
+				: `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Field drafts arrive as the engagement scout finds posts; trending-tag drafts arrive from scout-drafts.json.'}</p>`);
 		const last = g.lastRun;
 		const scoutMeta = g.metaScout;
 		const metaTitles = { cloud: 'Cloud', mac: 'Mac', reddit: 'Reddit', ownerTags: 'Owner tags', students: 'Students' };
@@ -8098,7 +8104,7 @@ export function mountJarvis({
 				{ label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale },
 			]) +
 			`<div class="jv-grid">${briefPanel('engagement')}
-            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: "Approve tells Jarvis to send it (never a clipboard paste). Your edit goes when you changed the text. A draft in a language other than English shows Gemini's English translation under it (#2630). Drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461)." })}
+            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: "Approve tells Jarvis to send a field reply (never a clipboard paste). Trend drafts (scout-drafts.json, #3814) use Save (no post): the decision is stored and nothing goes to any network. Your edit goes when you changed the text. A draft in a language other than English shows Gemini's English translation under it (#2630). Field drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved field reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461)." })}
             ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs.' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: "The poster acts as these accounts. Connect signs in on the network's own page and comes back here; Mastodon is marked as a bot when it connects." })}

@@ -95,6 +95,13 @@ class EngagementTest {
         assertEquals(listOf(field), listOf(invite, field).filter { Engagement.keep(it, "field") })
     }
 
+    @Test fun aScoutTrendDraftIsMarkedNoPost() {
+        val scout = json("""{"campaign":"scout-trend","noPost":true,"actions":{"reply":{"status":"waiting","draft":"#WebSecurity is trending.","noPost":true}}}""")
+        val field = json("""{"campaign":""}""")
+        assertTrue(Engagement.isScout(scout) && !Engagement.isScout(field))
+        assertTrue(Engagement.keep(scout, "field") && !Engagement.keep(scout, "report"))
+    }
+
     @Test fun aReportReplySaysWhichReportItInvitesTo() {
         assertEquals("Invites to the UPB report (upb.edu.co) · scores 64 (not named in the reply) · found by domain · card",
             Engagement.reportLine(json("""{"campaign":"report-reply","report":{"host":"upb.edu.co","name":"UPB","score":64,"shown":false,"match":"domain","format":"card"}}""")))
