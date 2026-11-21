@@ -7076,7 +7076,7 @@
 		});
 	}
 
-	window.QAReviewSections = { paint: paintColumn, caseGroups, esc, scoreColor, gradeOf };
+	window.QAReviewSections = { paint: paintColumn, caseGroups, esc, scoreColor, gradeOf, fade: fadeText, endpoint };
 
 	function render(payload) {
 		const report = payload.report;
@@ -7102,6 +7102,7 @@
 		liveId = report.id;
 		if (!sample) remember(report.id);
 		if (window.QAReviewAsk) QAReviewAsk.show(payload);
+		if (window.QAReviewRun) QAReviewRun.show(payload);
 		if (window.QAReviewFix) QAReviewFix.show(payload, { title: (item) => said(item, 'title') });
 		const fixed = !sample && fixListOpen(report.id);
 		document.body.classList.toggle('fix-open', fixed && !payload.paid);
@@ -8623,6 +8624,7 @@
 
 	function closeDashboard() {
 		dash.classList.remove('open');
+		if (window.QAReviewRun) QAReviewRun.hide();
 		document.body.style.overflow = '';
 		if (current && current.sample) {
 			current = null;

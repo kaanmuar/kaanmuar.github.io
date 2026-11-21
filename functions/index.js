@@ -7456,7 +7456,34 @@ exports.reviewUrl = functions
 			res.status(204).send('');
 			return;
 		}
-		if (pathName.indexOf('/review/fix/') !== -1 && (await fixRequests.route(req, res, pathName, fixDeps()))) return;
+		if (req.method === 'POST' && (pathName.endsWith('/review/run/sample') || pathName.endsWith('/review/run/status'))) {
+		const body = req.body || {};
+		const db = getFirestore();
+		const id = String(body.id || '').replace(/[^a-f0-9]/g, '').slice(0, 32);
+		const snap = id ? await db.collection('url_reviews').doc(id).get() : null;
+		const row = snap && snap.exists ? snap.data() || {} : null;
+		const access = await reviewAuth.runAccess(reviewAuth.firestoreStore(db), body, row);
+		if (!access.ok) {
+			res.status(access.status).json({ error: access.error, code: access.code || '', signIn: !!access.signIn });
+			return;
+		}
+		const now = Date.now();
+		try {
+			if (pathName.endsWith('/sample')) {
+				const started = await cube.startSample(db, { reviewId: id, host: row.report.host, email: access.email }, now);
+				if (started.used) {
+					res.status(429).json({ error: 'The free sample for this site already ran today.', code: 'sample-used', next: started.next });
+					return;
+				}
+			}
+			res.status(200).json({ run: await cube.latestFor(db, id), sample: await cube.sampleState(db, row.report.host, now), size: cube.SAMPLE_SIZE });
+		} catch (error) {
+			console.error('Run tab failed for ' + id + ':', error);
+			res.status(500).json({ error: 'The run did not load. Try again in a moment.', code: 'failed' });
+		}
+		return;
+	}
+	if (pathName.indexOf('/review/fix/') !== -1 && (await fixRequests.route(req, res, pathName, fixDeps()))) return;
 		if (req.method === 'POST' && pathName.endsWith('/review/owner-notice')) {
 			const body = req.body || {};
 			if (body.attackOffer !== true) {
@@ -9990,20 +10017,16 @@ exports.cubeRunStart = functions
 		}
 	});
 
-exports.cubeRunDone = functions
-	.runWith({ timeoutSeconds: 60, memory: '256MB' })
-	.firestore.document(cube.RUNS + '/{id}')
-	.onUpdate(async (change) => {
-		const run = change.after.data() || {};
-		if ((change.before.data() || {}).status !== run.status) await cubeProcess(change.after.id, run);
-		if (!cube.finished(change.before.data(), run)) return;
-		const db = getFirestore();
-		const tokens = run.token ? [run.token] : await jarvisPush.targets(db, 'alerts');
-		const link = customerMail.pageUrl('en', { report: run.reviewId });
-		await jarvisPush
-			.send(getMessaging(), db, tokens, cube.doneMessage(run, link))
-			.catch((error) => console.error('Cube run push failed:', error));
-	});
+exports.cubeRunDone = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onUpdate(async (change) => {
+  const run = change.after.data() || {};
+  if ((change.before.data() || {}).status !== run.status) await cubeProcess(change.after.id, run);
+  if (!cube.finished(change.before.data(), run)) return;
+  const db = getFirestore();
+  await cube.releaseSample(db, run, change.after.id).catch((error) => console.error("Cube sample slot was not released:", error));
+  const tokens = run.token ? [run.token] : await jarvisPush.targets(db, "alerts");
+  const link = customerMail.pageUrl("en", { report: run.reviewId });
+  await jarvisPush.send(getMessaging(), db, tokens, cube.doneMessage(run, link)).catch((error) => console.error("Cube run push failed:", error));
+});
 
 async function jarvisUsers() {
 	const users = [];

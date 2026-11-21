@@ -53,11 +53,13 @@ async function job(runId) {
     flushed = log.length;
     return ref.update({ log: log.slice(-LOG_LINES) }).catch(() => {});
   };
+  const cases = order.limit ? cube.sampleOf(report, order.limit) : report.cases;
+  if (!cases.length) return ref.update({ status: "failed", finishedAt: FieldValue.serverTimestamp(), error: "This report has no case a browser checks on its own." });
   const timer = setInterval(flush, 2000);
-  await ref.update({ status: "running", startedAt: FieldValue.serverTimestamp() });
+  await ref.update(Object.assign({ status: "running", startedAt: FieldValue.serverTimestamp() }, order.limit ? { only: cases.map((item) => item.id) } : {}));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cube-"));
   try {
-    const result = await cube.run(report, { dir, frameworks: order.frameworks, onLine: (line) => log.push(line.slice(0, 300)) });
+    const result = await cube.run(Object.assign({}, report, { cases }), { dir, frameworks: order.frameworks, onLine: (line) => log.push(line.slice(0, 300)) });
     const bucket = getStorage().bucket(BUCKET);
     for (const row of result.cases) {
       for (const file of row.artifacts || []) {
