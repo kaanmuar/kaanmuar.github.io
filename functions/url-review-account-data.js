@@ -24,6 +24,8 @@ const BY_EMAIL = [
 	['sessions', 'url_review_sessions'],
 	['visits', 'url_review_visits'],
 	['ownerProofs', 'url_review_owner_proofs'],
+	['dmarcConsent', 'url_review_dmarc_consent'],
+	['dmarcCounts', 'url_review_dmarc_counts'],
 ];
 
 // Their ids are a hash of a live secret or the secret itself.

@@ -2593,6 +2593,9 @@ const ownerMail = require('./url-review-owner-mail');
 const mailFace = require('./mail-face');
 const accountData = require('./url-review-account-data');
 const ownerProofs = require('./url-review-owner-proof');
+const dmarcConsent = require('./url-review-dmarc-consent');
+const dmarcStore = require('./url-review-dmarc-store');
+const dmarcInbound = require('./url-review-dmarc-inbound');
 const domainOffer = require('./url-review-domain-offer');
 const outreachTrials = require('./outreach-trials');
 const outreachSend = require('./outreach-send');
@@ -6375,6 +6378,52 @@ async function reviewAccount(req, res, pathName) {
 			return;
 		}
 		res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
+		return;
+	}
+	// DMARC / TLS-RPT consent on/off for an owner-proven host (#3777). Session required; turning on needs a live proof.
+	if (pathName.endsWith('/account/dmarc-consent') || pathName.endsWith('/account/dmarc-consent-set')) {
+		const store = reviewAuth.firestoreStore(db);
+		const host = ownerProofs.hostOf(req.body && req.body.host);
+		const proofRows = await ownerProofRows(signedIn.email);
+		const proofKind = host ? dmarcStore.proofKindOf(proofRows, signedIn.email, host, Date.now()) : '';
+		if (pathName.endsWith('/account/dmarc-consent-set')) {
+			if (!host) {
+				res.status(400).json({ error: 'Enter a public host name, such as shop.example.com.' });
+				return;
+			}
+			const result = await dmarcStore.setConsent(
+				store,
+				{
+					email: signedIn.email,
+					host,
+					accept: !!(req.body && req.body.accept === true),
+					noticeVersion: req.body && req.body.noticeVersion,
+				},
+				proofRows,
+				Date.now()
+			);
+			if (!result.ok) {
+				res.status(result.status).json({ error: result.error, notice: dmarcConsent.NOTICE, proofKind });
+				return;
+			}
+			res.status(200).json({
+				ok: true,
+				notice: dmarcConsent.NOTICE,
+				consent: result.consent,
+				proofKind: result.proofKind,
+				deleted: result.deleted || 0,
+			});
+			return;
+		}
+		const row = host ? await dmarcStore.getConsent(store, signedIn.email, host) : null;
+		res.status(200).json({
+			ok: true,
+			notice: dmarcConsent.NOTICE,
+			host: host || '',
+			proofKind,
+			consent: dmarcStore.publicConsent(row),
+			on: !!(row && dmarcConsent.consentOn(row, proofKind, Date.now())),
+		});
 		return;
 	}
 	res.status(404).json({ error: 'Not found.' });
@@ -12183,6 +12232,15 @@ exports.mailboxGraduate = scheduled(
 const mailInbound = require('./mail-inbound');
 const mailCodes = () => getFirestore().collection('jarvis_mail_codes');
 
+async function ingestDmarcReport(payload) {
+	const store = reviewAuth.firestoreStore(getFirestore());
+	return dmarcInbound.ingest(payload, {
+		store,
+		proofsFor: (email) => ownerProofRows(email),
+		now: Date.now(),
+	});
+}
+
 async function mailCodeRows() {
 	const now = Date.now();
 	const snap = await mailCodes()
@@ -12247,6 +12305,7 @@ exports.mailCanary = scheduled(
 // ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
 // link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
 // Other mail to qa@ or a face address that matches an owner notice goes into the owner-replies queue (#1899, #2312).
+// DMARC aggregate / TLS-RPT mail is reduced to counts only when consent is on for that domain (#3777); raw report discarded.
 // The daily canary to canary@ only marks its round trip back (#1900).
 exports.mailInbound = functions
 	.runWith({ timeoutSeconds: 60, memory: '256MB', maxInstances: 5, secrets: SECRETS.mailInbound })
@@ -12271,6 +12330,17 @@ exports.mailInbound = functions
 						(await mailCanaryBack(mailHealth.tokenOf(mail.subject), Date.now()))
 							? 'canary back'
 							: 'canary not in flight'
+					);
+				return;
+			}
+			if (dmarcInbound.looksLikeReport(req.body)) {
+				const report = await ingestDmarcReport(req.body);
+				res
+					.status(200)
+					.send(
+						report.outcome === 'counted'
+							? 'report ' + report.kinds.join('+') + ' ' + report.domain
+							: 'report ' + report.outcome + (report.domain ? ' ' + report.domain : '')
 					);
 				return;
 			}

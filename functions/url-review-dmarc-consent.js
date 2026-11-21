@@ -1,7 +1,7 @@
 'use strict';
 
 /* Consent for reading an owner's DMARC aggregate and TLS-RPT data (#3777). One row per (account email, host) the owner has
-   proved (functions/url-review-owner-proof.js), in Firestore url_review_dmarc_consent (wiring comes in a later slice):
+   proved (functions/url-review-owner-proof.js), in Firestore url_review_dmarc_consent (store + endpoints in url-review-dmarc-store.js):
    { email, host, on, noticeVersion, at, expireAt }. The row holds the choice and the notice version the owner saw, never report data.
 
    The review shows owner-report data only when ALL hold: the row is on, its noticeVersion is the current NOTICE_VERSION (a changed

@@ -37,11 +37,38 @@ test('company-contacts JSON-LD blocks', () => {
 });
 
 test('company-contacts contact links', () => {
+	// #4101: the nested [^<>]*? href regex is gone; contactLinks walks <a…> tags with indexOf.
+	const src = fs.readFileSync(path.join(ROOT, 'functions', 'company-contacts.js'), 'utf8');
+	assert.equal(/<a\\b\[\^<>\]\*/.test(src), false);
+	assert.match(src, /indexOf\('<a'/);
+	const contacts = require('../../functions/company-contacts');
 	const OLD = /<a\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
-	same(OLD, fromSource('company-contacts.js', 'const re = /<a\\b'), [
+	const inputs = [
 		'<a href="/contact">Contact</a> <a class="x" href=\'/about#team\'>A</a> <A HREF="https://x.com/kontakt">K</A>',
 		'<a href="#top">t</a> <a name=x>n</a> <a data-href="/a" href="/b">b</a> <abbr href="/no">no</abbr>',
-	]);
+	];
+	for (const html of inputs) {
+		const fromOld = [...html.matchAll(OLD)].map((m) => m[1] || m[2]);
+		const fromNew = [];
+		let at = 0;
+		while (fromNew.length < 20) {
+			const open = html.toLowerCase().indexOf('<a', at);
+			if (open < 0) break;
+			const after = html.charAt(open + 2);
+			if (after && after !== ' ' && after !== '\t' && after !== '\n' && after !== '\r' && after !== '>') {
+				at = open + 2;
+				continue;
+			}
+			const gt = html.indexOf('>', open);
+			if (gt < 0) break;
+			at = gt + 1;
+			const tag = html.slice(open, Math.min(gt + 1, open + 500));
+			const href = tag.match(/\bhref\s*=\s*(?:"([^"#]*)"|'([^'#]*)')/i);
+			if (href) fromNew.push(href[1] || href[2]);
+		}
+		assert.deepEqual(fromNew, fromOld, JSON.stringify(html));
+		assert.ok(typeof contacts.contactLinks === 'function');
+	}
 });
 
 test('engagement-profiles Mastodon hosts', () => {
