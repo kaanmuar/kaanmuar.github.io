@@ -39,6 +39,9 @@ jobs:
       - name: Detekt (Jarvis custom rules, #3836)
         run: ./gradlew --console=plain detekt :detekt-rules:test
 
+      - name: Compose lint checks (slackhq/compose-lints, #3836)
+        run: ./gradlew --console=plain lintDebug
+
       - name: Unit tests and debug build
         run: ./gradlew --console=plain testDebugUnitTest assembleDebug
 
