@@ -55,7 +55,7 @@ val ACTION_LABELS = mapOf("rerun-held" to "Send held re-runs", "resend-notices" 
     "enable-warmup" to "Turn mailbox warm-up back on", "restore-alias" to "Restore a missing alias", "launch-campaign" to "Launch a draft campaign", "index-submit" to "Send missing pages to search engines",
     "gh-board-sync" to "Sync the board", "gh-orphan-ticket" to "File a ticket for the PR", "gh-update-pr" to "Update the PR with main", "gh-merge-pr" to "Merge the green PR",
     "gh-revert" to "Open a revert PR", "gh-delete-branch" to "Delete merged branches", "gh-close-issue" to "Close the issue", "gh-remove-worktree" to "Remove the merged worktree",
-    "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
+    "gh-agent" to "Launch a fix agent", "gh-worker" to "Start Jarvis's worker on a fix", "worker-drop" to "Drop a fix main no longer needs", "gh-quarantine" to "File a flaky-workflow ticket", "gh-security-ticket" to "File a ticket for a security alert",
     "gh-dismiss-alert" to "Dismiss a security alert", "gh-dismiss-low" to "Dismiss the low security alerts", "owner-tags-approve-verified" to "Approve verified owner-tag accounts", "owner-tags-block" to "Block accounts that asked us to stop tagging",
     "calendar-pause" to "Pause campaigns over a holiday", "calendar-resume" to "Resume campaigns after a holiday")
 private val CAPS = listOf("rerun-held", "resend-notices", "publish-hub")

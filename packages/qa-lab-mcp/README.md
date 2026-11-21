@@ -33,7 +33,7 @@ Add to Cursor MCP settings (`.cursor/mcp.json` or Cursor Settings → MCP):
 }
 ```
 
-Local soft-preview (no Turnstile): start `node scripts/url-review-server.js`, then set both bases to `http://127.0.0.1:8768`. The server needs `FIREBASE_WEB_KEY` (the Firebase Web API key) in `functions/.secret.local` or the environment; it exits at startup without it.
+Local soft-preview (no Turnstile): start `node scripts/url-review-server.js`, then set both bases to `http://127.0.0.1:8768`. The server needs `FIREBASE_WEB_KEY` (the Identity Toolkit-only server key from Secret Manager / `functions/.secret.local`, not the browser key) in the environment; it exits at startup without it.
 
 ## Env
 

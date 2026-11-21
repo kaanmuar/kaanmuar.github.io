@@ -221,7 +221,7 @@ const JOBS = [
 		job: 'retentionSweep',
 		cron: '30 9 * * 1',
 		gap: 7 * 24 + 2,
-		what: 'Retention (#3823): delete outreach rows 12 months after the last contact (declined or blocked people keep a stop-list stub), engagement posts 12 months, contact messages, ratings and bookings 24 months. A dry run until RETENTION_APPLY=on; counts only, in retention_runs',
+		what: 'Retention (#3823 #4026): delete outreach rows 12 months after the last contact (declined or blocked people keep a stop-list stub), engagement posts 12 months, contact messages, ratings and bookings 24 months, unpaid fix requests 12 months, payment rows and coupon redemptions (and paid fix requests) on 1 January of the sixth year after the payment unless taxHold. A dry run until RETENTION_APPLY=on; counts only, in retention_runs',
 	},
 	{
 		job: 'legalWatch',

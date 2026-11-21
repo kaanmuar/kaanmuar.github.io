@@ -124,3 +124,43 @@ test('url review: Web Risk and PageSpeed keep their answer shapes through retrie
 		node.breakers.pagespeed.success();
 	}
 });
+
+test('url review: CrUX History and Places keep their answer shapes through retries and the breaker', async () => {
+	const core = require('../../functions/url-review-core.js');
+	const local = require('../../functions/url-review-local.js');
+	const prospects = require('../../functions/url-review-prospects.js');
+	const saved = global.fetch;
+	const slept = global.setTimeout;
+	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
+	const emptyCrux = () =>
+		new Response(JSON.stringify({ record: { metrics: {}, collectionPeriods: [] } }), { status: 200 });
+	try {
+		let n = 0;
+		global.fetch = async () => (++n <= 2 ? res(503, { 'retry-after': '1' }) : emptyCrux());
+		const crux = await core.cruxHistory('https://x.example/', 'k');
+		assert.equal(crux.ok, true);
+		assert.ok(n >= 3, 'CrUX retries a 503 before succeeding');
+		n = 0;
+		global.fetch = async () => (n++, res(429));
+		await assert.rejects(core.cruxHistory('https://x.example/', 'k'), /quota is used up/);
+		assert.ok(n >= 1 && n <= 2, 'CrUX does not retry a spent quota (forms may race)');
+		assert.ok(n < 4, 'no Retry-After loop on CrUX 429');
+		n = 0;
+		global.fetch = async () => (++n === 1 ? res(503, { 'retry-after': '1' }) : new Response(JSON.stringify({ places: [{ id: 'p1' }] }), { status: 200 }));
+		assert.deepEqual(await local.placesSearch({ textQuery: 'cafe' }, 'k'), { ok: true, places: [{ id: 'p1' }] });
+		assert.equal(n, 2);
+		n = 0;
+		global.fetch = async () => (n++, res(429));
+		assert.deepEqual(await prospects.placesSearch({ textQuery: 'x' }, 'k'), { ok: false, error: 'status 429' });
+		assert.equal(n, 1, 'Places prospects share no-retry on 429');
+		n = 0;
+		global.fetch = async () => (n++, res(500));
+		assert.deepEqual(await local.placesSearch({ textQuery: 'x' }, 'k'), { ok: false, error: 'status 500' });
+		assert.equal(n, 3, 'Places retries 5xx twice then returns');
+	} finally {
+		global.fetch = saved;
+		global.setTimeout = slept;
+		node.breakers.crux.success();
+		node.breakers.places.success();
+	}
+});

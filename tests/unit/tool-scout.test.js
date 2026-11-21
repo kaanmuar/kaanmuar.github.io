@@ -93,6 +93,40 @@ test('a listed repo that is archived, stale, copyleft or off the row license is 
 	assert.deepEqual(scout.auditRepo({ notFound: true }, line, 'listed', NOW).map((r) => r.level), ['MISSING']);
 });
 
+test('arsenalSlugs picks up a Wave-style table row such as pourdev/pour-engine', () => {
+	const wave = ['## Queued', '### Wave 7 (weekly scout candidates, `#3909`, Nov 19 2026)', '| `pourdev/pour-engine` | MIT | #4067 | audit |'].join('\n');
+	assert.ok(scout.arsenalSlugs(wave).has('pourdev/pour-engine'));
+});
+
+test('filterRankedCandidates drops arsenal slugs and slugs named in recent issue titles', () => {
+	const groups = {
+		permissive: [
+			{ slug: 'pourdev/pour-engine', license: 'MIT', stars: 80, pushed: '2026-11-10', about: 'a', flags: [] },
+			{ slug: 'fresh/tool', license: 'MIT', stars: 90, pushed: '2026-11-11', about: 'b', flags: [] },
+		],
+		attribution: [],
+		isolate: [],
+		trap: [],
+		unknown: [],
+	};
+	const arsenal = ['## Queued', '| `pourdev/pour-engine` | MIT | #4067 |'].join('\n');
+	const search = (args) => {
+		const q = String(args.find((a) => String(a).startsWith('q=')) || '');
+		if (q.includes('fresh/tool')) return { items: [{ title: 'Evaluate fresh/tool from scout' }] };
+		return { items: [] };
+	};
+	const found = scout.filterRankedCandidates([{ corner: scout.CORNERS[0], groups: structuredClone(groups) }], arsenal, NOW, search);
+	assert.deepEqual(found[0].groups.permissive.map((c) => c.slug), []);
+});
+
+test('when the issue-title search fails the candidate stays and is flagged', () => {
+	const groups = { permissive: [{ slug: 'maybe/new', license: 'MIT', stars: 40, pushed: '2026-11-10', about: 'x', flags: [] }], attribution: [], isolate: [], trap: [], unknown: [] };
+	const search = () => ({ error: 'rate limited' });
+	const found = scout.filterRankedCandidates([{ corner: scout.CORNERS[0], groups: structuredClone(groups) }], '## Queued\n', NOW, search);
+	assert.equal(found[0].groups.permissive.length, 1);
+	assert.ok(found[0].groups.permissive[0].flags.some((f) => /issue-title check failed/.test(f)));
+});
+
 test('candidates the arsenal or the scout already knows, forks and archived repos are dropped, and licenses are sorted', () => {
 	const known = scout.arsenalSlugs(ARSENAL);
 	const hit = (full_name, spdx, extra) => Object.assign({ full_name, license: spdx ? { spdx_id: spdx } : null, stargazers_count: 120, pushed_at: '2026-11-10T00:00:00Z', description: 'd' }, extra);

@@ -28,10 +28,42 @@ warn_dirty() { # <dir> <what>
 }
 "$lock" install
 
+# Root node_modules is only worth sharing when the review/hub suite can resolve postcss and
+# css-select. An empty or stale main/node_modules still passes -e and would poison every new
+# worktree with ~39 "Cannot find module" failures while CI stays green via NODE_PATH (#4056).
+root_modules_usable() {
+	[ -f "$1/node_modules/postcss/package.json" ] && [ -f "$1/node_modules/css-select/package.json" ]
+}
+# Drop a symlink (or leave a real install alone) when it cannot resolve those packages.
+drop_unusable_root_modules() { # <worktree>
+	local wt=$1
+	if [ -L "$wt/node_modules" ] && ! root_modules_usable "$wt"; then
+		rm -f "$wt/node_modules"
+		echo "warning: removed broken node_modules symlink (main install lacks postcss/css-select). Run: npm ci --ignore-scripts --no-audit --no-fund (#4056)" >&2
+	fi
+}
+link_shared() { # <worktree>
+	local wt=$1 deps
+	# functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
+	for deps in node_modules functions/node_modules functions/.env functions/.secret.local; do
+		if [ "$deps" = "node_modules" ]; then
+			if root_modules_usable "$main"; then
+				[ ! -e "$wt/node_modules" ] && ln -s "$main/node_modules" "$wt/node_modules"
+			elif [ -e "$main/node_modules" ] && [ ! -e "$wt/node_modules" ]; then
+				echo "warning: main node_modules lacks postcss/css-select; not linking. Run npm ci in the worktree, or npm run test:review (installs the CI CSS deps) (#4056)" >&2
+			fi
+			continue
+		fi
+		[ -e "$main/$deps" ] && [ ! -e "$wt/$deps" ] && ln -s "$main/$deps" "$wt/$deps"
+	done
+	drop_unusable_root_modules "$wt"
+}
+
 existing=$(git -C "$main" worktree list --porcelain | awk -v ref="refs/heads/$branch" '$1 == "worktree" { dir = $2 } $1 == "branch" && $2 == ref { print dir }')
 if [ -n "$existing" ]; then
 	"$lock" claim "$existing" $take
 	warn_dirty "$existing" "the reused worktree"
+	drop_unusable_root_modules "$existing"
 	echo "$existing"
 	exit 0
 fi
@@ -56,8 +88,5 @@ fi
 n=$(sed -nE 's#^[^/]+/([0-9]+)(-.*)?$#\1#p' <<<"$branch")
 [ -z "$n" ] || node "$(dirname "$0")/open-work.js" ticket "$n" --branch "$branch" </dev/null >&2 || true
 
-# functions/.env is gitignored; without it a deploy from the worktree ships every function without its keys (#1739).
-for deps in node_modules functions/node_modules functions/.env functions/.secret.local; do
-	[ -e "$main/$deps" ] && [ ! -e "$dir/$deps" ] && ln -s "$main/$deps" "$dir/$deps"
-done
+link_shared "$dir"
 echo "$dir"

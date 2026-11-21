@@ -240,6 +240,7 @@ test('each language carries the same parts: subject, host, check list, false-pos
 	for (const lang of heads.LANGS) {
 		const mail = heads.draft(threat(), Object.assign({}, withSender, { lang: lang }));
 		assert.equal(mail.lang, lang);
+		assert.equal(mail.text.split('\n')[0], heads.COPY[lang].hello, lang);
 		assert.match(mail.subject, /shop\.northwind-shop\.io/, lang);
 		assert.equal(mail.text.split('\n').filter((line) => /^[1-4]\. /.test(line)).length, 4, lang);
 		assert.match(mail.text, new RegExp('\\b' + LANG_STOP[lang] + '\\b'), lang);
@@ -247,6 +248,16 @@ test('each language carries the same parts: subject, host, check list, false-pos
 		assert.match(mail.text, /Example postal address/, lang);
 		assert.doesNotMatch(mail.text, /\{(host|day|what|ev)\}/, lang);
 		assert.equal(mail.text.includes('<'), false, lang);
+	}
+});
+
+test('non-English drafts do not open with the English Hello', () => {
+	const withSender = Object.assign(ctx(), { sender: SENDER });
+	for (const lang of heads.LANGS) {
+		if (lang === 'en') continue;
+		const mail = heads.draft(threat(), Object.assign({}, withSender, { lang: lang }));
+		assert.equal(mail.text.startsWith('Hello,'), false, lang);
+		assert.equal(mail.text.startsWith(heads.COPY[lang].hello + '\n'), true, lang);
 	}
 });
 

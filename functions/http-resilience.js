@@ -119,6 +119,8 @@ async function resilientFetch(url, init, opts = {}) {
 const breakers = {
 	pagespeed: createBreaker({ name: 'pagespeed', threshold: 5, coolDownMs: 30000 }),
 	webrisk: createBreaker({ name: 'webrisk', threshold: 5, coolDownMs: 30000 }),
+	crux: createBreaker({ name: 'crux', threshold: 5, coolDownMs: 30000 }),
+	places: createBreaker({ name: 'places', threshold: 5, coolDownMs: 30000 }),
 };
 
 const isTimeout = (error) => !!error && (error.name === 'TimeoutError' || error.name === 'AbortError');

@@ -2,7 +2,9 @@ package com.carlosandmunoz.jarvis
 
 import com.carlosandmunoz.jarvis.update.Updater
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UpdaterTest {
@@ -33,5 +35,18 @@ class UpdaterTest {
         assertEquals("The update failed: the release has no checksum, so it was not installed", Updater.refusal(none))
         val some = Updater.newest("[" + rel("jarvis-android-v1.0.42", "jarvis-1.0.42.apk", digest = "sha256:abc") + "]")!!
         assertNull(Updater.refusal(some))
+    }
+
+    @Test fun workerNotifySkipsBenignRunLines() {
+        assertFalse(Updater.isWorkerNotifyMessage("Checked recently."))
+        assertFalse(Updater.isWorkerNotifyMessage("Jarvis 1.0.10 is the latest version."))
+        assertTrue(Updater.isWorkerNotifyMessage("The update failed: the release has no checksum, so it was not installed"))
+    }
+
+    @Test fun workerNotifyOncePerReleaseKey() {
+        val key = "rel:120"
+        assertTrue(Updater.shouldNotifyRefusal(null, key))
+        assertFalse(Updater.shouldNotifyRefusal(key, key))
+        assertTrue(Updater.shouldNotifyRefusal(key, "rel:121"))
     }
 }

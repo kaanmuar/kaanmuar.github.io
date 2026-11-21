@@ -13,6 +13,7 @@
    capOf(segment) prospects a night. */
 const sweep = require('./url-review-sweep');
 const SD = require('./site-dependency');
+const resilience = require('./http-resilience');
 
 const PLACES_API = 'https://places.googleapis.com/v1/places:searchText';
 const FIELDS = 'places.id,places.websiteUri,places.businessStatus';
@@ -135,12 +136,31 @@ function request(slot) {
 
 async function placesSearch(body, key) {
 	if (!key) return null;
-	const res = await fetch(PLACES_API, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELDS },
-		body: JSON.stringify(body),
-		signal: AbortSignal.timeout(15000),
-	});
+	// Retries 5xx with backoff (not 429: the quota), and pauses after repeated failures (#3838). Shares the Places
+	// breaker with the Local check.
+	let res;
+	try {
+		res = await resilience.resilientFetch(
+			PLACES_API,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELDS },
+				body: JSON.stringify(body),
+			},
+			{
+				retries: 2,
+				baseMs: 300,
+				maxMs: 2000,
+				maxRetryAfterMs: 3000,
+				timeoutMs: 15000,
+				noRetryStatuses: [429],
+				breaker: resilience.breakers.places,
+			}
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	if (!res.ok) return { ok: false, error: 'status ' + res.status };
 	const data = await res.json();
 	return { ok: true, places: Array.isArray(data && data.places) ? data.places : [] };

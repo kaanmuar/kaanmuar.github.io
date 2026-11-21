@@ -5,6 +5,8 @@
 // The Maps Platform terms allow keeping a place ID and nothing else from Places, so the result holds that ID and
 // what the comparison found: never the profile's own name, address, phone, hours or website link.
 
+const resilience = require('./http-resilience');
+
 const PLACES_API = 'https://places.googleapis.com/v1/places:searchText';
 const FIELDS = [
 	'id',
@@ -406,12 +408,30 @@ async function placesSearch(request, key) {
 	if (!key) return null;
 	const body = { textQuery: request.textQuery, pageSize: 5 };
 	if (request.languageCode) body.languageCode = request.languageCode;
-	const res = await fetch(PLACES_API, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELDS },
-		body: JSON.stringify(body),
-		signal: AbortSignal.timeout(10000),
-	});
+	// Retries 5xx with backoff (not 429: the quota), and pauses after repeated failures (#3838).
+	let res;
+	try {
+		res = await resilience.resilientFetch(
+			PLACES_API,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELDS },
+				body: JSON.stringify(body),
+			},
+			{
+				retries: 2,
+				baseMs: 300,
+				maxMs: 2000,
+				maxRetryAfterMs: 3000,
+				timeoutMs: 10000,
+				noRetryStatuses: [429],
+				breaker: resilience.breakers.places,
+			}
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	if (!res.ok) return { ok: false, error: 'status ' + res.status };
 	const data = await res.json();
 	return { ok: true, places: Array.isArray(data && data.places) ? data.places.slice(0, 5) : [] };

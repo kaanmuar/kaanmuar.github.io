@@ -51,9 +51,6 @@ test('every clause carries its id, language, jurisdiction, status, lastChecked d
 		clauses.filter((clause) => clause.kind === 'statute').map((clause) => [clause.text, clause.cites[0].url])
 	);
 	const seenCites = new Map();
-	// Pre-existing OFFICIAL table links left unchanged so qa-review-legal.html stays byte-identical (#4004, #3827):
-	// gob.pe/anpd is an authority portal without Ley 29733 text; popia.co.za is unofficial.
-	const unverifiedTableUrls = new Set(['https://www.gob.pe/anpd', 'https://popia.co.za/']);
 	assert.equal(new Set(clauses.map((clause) => clause.id)).size, clauses.length, 'clause ids are unique');
 	clauses.forEach((clause) => {
 		const where = clause.id + ': ';
@@ -67,11 +64,7 @@ test('every clause carries its id, language, jurisdiction, status, lastChecked d
 			assert.ok(cite.name, where + 'cite name');
 			assert.match(cite.url, /^https:\/\//, where + cite.name);
 			assert.ok('urlVerified' in cite, where + cite.name + ' has urlVerified');
-			if (unverifiedTableUrls.has(cite.url)) {
-				assert.equal(cite.urlVerified, null, where + cite.name + ' unverified table URL');
-			} else {
-				assert.ok(real(cite.urlVerified), where + cite.name + ' urlVerified ' + cite.urlVerified);
-			}
+			assert.ok(real(cite.urlVerified), where + cite.name + ' urlVerified ' + cite.urlVerified);
 			if (statutes.has(cite.name)) {
 				assert.equal(statutes.get(cite.name), cite.url, where + cite.name + ' matches its statute record');
 			}

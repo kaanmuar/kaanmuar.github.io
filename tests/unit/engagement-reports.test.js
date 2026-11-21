@@ -22,6 +22,8 @@ const index = {
 			host: 'www.gov.uk',
 			overall: 92,
 			grade: 'A',
+			trustGrade: 'A-',
+			trustScore: 88,
 			areas: { SEO: 86, Accessibility: 100 },
 		},
 		{ id: 'home', name: 'Home', host: 'acme-dental.com', overall: 71, areas: {} },
@@ -311,6 +313,8 @@ test('the stored post is tagged report-reply with the site, the match and the fo
 		score: 58,
 		shown: false,
 		weakest: 'Accessibility',
+		trustGrade: '',
+		trustScore: null,
 		match: 'domain',
 		problem: '',
 		niche: '',
@@ -318,6 +322,11 @@ test('the stored post is tagged report-reply with the site, the match and the fo
 		format: 'card',
 		link: 'https://qalabreview.com/es/r/bsky/upb.edu.co/012345',
 	});
+	assert.deepEqual(
+		[govuk.trustGrade, govuk.trustScore, R.doc(post({ query: 'gov.uk' }), ai(), govuk, 'domain', d, '', NOW).report.trustGrade],
+		['A-', 88, 'A-'],
+		'trust grade from the Live Report index rides on the engagement report doc (#3958)'
+	);
 	assert.equal(doc.topic, 'Reports');
 	const youtube = R.doc(
 		post({ network: 'youtube' }),

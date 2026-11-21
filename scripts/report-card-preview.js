@@ -47,6 +47,8 @@ const out = path.resolve(ROOT, opt('out', 'media/report-cards'));
 					score: t.score,
 					shown: R.shown(t),
 					weakest: t.weakest,
+					trustGrade: t.trustGrade || '',
+					trustScore: t.trustScore,
 					format: 'card',
 					link,
 				},

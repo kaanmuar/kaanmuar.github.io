@@ -88,14 +88,22 @@ object Updater {
         if (!force && now - prefs.getLong("checkedAt", 0) < EVERY_MS) return@withContext "Checked recently."
         if (!busy.compareAndSet(false, true)) return@withContext "Already checking."
         try {
-            val rel = latest() ?: return@withContext "Couldn't reach GitHub. Try again later."
+            val rel = latest() ?: run {
+                prefs.edit { putString(PENDING_WORKER_ISSUE, "github") }
+                return@withContext "Couldn't reach GitHub. Try again later."
+            }
             prefs.edit { putLong("checkedAt", now) }
             if (rel.code <= BuildConfig.VERSION_CODE) return@withContext "Jarvis ${BuildConfig.VERSION_NAME} is the latest version."
-            refusal(rel)?.let { return@withContext it }
+            refusal(rel)?.let {
+                prefs.edit { putString(PENDING_WORKER_ISSUE, "rel:${rel.code}") }
+                return@withContext it
+            }
             install(context, download(context, rel), rel)
             "Installing Jarvis ${rel.name}."
         } catch (e: Exception) {
-            "The update failed: ${e.message ?: e.javaClass.simpleName}"
+            val msg = "The update failed: ${e.message ?: e.javaClass.simpleName}"
+            context.getSharedPreferences("updates", Context.MODE_PRIVATE).edit { putString(PENDING_WORKER_ISSUE, "err:$msg") }
+            msg
         } finally {
             busy.set(false)
         }
@@ -104,6 +112,34 @@ object Updater {
     /** A release without a SHA-256 digest can't be verified, so it is never downloaded or installed (#4021). */
     internal fun refusal(rel: Release): String? =
         if (rel.sha256 == null) "The update failed: the release has no checksum, so it was not installed" else null
+
+    private const val PENDING_WORKER_ISSUE = "pendingWorkerIssueKey"
+    private const val WORKER_NOTIFY_ISSUE = "workerNotifyIssueKey"
+
+    /** Background worker lines the user should not get a notification for (foreground toast only). */
+    internal fun isWorkerNotifyMessage(message: String): Boolean = when {
+        message == "Checked recently." || message == "Already checking." -> false
+        message == "Debug builds don't update themselves." -> false
+        message.startsWith("Jarvis ") && message.endsWith(" is the latest version.") -> false
+        message.startsWith("Installing Jarvis ") -> false
+        else -> true
+    }
+
+    /** Once per release or failure signature; the six-hour worker would re-fire otherwise (#4072). */
+    internal fun shouldNotifyRefusal(prevNotifiedKey: String?, issueKey: String): Boolean =
+        issueKey.isNotEmpty() && prevNotifiedKey != issueKey
+
+    internal fun maybeNotifyAfterWorker(context: Context, message: String) {
+        if (!isWorkerNotifyMessage(message)) return
+        val prefs = context.getSharedPreferences("updates", Context.MODE_PRIVATE)
+        val issueKey = prefs.getString(PENDING_WORKER_ISSUE, null) ?: "msg:$message"
+        if (!shouldNotifyRefusal(prefs.getString(WORKER_NOTIFY_ISSUE, null), issueKey)) return
+        notify(context, "Jarvis update", message)
+        prefs.edit {
+            putString(WORKER_NOTIFY_ISSUE, issueKey)
+            remove(PENDING_WORKER_ISSUE)
+        }
+    }
 
     private fun latest(): Release? {
         val req = Request.Builder().url(RELEASES).header("Accept", "application/vnd.github+json").build()
@@ -173,7 +209,8 @@ object Updater {
 
 class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        Updater.run(applicationContext, inputData.getBoolean("force", false))
+        val line = Updater.run(applicationContext, inputData.getBoolean("force", false))
+        Updater.maybeNotifyAfterWorker(applicationContext, line)
         return Result.success()
     }
 }
