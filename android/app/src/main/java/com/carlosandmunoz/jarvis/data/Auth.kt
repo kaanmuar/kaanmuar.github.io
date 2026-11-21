@@ -1,5 +1,6 @@
 package com.carlosandmunoz.jarvis.data
 
+import com.carlosandmunoz.jarvis.telemetry.Telemetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -67,6 +68,7 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
         val out = try {
             post("$STS/v1/token?key=$KEY", FormBody.Builder().add("grant_type", "refresh_token").add("refresh_token", refresh).build())
         } catch (e: AuthError) {
+            Telemetry.log("Auth").w { "Token refresh refused, signing out" }
             signOut()
             throw e
         }
