@@ -60,6 +60,7 @@ const DOMAIN_CHAR = /[A-Za-z0-9.-]/;
    Native review is required before any send (#3996). */
 const COPY = {
 	en: {
+		hello: 'Hello,',
 		subject: 'Possible compromise seen on {host}',
 		intro: 'Our scanner, QA-lab URL Review, looked at {host} on {day} and saw {what}.',
 		once: 'We are writing once so your team can check it. It may be a false positive; if so, reply with the word FALSE POSITIVE and we will confirm and stop.',
@@ -84,6 +85,7 @@ const COPY = {
 		},
 	},
 	es: {
+		hello: 'Hola:',
 		subject: 'Posible compromiso detectado en {host}',
 		intro: 'Nuestro escáner, QA-lab URL Review, revisó {host} el {day} y detectó {what}.',
 		once: 'Escribimos una sola vez para que tu equipo lo pueda revisar. Podría ser un falso positivo; si es así, responde con la palabra FALSO POSITIVO y lo confirmaremos y dejaremos de escribir.',
@@ -110,6 +112,7 @@ const COPY = {
 		},
 	},
 	pt: {
+		hello: 'Olá,',
 		subject: 'Possível comprometimento detectado em {host}',
 		intro: 'Nosso scanner, QA-lab URL Review, analisou {host} em {day} e encontrou {what}.',
 		once: 'Escrevemos uma única vez para que a sua equipe possa verificar. Pode ser um falso positivo; se for, responda com a palavra FALSO POSITIVO e confirmaremos e pararemos.',
@@ -135,6 +138,7 @@ const COPY = {
 		},
 	},
 	de: {
+		hello: 'Hallo,',
 		subject: 'Mögliche Kompromittierung auf {host} festgestellt',
 		intro: 'Unser Scanner, QA-lab URL Review, hat {host} am {day} geprüft und {what} festgestellt.',
 		once: 'Wir schreiben einmalig, damit Ihr Team es prüfen kann. Es kann auch ein Fehlalarm sein; in dem Fall antworten Sie mit dem Wort FEHLALARM, dann bestätigen wir das und schreiben nicht weiter.',
@@ -160,6 +164,7 @@ const COPY = {
 		},
 	},
 	fr: {
+		hello: 'Bonjour,',
 		subject: 'Compromission possible détectée sur {host}',
 		intro: 'Notre scanner, QA-lab URL Review, a examiné {host} le {day} et constaté {what}.',
 		once: "Nous écrivons une seule fois pour que votre équipe puisse vérifier. Il peut s'agir d'un faux positif ; si c'est le cas, répondez avec le mot FAUX POSITIF et nous confirmerons et n'écrirons plus.",
@@ -185,6 +190,7 @@ const COPY = {
 		},
 	},
 	it: {
+		hello: 'Ciao,',
 		subject: 'Possibile compromissione rilevata su {host}',
 		intro: 'Il nostro scanner, QA-lab URL Review, ha verificato {host} il {day} e ha rilevato {what}.',
 		once: 'Scriviamo una sola volta, così il vostro team può verificare. Potrebbe trattarsi di un falso positivo; in quel caso rispondete con la parola FALSO POSITIVO e confermeremo e non scriveremo più.',
@@ -354,7 +360,7 @@ function draft(threat, ctx) {
 	};
 	const evidence = threat.kind === 'exposed-secret' ? c.secret : fill(c.evidence, vars);
 	const text = [
-		'Hello,',
+		c.hello,
 		'',
 		fill(c.intro, vars),
 		fill(c.once, vars),

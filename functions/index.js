@@ -4456,6 +4456,7 @@ async function opsWatchdog() {
 exports.opsWatchdog = scheduled(withMailAndGithub, 'opsWatchdog', () => opsWatchdog());
 
 const ownerReplies = require('./url-review-owner-replies');
+const headsUpSend = require('./url-review-heads-up-send');
 const OWNER_REPLIES_URL =
 	process.env.OWNER_REPLIES_URL || 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/ownerReplies';
 
@@ -4498,6 +4499,9 @@ async function applyReplyAction(action, row) {
 					.set({ at, via: 'reply-' + row.kind, domain })
 			)
 		);
+	}
+	if (action === 'false-positive' && row.threatId) {
+		await db.collection('url_review_threats').doc(row.threatId).set(headsUpSend.FALSE_POSITIVE_PATCH, { merge: true });
 	}
 	if (action === 'unlist' && row.host) {
 		await db
@@ -4660,6 +4664,12 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 	if (matchedOnly && ownerReplies.OPERATORS.includes(reply.from)) return { id: '', outcome: 'operator' };
 	const { link, ref, notice } = await noticeForReply(reply);
 	if (matchedOnly && !ref && !link) return { id: '', outcome: 'unmatched' };
+	// A reply to a security heads-up (#3997) that is only STOP or FALSE POSITIVE is read by that word, not by the owner-notice rules.
+	const headsUpKind =
+		link && link.kind === 'heads-up' && !ownerReplies.OPERATORS.includes(reply.from)
+			? headsUpSend.replyKind(reply.words)
+			: '';
+	if (headsUpKind) reply.kind = headsUpKind;
 	const decision = ownerReplies.plan(reply, notice);
 	const id = ownerReplies.replyId(mail.messageId) || crypto.randomBytes(16).toString('hex');
 	const host = (notice && notice.host) || (link && link.host) || '';
@@ -4670,7 +4680,8 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 		reply,
 		{
 			at: new Date().toISOString(),
-			noticeDomain: ref ? ref.id : '',
+			noticeDomain: ref ? ref.id : (link && link.domain) || '',
+			threatId: (link && link.kind === 'heads-up' && link.threatId) || '',
 			host,
 			noticeEmail: (link && link.email) || (notice && notice.email) || '',
 			messageId: String(mail.messageId || '')
