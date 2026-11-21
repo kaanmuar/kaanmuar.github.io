@@ -61,12 +61,14 @@ const BY_FUNCTION = {
 	// Gemini drafts answers for interested / other owner replies on the decide page (#3670).
 	ownerReplies: list(MAIL, GEMINI, ['OWNER_REPLY_KEY']),
 	// CERTSPOTTER_KEY (#3946): the paid Deep check reads certificate-transparency logs (scripts/set-certspotter-key.sh stores it).
+	// FIREBASE_WEB_KEY (#3971): Identity Toolkit-only server key for desk/auth lookups (not the browser key).
 	reviewUrl: list(MAIL, SCAN, SITE_TOKEN, PAY, GEMINI, [
 		'PUBLISH_KEY',
 		'QA_TEST_KEY',
 		'TURNSTILE_SECRET_KEY',
 		'QA_LAB_MCP_KEY',
 		'CERTSPOTTER_KEY',
+		'FIREBASE_WEB_KEY',
 	]),
 	reviewRun: list(MAIL, SCAN, SITE_TOKEN, ['QA_TEST_KEY', 'TURNSTILE_SECRET_KEY', 'QA_LAB_MCP_KEY']),
 	reviewBrowser: list(BROWSER),
@@ -111,7 +113,12 @@ const BY_FUNCTION = {
 	engagementWeekly: list(MAIL, GEMINI, GITHUB, ['YOUTUBE_KEY', 'GOOGLE_CALENDAR_CLIENT_SECRET']),
 	// An approved YouTube comment goes out from the jarvis function at once, so it refreshes the same token.
 	// CURSOR_API_KEY: the hourly watch polls Cursor cloud agents Jarvis started via the API (#2526); Hand to Cursor asks @cursor on GitHub for weekly usage (#3536).
-	jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, ['GOOGLE_CALENDAR_CLIENT_SECRET', 'CURSOR_API_KEY']),
+	// FIREBASE_WEB_KEY: jarvis verifies the operator the same way reviewUrl/desk does (#3971).
+	jarvis: list(MAIL, JARVIS_SOURCES, BROWSER, GEMINI, CLOUDFLARE, [
+		'GOOGLE_CALENDAR_CLIENT_SECRET',
+		'CURSOR_API_KEY',
+		'FIREBASE_WEB_KEY',
+	]),
 };
 
 const ALL = list(...Object.values(BY_FUNCTION));

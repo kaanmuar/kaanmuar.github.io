@@ -27,7 +27,6 @@ regexes = [
   '''"api_key"\s*:\s*\[''',
   '''apiKey\s*:\s*['"]AIza''',
   '''const val KEY = "AIza''',
-  '''DESK_FIREBASE_KEY = ['"]AIza''',
 ]
 
 [[allowlists]]
@@ -36,13 +35,6 @@ regexTarget = "line"
 regexes = [
   '''const INDEXNOW_KEY = ['"]''',
   '''\bKEY = ['"]''',
-]
-
-[[allowlists]]
-description = "Server fallback to the public Firebase web key when FIREBASE_WEB_KEY is unset; removal is tracked as a bug (#3920)"
-regexTarget = "line"
-regexes = [
-  '''FIREBASE_WEB_KEY \|\| '''',
 ]
 
 [[allowlists]]
