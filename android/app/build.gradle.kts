@@ -4,10 +4,34 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.sentry.gradle)
 }
 
 val build = (System.getenv("JARVIS_VERSION_CODE") ?: "1").toInt()
 val keystore = System.getenv("JARVIS_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+
+// Mapping upload (#3836): gated on auth token + org + project (env or gradle property). No secrets in git.
+val sentryAuthToken = System.getenv("SENTRY_AUTH_TOKEN")
+    ?: (findProperty("sentry.auth.token") as String?)
+val sentryOrg = System.getenv("SENTRY_ORG")
+    ?: (findProperty("sentry.org") as String?)
+val sentryProject = System.getenv("SENTRY_PROJECT")
+    ?: (findProperty("sentry.project") as String?)
+val sentryUpload = listOf(sentryAuthToken, sentryOrg, sentryProject).all { !it.isNullOrBlank() }
+
+sentry {
+    org.set(sentryOrg)
+    projectName.set(sentryProject)
+    authToken.set(sentryAuthToken)
+    // Without credentials, skip upload (dry-run) so local/CI without secrets still builds.
+    autoUploadProguardMapping.set(sentryUpload)
+    uploadNativeSymbols.set(false)
+    includeSourceContext.set(false)
+    ignoredBuildTypes.set(setOf("debug"))
+    // Keep the catalog pin (sentry-android 8.65.0); do not let the plugin inject its bundled SDK.
+    autoInstallation { enabled.set(false) }
+    telemetry.set(false)
+}
 
 android {
     namespace = "com.carlosandmunoz.jarvis"
