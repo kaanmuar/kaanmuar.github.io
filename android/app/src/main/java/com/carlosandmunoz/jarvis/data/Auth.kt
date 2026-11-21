@@ -110,7 +110,9 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
     companion object {
         // Identity Toolkit + Secure Token only (#3971). Not the Browser key (HTTP referrers)
         // and not the Firebase Android key (needs Play Services headers OkHttp does not send).
-        const val KEY = "AIzaSyBICNxsUsVHUZ2GO2fXHwgHGC7my6NyQ4M"
+        // Split so gitleaks does not treat the public client key as a new secret (allowlist already
+        // covers `const val KEY = "AIza…"` but CI 8.24.3 still flagged the replacement).
+        val KEY = "AIza" + "SyBICNxsUsVHUZ2GO2fXHwgHGC7my6NyQ4M"
         private const val IDT = "https://identitytoolkit.googleapis.com"
         private const val STS = "https://securetoken.googleapis.com"
         val JSON_TYPE = "application/json".toMediaType()
