@@ -108,7 +108,9 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
     }
 
     companion object {
-        const val KEY = "AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w"
+        // Identity Toolkit + Secure Token only (#3971). Not the Browser key (HTTP referrers)
+        // and not the Firebase Android key (needs Play Services headers OkHttp does not send).
+        const val KEY = "AIzaSyBICNxsUsVHUZ2GO2fXHwgHGC7my6NyQ4M"
         private const val IDT = "https://identitytoolkit.googleapis.com"
         private const val STS = "https://securetoken.googleapis.com"
         val JSON_TYPE = "application/json".toMediaType()
