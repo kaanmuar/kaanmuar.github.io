@@ -389,6 +389,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Ein Event am Formular, am Download oder an der Anmeldung zeigt Ihnen, ob die Seite funktioniert hat.",
  "An http Location adds a hop and an unencrypted request.": "Eine http-Location kostet einen Hop und eine unverschlüsselte Anfrage.",
  "An icon alone needs an aria-label.": "Ein Icon allein braucht ein aria-label.",
+ "An icon alone…": {
+  "text": "Eine Ikone allein…",
+  "machine": true
+ },
  "An item with empty required fields is noise that search may ignore.": "Ein Eintrag mit leeren Pflichtfeldern ist Rauschen, das die Suche ignorieren kann.",
  "An NGO entity in JSON-LD, DMARC set to reject, framing limited, and language versions that link back.": "Eine NGO-Entität in JSON-LD, DMARC auf reject, begrenztes Framing und Sprachversionen, die zurückverlinken.",
  "An ofrenda for the links that died.": "Eine Ofrenda für die Links, die gestorben sind.",
@@ -558,6 +562,10 @@
   "text": "Aber ⟦1⟧ Bilder sind mehr als doppelt so groß wie angezeigt.",
   "machine": true
  },
+ "But ⟦1⟧ images below the first screen load straight away.": {
+  "text": "Aber ⟦1⟧ Bilder unter dem ersten Bildschirm werden sofort geladen.",
+  "machine": true
+ },
  "But ⟦1⟧ images have no alt attribute.": "Doch ⟦1⟧ Bilder haben kein alt-Attribut.",
  "But ⟦1⟧ images have no width or height.": {
   "text": "Aber ⟦1⟧ Bilder haben keine Breite oder Höhe.",
@@ -625,6 +633,10 @@
  "But /explainers/ is listed in the sitemap while telling search engines not to index it.": "Doch /explainers/ steht in der Sitemap und sagt Suchmaschinen zugleich, sie nicht zu indexieren.",
  "But /personas/creditos declares itself canonical while its es-CO, es, and x-default alternates all point to the home page.": "Doch /personas/creditos erklärt sich selbst zum Canonical, während ihre Alternativen es-CO, es und x-default alle auf die Startseite zeigen.",
  "But /transparencia/menu-participa and two pages under it tell search engines noindex.": "Doch /transparencia/menu-participa und zwei Unterseiten sagen Suchmaschinen noindex.",
+ "But A lookalike of your domain looks like phishing.": {
+  "text": "Aber ein Doppelgänger Ihrer Domain sieht nach Phishing aus.",
+  "machine": true
+ },
  "But a made-up address answers ⟦1⟧ instead of ⟦2⟧, so crawlers can index error pages as real ones.": "Doch eine erfundene Adresse antwortet mit ⟦1⟧ statt ⟦2⟧, also können Crawler Fehlerseiten als echte indexieren.",
  "But a made-up path answers ⟦1⟧ with \"Page Not Found\", so crawlers may index it.": "Doch ein erfundener Pfad antwortet mit ⟦1⟧ und „Page Not Found“, also könnten Crawler ihn indexieren.",
  "But a made-up path answers ⟦1⟧ with the home page title, so search engines see a soft ⟦2⟧.": "Doch ein erfundener Pfad antwortet mit ⟦1⟧ und dem Titel der Startseite, also sehen Suchmaschinen einen Soft-⟦2⟧.",
@@ -1232,6 +1244,10 @@
  "Fix layout overflow instead of locking zoom.": "Beheben Sie Layout-Überläufe, statt den Zoom zu sperren.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a ⟦2⟧ to the closest live page.": "Korrigieren oder entfernen Sie jeden, der mit ⟦1⟧ antwortet, oder leiten Sie ihn mit einem ⟦2⟧ auf die nächstgelegene aktive Seite um.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a…": "Korrigieren oder entfernen Sie jeden, der mit ⟦1⟧ antwortet, oder leiten Sie ihn mit einem…",
+ "Fix the first security item in the report, then run the review again.": {
+  "text": "Korrigieren Sie das erste Sicherheitselement im Bericht und führen Sie die Überprüfung dann erneut durch.",
+  "machine": true
+ },
  "Fix the slowest first.": "Beheben Sie die langsamste zuerst.",
  "Fix the weakest area first: for Metro de Bogotá that is security, at ⟦1⟧.": "Beheben Sie zuerst den schwächsten Bereich: bei Metro de Bogotá die Sicherheit mit ⟦1⟧.",
  "Flat Traffic, No Budget:": "Stagnierender Traffic, kein Budget:",
@@ -1288,6 +1304,10 @@
  "Give every button text or an aria-label, so a screen reader can announce it.": "Geben Sie jedem Button Text oder ein aria-label, damit ein Screenreader ihn ansagen kann.",
  "Give every button text or an aria-label, so a screen reader can announce…": {
   "text": "Geben Sie jeder Schaltfläche einen Text oder eine Arie-Beschriftung, damit ein Screenreader Folgendes ankündigen kann:",
+  "machine": true
+ },
+ "Give every button text or an aria-label, so a screen reader can…": {
+  "text": "Geben Sie jeder Schaltfläche einen Text oder eine Arie-Beschriftung, damit ein Screenreader …",
   "machine": true
  },
  "Give every field a ⟦1⟧ or an aria-label.": "Geben Sie jedem Feld ein ⟦1⟧ oder ein aria-label.",
@@ -1589,6 +1609,10 @@
  "Language versions link to each other, share cards are complete, and pages read without JavaScript.": "Sprachversionen verlinken aufeinander, die Share-Cards sind vollständig und die Seiten sind ohne JavaScript lesbar.",
  "Language versions point at each other, framing is limited, and unknown paths answer ⟦1⟧.": "Sprachversionen verweisen aufeinander, Framing ist begrenzt und unbekannte Pfade antworten mit ⟦1⟧.",
  "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering.": "Largest Contentful Paint markiert, wann das größte Bild oder der größte Textblock im Viewport fertig gerendert ist.",
+ "Lazy-load images below the first screen, and never the main image.": {
+  "text": "Laden Sie Bilder träge unter den ersten Bildschirm und niemals unter das Hauptbild.",
+  "machine": true
+ },
  "LCP isn't.": "LCP nicht.",
  "LCP: when the main thing shows up.": "LCP: wann das Wichtigste erscheint.",
  "Le Monde answers with analytics, ⟦1⟧ to ⟦2⟧, security, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "Le Monde kontert bei Analytics, ⟦1⟧ zu ⟦2⟧, bei Sicherheit, ⟦3⟧ zu ⟦4⟧, und bei GEO, ⟦5⟧ zu ⟦6⟧.",
@@ -2021,6 +2045,10 @@
   "text": "Leiten Sie jede HTTP-Anfrage mit einer permanenten ⟦1⟧ auf https um und fügen Sie dann hinzu…",
   "machine": true
  },
+ "Redirect every http request to https with one permanent…": {
+  "text": "Leiten Sie jede HTTP-Anfrage mit einer permanenten … auf https um.",
+  "machine": true
+ },
  "Redirecting entries waste crawl.": "Weiterleitende Einträge verschwenden Crawl-Budget.",
  "Release day: is the page still right?": "Release-Tag: Stimmt die Seite noch?",
  "Relevance ⟦1⟧ (formerly SEO Week), the premier AI Search conference, takes place April ⟦2⟧–⟦3⟧, ⟦4⟧, at Halo […] The post Press Release:": "Relevance ⟦1⟧ (ehemals SEO Week), die führende Konferenz zur KI-Suche, findet vom ⟦2⟧. bis ⟦3⟧. April ⟦4⟧ im Halo […] Der Beitrag Pressemitteilung:",
@@ -2272,6 +2300,10 @@
   "text": "Stellen Sie ⟦1⟧ vom selben Host wie die darin aufgelisteten Seiten bereit und benennen Sie es in …",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it…": {
+  "text": "Stellen Sie ⟦1⟧ vom selben Host wie die darin aufgelisteten Seiten bereit und benennen Sie es …",
+  "machine": true
+ },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
   "text": "Stellen Sie ⟦1⟧ vom selben Host wie die darin aufgelisteten Seiten bereit und benennen Sie …",
   "machine": true
@@ -2463,6 +2495,10 @@
   "text": "Die Lücke: Layoutverschiebung.",
   "machine": true
  },
+ "The gap: lazy loading.": {
+  "text": "Die Lücke: Lazy Loading.",
+  "machine": true
+ },
  "The gap: link names.": "Die Lücke: Linknamen.",
  "The gap: list markup.": {
   "text": "Die Lücke: Listen-Markup.",
@@ -2488,6 +2524,10 @@
  },
  "The gap: page titles.": "Die Lücke: Seitentitel.",
  "The gap: schema fields.": "Die Lücke: Schema-Felder.",
+ "The gap: security.": {
+  "text": "Die Lücke: Sicherheit.",
+  "machine": true
+ },
  "The gap: tap targets.": {
   "text": "Die Lücke: Ziele antippen.",
   "machine": true

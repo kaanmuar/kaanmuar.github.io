@@ -200,6 +200,31 @@
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/launch-2026-10/it/a11y-portrait.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/ai-citations-what-to-check-before-reacting-to-a-lost-one-via.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/ai-citations-missing-puzzle-piece.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/avivgerz-hue-ghost-qa-autonomous-headless-playwright-qa-agen.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://opengraph.githubassets.com/1/avivgerz-hue/ghost-qa</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/building-an-accessible-colour-system-for-data-heavy-dashboar.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fqn8x1ankz3bszot2a5br.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/google-told-cmos-to-stop-top-10-listicles-here-s-its-example.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-listicle-guidance-featured.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/shipped-streamlit-text-accessibility-checker.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fq3a1fk412h6q7sb3uo9o.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/runs-100/22-apache.html</loc>
     <lastmod>2026-11-21</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg</image:loc></image:image>
@@ -443,61 +468,253 @@
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. The gap: form labels.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 25 form controls have no label.
+
+What to change: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-de.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. Die Lücke: Formular-Labels.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 25 Formularfelder haben kein Label.
+
+Was zu ändern ist: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine erste Analyse, kein endgültiger Entscheid.
+Vollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-es.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. El punto débil: etiquetas de formulario.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 25 controles de formulario no tienen etiqueta.
+
+Qué cambiar: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
+
+Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un análisis inicial, no una decisión final.
+Informe completo: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-fr.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. Le point faible : les libellés de formulaire.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 25 champs de formulaire n’ont pas de libellé.
+
+Ce qu’il faut changer : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
+
+Une analyse automatisée des pages publiques le 18 novembre 2026, demandée via QA-lab URL Review. Une analyse d’ouverture, pas une décision finale.
+Rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-it.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. La lacuna: le label dei form.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 25 controlli dei form non hanno label.
+
+Cosa cambiare: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Un’analisi iniziale, non una decisione finale.
+Rapporto completo: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-pt.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/A6DNNICqGZk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aijabogados.cl: 74. A lacuna: rótulos de formulário.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 25 controles de formulário não têm rótulo.
+
+O que mudar: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
+
+Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Uma análise inicial, não uma decisão final.
+Relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/A6DNNICqGZk</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. The gap: framing.</video:title>
+      <video:description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-de.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. Die Lücke: Einbettung.</video:title>
+      <video:description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch andere Websites können die Seite einbetten.
+
+Die Lektion für jedes Team: Senden Sie frame-ancestors 'self' in der CSP oder X-Frame-Options: SAMEORIGIN, damit andere Websites Ihre Seiten nicht einbetten können.
+
+Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Momentaufnahme zum Start, kein Urteil.
+Bericht: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-es.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. El punto débil: enmarcado.</video:title>
+      <video:description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
+
+La lección para cualquier equipo: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
+
+Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una instantánea de partida, no un veredicto.
+Informe: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-fr.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. Le point faible : l’intégration en iframe.</video:title>
+      <video:description>Chaque lien interne ouvert a répondu, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais d’autres sites peuvent intégrer la page en iframe.
+
+La leçon pour chaque équipe : Envoyez frame-ancestors 'self' dans la CSP, ou X-Frame-Options: SAMEORIGIN, pour que d’autres sites ne puissent pas intégrer vos pages en iframe.
+
+Une analyse automatisée des pages publiques le 18 novembre 2026, demandée via QA-lab URL Review. Un instantané de départ, pas un verdict.
+Rapport : https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-it.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. La lacuna: i frame.</video:title>
+      <video:description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma altri siti possono mettere la pagina in un frame.
+
+La lezione per ogni team: Invia frame-ancestors 'self' nella CSP, o X-Frame-Options: SAMEORIGIN, così altri siti non possono mettere le tue pagine in un frame.
+
+Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Uno snapshot di partenza, non un verdetto.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-pt.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/9ADHvMpIutM/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>aire-plus.com: 79. A lacuna: frames.</video:title>
+      <video:description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas outros sites podem colocar a página em frame.
+
+A lição para toda equipe: Envie frame-ancestors 'self' no CSP, ou X-Frame-Options: SAMEORIGIN, para que outros sites não possam colocar suas páginas em frame.
+
+Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um retrato inicial, não um veredito.
+Relatório: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/9ADHvMpIutM</video:player_loc>
+      <video:publication_date>2026-11-20</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-19/01-u-almazangourmet-cl.html</loc>
@@ -528,6 +745,66 @@
     <loc>https://carlosandmunoz.com/social/auto-2026-11-19/01-u-almazangourmet-cl-pt.html</loc>
     <lastmod>2026-11-20</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/01-u-almazangourmet-cl.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/a-keyboard-and-contrast-baseline-for-a-static-css-demo.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Ffk83hp8th77rg2ytqgr9.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2025-42884-netweaver-sap-netweaver-improper-neutralizati.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-104885-openremote-cross-realm-mqtt-session-disconne.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-114516-etherpad-pre-auth-arbitrary-file-read.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-123890-vmware-vcenter-vmware-vcenter-authentication.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-129448-roller-apache-roller-deserialization-of-untr.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-62955-basercms-path-traversal-bypass-via-realpath-i.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-63012-basercms-administrative-api-authorization-byp.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-76466-expressway-series-cisco-expressway-series-use.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/salesforce-ceo-says-goodbye-seo-salesforce-s-seo-guide-disag.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/salesforce-benioff-2640839201.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/wcag-2-2-aa-accessibility-audit-checklist-for-modern-web-app.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2F2dvbkjpcx34hhoofia3x.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/why-building-trust-through-real-people-stands-the-test-of-ti.html</loc>
+    <lastmod>2026-11-20</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/real-people-trust-seo-ai-search-1600x840-1.jpg</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/20-rust.html</loc>
@@ -1004,31 +1281,115 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Us vs them: SEO audits in four beats.</video:title>
+      <video:description>A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.
+
+Lesson: Post the hook, then the four beats as replies — not a LI/IG carousel.
+
+Coverage compared from each vendor's own pages, checked 2026-11-10. Names are trademarks of their owners.
+Table: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-de.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wir gegen sie: SEO-Audits in vier Schritten.</video:title>
+      <video:description>Ein kurzer X/Threads-Thread: Worin SEO-Audits gewinnen, was die URL-Überprüfung stattdessen abdeckt, eine ehrliche Aufteilung und die Vergleichstabelle.
+
+Lektion: Posten Sie den Hook, dann die vier Beats als Antworten – kein LI/IG-Karussell.
+
+Vergleich der Abdeckung auf den eigenen Seiten jedes Anbieters, überprüft 2026-11-10. Namen sind Marken ihrer Besitzer.
+Tabelle: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-es.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Nosotros contra ellos: Auditorías SEO en cuatro tiempos.</video:title>
+      <video:description>Un breve hilo de X/Threads: en qué ganan las auditorías de SEO, qué cubre la revisión de URL, una división honesta y la tabla de comparación.
+
+Lección: Publique el gancho, luego los cuatro tiempos como respuestas, no un carrusel LI/IG.
+
+Cobertura comparada desde las páginas de cada proveedor, marcada 2026-11-10. Los nombres son marcas comerciales de sus propietarios.
+Tabla: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-fr.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Nous contre eux : Audits SEO en quatre temps.</video:title>
+      <video:description>Un court fil de discussion X/Threads : quels sont les avantages des audits SEO, ce que couvre l'examen d'URL à la place, une répartition honnête et le tableau de comparaison.
+
+La leçon : Publiez le crochet, puis les quatre temps comme réponses – pas un carrousel LI/IG.
+
+Couverture comparée à partir des pages de chaque fournisseur, cochée 2026-11-10. Les noms sont des marques déposées de leurs propriétaires.
+Tableau : https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-it.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Noi contro loro: Audit SEO in quattro battute.</video:title>
+      <video:description>Un breve thread su X/Threads: in cosa vincono gli audit SEO, cosa copre invece URL Review, una suddivisione onesta e la tabella di confronto.
+
+Lezione: Pubblica il gancio, quindi le quattro battute come risposte: non un carosello LI/IG.
+
+Copertura confrontata dalle pagine di ciascun fornitore, controllata 2026-11-10. I nomi sono marchi dei rispettivi proprietari.
+Tabella: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-pt.html</loc>
     <lastmod>2026-11-19</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/avYfQI9q_Zk/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Nós contra eles: Auditorias de SEO em quatro momentos.</video:title>
+      <video:description>Um pequeno tópico X / Threads: quais são as vantagens das auditorias de SEO, o que a revisão de URL cobre, uma divisão honesta e a tabela de comparação.
+
+Lição: Poste o gancho e depois as quatro batidas como respostas - não um carrossel LI/IG.
+
+Cobertura comparada nas próprias páginas de cada fornecedor, verificada 2026-11-10. Os nomes são marcas registradas de seus proprietários.
+Tabela: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
+
+#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/avYfQI9q_Zk</video:player_loc>
+      <video:publication_date>2026-11-19</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/launch-2026-10/fr/a11y.html</loc>
@@ -1335,31 +1696,115 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>URL Review vs SEO audits.</video:title>
+      <video:description>A coverage scorecard from each vendor's own pages (checked 2026-11-10). 10 checks we name that SEO audits does not; they go deeper on SEO crawl issues.
+
+Lesson: Keep the SEO crawler for on-page depth; add a URL Review for threats, lookalikes, mail auth and fix packages.
+
+Coverage compared from each vendor's own pages, checked 2026-11-10. Names are trademarks of their owners.
+Table: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-de.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>URL-Überprüfung vs. SEO-Audits.</video:title>
+      <video:description>Eine Abdeckungs-Scorecard von den eigenen Seiten jedes Anbieters (markiert 2026-11-10). 10 prüft, was wir nennen, dass SEO-Audits dies nicht tun; Sie gehen tiefer auf SEO-Crawling-Probleme ein.
+
+Lektion: Behalten Sie den SEO-Crawler für die On-Page-Tiefe; Fügen Sie eine URL-Überprüfung für Bedrohungen, Lookalikes, E-Mail-Authentifizierung und Fixpakete hinzu.
+
+Vergleich der Abdeckung auf den eigenen Seiten jedes Anbieters, überprüft 2026-11-10. Namen sind Marken ihrer Besitzer.
+Tabelle: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-es.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Revisión de URL vs auditorías SEO.</video:title>
+      <video:description>Un cuadro de mando de cobertura de las páginas de cada proveedor (marcado 2026-11-10). 10 comprueba que nombramos las auditorías de SEO; profundizan en los problemas de rastreo de SEO.
+
+Lección: Mantenga el rastreador de SEO para profundizar en la página; agregue una revisión de URL para detectar amenazas, imitaciones, autenticación de correo y paquetes de reparación.
+
+Cobertura comparada desde las páginas de cada proveedor, marcada 2026-11-10. Los nombres son marcas comerciales de sus propietarios.
+Tabla: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-fr.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Révision d’URL vs audits SEO.</video:title>
+      <video:description>Une carte de pointage de couverture provenant des pages de chaque fournisseur (cochée 2026-11-10). 10 vérifie que nous nommons ce que les audits SEO ne font pas ; ils approfondissent les problèmes d'exploration du référencement.
+
+La leçon : Conservez le robot d'exploration SEO pour la profondeur de la page ; ajoutez une révision d'URL pour les menaces, les sosies, l'authentification de messagerie et les packages de correctifs.
+
+Couverture comparée à partir des pages de chaque fournisseur, cochée 2026-11-10. Les noms sont des marques déposées de leurs propriétaires.
+Tableau : https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-it.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Revisione URL e audit SEO.</video:title>
+      <video:description>Una scorecard di copertura dalle pagine di ciascun fornitore (selezionato 2026-11-10). 10 controlli che chiamiamo che gli audit SEO non lo fanno; approfondiscono i problemi di scansione SEO.
+
+Lezione: Mantieni il crawler SEO per la profondità della pagina; aggiungere una revisione URL per minacce, sosia, autenticazione e-mail e pacchetti di correzione.
+
+Copertura confrontata dalle pagine di ciascun fornitore, controllata 2026-11-10. I nomi sono marchi dei rispettivi proprietari.
+Tabella: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/battle-vs-2026-11/01-vs-seo-scorecard-pt.html</loc>
     <lastmod>2026-11-18</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/01-vs-seo-scorecard.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/TPE9u140kew/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Revisão de URL versus auditorias de SEO.</video:title>
+      <video:description>Um scorecard de cobertura das próprias páginas de cada fornecedor (marcado 2026-11-10). 10 verificações que nomeamos e que as auditorias de SEO não; eles se aprofundam nos problemas de rastreamento de SEO.
+
+Lição: Mantenha o rastreador de SEO para obter profundidade na página; adicione uma revisão de URL para ameaças, sósias, autenticação de e-mail e pacotes de correção.
+
+Cobertura comparada nas próprias páginas de cada fornecedor, verificada 2026-11-10. Os nomes são marcas registradas de seus proprietários.
+Tabela: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=vs-seo-scorecard
+
+#WebQuality #Automation #SRE #QA #SEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/TPE9u140kew</video:player_loc>
+      <video:publication_date>2026-11-18</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/pick/agricidaniel-dataforseo-agent-ask-seo-questions-in-plain-wor.html</loc>
@@ -2607,31 +3052,127 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. The gap: link names.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+The lesson for every team: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 13 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-de.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. Die Lücke: Linknamen.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Die Lektion für jedes Team: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 13 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-es.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. El punto débil: nombres de enlaces.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los enlaces deben tener texto discernible.
+
+La lección para cualquier equipo: Dale a cada enlace un texto que diga adónde lleva. Un icono solo necesita un aria-label.
+
+Un análisis automatizado de páginas públicas el 13 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-fr.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. Le point faible : les noms de liens.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais les liens doivent avoir un texte discernable.
+
+La leçon pour chaque équipe : Donnez à chaque lien un texte qui dit où il mène. Une icône seule a besoin d’un aria-label.
+
+Une analyse automatisée des pages publiques du 13 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-it.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. La lacuna: i nomi dei link.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i link devono avere un testo riconoscibile.
+
+La lezione per ogni team: Dai a ogni link un testo che dica dove porta. Un’icona da sola ha bisogno di un aria-label.
+
+Un'analisi automatizzata delle pagine pubbliche del 13 novembre 2026, uno dei siti più visitati nel suo paese, dall'analisi dei paesi di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/01-u-actualite-cd-pt.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-14/feed/01-u-actualite-cd.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/0KE_68WK2eg/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>actualite.cd: 48. A lacuna: nomes de links.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os links precisam ter texto discernível.
+
+A lição para toda equipe: Dê a todo link um texto que diga para onde ele leva. Um ícone sozinho precisa de um aria-label.
+
+Uma análise automatizada de páginas públicas em 13 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-actualite-cd&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-actualite-cd
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/0KE_68WK2eg</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-14/04-vs-sinarharian-com-my.html</loc>
@@ -2958,6 +3499,19 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/promo-social-hub-2026-10/35-follow-es.html</loc>
     <lastmod>2026-11-15</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/promo-social-hub-2026-10/feed/35-follow-es.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/6Ozg9paUbSY/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Síguelo a tu manera.</video:title>
+      <video:description>Lee el hub en cualquier lector RSS, con un feed por idioma, o síguenos en YouTube, TikTok, LinkedIn, X y Facebook.
+
+Pruébalo: Añade el feed RSS del hub a tu lector.
+
+Todas las publicaciones, en un solo lugar: https://carlosandmunoz.com/qa-review-social-es.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=social-hub-promo&amp;utm_content=follow-es
+
+#RSS #OpenSource #SoftwareTesting #QA #SocialMedia #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/6Ozg9paUbSY</video:player_loc>
+      <video:publication_date>2026-11-15</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/10-amnesty.html</loc>
@@ -6413,31 +6967,115 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wikipedia leaves the snippet to search.</video:title>
+      <video:description>HSTS is preloaded, security.txt is published, and articles read without JavaScript. But the Main Page and the other 18 pages analyzed have no meta description, so search engines pick the snippet.
+
+The lesson for every team: Write a description of about 150 characters for each key page, so you choose the pitch, not the crawler.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia-de.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wikipedia überlässt das Snippet der Suche.</video:title>
+      <video:description>HSTS ist preloaded, security.txt ist veröffentlicht und Artikel sind ohne JavaScript lesbar. Doch die Main Page und die anderen 18 analysierten Seiten haben keine Meta-Description, also wählen Suchmaschinen das Snippet.
+
+Die Lektion für jedes Team: Schreiben Sie für jede wichtige Seite eine Beschreibung von etwa 150 Zeichen, damit Sie die Botschaft wählen, nicht der Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia-es.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wikipedia deja el fragmento al buscador.</video:title>
+      <video:description>HSTS tiene preload, security.txt está publicado y los artículos se leen sin JavaScript. Pero la Main Page y las otras 18 páginas analizadas no tienen meta description, así que los buscadores eligen el snippet.
+
+La lección para cualquier equipo: Escribe una descripción de unos 150 caracteres para cada página clave, así eliges tú el mensaje y no el rastreador.
+
+Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
+Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia-fr.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wikipédia laisse les moteurs écrire l’extrait.</video:title>
+      <video:description>HSTS est préchargé, security.txt est publié, et les articles se lisent sans JavaScript. Mais la Main Page et les 18 autres pages analysées n’ont pas de meta description : les moteurs choisissent l’extrait.
+
+La leçon pour chaque équipe : Rédigez une description d’environ 150 caractères pour chaque page clé : c’est vous qui choisissez l’accroche, pas le crawler.
+
+Une analyse automatisée des pages publiques, le 19 oct. 2026. Un point de départ, pas un verdict.
+Comment fonctionne la revue, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia-it.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Wikipedia lascia lo snippet alla ricerca.</video:title>
+      <video:description>HSTS è in preload, security.txt è pubblicato e gli articoli si leggono senza JavaScript. Ma la Main Page e le altre 18 pagine analizzate non hanno meta description, quindi lo snippet lo scelgono i motori di ricerca.
+
+La lezione per ogni team: Scrivi una descrizione di circa 150 caratteri per ogni pagina chiave, così il messaggio lo scegli tu, non il crawler.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/01-wikipedia-pt.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/01-wikipedia.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/hIHWzpMcQho/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>A Wikipedia deixa o snippet para a busca.</video:title>
+      <video:description>O HSTS tem preload, security.txt está publicado e os artigos se leem sem JavaScript. Mas a Main Page e as outras 18 páginas analisadas não têm meta description, então os buscadores escolhem o snippet.
+
+A lição para toda equipe: Escreva uma descrição de cerca de 150 caracteres para cada página-chave, para que você escolha o pitch, não o crawler.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikipedia
+
+#SEO #MetaDescription #OpenKnowledge #QA #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/hIHWzpMcQho</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-2026-10/10-nasa.html</loc>
@@ -7061,31 +7699,121 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI: a fingerprint for borrowed scripts.</video:title>
+      <video:description>Word of the day: SRI: a fingerprint for borrowed scripts.
+
+Subresource Integrity puts a hash of the file in the tag. If the CDN ever serves anything else, the browser refuses to run it.
+
+Spot it: List the scripts you load from other domains. Add an integrity hash to every one that has a fixed version.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-de.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI: ein Fingerabdruck für geliehene Skripte.</video:title>
+      <video:description>Wort des Tages: SRI: ein Fingerabdruck für geliehene Skripte.
+
+Subresource Integrity schreibt einen Hash der Datei in das Tag. Liefert das CDN je etwas anderes aus, verweigert der Browser die Ausführung.
+
+Erkennen Sie es: Listen Sie die Skripte auf, die Sie von anderen Domains laden. Ergänzen Sie bei jedem mit fester Version einen Integritäts-Hash.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-es.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI: una huella para los scripts prestados.</video:title>
+      <video:description>Palabra del día: SRI: una huella para los scripts prestados.
+
+Subresource Integrity pone un hash del archivo en la etiqueta. Si la CDN llega a servir otra cosa, el navegador se niega a ejecutarla.
+
+Encuéntralo: Haz una lista de los scripts que cargas desde otros dominios. Añade un hash de integridad a cada uno que tenga una versión fija.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-fr.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI : une empreinte pour les scripts empruntés.</video:title>
+      <video:description>Mot du jour : SRI : une empreinte pour les scripts empruntés.
+
+Subresource Integrity met un hash du fichier dans la balise. Si le CDN sert autre chose, le navigateur refuse de l'exécuter.
+
+Repérez-le : Listez les scripts que vous chargez depuis d'autres domaines. Ajoutez un hash d'intégrité à chacun de ceux qui ont une version fixe.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-it.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI: un'impronta per gli script presi in prestito.</video:title>
+      <video:description>Parola del giorno: SRI: un'impronta per gli script presi in prestito.
+
+Subresource Integrity mette nel tag un hash del file. Se la CDN serve qualcosa di diverso, il browser si rifiuta di eseguirlo.
+
+Trovalo: Elenca gli script che carichi da altri domini. Aggiungi un hash di integrità a ognuno che abbia una versione fissa.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/06-sri-pt.html</loc>
     <lastmod>2026-11-09</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/06-sri.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/OBh2tfMbQ8E/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>SRI: uma impressão digital para scripts de terceiros.</video:title>
+      <video:description>Palavra do dia: SRI: uma impressão digital para scripts de terceiros.
+
+O Subresource Integrity coloca um hash do arquivo na tag. Se a CDN servir qualquer outra coisa, o navegador se recusa a executá-la.
+
+Confira: Liste os scripts que você carrega de outros domínios. Adicione um hash de integridade a cada um que tenha versão fixa.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=sri
+
+#WebSecurity #Programming #Phishing #QA #SRI #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/OBh2tfMbQ8E</video:player_loc>
+      <video:publication_date>2026-11-09</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/10-myth-overlay.html</loc>

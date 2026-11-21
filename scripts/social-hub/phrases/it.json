@@ -385,6 +385,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Un evento sul form, sul download o sull’iscrizione ti dice se la pagina ha funzionato.",
  "An http Location adds a hop and an unencrypted request.": "Una Location http aggiunge un passaggio e una richiesta non cifrata.",
  "An icon alone needs an aria-label.": "Un’icona da sola ha bisogno di un aria-label.",
+ "An icon alone…": {
+  "text": "Un'icona da sola...",
+  "machine": true
+ },
  "An item with empty required fields is noise that search may ignore.": "Un elemento con campi obbligatori vuoti è rumore che la ricerca può ignorare.",
  "An NGO entity in JSON-LD, DMARC set to reject, framing limited, and language versions that link back.": "Un’entità NGO in JSON-LD, DMARC su reject, framing limitato e versioni linguistiche che si linkano a vicenda.",
  "An ofrenda for the links that died.": "Un’ofrenda per i link che sono morti.",
@@ -538,6 +542,10 @@
  "But ⟦1⟧ form controls have no label.": "Ma ⟦1⟧ controlli dei form non hanno label.",
  "But ⟦1⟧ front-end libraries have known flaws.": "Ma ⟦1⟧ librerie front-end hanno vulnerabilità note.",
  "But ⟦1⟧ has Google MX records and no SPF or DMARC record, so anyone can send mail in its name.": "Ma ⟦1⟧ ha record MX di Google e nessun record SPF o DMARC, quindi chiunque può inviare email a suo nome.",
+ "But ⟦1⟧ images below the first screen load straight away.": {
+  "text": "Ma ⟦1⟧ immagini sotto la prima schermata vengono caricate immediatamente.",
+  "machine": true
+ },
  "But ⟦1⟧ images have no alt attribute.": "Ma ⟦1⟧ immagini non hanno l’attributo alt.",
  "But ⟦1⟧ inner pages name ⟦2⟧ as their canonical, which asks search engines to index the home instead.": "Ma ⟦1⟧ pagine interne indicano ⟦2⟧ come canonical, chiedendo ai motori di ricerca di indicizzare invece la home.",
  "But ⟦1⟧ internal link leads to an error.": "Ma ⟦1⟧ link interno porta a un errore.",
@@ -593,6 +601,10 @@
  "But /explainers/ is listed in the sitemap while telling search engines not to index it.": "Ma /explainers/ è nella sitemap mentre dice ai motori di ricerca di non indicizzarlo.",
  "But /personas/creditos declares itself canonical while its es-CO, es, and x-default alternates all point to the home page.": "Ma /personas/creditos si dichiara canonical mentre i suoi alternate es-CO, es e x-default puntano tutti alla home page.",
  "But /transparencia/menu-participa and two pages under it tell search engines noindex.": "Ma /transparencia/menu-participa e due pagine sotto di essa dicono noindex ai motori di ricerca.",
+ "But A lookalike of your domain looks like phishing.": {
+  "text": "Ma un sosia del tuo dominio sembra phishing.",
+  "machine": true
+ },
  "But a made-up address answers ⟦1⟧ instead of ⟦2⟧, so crawlers can index error pages as real ones.": "Ma un indirizzo inventato risponde ⟦1⟧ invece di ⟦2⟧, quindi i crawler possono indicizzare pagine di errore come se fossero vere.",
  "But a made-up path answers ⟦1⟧ with \"Page Not Found\", so crawlers may index it.": "Ma un percorso inventato risponde ⟦1⟧ con \"Page Not Found\", quindi i crawler potrebbero indicizzarlo.",
  "But a made-up path answers ⟦1⟧ with the home page title, so search engines see a soft ⟦2⟧.": "Ma un percorso inventato risponde ⟦1⟧ con il titolo della home page, quindi i motori di ricerca vedono un soft ⟦2⟧.",
@@ -610,6 +622,10 @@
  },
  "But analytics may count some visits twice.": {
   "text": "Ma l'analisi potrebbe conteggiare alcune visite due volte.",
+  "machine": true
+ },
+ "But ARIA hidden element must not be focusable or contain focusable elements.": {
+  "text": "Ma l'elemento nascosto ARIA non deve essere focalizzabile o contenere elementi focalizzabili.",
   "machine": true
  },
  "But beside GA4 the page still loads UA-⟦1⟧-⟦2⟧, which has collected nothing since July ⟦3⟧.": "Ma oltre a GA4 la pagina carica ancora UA-⟦1⟧-⟦2⟧, che non raccoglie nulla da luglio ⟦3⟧.",
@@ -1160,6 +1176,10 @@
  "Fix layout overflow instead of locking zoom.": "Correggi l’overflow del layout invece di bloccare lo zoom.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a ⟦2⟧ to the closest live page.": "Correggi o rimuovi ognuno che risponde ⟦1⟧, oppure reindirizzalo con un ⟦2⟧ alla pagina attiva più vicina.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a…": "Correggi o rimuovi ognuno che risponde ⟦1⟧, oppure reindirizzalo con un…",
+ "Fix the first security item in the report, then run the review again.": {
+  "text": "Correggi il primo elemento di sicurezza nel rapporto, quindi esegui nuovamente la revisione.",
+  "machine": true
+ },
  "Fix the slowest first.": "Sistema prima la più lenta.",
  "Fix the weakest area first: for Metro de Bogotá that is security, at ⟦1⟧.": "Sistema prima l'area più debole: per Metro de Bogotá è la sicurezza, a ⟦1⟧.",
  "Flat Traffic, No Budget:": "Traffico piatto, budget zero:",
@@ -1216,6 +1236,10 @@
  "Give every button text or an aria-label, so a screen reader can announce it.": "Dai a ogni pulsante un testo o un aria-label, così uno screen reader può annunciarlo.",
  "Give every button text or an aria-label, so a screen reader can announce…": {
   "text": "Assegna a ogni pulsante un testo o un'etichetta di aria, in modo che uno screen reader possa annunciare...",
+  "machine": true
+ },
+ "Give every button text or an aria-label, so a screen reader can…": {
+  "text": "Assegna a ogni pulsante un testo o un'etichetta aria, in modo che uno screen reader possa...",
   "machine": true
  },
  "Give every field a ⟦1⟧ or an aria-label.": "Dai a ogni campo un ⟦1⟧ o un aria-label.",
@@ -1497,6 +1521,10 @@
  "Language versions link to each other, share cards are complete, and pages read without JavaScript.": "Le versioni linguistiche si linkano a vicenda, le card di condivisione sono complete e le pagine si leggono senza JavaScript.",
  "Language versions point at each other, framing is limited, and unknown paths answer ⟦1⟧.": "Le versioni linguistiche si puntano a vicenda, il framing è limitato e i percorsi sconosciuti rispondono ⟦1⟧.",
  "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering.": "Il Largest Contentful Paint segna quando l'immagine o il blocco di testo più grande nel viewport finisce di essere visualizzato.",
+ "Lazy-load images below the first screen, and never the main image.": {
+  "text": "Carica lentamente le immagini sotto la prima schermata e mai l'immagine principale.",
+  "machine": true
+ },
  "LCP isn't.": "L’LCP no.",
  "LCP: when the main thing shows up.": "LCP: quando compare la cosa principale.",
  "Le Monde answers with analytics, ⟦1⟧ to ⟦2⟧, security, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "Le Monde risponde con gli analytics, ⟦1⟧ a ⟦2⟧, la sicurezza, ⟦3⟧ a ⟦4⟧, e il GEO, ⟦5⟧ a ⟦6⟧.",
@@ -1658,6 +1686,10 @@
  "nautnhanahp-design/payback-coupon-bot:": "nautnhanahp-design/payback-coupon-bot:",
  "Neiva's sitemap lists a host that won't load.": "La sitemap di Neiva elenca un host che non si carica.",
  "Nequi's hreflang points to the home page.": "L’hreflang di Nequi punta alla home.",
+ "Never leave a focusable element inside aria-hidden content.": {
+  "text": "Non lasciare mai un elemento attivabile all'interno del contenuto nascosto nell'aria.",
+  "machine": true
+ },
  "Never point it at an address that redirects.": "Non puntarlo mai a un indirizzo che fa redirect.",
  "New research identifies a potential weakness in big-brand visibility that smaller publishers may be able to exploit.": "Una nuova ricerca individua un potenziale punto debole nella visibilità dei grandi brand che gli editori più piccoli potrebbero sfruttare.",
  "New spam guidance says to noindex or block crawling on pages made for sharing.": "Le nuove linee guida sullo spam indicano di usare noindex o bloccare la scansione sulle pagine create per essere condivise.",
@@ -1723,6 +1755,10 @@
  "One server setting covers them all.": "Un’impostazione del server le copre tutte.",
  "One site, one GA4 property, one ⟦1⟧.": "Un sito, una proprietà GA4, un ⟦1⟧.",
  "One stray comma hides all of it.": "Una virgola di troppo nasconde tutto.",
+ "One stray comma hides all…": {
+  "text": "Una virgola vagante nasconde tutto...",
+  "machine": true
+ },
  "One stray comma…": {
   "text": "Una virgola vagante...",
   "machine": true
@@ -1911,6 +1947,10 @@
  "Redirect every http request to https with one permanent ⟦1⟧, then add HSTS.": "Reindirizza ogni richiesta http a https con un solo ⟦1⟧ permanente, poi aggiungi HSTS.",
  "Redirect every http request to https with one permanent ⟦1⟧, then add…": {
   "text": "Reindirizza ogni richiesta http a https con un ⟦1⟧ permanente, quindi aggiungi...",
+  "machine": true
+ },
+ "Redirect every http request to https with one permanent…": {
+  "text": "Reindirizza ogni richiesta http a https con un permanente...",
   "machine": true
  },
  "Redirecting entries waste crawl.": "Le voci che fanno redirect sprecano crawl.",
@@ -2132,6 +2172,10 @@
   "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e nominalo in ⟦2⟧.",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it…": {
+  "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e chiamalo...",
+  "machine": true
+ },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
   "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e nomina...",
   "machine": true
@@ -2293,8 +2337,16 @@
  },
  "The gap: form labels.": "La lacuna: le label dei form.",
  "The gap: framing.": "La lacuna: i frame.",
+ "The gap: hidden focus.": {
+  "text": "Il divario: focus nascosto.",
+  "machine": true
+ },
  "The gap: hreflang.": "La lacuna: hreflang.",
  "The gap: its WebSite JSON-LD has no name, the property search uses for the site name in results.": "La lacuna: il suo WebSite JSON-LD non ha name, la proprietà che la ricerca usa per il nome del sito nei risultati.",
+ "The gap: lazy loading.": {
+  "text": "Il divario: caricamento lento.",
+  "machine": true
+ },
  "The gap: link names.": "La lacuna: i nomi dei link.",
  "The gap: list markup.": {
   "text": "Il divario: markup dell'elenco.",
@@ -2312,6 +2364,10 @@
  "The gap: outdated libraries.": "La lacuna: librerie obsolete.",
  "The gap: page titles.": "La lacuna: i titoli delle pagine.",
  "The gap: schema fields.": "La lacuna: i campi schema.",
+ "The gap: security.": {
+  "text": "Il divario: la sicurezza.",
+  "machine": true
+ },
  "The gap: tap targets.": {
   "text": "Il divario: toccare gli obiettivi.",
   "machine": true

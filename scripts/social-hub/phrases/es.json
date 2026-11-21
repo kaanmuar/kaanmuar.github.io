@@ -613,6 +613,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Un evento en el formulario, la descarga o el registro te dice si la página funcionó.",
  "An http Location adds a hop and an unencrypted request.": "Un Location http añade un salto y una petición sin cifrar.",
  "An icon alone needs an aria-label.": "Un icono solo necesita un aria-label.",
+ "An icon alone…": {
+  "text": "Un icono por sí solo...",
+  "machine": true
+ },
  "An item with empty required fields is noise that search may ignore.": "Un elemento con campos obligatorios vacíos es ruido que el buscador puede ignorar.",
  "An NGO entity in JSON-LD, DMARC set to reject, framing limited, and language versions that link back.": "Una entidad NGO en JSON-LD, DMARC en reject, framing limitado y versiones de idioma que se enlazan entre sí.",
  "An ofrenda for the links that died.": "Una ofrenda para los enlaces que murieron.",
@@ -872,6 +876,10 @@
   "text": "Pero las imágenes de ⟦1⟧ tienen más del doble del tamaño que se muestra.",
   "machine": true
  },
+ "But ⟦1⟧ images below the first screen load straight away.": {
+  "text": "Pero las imágenes ⟦1⟧ debajo de la primera pantalla se cargan de inmediato.",
+  "machine": true
+ },
  "But ⟦1⟧ images have no alt attribute.": "Pero ⟦1⟧ imágenes no tienen atributo alt.",
  "But ⟦1⟧ images have no width or height.": {
   "text": "Pero las imágenes ⟦1⟧ no tienen ancho ni alto.",
@@ -939,6 +947,10 @@
  "But /explainers/ is listed in the sitemap while telling search engines not to index it.": "Pero /explainers/ aparece en el sitemap mientras pide a los buscadores que no lo indexen.",
  "But /personas/creditos declares itself canonical while its es-CO, es, and x-default alternates all point to the home page.": "Pero /personas/creditos se declara canonical mientras sus alternativas es-CO, es y x-default apuntan todas a la home.",
  "But /transparencia/menu-participa and two pages under it tell search engines noindex.": "Pero /transparencia/menu-participa y dos páginas bajo ella dicen noindex a los buscadores.",
+ "But A lookalike of your domain looks like phishing.": {
+  "text": "Pero una copia de su dominio parece phishing.",
+  "machine": true
+ },
  "But a made-up address answers ⟦1⟧ instead of ⟦2⟧, so crawlers can index error pages as real ones.": "Pero una dirección inventada responde ⟦1⟧ en vez de ⟦2⟧, así que los rastreadores pueden indexar páginas de error como si fueran reales.",
  "But a made-up path answers ⟦1⟧ with \"Page Not Found\", so crawlers may index it.": "Pero una ruta inventada responde ⟦1⟧ con \"Page Not Found\", así que los rastreadores podrían indexarla.",
  "But a made-up path answers ⟦1⟧ with the home page title, so search engines see a soft ⟦2⟧.": "Pero una ruta inventada responde ⟦1⟧ con el título de la home, así que los buscadores ven un soft ⟦2⟧.",
@@ -1714,6 +1726,10 @@
  "Fix layout overflow instead of locking zoom.": "Arregla el desbordamiento del diseño en lugar de bloquear el zoom.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a ⟦2⟧ to the closest live page.": "Corrige o quita cada uno que responda ⟦1⟧, o redirígelo con un ⟦2⟧ a la página viva más cercana.",
  "Fix or remove each one that answers ⟦1⟧, or redirect it with a…": "Corrige o quita cada uno que responda ⟦1⟧, o redirígelo con un…",
+ "Fix the first security item in the report, then run the review again.": {
+  "text": "Corrija el primer elemento de seguridad del informe y luego ejecute la revisión nuevamente.",
+  "machine": true
+ },
  "Fix the slowest first.": "Arregla primero la más lenta.",
  "Fix the weakest area first: for Metro de Bogotá that is security, at ⟦1⟧.": "Arregla primero el área más débil: para Metro de Bogotá es la seguridad, con ⟦1⟧.",
  "Flat Traffic, No Budget:": "Tráfico estancado, sin presupuesto:",
@@ -1808,6 +1824,10 @@
  "Give every button text or an aria-label, so a screen reader can announce it.": "Dale a cada botón texto o un aria-label, para que un lector de pantalla pueda anunciarlo.",
  "Give every button text or an aria-label, so a screen reader can announce…": {
   "text": "Asigne a cada botón un texto o una etiqueta de aria, para que un lector de pantalla pueda anunciar...",
+  "machine": true
+ },
+ "Give every button text or an aria-label, so a screen reader can…": {
+  "text": "Asigne texto a cada botón o una etiqueta de aria, para que un lector de pantalla pueda...",
   "machine": true
  },
  "Give every field a ⟦1⟧ or an aria-label.": "Dale a cada campo un ⟦1⟧ o un aria-label.",
@@ -2426,6 +2446,10 @@
  "Language versions link to each other, share cards are complete, and pages read without JavaScript.": "Las versiones de idioma se enlazan entre sí, las tarjetas para compartir están completas y las páginas se leen sin JavaScript.",
  "Language versions point at each other, framing is limited, and unknown paths answer ⟦1⟧.": "Las versiones de idioma se apuntan entre sí, el framing está limitado y las rutas desconocidas responden ⟦1⟧.",
  "Largest Contentful Paint marks when the biggest image or text block in the viewport finishes rendering.": "Largest Contentful Paint marca cuándo termina de renderizarse la imagen o el bloque de texto más grande del viewport.",
+ "Lazy-load images below the first screen, and never the main image.": {
+  "text": "Carga diferida de imágenes debajo de la primera pantalla, nunca de la imagen principal.",
+  "machine": true
+ },
  "LCP isn't.": "El LCP no lo es.",
  "LCP: when the main thing shows up.": "LCP: cuándo aparece lo principal.",
  "Le Monde answers with analytics, ⟦1⟧ to ⟦2⟧, security, ⟦3⟧ to ⟦4⟧, and GEO, ⟦5⟧ to ⟦6⟧.": "Le Monde responde con analítica, ⟦1⟧ a ⟦2⟧, seguridad, ⟦3⟧ a ⟦4⟧, y GEO, ⟦5⟧ a ⟦6⟧.",
@@ -3111,6 +3135,10 @@
   "text": "Redirija cada solicitud http a https con un ⟦1⟧ permanente, luego agregue…",
   "machine": true
  },
+ "Redirect every http request to https with one permanent…": {
+  "text": "Redirigir cada solicitud http a https con una permanente...",
+  "machine": true
+ },
  "Redirecting entries waste crawl.": "Las entradas que redirigen desperdician rastreo.",
  "Release day: is the page still right?": "Día de lanzamiento: ¿la página sigue bien?",
  "Relevance ⟦1⟧ (formerly SEO Week), the premier AI Search conference, takes place April ⟦2⟧–⟦3⟧, ⟦4⟧, at Halo […] The post Press Release:": "Relevance ⟦1⟧ (antes SEO Week), la principal conferencia de búsqueda con IA, se celebra del ⟦2⟧ al ⟦3⟧ de abril de ⟦4⟧ en Halo […] La entrada Comunicado de prensa:",
@@ -3461,6 +3489,10 @@
   "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y asígnele el nombre...",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and name it…": {
+  "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y asígnele un nombre...",
+  "machine": true
+ },
  "Serve ⟦1⟧ from the same host as the pages it lists, and name…": {
   "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y nombre...",
   "machine": true
@@ -3755,6 +3787,10 @@
   "text": "La brecha: cambio de diseño.",
   "machine": true
  },
+ "The gap: lazy loading.": {
+  "text": "La brecha: carga diferida.",
+  "machine": true
+ },
  "The gap: link names.": "El punto débil: nombres de enlaces.",
  "The gap: list markup.": {
   "text": "La brecha: marcado de lista.",
@@ -3780,6 +3816,10 @@
  },
  "The gap: page titles.": "El punto débil: títulos de página.",
  "The gap: schema fields.": "El punto débil: campos de schema.",
+ "The gap: security.": {
+  "text": "La brecha: la seguridad.",
+  "machine": true
+ },
  "The gap: tap targets.": {
   "text": "La brecha: aprovechar los objetivos.",
   "machine": true

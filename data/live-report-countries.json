@@ -1,6 +1,17 @@
 {
  "about": "Live Report countries found by scripts/live-report-countries.js (#2980). scope country | worldwide; by signals | gemini | carlos | curated.",
  "hosts": {
+  "10fastfingers.com": {
+   "country": "DE",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "Handelsregister printed (legal/contact page)",
+    "RDAP registrant in DE"
+   ],
+   "at": "2026-11-21"
+  },
   "111m9.com": {
    "country": "MM",
    "scope": "country",
@@ -218,6 +229,19 @@
     ".be is the BE country ending"
    ],
    "at": "2026-11-09"
+  },
+  "abogadojuannino.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +58-414-392-0363",
+    "phone +58-414-392-0363 (legal/contact page)"
+   ],
+   "at": "2026-11-21"
   },
   "absa.sc": {
    "country": "SC",
@@ -1208,6 +1232,18 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "aranjuezsteakhouse.com": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry ES",
+    "phone +34 691 713 369 (legal/contact page)",
+    "written in es, spoken in ES"
+   ],
+   "at": "2026-11-21"
   },
   "arcodental.com": {
    "country": "CR",
@@ -2885,6 +2921,19 @@
    ],
    "at": "2026-11-09"
   },
+  "centrovenezolanoamericano.org": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +58 412 5403079",
+    "phone +58 412 5403079 (legal/contact page)"
+   ],
+   "at": "2026-11-21"
+  },
   "century-properties.com": {
    "country": "PH",
    "scope": "country",
@@ -3439,6 +3488,19 @@
     "phone +525545453867 (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "clinicaelavila.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.91,
+   "by": "signals",
+   "evidence": [
+    "phone +58 212 2761111",
+    "phone +58 212 2761111 (legal/contact page)",
+    "Google Maps link in VE",
+    "address names VE"
+   ],
+   "at": "2026-11-21"
   },
   "clinicaelrosario.com": {
    "country": "CO",
@@ -8888,6 +8950,19 @@
    ],
    "at": "2026-11-09"
   },
+  "iconchile.com": {
+   "country": "CL",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry CL",
+    "schema.org addressCountry CL (legal/contact page)",
+    "phone +56 2 2488 2400",
+    "phone +56 2 2488 2400 (legal/contact page)"
+   ],
+   "at": "2026-11-21"
+  },
   "idam.pt": {
    "country": "PT",
    "scope": "country",
@@ -10546,6 +10621,19 @@
     "locale pt-BR"
    ],
    "at": "2026-11-11"
+  },
+  "liontechve.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584129777736",
+    "address names VE",
+    "locale es-VE"
+   ],
+   "at": "2026-11-21"
   },
   "liriaspa.com": {
    "country": "PE",
@@ -16325,6 +16413,19 @@
    ],
    "at": "2026-11-13"
   },
+  "sinfronterasve.online": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +584242292600",
+    "phone +584242292600 (legal/contact page)",
+    "hreflang only for VE (legal/contact page)"
+   ],
+   "at": "2026-11-21"
+  },
   "sistecredito.com": {
    "country": "CO",
    "scope": "country",
@@ -19824,6 +19925,19 @@
     "written in cs"
    ],
    "at": "2026-11-09"
+  },
+  "vvipvenezuela.net": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "phone +584166327919",
+    "phone +584166327919 (legal/contact page)",
+    "Google Maps link in VE",
+    "Google Maps link in VE (legal/contact page)"
+   ],
+   "at": "2026-11-21"
   },
   "w3.org": {
    "country": "",
