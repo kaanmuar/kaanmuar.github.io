@@ -24,6 +24,15 @@ test("deck parity: a URL Review change needs changes.js / presentation/ or 'deck
 	assert.equal(parity.checkPr(['llms.txt'], 'deck: skip:').ok, false);
 });
 
+test('deck parity: optOutText feeds checkPr so skip can live outside the webhook body (#4139)', () => {
+	const text = parity.optOutText('deck: skip: commit-message lane (#4139).', null, null);
+	assert.deepEqual(parity.checkPr(['functions/url-review-core.js'], text), {
+		ok: true,
+		review: ['functions/url-review-core.js'],
+		optOut: true,
+	});
+});
+
 test('deck parity: base and head refs default to origin/main and HEAD', () => {
 	assert.deepEqual(parity.refs([]), { base: 'origin/main', head: 'HEAD' });
 	assert.deepEqual(parity.refs(['abc']), { base: 'abc', head: 'HEAD' });
