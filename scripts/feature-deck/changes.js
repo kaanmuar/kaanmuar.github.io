@@ -21,6 +21,7 @@ const CHANGES = [
 		date: '2026-11-21',
 		eg: 'The deck stays current by itself: a PR that changes URL Review must update this list, or say why not.',
 		items: [
+			{ face: 'a11y', t: 'Keyboard-order checks on the start page', d: 'The accessibility section now reads the start page’s HTML for keyboard traps and odd tab order: positive tabindex, controls cut out of Tab, click-only elements, modals with nothing to focus or close, inert misuse, hidden-but-focusable controls and unnamed links or buttons. It says what the HTML shows and asks a person to confirm.' },
 			{ face: 'tools', t: 'Deck stays current automatically', d: 'Every URL Review change must update this list in the same PR, or say deck: skip. A daily check opens an issue when main moves and the deck does not.' },
 		],
 	},
