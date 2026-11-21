@@ -4,12 +4,10 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.wear.tiles.TileService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
-import com.google.android.gms.wearable.DataMap
-import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayInputStream
 
-/** The last summary the phone sent (#1419). The watch never signs in; everything it shows comes through here. */
+/** The last summary the phone sent (#1419 / #3836). The watch never signs in; everything it shows comes through Horologist's Data Layer. */
 object Store {
     const val PATH = "/jarvis/status"
     const val SYNC = "/jarvis/sync"
@@ -49,22 +47,26 @@ object Store {
         )
     }
 
-    /** Writes what the phone sent and redraws the tile and complication; "empty" means the phone is signed out. */
-    fun write(caller: Context, map: DataMap) {
+    /** Writes what the phone sent and redraws the tile and complication; null / empty means the phone is signed out. */
+    fun apply(caller: Context, payload: WatchPayload) {
+        write(caller, payload.toStatus())
+    }
+
+    fun write(caller: Context, status: Status?) {
         val context = caller.applicationContext
         prefs(context).edit().apply {
             clear()
-            if (!map.getBoolean("empty", false)) {
-                putFloat("readiness", map.getDouble("readiness", -1.0).toFloat())
-                putInt("alerts", map.getInt("alerts"))
-                putInt("warns", map.getInt("warns"))
-                putString("headline", map.getString("headline"))
-                putString("revenue", map.getString("revenue"))
-                putInt("sales", map.getInt("sales"))
-                putString("top", map.getString("top"))
-                putLong("at", map.getLong("at"))
-                putInt("running", map.getInt("running", 0))
-                putInt("needsYou", map.getInt("needsYou", 0))
+            if (status != null) {
+                putFloat("readiness", (status.readiness ?: -1.0).toFloat())
+                putInt("alerts", status.alerts)
+                putInt("warns", status.warns)
+                putString("headline", status.headline)
+                putString("revenue", status.revenue)
+                putInt("sales", status.sales)
+                putString("top", status.top)
+                putLong("at", status.at)
+                putInt("running", status.running)
+                putInt("needsYou", status.needsYou)
             }
         }.apply()
         TileService.getUpdater(context).requestUpdate(JarvisTile::class.java)
@@ -74,17 +76,21 @@ object Store {
     /** Reads the summary already in the Data Layer, then asks the phone for a fresh one. */
     suspend fun pull(context: Context) {
         val app = context.applicationContext
+        val registry = DataLayer.registry(app)
         runCatching {
-            val items = Wearable.getDataClient(app).dataItems.await()
+            val items = registry.dataClient.dataItems.await()
             try {
-                items.firstOrNull { it.uri.path == PATH }?.let { write(app, DataMapItem.fromDataItem(it).dataMap) }
+                items.firstOrNull { it.uri.path == PATH }?.data?.let { bytes ->
+                    val payload = WatchPayloadSerializer.readFrom(ByteArrayInputStream(bytes))
+                    apply(app, payload)
+                }
             } finally {
                 items.release()
             }
         }
         runCatching {
-            Wearable.getNodeClient(app).connectedNodes.await().forEach {
-                Wearable.getMessageClient(app).sendMessage(it.id, SYNC, null).await()
+            registry.nodeClient.connectedNodes.await().forEach {
+                registry.messageClient.sendMessage(it.id, SYNC, null).await()
             }
         }
     }
