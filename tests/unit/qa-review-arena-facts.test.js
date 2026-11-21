@@ -65,3 +65,41 @@ test("preview failed maps to fail (#4108)", () => {
 	assert.equal(fact.anomaly, "fail");
 	assert.equal(fact.status, "fail");
 });
+
+test("Plain http answered maps to https, not pages (#4106)", () => {
+	const fact = matchFact("Plain http answered 200.");
+	assert.equal(fact.stage, "https");
+	assert.equal(fact.status, "done");
+});
+
+test("RDAP timeout marks dns before generic timeout (#4107)", () => {
+	const fact = matchFact("The RDAP registration did not answer in time.");
+	assert.equal(fact.stage, "dns");
+	assert.equal(fact.status, "fail");
+	assert.equal(fact.anomaly, "timeout");
+});
+
+test("URLhaus could not maps to malware, not pages (#4106)", () => {
+	const fact = matchFact("URLhaus could not be read (timeout).");
+	assert.equal(fact.stage, "malware");
+	assert.equal(fact.status, "fail");
+});
+
+test("hacked-site failed paints fail (#4106)", () => {
+	const fact = matchFact("Hacked-site checks: 2 failed or did not answer.");
+	assert.equal(fact.stage, "security");
+	assert.equal(fact.status, "fail");
+});
+
+test("bot-recovery wait lights browser slow (#4108)", () => {
+	const fact = matchFact("The plain request was refused (status 403). Waiting for headless Chrome to open the page.");
+	assert.equal(fact.stage, "browser");
+	assert.equal(fact.anomaly, "slow");
+	assert.equal(fact.status, "wip");
+});
+
+test("linked Safe Browsing read maps webrisk (#4108)", () => {
+	const fact = matchFact("Google's Safe Browsing lists were read for 3 of 5 hosts; none is flagged.");
+	assert.equal(fact.stage, "webrisk");
+	assert.equal(fact.status, "done");
+});
