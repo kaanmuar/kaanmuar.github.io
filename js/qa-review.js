@@ -5960,6 +5960,13 @@
 						'<p class="meta-line targeted-owner-status" hidden></p>') +
 				'</div>'
 			: '';
+		const attackKeys = attackSourceFindings(report)
+			.filter((row) => row.verdict !== 'pass')
+			.map((row) => row.key);
+		const playbooksHtml =
+			window.QaReviewPlaybooks && typeof QaReviewPlaybooks.reportHtml === 'function'
+				? QaReviewPlaybooks.reportHtml(attackKeys, rc.lang || 'en', esc)
+				: '';
 		const pdfBtn = attackSourceFindings(report).length
 			? '<p class="no-print targeted-pdf-row"><button type="button" class="btn btn-ghost" id="targeted-evidence-pdf">' +
 				esc(rc.t('evidencePdf')) +
@@ -5979,6 +5986,7 @@
 			(metaParts.length ? '<div class="targeted-meta">' + metaParts.join('') + '</div>' : '') +
 			listHtml +
 			(foot.length ? '<div class="targeted-foot">' + foot.join('') + '</div>' : '') +
+			playbooksHtml +
 			offerHtml +
 			pdfBtn +
 			deepBlock(report, paid, payload);

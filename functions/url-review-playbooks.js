@@ -1,4 +1,10 @@
-'use strict';
+(function (root, factory) {
+	'use strict';
+	const api = factory();
+	if (typeof module === 'object' && module.exports) module.exports = api;
+	if (root) root.QaReviewPlaybooks = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+	'use strict';
 
 /* Incident-response playbooks for the paid "Was it targeted?" reports (#3958).
 
@@ -368,17 +374,61 @@ const native = (lang) =>
 			.toLowerCase()
 	) !== -1;
 
-module.exports = {
-	SOURCE_URL,
-	LICENSE_URL,
-	ATTRIBUTION,
-	HEADING,
-	PHASES,
-	FOR_KEY,
-	PLAYBOOKS,
-	forKeys,
-	heading,
-	attribution,
-	native,
-	langCode,
-};
+/* HTML for the paid report page (#3958). esc(text) must HTML-escape. Same books and CC BY line as the evidence PDF. */
+function reportHtml(keys, lang, esc) {
+	const escape = typeof esc === 'function' ? esc : (value) => String(value == null ? '' : value);
+	const books = forKeys(keys, lang);
+	if (!books.length) return '';
+	const head = heading(lang);
+	return (
+		'<section class="targeted-playbooks" data-playbooks>' +
+		'<h3>' +
+		escape(head.section) +
+		'</h3>' +
+		(native(lang) ? '' : '<p class="meta-line">' + escape(head.note || '') + '</p>') +
+		books
+			.map(
+				(book) =>
+					'<article class="targeted-playbook" data-playbook="' +
+					escape(book.id) +
+					'"><h4>' +
+					escape(book.title) +
+					' <span class="muted">(' +
+					escape(head.irm) +
+					' ' +
+					escape(book.irm) +
+					')</span></h4>' +
+					PHASES.map(
+						(phase) =>
+							'<p class="targeted-playbook-phase"><strong>' +
+							escape(head.phases[phase]) +
+							'</strong></p><ul>' +
+							book.steps[phase].map((step) => '<li>' + escape(step) + '</li>').join('') +
+							'</ul>'
+					).join('') +
+					'</article>'
+			)
+			.join('') +
+		'<p class="targeted-playbooks-attr meta-line">' +
+		escape(attribution(lang)) +
+		'</p></section>'
+	);
+}
+
+
+	return {
+		SOURCE_URL,
+		LICENSE_URL,
+		ATTRIBUTION,
+		HEADING,
+		PHASES,
+		FOR_KEY,
+		PLAYBOOKS,
+		forKeys,
+		heading,
+		attribution,
+		native,
+		langCode,
+		reportHtml
+	};
+});
