@@ -406,8 +406,15 @@ function stubFetch(routes) {
 	const calls = [];
 	const real = global.fetch;
 	global.fetch = async (url, opts = {}) => {
+		// masto (Mastodon) calls fetch(Request); the other clients call fetch(url, init). Both reach the routes as (url, init).
+		if (url instanceof Request) {
+			const type = url.headers.get('content-type') || '';
+			const body = !url.body ? undefined : /multipart/.test(type) ? await url.formData() : await url.text();
+			opts = { method: url.method, headers: Object.fromEntries(url.headers), body };
+			url = url.url;
+		}
 		const u = String(url);
-		calls.push({ url: u, method: opts.method || 'GET' });
+		calls.push({ url: u, method: opts.method || 'GET', headers: opts.headers });
 		const route = routes.find(([match]) => u.includes(match));
 		return route ? route[1](u, opts) : ok({});
 	};
@@ -418,12 +425,9 @@ function stubFetch(routes) {
 		},
 	};
 }
-const ok = (json, status = 200) => ({
-	ok: status < 300,
-	status,
-	json: async () => json,
-	arrayBuffer: async () => new ArrayBuffer(8),
-});
+// A real Response, since masto reads headers and status off it.
+const ok = (json, status = 200) =>
+	new Response(JSON.stringify(json), { status, headers: { 'Content-Type': 'application/json' } });
 const clipOf = (slug, lang) => ({ url: 'https://github.com/o/r/releases/download/b/' + slug + '.mp4', lang });
 
 test("run hands a composer network the clip, both halves of the quiz and the quiz's own post there", async () => {
@@ -602,6 +606,60 @@ test('the Mastodon client posts a quiz as a poll without media, and drops a refu
 			]
 		);
 		assert.equal(uploads, 1);
+	} finally {
+		f.restore();
+	}
+});
+
+test('the Mastodon client (masto) sends the idempotency key and the card with its file name, polls an unfinished upload, and surfaces the HTTP status (#3841)', async () => {
+	const uploads = [];
+	const statuses = [];
+	let polls = 0;
+	const f = stubFetch([
+		[
+			'/api/v2/media',
+			(u, o) => {
+				uploads.push(o.body);
+				return ok({ id: 'm' + uploads.length, url: uploads.length === 1 ? null : 'https://files.example/m.jpg' });
+			},
+		],
+		[
+			'/api/v1/media/m1',
+			() => {
+				polls += 1;
+				return ok({ id: 'm1', url: 'https://files.example/m1.jpg' });
+			},
+		],
+		[
+			'/api/v1/statuses',
+			(u, o) => {
+				statuses.push({ body: JSON.parse(o.body), key: o.headers['idempotency-key'], auth: o.headers.authorization });
+				return statuses.length === 1
+					? ok({ error: 'Rate limited' }, 429)
+					: ok({ id: 's1', url: 'https://mastodon.social/@q/s1' });
+			},
+		],
+	]);
+	try {
+		const client = q.NETWORKS.mastodon({ MASTODON_URL: 'https://mastodon.social', MASTODON_TOKEN: 'tok' });
+		const args = { text: 'Hello', image: __filename, alt: 'Card', lang: 'en', key: 'b/01-a', cap: { kind: 'compare' } };
+		// Anything but a 422 is not retried as a plainer post: it reaches the queue with .status and the usual message.
+		await assert.rejects(
+			client.post(args),
+			(error) => error.status === 429 && /^Mastodon \/api\/v1\/statuses 429: Rate limited/.test(error.message)
+		);
+		const posted = await client.post(args);
+		assert.deepEqual([posted.id, posted.uses], ['s1', ['image']]);
+		assert.match(uploads[0].get('file').name, /open-social-queue\.test\.js$/);
+		assert.equal(uploads[0].get('description'), 'Card');
+		assert.equal(polls, 1);
+		assert.deepEqual(
+			statuses.map((s) => [s.body.media_ids, s.body.language, s.key, s.auth]),
+			[
+				[['m1'], 'en', 'b/01-a', 'Bearer tok'],
+				[['m2'], 'en', 'b/01-a', 'Bearer tok'],
+			]
+		);
 	} finally {
 		f.restore();
 	}

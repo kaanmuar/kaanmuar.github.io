@@ -20,10 +20,16 @@ function stub(routes) {
 	const calls = [];
 	const real = global.fetch;
 	global.fetch = async (url, init = {}) => {
+		// masto (Mastodon) calls fetch(Request); Bluesky calls fetch(url, init). Both are logged as (url, init).
+		if (url instanceof Request) {
+			const multipart = /multipart/.test(url.headers.get('content-type') || '');
+			init = { method: url.method, body: multipart ? await url.formData() : await url.text() };
+			url = url.url;
+		}
 		calls.push({ url: String(url), init });
 		const hit = Object.keys(routes).find((key) => String(url).includes(key));
 		const [status, json] = hit ? routes[hit] : [404, { error: 'NotFound' }];
-		return { ok: status < 400, status, json: async () => json };
+		return new Response(JSON.stringify(json), { status, headers: { 'Content-Type': 'application/json' } });
 	};
 	return {
 		calls,
