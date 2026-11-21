@@ -1,0 +1,62 @@
+#!/usr/bin/env node
+/*
+ * Out-of-band accessibility-tree audit (#3831). Opens a page in Chromium with Playwright, reads the browser's own
+ * accessibility tree over the DevTools Protocol (Accessibility.getFullAXTree), and reduces it with
+ * functions/url-review-axtree.js. No script is injected into the page, so a strict Content-Security-Policy cannot
+ * block it the way it blocks an injected axe-core (#998). This runs on a machine with a browser, never in Cloud Functions.
+ *
+ *   node scripts/axtree-audit.js <url>                       prints a summary, exits 1 when any error-level rule fails
+ *   node scripts/axtree-audit.js <url> --earl out.json       also writes W3C EARL 1.0 (JSON-LD)
+ *   node scripts/axtree-audit.js <url> --sarif out.sarif     also writes SARIF 2.1.0
+ *   node scripts/axtree-audit.js --file tree.json [--url u]  reduces a saved getFullAXTree response, no browser
+ */
+const fs = require('fs');
+const axtree = require('../functions/url-review-axtree');
+
+function args(argv) {
+	const out = { target: '', earl: '', sarif: '', file: '', url: '' };
+	for (let i = 0; i < argv.length; i++) {
+		const arg = argv[i];
+		if (arg === '--earl') out.earl = argv[++i] || '';
+		else if (arg === '--sarif') out.sarif = argv[++i] || '';
+		else if (arg === '--file') out.file = argv[++i] || '';
+		else if (arg === '--url') out.url = argv[++i] || '';
+		else if (!arg.startsWith('--')) out.target = arg;
+	}
+	return out;
+}
+
+async function capture(url) {
+	if (!/^https?:\/\//i.test(url)) throw new Error('Give an http(s) address.');
+	require('./playwright-sandbox');
+	const { chromium } = require('playwright');
+	const browser = await chromium.launch();
+	try {
+		const page = await browser.newPage();
+		await page.goto(url, { waitUntil: 'load', timeout: 45000 });
+		const session = await page.context().newCDPSession(page);
+		return await session.send('Accessibility.getFullAXTree');
+	} finally {
+		await browser.close();
+	}
+}
+
+async function main() {
+	const opts = args(process.argv.slice(2));
+	if (!opts.target && !opts.file) {
+		console.error('Usage: node scripts/axtree-audit.js <url> [--earl out.json] [--sarif out.sarif] | --file tree.json');
+		process.exit(2);
+	}
+	const tree = opts.file ? JSON.parse(fs.readFileSync(opts.file, 'utf8')) : await capture(opts.target);
+	const report = axtree.reduce(tree, { url: opts.target || opts.url });
+	if (opts.earl) fs.writeFileSync(opts.earl, JSON.stringify(axtree.earl(report), null, 2) + '\n');
+	if (opts.sarif) fs.writeFileSync(opts.sarif, JSON.stringify(axtree.sarif(report), null, 2) + '\n');
+	console.log(report.total + ' accessibility nodes (' + report.ignored + ' ignored), ' + report.issues.length + ' problems');
+	Object.keys(report.counts).forEach((rule) => console.log('  ' + rule + ': ' + report.counts[rule]));
+	process.exit(Object.keys(report.counts).some((rule) => axtree.RULES[rule].level === 'error') ? 1 : 0);
+}
+
+main().catch((error) => {
+	console.error(error.message || error);
+	process.exit(2);
+});
