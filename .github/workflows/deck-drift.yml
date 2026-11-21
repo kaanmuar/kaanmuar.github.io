@@ -54,13 +54,20 @@ jobs:
         run: |
           set -euo pipefail
           title='Living deck lagged behind URL Review on main (#4102)'
+          short=${GITHUB_SHA:0:9}
           # Reuse an open issue with the same title; otherwise file a new one linked to #4102.
           existing=$(gh issue list --state open --search "in:title Living deck lagged behind URL Review" --json number,title --jq '.[0].number // empty')
-          body=$(printf '%s\n\n## Drift\n```\n%s\n```\n\nParent: #4102. Update `scripts/feature-deck/changes.js`, run `npm --prefix scripts/feature-deck run deck`, commit `presentation/`.\n' \
-            "Detected by deck-drift on \`${GITHUB_SHA:0:9}\`." "$LOG")
+          body="Detected by deck-drift on ${short}.
+
+## Drift
+\`\`\`
+${LOG}
+\`\`\`
+
+Parent: #4102. Update scripts/feature-deck/changes.js, run npm --prefix scripts/feature-deck run deck, commit presentation/."
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
-            echo "Refreshed #$existing"
+            echo "Refreshed #${existing}"
           else
             gh issue create --title "$title" --body "$body" --label "bug" --label "area:Ops"
           fi
