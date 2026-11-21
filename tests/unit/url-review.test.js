@@ -2126,6 +2126,17 @@ test.describe('journeys', () => {
 		assert.equal(steps[0].h1, 'Sport');
 	});
 
+	test('carry a test id and an aria-label to the generated locator only when the link had them (#3832)', () => {
+		const nav = [
+			{ text: 'Sport', target: '/sport', selector: 'a[href="/sport"]', where: 'navigation', testId: 'nav-sport', ariaLabel: 'Sport news' },
+		];
+		const [step] = core.journeys(pages, { nav });
+		assert.equal(step.testId, 'nav-sport');
+		assert.equal(step.ariaLabel, 'Sport news');
+		const [plain] = core.journeys(pages, { nav: [Object.assign({}, nav[0], { testId: '', ariaLabel: undefined })] });
+		assert.ok(!('testId' in plain) && !('ariaLabel' in plain));
+	});
+
 	test('propose at most four', () => {
 		const nav = ['a', 'b', 'c', 'd', 'e', 'f'].map((name) => ({
 			text: 'Section ' + name,

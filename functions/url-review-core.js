@@ -3203,14 +3203,20 @@ function journeys(pages, dom) {
 				((a.page ? 2 : 0) + (a.link.where === 'navigation' ? 1 : 0))
 		)
 		.slice(0, 4)
-		.map((row) => ({
-			path: start,
-			selector: row.link.selector,
-			text: row.link.text,
-			target: row.link.target,
-			h1: heading(row.page),
-			where: row.link.where,
-		}));
+		.map((row) =>
+			Object.assign(
+				{
+					path: start,
+					selector: row.link.selector,
+					text: row.link.text,
+					target: row.link.target,
+					h1: heading(row.page),
+					where: row.link.where,
+				},
+				row.link.testId ? { testId: clean(row.link.testId, 80) } : {},
+				row.link.ariaLabel ? { ariaLabel: clean(row.link.ariaLabel, 80) } : {}
+			)
+		);
 }
 
 // A privacy link is often named for the page, not the word: "Privacy and disclaimers" can point to /legal.html.
