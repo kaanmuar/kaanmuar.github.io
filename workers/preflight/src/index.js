@@ -4,8 +4,9 @@
 //   POST /index  {items:[{id, text, meta:{kind, ref, title}}]}  (up to 50 per call)
 //   POST /delete {ids:[...]}
 //   POST /complete {system, prompt, json, max_tokens}  -> {text} or {json}  (the outreach runs of #1980)
-// Bearer TOKEN on every call.
+// Bearer TOKEN on every call; a rejected call logs the caller's country/ASN when the GEOIP R2 binding is set (#4031).
 import { createBreaker, resilientCall } from "../../shared/breaker.js";
+import { createGeoip } from "../../shared/geoip.js";
 
 // Workers AI and Vectorize calls (#3838): retry transient 429/5xx/network errors with jittered backoff; ten failures in a
 // row pause the calls for 30s. The free-allocation error (4006) is not transient and passes straight through.
@@ -19,6 +20,20 @@ const SYSTEM = "You plan coding tasks in one repo: a static site (HTML/JS/CSS on
   + "Plan only the code and verification work, naming the candidate files you would change. If the candidates do not fit the task, return an empty files list rather than guessing. "
   + "Reply with JSON only: {\"plan\": [at most 5 short imperative steps], \"files\": [{\"n\": candidate number, \"why\": \"under 12 words\"}] (at most 6), \"rules\": [paths from the rule list that apply]}.";
 const RULES = [".cursor/rules/jarvis-mobile-parity.mdc", ".cursor/rules/social-clips.mdc", ".cursor/rules/playwright-sandbox.mdc"];
+
+// GeoIP (#4031): rejected calls log the caller's country and ASN, so a probe of the token shows where it came from.
+// env.GEOIP is an R2 bucket binding (see cloudflare.config.ts); without it, or without the database, geo is just null.
+// Created per isolate so the two .mmdb files are read from R2 once, and only when a call is rejected.
+let geo; let geoBucket;
+export async function lookupCaller(request, env) {
+  if (!env || !env.GEOIP) return null;
+  if (!geo || geoBucket !== env.GEOIP) { geoBucket = env.GEOIP; geo = createGeoip({ bucket: env.GEOIP }); }
+  return geo.lookup(request.headers.get("cf-connecting-ip") || "");
+}
+async function logRejected(request, env, pathname) {
+  const where = await lookupCaller(request, env).catch(() => null);
+  console.warn("unauthorized", pathname, where ? JSON.stringify(where) : "geo unknown");
+}
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
@@ -82,11 +97,15 @@ async function complete(env, { system = "", prompt = "", json: asJson = false, m
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method !== "POST") return json({ ok: true, service: "preflight" });
-    if (request.headers.get("authorization") !== `Bearer ${env.TOKEN}`) return json({ error: "unauthorized" }, 401);
-    const body = await request.json().catch(() => ({}));
     const { pathname } = new URL(request.url);
+    if (request.headers.get("authorization") !== `Bearer ${env.TOKEN}`) {
+      const note = logRejected(request, env, pathname);
+      if (ctx && ctx.waitUntil) ctx.waitUntil(note);
+      return json({ error: "unauthorized" }, 401);
+    }
+    const body = await request.json().catch(() => ({}));
     try {
       if (pathname === "/triage") return json(await triage(env, body));
       if (pathname === "/index") return json(await index(env, body));

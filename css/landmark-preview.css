@@ -1,0 +1,126 @@
+/* Dev-only landmark announcement overlay (#3832). Loaded only when ?landmarks=1 / qa-landmarks. */
+.landmark-preview {
+	position: fixed;
+	right: 12px;
+	bottom: 12px;
+	z-index: 2147483000;
+	width: min(380px, calc(100vw - 24px));
+	max-height: min(52vh, 440px);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 14px;
+	box-sizing: border-box;
+	overflow: hidden;
+	border-radius: 12px;
+	border: 1px solid var(--line, #d5dce3);
+	background: color-mix(in srgb, var(--card, #ffffff) 92%, transparent);
+	color: var(--text, #12181f);
+	box-shadow: 0 18px 40px rgba(8, 14, 18, 0.28);
+	-webkit-backdrop-filter: blur(18px) saturate(1.25);
+	backdrop-filter: blur(18px) saturate(1.25);
+	font: 600 12px/1.35 Inter, system-ui, sans-serif;
+}
+
+.landmark-preview__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.landmark-preview__head strong {
+	font-size: 13px;
+	letter-spacing: 0.01em;
+}
+
+.landmark-preview__note {
+	color: var(--muted, #4a5560);
+	font-weight: 500;
+	font-size: 11px;
+	white-space: nowrap;
+}
+
+.landmark-preview__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.landmark-preview__btn {
+	border: 1px solid var(--line, #d5dce3);
+	border-radius: 6px;
+	padding: 5px 10px;
+	background: var(--cyan, #0d6e76);
+	color: var(--on-cyan, #fff);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.landmark-preview__btn--ghost {
+	background: transparent;
+	color: var(--text, #12181f);
+}
+
+.landmark-preview__btn:hover {
+	filter: brightness(1.05);
+}
+
+.landmark-preview__warnings {
+	margin: 0;
+	padding: 8px 10px 8px 24px;
+	border-radius: 8px;
+	border: 1px solid color-mix(in srgb, var(--amber, #b45309) 45%, var(--line, #d5dce3));
+	background: color-mix(in srgb, var(--amber, #b45309) 12%, var(--card, #fff));
+	color: var(--text, #12181f);
+	font-weight: 500;
+	font-size: 11px;
+	line-height: 1.4;
+	max-height: 28%;
+	overflow: auto;
+}
+
+.landmark-preview__lines {
+	margin: 0;
+	padding: 0 0 0 18px;
+	overflow: auto;
+	overscroll-behavior: contain;
+	flex: 1;
+	min-height: 0;
+	font-weight: 500;
+	font-family: "Fira Code", ui-monospace, monospace;
+	font-size: 11px;
+	line-height: 1.45;
+	color: var(--text, #12181f);
+}
+
+.landmark-preview__lines li {
+	margin: 0 0 4px;
+}
+
+.landmark-preview__empty {
+	margin: 0;
+	color: var(--muted, #4a5560);
+	font-weight: 500;
+}
+
+html.dark-mode .landmark-preview {
+	box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 560px) {
+	.landmark-preview {
+		right: 8px;
+		bottom: 8px;
+		width: calc(100vw - 16px);
+		max-height: 42vh;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.landmark-preview {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+}

@@ -2635,6 +2635,11 @@ async function ownerProofRows(email) {
 	}
 }
 
+// Owner DMARC / TLS-RPT verdicts for a review of the asker's own proven host (#3777); null without consent or data.
+function ownerReportsLoader(email) {
+	return (host, kind) => dmarcStore.ownerReportsFor(reviewAuth.firestoreStore(getFirestore()), email, host, kind, Date.now());
+}
+
 // Site verification is off until REVIEW_VERIFY_KEY is set: no token is issued or checked.
 function siteTokenFor(email) {
 	const key = process.env.REVIEW_VERIFY_KEY || '';
@@ -8999,7 +9004,7 @@ async function runReview(req, res, placeOf) {
     const report = await urlReview.reviewTarget(intake.value.url, {
       log: (text) => writeLine({ type: "log", text }),
       stopped: () => stopped,
-      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email, proofs: await ownerProofRows(intake.value.email), siteToken: siteTokenFor(intake.value.email) },
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email, proofs: await ownerProofRows(intake.value.email), siteToken: siteTokenFor(intake.value.email), ownerReports: ownerReportsLoader(intake.value.email) },
       maxPages: intake.value.pages,
       maxDepth: intake.value.depth,
       pageLang: intake.value.pageLang,
@@ -9780,6 +9785,7 @@ exports.jarvisReviewRun = functions
 					email: value.email,
 					proofs: await ownerProofRows(value.email),
 					siteToken: siteTokenFor(value.email),
+					ownerReports: ownerReportsLoader(value.email),
 				},
 				browse: browseForReview,
 				pagespeed: process.env.PAGESPEED_KEY
@@ -9878,6 +9884,7 @@ exports.fixRereview = functions
 					email: goal.email,
 					proofs: await ownerProofRows(goal.email),
 					siteToken: siteTokenFor(goal.email),
+					ownerReports: ownerReportsLoader(goal.email),
 				},
 				customer: true,
 				browse: browseForReview,

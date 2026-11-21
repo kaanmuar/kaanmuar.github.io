@@ -6,6 +6,9 @@ const insights = require('../../functions/url-review-insights');
 const proof = require('../../functions/url-review-owner-proof');
 const reports = require('../../functions/url-review-dmarc-reports');
 const consent = require('../../functions/url-review-dmarc-consent');
+const storeApi = require('../../functions/url-review-dmarc-store');
+const auth = require('../../functions/url-review-auth');
+const publish = require('../../functions/url-review-publish');
 const { EN, render } = require('../../functions/url-review-findings-en');
 
 // Invented fixtures: example domains and documentation IP ranges (RFC 5737, RFC 3849). No real report is in the repo.
@@ -317,5 +320,116 @@ test.describe('the review shows owner data only with consent and data (#3777)', 
 		const found = review(consent.ownerReportView(row, 'site', [], [tls], NOW)).findings.filter((item) => /-data$/.test(item.key));
 		assert.deepEqual(found.map((item) => item.key), ['sec-tlsrpt-data']);
 		assert.match(text(found[0]), /10 of 100 reported sessions to shop\.example\.com failed \(10\.0%\)/);
+	});
+});
+
+test.describe('p=reject safety wording uses sec-dmarc-data (#3777)', () => {
+	const REJECT = '<p>reject</p><pct>100</pct>';
+	const row = consent.consentRecord({ email: 'owner@shop.example.com', host: 'shop.example.com', accept: true, noticeVersion: consent.NOTICE_VERSION }, 'site', NOW);
+	const view = (list) => consent.ownerReportView(row, 'site', list, [], NOW).dmarc;
+	const review = (list) => {
+		const dns = {
+			domain: 'shop.example.com',
+			spf: 'v=spf1 include:_spf.google.com ~all',
+			dmarc: 'v=DMARC1; p=reject; rua=mailto:dmarc@shop.example.com',
+			mx: ['mx.shop.example.com'],
+			caa: ['letsencrypt.org'],
+			unread: [],
+			mailAuth: { spfRecords: 1, lookups: 2, complete: true, all: '~', dmarcRecords: 1 },
+			ownerReports: consent.ownerReportView(row, 'site', list, [], NOW),
+		};
+		const url = 'https://shop.example.com/';
+		const html = '<!doctype html><html lang="en"><head><title>Example shop for garden tools</title></head><body><main><h1>Garden tools</h1></main></body></html>';
+		const page = { url, path: '/', status: 200, ms: 120, depth: 0, inspect: core.analyzeHtml(html, { 'content-type': 'text/html' }, url) };
+		return insights.analyze({ pages: [page], extras: { dns } }).findings.filter((item) => item.key === 'sec-dmarc-data');
+	};
+
+	test('verdict: reject with clean mail is at-reject, reject with a failing sender is at-reject-check, never "safe"', () => {
+		assert.equal(view(week(null, REJECT)).verdict, 'at-reject');
+		const dirty = view(week({ ip: '198.51.100.7', n: 10, dkim: 'fail', spf: 'fail', disposition: 'reject' }, REJECT));
+		assert.equal(dirty.verdict, 'at-reject-check');
+		assert.equal(dirty.failing[0].ip, '198.51.100.7');
+		assert.equal(view(week(null, '<p>none</p><pct>100</pct>')).verdict, 'safe');
+		assert.equal(view(week(null, '<p>reject</p><pct>50</pct>')).verdict, 'safe');
+	});
+
+	test('wording: clean reject says working; a failing sender at reject asks the owner to check and is not a pass', () => {
+		const [ok] = review(week(null, REJECT));
+		assert.deepEqual([ok.verdict, ok.severity], ['pass', 'info']);
+		assert.match(render(EN, ok.title), /reject policy is working/);
+		const [check] = review(week({ ip: '198.51.100.7', n: 10, dkim: 'fail', spf: 'fail', disposition: 'reject' }, REJECT));
+		assert.deepEqual([check.verdict, check.severity], ['risk', 'low']);
+		assert.doesNotMatch(render(EN, check.title), /working/);
+		assert.match(render(EN, check.evidence), /being rejected: 198\.51\.100\.7 \(70 of 70 failed\)/);
+		assert.match(render(EN, check.fix), /one of your own senders/);
+	});
+
+	test('wording: a low pass rate with no single big failing sender still reads as check, with the rate', () => {
+		const list = [];
+		for (let i = 0; i < 7; i++) {
+			const rows = [record('192.0.2.10', 40, 'none', 'pass', 'pass')];
+			for (let n = 1; n <= 12; n++) rows.push(record('203.0.113.' + n, 1, 'reject', 'fail', 'fail'));
+			list.push(reports.parseDmarcAggregate(dmarcXml(i, rows, REJECT)));
+		}
+		const [item] = review(list);
+		assert.equal(item.verdict, 'risk');
+		assert.match(render(EN, item.evidence), /p=reject in force, below the 98%/);
+	});
+
+	test('every language ships the new keys (English until native review)', () => {
+		const source = require('fs').readFileSync(require('path').join(__dirname, '../../js/qa-review-findings-copy.js'), 'utf8');
+		assert.equal((source.match(/"sec-dmarc-data\.atRejectCheck\.fix"/g) || []).length, 5);
+	});
+});
+
+test.describe('the live review loads owner data through the store (#3777)', () => {
+	const EMAIL = 'owner@shop.example.com';
+	const HOST = 'shop.example.com';
+	const siteRows = [proof.siteRecord({ email: EMAIL, host: HOST, how: 'dns' })];
+
+	async function seeded(on) {
+		const store = auth.memoryStore();
+		await storeApi.setConsent(store, { email: EMAIL, host: HOST, accept: on, noticeVersion: consent.NOTICE_VERSION }, siteRows, NOW);
+		for (const agg of week()) await storeApi.saveAggregate(store, EMAIL, HOST, agg, NOW);
+		return store;
+	}
+
+	test('consent + proof + data gives verdicts only, no stored counts', async () => {
+		const store = await seeded(true);
+		const view = await storeApi.ownerReportsFor(store, EMAIL, HOST, 'site', NOW);
+		assert.equal(view.dmarc.verdict, 'safe');
+		assert.equal(view.tls, null);
+		assert.equal(view.dmarc.messages, 280);
+		const dump = JSON.stringify(view);
+		assert.equal(dump.indexOf('"days":{'), -1);
+		assert.equal(dump.indexOf('"sources"'), -1);
+	});
+
+	test('no consent, withdrawn consent, a weak proof, or another host gives null', async () => {
+		assert.equal(await storeApi.ownerReportsFor(await seeded(false), EMAIL, HOST, 'site', NOW), null);
+		const on = await seeded(true);
+		assert.equal(await storeApi.ownerReportsFor(on, EMAIL, HOST, 'own', NOW), null);
+		assert.equal(await storeApi.ownerReportsFor(on, EMAIL, HOST, '', NOW), null);
+		assert.equal(await storeApi.ownerReportsFor(on, EMAIL, 'other.example.com', 'site', NOW), null);
+		assert.equal(await storeApi.ownerReportsFor(on, 'someone@else.example.com', HOST, 'site', NOW), null);
+		await storeApi.setConsent(on, { email: EMAIL, host: HOST, accept: false }, siteRows, NOW);
+		assert.equal(await storeApi.ownerReportsFor(on, EMAIL, HOST, 'site', NOW), null);
+	});
+
+	test('a store failure falls back to the public-policy-only review', async () => {
+		const broken = { get: async () => { throw new Error('down'); } };
+		assert.equal(await storeApi.ownerReportsFor(broken, EMAIL, HOST, 'site', NOW), null);
+	});
+
+	test('owner data stays out of unpaid previews and the public Live Reports feed', () => {
+		const finding = { key: 'sec-dmarc-data', area: 'Security', verdict: 'risk', severity: 'medium', rank: 1, title: 'Your DMARC reports show legitimate mail could fail if you tighten the policy', evidence: '198.51.100.7 (70 of 70 failed)', fix: 'Fix alignment' };
+		const report = {
+			id: 'r1', status: 'complete', host: 'shop.example.com', finalUrl: 'https://shop.example.com/', limits: { pagesRead: 1, maxPages: 5 },
+			pages: [{ url: 'https://shop.example.com/', path: '/', status: 200 }], cases: [],
+			insights: { score: { overall: 80, grade: 'B', areas: { Security: { score: 70 } } }, findings: [finding, Object.assign({}, finding, { key: 'sec-tlsrpt-data' }), Object.assign({}, finding, { key: 'sec-hsts', title: 'HSTS missing' })] },
+		};
+		const keys = (r) => r.insights.findings.map((item) => item.key);
+		assert.deepEqual(keys(core.previewReport(report)), ['sec-hsts']);
+		assert.deepEqual(keys(publish.publicReport(report)), ['sec-hsts']);
 	});
 });

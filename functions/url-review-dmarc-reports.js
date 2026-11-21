@@ -310,7 +310,10 @@ function bySource(agg) {
 		.sort((a, b) => b.fail - a.fail || b.messages - a.messages || (a.ip < b.ip ? -1 : 1));
 }
 
-// "Safe to tighten?" for a DMARC aggregate (already merged). verdict: "not-enough-data" | "safe" | "not-yet" | "at-reject".
+// "Safe to tighten?" for a DMARC aggregate (already merged). verdict: "not-enough-data" | "safe" | "not-yet" | "at-reject" | "at-reject-check".
+// Under p=reject (pct 100) the question turns round: "safe" no longer applies, so the clean case is "at-reject" and a window that would
+// fail the "safe" test is "at-reject-check": those messages are being dropped now, and the owner has to tell whether the failing
+// servers are their own senders (fix alignment) or spoofers (reject is doing its job). It never says "working" over a failing sender.
 function tightenVerdict(agg) {
 	const T = THRESHOLDS;
 	const sum = totals(agg);
@@ -332,7 +335,8 @@ function tightenVerdict(agg) {
 		.map((row) => ({ ip: row.ip, messages: row.messages, fail: row.fail, passRate: row.rate }));
 	const safe = rate >= T.OVERALL_PASS && !failing.length;
 	const atReject = base.policy.p === 'reject' && base.policy.pct === 100;
-	return Object.assign(base, { failing, verdict: atReject ? 'at-reject' : safe ? 'safe' : 'not-yet' });
+	const verdict = atReject ? (safe ? 'at-reject' : 'at-reject-check') : safe ? 'safe' : 'not-yet';
+	return Object.assign(base, { failing, verdict });
 }
 
 // TLS-RPT: is mail to this domain arriving over verified TLS? "ok" | "failing" | "not-enough-data".

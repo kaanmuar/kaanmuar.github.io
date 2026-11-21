@@ -1290,7 +1290,13 @@ async function domFacts(page) {
 				const selector = options.find((option) => unique(option) && document.querySelector(option) === node);
 				if (!selector) return;
 				seen.add(url.pathname);
-				nav.push({ text, target: url.pathname, selector, where: node.closest('main') ? 'main' : 'navigation' });
+				const step = { text, target: url.pathname, selector, where: node.closest('main') ? 'main' : 'navigation' };
+				// What a generated test can find the link by besides CSS (#3832): a test id and an aria-label, only when set.
+				const testId = (node.getAttribute('data-testid') || '').trim().slice(0, 80);
+				const ariaLabel = (node.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+				if (testId) step.testId = testId;
+				if (ariaLabel) step.ariaLabel = ariaLabel;
+				nav.push(step);
 			});
 		const named = (node) =>
 			(node.labels && node.labels.length) ||
