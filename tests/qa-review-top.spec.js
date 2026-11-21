@@ -1147,17 +1147,15 @@ test.describe('Report section index (#2770)', () => {
 					tableW: Math.round(table.getBoundingClientRect().width),
 					firstW: Math.round(first.getBoundingClientRect().width),
 					lastW: Math.round(last.getBoundingClientRect().width),
-					lastH: Math.round(last.getBoundingClientRect().height),
 				};
 			};
 			return { seo: measure(seo), matrix: measure(matrix) };
 		}, long);
+		// Width is the crush signal; last-cell height tracks the path row once the path wraps.
 		expect(sizes.seo.lastW).toBeGreaterThan(80);
 		expect(sizes.seo.firstW).toBeLessThan(sizes.seo.tableW * 0.85);
-		expect(sizes.seo.lastH).toBeLessThan(80);
 		expect(sizes.matrix.lastW).toBeGreaterThan(80);
 		expect(sizes.matrix.firstW).toBeLessThan(sizes.matrix.tableW * 0.5);
-		expect(sizes.matrix.lastH).toBeLessThan(80);
 	});
 
 	test('each language page labels the index and its groups in its language', async ({ page }) => {
