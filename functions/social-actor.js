@@ -52,7 +52,8 @@ function preferredUsername(env = process.env) {
 	const actor = ourActor(env);
 	if (!actor) return '';
 	try {
-		const path = new URL(actor).pathname.replace(/\/+$/, '');
+		let path = new URL(actor).pathname;
+		while (path.endsWith('/')) path = path.slice(0, -1);
 		const part = path.split('/').filter(Boolean).pop();
 		return part || '';
 	} catch (error) {
@@ -102,7 +103,7 @@ function buildActor(env = process.env) {
 	};
 	if (pem) {
 		doc.publicKey = {
-			id: id.replace(/#.*$/, '') + '#main-key',
+			id: (id.includes('#') ? id.slice(0, id.indexOf('#')) : id) + '#main-key',
 			owner: id,
 			publicKeyPem: pem,
 		};
