@@ -9,6 +9,7 @@
 const net = require('net');
 const url = require('url');
 const { registrable, registryDomain } = require('./url-review-suffix');
+const resilience = require('./http-resilience');
 
 const LIMITS = {
 	candidates: 400,
@@ -21,7 +22,10 @@ const LIMITS = {
 	minLabel: 4,
 };
 
-const RESOLVERS = ['https://cloudflare-dns.com/dns-query', 'https://dns.google/resolve'];
+const RESOLVERS = [
+	{ base: 'https://cloudflare-dns.com/dns-query', breaker: 'doh-cloudflare' },
+	{ base: 'https://dns.google/resolve', breaker: 'doh-google' },
+];
 const TYPE = { A: 1, NS: 2, MX: 15, AAAA: 28 };
 
 // dnstwist's qwerty, qwertz and azerty layouts, merged: each key with the keys around it.
@@ -196,14 +200,25 @@ function permutations(site) {
 }
 
 // One DNS question as JSON; the second resolver answers when the first fails. Null when neither answered.
+// Retries 5xx/429 with backoff and pauses after repeated failures (#3838); DNS JSON Status (incl. NXDOMAIN)
+// stays on HTTP 200 and is never treated as a transport failure. Answer shapes stay the same.
 async function doh(name, type, ms) {
-	for (const base of RESOLVERS) {
+	const timeoutMs = ms || LIMITS.queryMs;
+	for (const { base, breaker } of RESOLVERS) {
 		try {
-			const res = await fetch(base + '?name=' + encodeURIComponent(name) + '&type=' + type, {
-				headers: { accept: 'application/dns-json' },
-				signal: AbortSignal.timeout(ms || LIMITS.queryMs),
-			});
-			if (!res.ok) continue;
+			const res = await resilience.resilientFetch(
+				base + '?name=' + encodeURIComponent(name) + '&type=' + type,
+				{ headers: { accept: 'application/dns-json' } },
+				{
+					retries: 2,
+					baseMs: 300,
+					maxMs: 2000,
+					maxRetryAfterMs: 3000,
+					timeoutMs,
+					breaker: resilience.breakers[breaker],
+				}
+			);
+			if (!res || !res.ok) continue;
 			const data = await res.json();
 			if (typeof data.Status !== 'number') continue;
 			return {
@@ -213,7 +228,7 @@ async function doh(name, type, ms) {
 					.map((row) => String(row.data || '').toLowerCase()),
 			};
 		} catch (error) {
-			/* the next resolver */
+			/* the next resolver (incl. open breaker) */
 		}
 	}
 	return null;
