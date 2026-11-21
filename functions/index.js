@@ -1396,6 +1396,7 @@ exports.emailQuarterSiteReport = scheduled(withMail, 'emailQuarterSiteReport', a
 
 const reviewMail = require('./url-review-mail');
 const webhookIdem = require('./webhook-idempotency');
+const stripeWebhook = require('./stripe-webhook');
 
 async function loadBound(name, field, startVal, endVal, options) {
 	const pageSize = (options && options.pageSize) || 400;
@@ -5868,6 +5869,16 @@ async function reversePayment(ids, keys, testRun) {
 	return true;
 }
 
+
+// Stripe posts each event to /stripe-webhook/live or /stripe-webhook/test. Stub: verify + claim-once ack only (#3837).
+async function handleStripeWebhook(req, res, mode) {
+	await stripeWebhook.handle(req, res, {
+		mode,
+		store: webhookIdem.firestoreStore(getFirestore()),
+		rawBody: req.rawBody,
+	});
+}
+
 // PayPal posts each event to /paypal-webhook/live or /paypal-webhook/sandbox. A non-2xx answer makes PayPal retry for three days.
 async function handlePayPalWebhook(req, res, mode) {
 	const keys = paypalKeys(mode);
@@ -6752,6 +6763,13 @@ exports.reviewUrl = functions
 			(pathName.endsWith('/paypal-webhook/live') || pathName.endsWith('/paypal-webhook/sandbox'))
 		) {
 			await handlePayPalWebhook(req, res, pathName.endsWith('/sandbox') ? 'sandbox' : 'live');
+			return;
+		}
+		if (
+			req.method === 'POST' &&
+			(pathName.endsWith('/stripe-webhook/live') || pathName.endsWith('/stripe-webhook/test'))
+		) {
+			await handleStripeWebhook(req, res, pathName.endsWith('/test') ? 'test' : 'live');
 			return;
 		}
 		if (pathName.indexOf('/auth/') !== -1) {
