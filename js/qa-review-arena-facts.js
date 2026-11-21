@@ -232,7 +232,7 @@
 			status: 'fail',
 		},
 		{
-			re: /^Google's Safe Browsing lists were read for .+\bflagged\b/i,
+			re: /^Google's Safe Browsing lists were read for \d+ of \d+ hosts; (?!none is flagged).+ flagged\./i,
 			stage: 'webrisk',
 			pose: 'fail',
 			anomaly: 'fail',
