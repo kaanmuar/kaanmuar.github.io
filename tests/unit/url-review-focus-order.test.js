@@ -231,7 +231,9 @@ test("every finding renders in English and carries its key, fix and no raw marku
     assert.equal(area, "Accessibility");
     assert.equal(verdict, "risk");
     assert.ok(["low", "medium"].includes(severity));
-    assert.ok(!/[<>]/.test(english(title) + english(evidence).replace(/<[a-z]+>/g, "")), key);
+    // Titles and evidence are plain copy ids resolved to English — no HTML tags expected.
+    assert.ok(!/[<>]/.test(english(title)), key + " title");
+    assert.ok(!/[<>]/.test(english(evidence)), key + " evidence");
     assert.ok(english(fix).length > 20, key);
     assert.equal(title.id, key + ".title");
     assert.equal(fix.id, key + ".fix");
@@ -243,10 +245,11 @@ test("every key the module can say has English copy and a version in the five ot
   const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
   const ids = Object.keys(EN).filter((id) => id.startsWith("a11y-focus"));
   assert.equal(ids.length, 29);
+  const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   ids.forEach((id) => {
     assert.equal(source.split(`"${id}":`).length - 1, 5, id + " should be in es, pt, de, fr and it");
     const slots = (text) => (text.match(/\{\w+\}/g) || []).sort().join(",");
-    const pattern = new RegExp(`"${id.replace(/[.]/g, "\\.")}": "((?:[^"\\\\]|\\\\.)*)"`, "g");
+    const pattern = new RegExp(`"${escapeRe(id)}": "((?:[^"\\\\]|\\\\.)*)"`, "g");
     for (const match of source.matchAll(pattern)) assert.equal(slots(JSON.parse(`"${match[1]}"`)), slots(EN[id]), id);
   });
 });
