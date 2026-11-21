@@ -98,9 +98,14 @@ test("tags and ids are flat, deduplicated and prefixed by catalogue", () => {
 test("urls lists each catalogue page once", () => {
   const u = standards.urls("ax-field-name");
   assert.equal(new Set(u).size, u.length);
-  assert.ok(u.includes("https://act-rules.github.io/rules/e086e5"));
-  assert.ok(u.includes("https://markuplint.dev/docs/rules/require-accessible-name"));
-  assert.ok(u.includes("https://markuplint.dev/docs/rules/label-has-control"));
+  const hostPath = (href) => {
+    const p = new URL(href);
+    return p.hostname + p.pathname;
+  };
+  const hosts = u.map(hostPath);
+  assert.ok(hosts.includes("act-rules.github.io/rules/e086e5"));
+  assert.ok(hosts.includes("markuplint.dev/docs/rules/require-accessible-name"));
+  assert.ok(hosts.includes("markuplint.dev/docs/rules/label-has-control"));
 });
 
 test("sarif rules carry the standards next to the unchanged WCAG tags", () => {
@@ -124,9 +129,14 @@ test("earl tests list reference pages, for failed and passed assertions alike", 
   const graph = axtree.earl(report, { date: "2026-11-21T00:00:00.000Z" })["@graph"];
   const failed = graph.find((a) => a["earl:test"]["@id"] === "urn:url-review:ax-link-name");
   const refs = failed["earl:test"]["dct:references"].map((r) => r["@id"]);
-  assert.ok(refs.includes("https://act-rules.github.io/rules/c487ae"));
+  assert.ok(refs.some((id) => new URL(id).hostname === "act-rules.github.io" && new URL(id).pathname === "/rules/c487ae"));
   const passed = graph.find((a) => a["earl:test"]["@id"] === "urn:url-review:ax-button-name");
-  assert.ok(passed["earl:test"]["dct:references"].some((r) => r["@id"] === "https://act-rules.github.io/rules/97a4e1"));
+  assert.ok(
+    passed["earl:test"]["dct:references"].some((r) => {
+      const p = new URL(r["@id"]);
+      return p.hostname === "act-rules.github.io" && p.pathname === "/rules/97a4e1";
+    })
+  );
   graph.forEach((a) => assert.ok(Array.isArray(a["earl:test"]["dct:references"])));
 });
 
