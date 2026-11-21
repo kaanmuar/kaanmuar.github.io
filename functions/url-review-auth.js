@@ -35,8 +35,39 @@ const SEND_WINDOW_MS = 60 * 60 * 1000;
 
 const OTHER_DEVICE = "This sign-in was asked for on another device or browser. Finish it there, or ask for a new code here.";
 
-function hashOf(text) {
+// CodeQL js/insufficient-password-hash (#154 / #4087): nothing here is a user password.
+// Device keys are 32 random bytes from the browser (js/qa-review-auth.js); sessions and
+// email-link tokens are server randomBytes; only the 6-digit email OTP is short — store
+// that with scrypt. SHA-256 remains for high-entropy binding and Firestore session doc ids.
+const SCRYPT_SIGNIN = Object.freeze({ N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
+const SIGNIN_CODE_SALT = "qa-lab-url-review-sign-in-code-v1";
+const SIGNIN_CODE_PREFIX = "s1:";
+
+function sha256Hex(text) {
   return crypto.createHash("sha256").update(String(text)).digest("hex");
+}
+
+function scryptSignInHex(joined) {
+  return crypto.scryptSync(String(joined), SIGNIN_CODE_SALT, 32, SCRYPT_SIGNIN).toString("hex");
+}
+
+function signInCodeHash(signInId, code) {
+  return SIGNIN_CODE_PREFIX + scryptSignInHex(signInId + ":" + code);
+}
+
+function signInTokenHash(signInId, token) {
+  return sha256Hex(signInId + ":" + token);
+}
+
+function matchesSignInCode(signInId, code, stored) {
+  if (String(stored || "").startsWith(SIGNIN_CODE_PREFIX)) {
+    return sameHash(stored, signInCodeHash(signInId, code));
+  }
+  return sameHash(stored, sha256Hex(signInId + ":" + code));
+}
+
+function matchesSignInToken(signInId, token, stored) {
+  return sameHash(stored, sha256Hex(signInId + ":" + token));
 }
 
 function sameHash(a, b) {
@@ -47,7 +78,7 @@ function sameHash(a, b) {
 
 function deviceHash(key) {
   const clean = String(key || "").toLowerCase();
-  return /^[a-f0-9]{64}$/.test(clean) ? hashOf("device:" + clean) : "";
+  return /^[a-f0-9]{64}$/.test(clean) ? sha256Hex("device:" + clean) : "";
 }
 
 function cleanEmail(email) {
@@ -135,8 +166,8 @@ async function startEmail(store, input) {
     provider: input.provider || "email",
     uid: input.uid || "",
     deviceHash: device,
-    codeHash: hashOf(id + ":" + code),
-    tokenHash: hashOf(id + ":" + token),
+    codeHash: signInCodeHash(id, code),
+    tokenHash: signInTokenHash(id, token),
     tries: 0,
     used: false,
     createdAt: new Date(now).toISOString(),
@@ -163,8 +194,8 @@ async function finishEmail(store, input) {
   const code = String(input.code || "").replace(/\D/g, "");
   const token = String(input.token || "").replace(/[^a-f0-9]/g, "");
   const matches = token
-    ? sameHash(hashOf(id + ":" + token), pending.tokenHash)
-    : code.length === 6 && sameHash(hashOf(id + ":" + code), pending.codeHash);
+    ? matchesSignInToken(id, token, pending.tokenHash)
+    : code.length === 6 && matchesSignInCode(id, code, pending.codeHash);
   if (!matches) {
     await store.set("url_review_sign_ins", id, { tries: pending.tries + 1 });
     return fail(401, "That code does not match. Check the latest email.", { code: "wrong-code" });
@@ -265,7 +296,7 @@ async function openSession(store, input) {
   const now = input.now || Date.now();
   const session = crypto.randomBytes(32).toString("hex");
   const at = new Date(now).toISOString();
-  await store.set("url_review_sessions", hashOf(session), {
+  await store.set("url_review_sessions", sha256Hex(session), {
     email: input.email,
     provider: input.provider,
     uid: String(input.uid || ""),
@@ -295,7 +326,7 @@ async function checkSession(store, input) {
   const now = input.now || Date.now();
   const session = String(input.session || "").replace(/[^a-f0-9]/g, "");
   if (session.length !== 64) return fail(401, "Sign in to run a review.", { signIn: true });
-  const id = hashOf(session);
+  const id = sha256Hex(session);
   const row = await store.get("url_review_sessions", id);
   if (!row || Date.parse(row.expiresAt) < now) return fail(401, "Your sign-in has expired. Sign in again to run a review.", { signIn: true });
   if (!sameHash(deviceHash(input.deviceKey), row.deviceHash)) {
@@ -440,7 +471,7 @@ async function runAccess(store, input, row) {
 
 async function closeSession(store, session) {
   const clean = String(session || "").replace(/[^a-f0-9]/g, "");
-  if (clean.length === 64) await store.remove("url_review_sessions", hashOf(clean));
+  if (clean.length === 64) await store.remove("url_review_sessions", sha256Hex(clean));
 }
 
 // A provider sign-in also leaves a Firebase Auth user under the same email; it
@@ -501,8 +532,12 @@ module.exports = {
   RUN_MS,
   MAX_TRIES,
   OTHER_DEVICE,
+  SIGNIN_CODE_PREFIX,
   sameHash,
   deviceHash,
+  sha256Hex,
+  signInCodeHash,
+  matchesSignInCode,
   cleanEmail,
   maskEmail,
   enabledProviders,

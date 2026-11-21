@@ -375,9 +375,9 @@ function sarif(report) {
    already reported (HTML pass or axe), the tree finding is skipped. */
 const FINDING = {
 	'ax-document-title': { key: 'a11y-axtree-title', overlap: [] },
-	'ax-link-name': { key: 'a11y-axtree-link-name', overlap: ['ax-link-name'] },
+	'ax-link-name': { key: 'a11y-axtree-link-name', overlap: ['ax-link-name', 'a11y-focus-noname'] },
 	'ax-link-generic': { key: 'a11y-axtree-link-generic', overlap: ['a11y-linktext'] },
-	'ax-button-name': { key: 'a11y-axtree-button-name', overlap: ['ax-button-name'] },
+	'ax-button-name': { key: 'a11y-axtree-button-name', overlap: ['ax-button-name', 'a11y-focus-noname'] },
 	'ax-image-name': { key: 'a11y-axtree-image-name', overlap: ['ax-image-alt', 'a11y-alt'] },
 	'ax-field-name': { key: 'a11y-axtree-field-name', overlap: ['ax-label', 'a11y-labels'] },
 	'ax-heading-skip': { key: 'a11y-axtree-heading-skip', overlap: ['ax-heading-order'] },

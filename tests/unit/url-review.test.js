@@ -5189,10 +5189,25 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 		cause: { id: 'bot-protection' },
 		lines: [],
 	};
+	const placeholder = filed('2026-11-09T10:00:00Z', 'not-html', 'The URL did not return an HTML page.', {
+		dns,
+		plain: {
+			hops: [],
+			status: 200,
+			html: false,
+			contentType: 'text/plain',
+			body: 'Site is under construction, please visit later',
+		},
+		browser: { ok: true, docStatus: 200, words: 6 },
+	});
+	const plainPdf = filed('2026-11-09T11:00:00Z', 'not-html', 'The URL did not return an HTML page.', {
+		dns,
+		plain: { hops: [], status: 200, html: false, contentType: 'application/pdf' },
+	});
 
 	assert.ok(failures.siteSide(slowOrigin, 'status'));
 	const bugs = failures.bugPlan(
-		[wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin],
+		[wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin, placeholder, plainPdf],
 		[wallRerun],
 		[]
 	);
@@ -5213,6 +5228,15 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 	assert.match(
 		byKey.status.body,
 		/\*\*Triage:\*\* every run here is the site's own state \(1 run answering every client with a 5xx\), so the daily fix comments without starting an agent\./
+	);
+	assert.deepEqual(marker(byKey['not-html'].body), { runs: 2, ours: 0, site: { 'not-html': 2 } });
+	assert.match(
+		byKey['not-html'].body,
+		/\*\*Triage:\*\* every run here is the site's own state \(2 runs serving no HTML page\), so the daily fix comments without starting an agent\./
+	);
+	assert.match(
+		byKey['not-html'].body,
+		/on not-html\.example\.com: .* Site's own state: serving no HTML page\./
 	);
 });
 
