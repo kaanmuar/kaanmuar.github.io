@@ -2601,7 +2601,7 @@
 	];
 	const FW_KEY = 'qa-lab-frameworks';
 	const TREE_GRID_KEY = 'qa-lab-runner-tree-grid';
-	const TREE_GRID_SRC = 'js/runner-tree-grid.js?v=20261121a';
+	const TREE_GRID_SRC = 'js/runner-tree-grid.js?v=20261121b';
 
 	function runnersFor(c) {
 		const list = c.fw.slice();
@@ -6204,10 +6204,40 @@
 			}
 			if (!on) {
 				this.treeGridInst = null;
+				this.syncTreeGridQuery('');
 				if (/[?&]treegrid=1(&|$)/.test(location.search) && global.history && history.replaceState) {
-					history.replaceState(null, '', location.pathname + location.search.replace(/([?&])treegrid=1(&|$)/, '$1').replace(/[?&]$/, '') + location.hash);
+					history.replaceState(null, '', location.pathname + location.search.replace(/([?&])treegrid=1(&|$)/, '$1').replace(/[?&]$/, '').replace(/\?&/, '?').replace(/\?$/, '') + location.hash);
 				}
 			}
+		},
+
+		// ?tgq= persists the Tree-Grid text filter next to ?treegrid=1 (shareable deep link).
+		readTreeGridQuery() {
+			try {
+				const m = /[?&]tgq=([^&]*)/.exec(location.search);
+				if (!m) return '';
+				return decodeURIComponent(m[1].replace(/\+/g, ' '));
+			} catch (e) {
+				return '';
+			}
+		},
+
+		syncTreeGridQuery(text) {
+			if (!global.history || !history.replaceState) return;
+			const q = String(text == null ? '' : text).trim();
+			let search = location.search;
+			const has = /[?&]tgq=/.test(search);
+			if (!q) {
+				if (!has) return;
+				search = search.replace(/([?&])tgq=[^&]*/g, '$1').replace(/[?&]$/, '').replace(/\?&/, '?').replace(/\?$/, '');
+			} else {
+				const enc = encodeURIComponent(q);
+				if (has) search = search.replace(/([?&]tgq=)[^&]*/, '$1' + enc);
+				else search += (search && search !== '?' ? '&' : '?') + 'tgq=' + enc;
+				// Keep treegrid=1 alongside tgq so the link opens the grid.
+				if (!/[?&]treegrid=1(&|$)/.test(search)) search += (search && search !== '?' ? '&' : '?') + 'treegrid=1';
+			}
+			if (search !== location.search) history.replaceState(null, '', location.pathname + search + location.hash);
 		},
 
 		// Loads js/runner-tree-grid.js on demand (only while the runner drawer is open and the grid is on).
@@ -6250,11 +6280,17 @@
 			host.style.cssText = 'display:flex;flex-direction:column;flex:1;min-height:0';
 			stage.appendChild(host);
 			this.treeGridHost = host;
+			if (!this.treeGridState) this.treeGridState = {};
+			if (!this.treeGridState.text) {
+				const fromUrl = this.readTreeGridQuery();
+				if (fromUrl) this.treeGridState.text = fromUrl;
+			}
 			this.treeGridInst = global.RunnerTreeGrid.mount(host, {
 				groups,
 				state: this.treeGridState,
 				onState: (state) => {
 					this.treeGridState = state;
+					this.syncTreeGridQuery(state && state.text);
 				},
 			});
 			return true;

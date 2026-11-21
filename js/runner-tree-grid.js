@@ -10,6 +10,7 @@
      buildTree(groups)            groups [{ name, label, running, rows: [{ title, ok }], log: [string] }] -> framework nodes
      filterTree(tree, filter)     filter { framework, status, text } -> pruned tree
      flatten(tree, collapsed, forceOpen) -> visible rows in order; windowRows(opts) -> slice to render
+     matchSegments(text, query)   pure string -> [{ text, match }] for highlight paint
      mount(container, opts)       DOM: toolbar + role="treegrid" viewport that only renders the visible window */
 (function (root, factory) {
 	const api = factory();
@@ -136,6 +137,30 @@
 		return s;
 	}
 
+	// Pure: split `text` into [{ text, match }] for safe DOM highlighting (text nodes + <mark>, never innerHTML).
+	// Case-insensitive; empty/whitespace query yields a single non-match segment. Overlapping hits are non-overlapping left-to-right.
+	function matchSegments(text, query) {
+		const s = String(text == null ? '' : text);
+		const q = String(query == null ? '' : query).trim();
+		if (!q) return [{ text: s, match: false }];
+		const lower = s.toLowerCase();
+		const needle = q.toLowerCase();
+		const out = [];
+		let i = 0;
+		while (i <= s.length) {
+			const at = lower.indexOf(needle, i);
+			if (at < 0) {
+				if (i < s.length) out.push({ text: s.slice(i), match: false });
+				break;
+			}
+			if (at > i) out.push({ text: s.slice(i, at), match: false });
+			out.push({ text: s.slice(at, at + needle.length), match: true });
+			i = at + needle.length;
+			if (i === s.length) break;
+		}
+		return out.length ? out : [{ text: '', match: false }];
+	}
+
 	/* ---------- DOM layer ---------- */
 
 	const CSS =
@@ -156,6 +181,7 @@
 		'.rtg-row.fail .st,.rtg-row.fail .tx{color:var(--red,#c0392b)}' +
 		'.rtg-row.pass .st{color:var(--green,#1e8e3e)}' +
 		'.rtg-row .tx{overflow:hidden;text-overflow:ellipsis}' +
+		'.rtg-row .tx mark.rtg-hl{background:rgba(255,196,0,.42);color:inherit;padding:0 .05em;border-radius:2px;font:inherit}' +
 		'.rtg-row .meta{margin-left:auto;opacity:.75;font-weight:400}' +
 		'.rtg-empty{padding:12px;opacity:.8}';
 
@@ -172,6 +198,22 @@
 		for (const k of Object.keys(attrs || {})) n.setAttribute(k, attrs[k]);
 		if (text != null) n.textContent = text;
 		return n;
+	}
+
+	// Append label as text nodes + <mark class="rtg-hl"> for matches. Never assigns innerHTML of log text.
+	function fillLabel(doc, span, label, query) {
+		span.textContent = '';
+		const segs = matchSegments(label, query);
+		const any = segs.some((seg) => seg.match);
+		if (!any) {
+			span.textContent = label;
+			return;
+		}
+		for (const seg of segs) {
+			if (!seg.text) continue;
+			if (seg.match) span.appendChild(el(doc, 'mark', { class: 'rtg-hl' }, seg.text));
+			else span.appendChild(doc.createTextNode(seg.text));
+		}
 	}
 
 	const MARK = { fail: '✗', pass: '✓', run: '·' };
@@ -257,7 +299,9 @@
 				if (isFw && r.expandable) row.setAttribute('aria-expanded', r.open ? 'true' : 'false');
 				const cell = el(doc, 'div', { role: 'gridcell', style: 'display:contents' });
 				cell.appendChild(el(doc, 'span', { class: 'st', 'aria-hidden': 'true' }, isFw ? (r.open ? '▾' : '▸') : MARK[n.status]));
-				cell.appendChild(el(doc, 'span', { class: 'tx', title: n.label }, n.label));
+				const tx = el(doc, 'span', { class: 'tx', title: n.label });
+				fillLabel(doc, tx, n.label, st.text);
+				cell.appendChild(tx);
 				if (isFw) {
 					const c = n.counts;
 					const shown = n.children.length === n.total ? '' : n.children.length + ' of ';
@@ -355,5 +399,5 @@
 		};
 	}
 
-	return { lineStatus, rowStatus, buildTree, filterTree, flatten, windowRows, summary, mount, ROW_HEIGHT };
+	return { lineStatus, rowStatus, buildTree, filterTree, flatten, windowRows, summary, matchSegments, mount, ROW_HEIGHT };
 });
