@@ -27,7 +27,6 @@ regexes = [
   '''"current_key"\s*:''',
   '''"api_key"\s*:\s*\[''',
   '''apiKey\s*:\s*['"]AIza''',
-  '''const val KEY = "AIza''',
 ]
 
 [[allowlists]]
