@@ -347,7 +347,10 @@ test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the i
 		assert.ok(n >= 2, 'desk lookup retries a 503 before succeeding');
 
 		n = 0;
-		global.fetch = async () => (n++, new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 }));
+		global.fetch = async () => (
+			n++,
+			new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 })
+		);
 		assert.equal(await desk.verifyOperator(signedBy('password')), null);
 		assert.equal(n, 1, 'permanent 4xx auth failure is not retried as 5xx');
 
@@ -363,7 +366,10 @@ test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the i
 		assert.ok(n >= 2, 'local auth lookup retries a 502 before succeeding');
 
 		n = 0;
-		global.fetch = async () => (n++, new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 }));
+		global.fetch = async () => (
+			n++,
+			new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 })
+		);
 		await assert.rejects(auth.lookupIdToken('test-firebase-web-key')(signedBy('password')), /not accepted/);
 		assert.equal(n, 1, 'local auth does not retry permanent 4xx');
 
