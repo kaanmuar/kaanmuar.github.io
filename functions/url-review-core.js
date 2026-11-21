@@ -6863,6 +6863,21 @@ async function reviewTarget(rawUrl, hooks) {
 	} catch (error) {
 		extras = {};
 	}
+	// Owner-verified DMARC / TLS-RPT verdicts (#3777): only for a proven owner, never a competitor run, and only the verdicts
+	// (never stored counts) go on extras.dns, where mail-auth turns them into the sec-dmarc-data / sec-tlsrpt-data findings.
+	if (
+		proof &&
+		proof.kind &&
+		!passive &&
+		extras.dns &&
+		extras.dns.domain &&
+		controls.asker &&
+		typeof controls.asker.ownerReports === 'function'
+	) {
+		extras.dns.ownerReports = await Promise.resolve()
+			.then(() => controls.asker.ownerReports(ownerProofs.hostOf(origin.hostname), proof.kind))
+			.catch(() => null);
+	}
 	extras.linkedRisk = await linkedPromise;
 	if (extras.linkedRisk && extras.linkedRisk.found) note(linkedRisk.note(extras.linkedRisk));
 	extras.outbound = await outboundPromise;
@@ -8575,7 +8590,8 @@ function previewReport(report, options) {
 	const ins = copy.insights || {};
 	if (Array.isArray(ins.findings)) {
 		ins.findings = ins.findings.filter(
-			(item) => !/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted)$/.test(String((item && item.key) || ''))
+			(item) =>
+				!/^sec-(kev|osv|drop|feodo|breach-news|cert-anomaly|targeted|dmarc-data|tlsrpt-data)$/.test(String((item && item.key) || ''))
 		);
 	}
 	// Comparison columns pass { sample: false }: every finding frosts. Shared single-report opens keep one teaser (#3477).

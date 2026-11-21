@@ -105,6 +105,21 @@ async function loadAggregates(store, email, host) {
 	};
 }
 
+// What one review of `host` gets for the signed-in owner: ownerReportView() (verdicts only) or null. Only a proof that holds up on its
+// own counts ("site" or "credentials"): the "own" reason (a mailbox on the domain) is a claim, not a proof, so it never unlocks report data.
+// A read failure returns null so a review never fails over this and falls back to the public-policy-only text.
+async function ownerReportsFor(store, email, host, kind, now) {
+	if (kind !== 'site' && kind !== 'credentials') return null;
+	try {
+		const row = await getConsent(store, email, host);
+		if (!consent.consentOn(row, kind, now)) return null;
+		const loaded = await loadAggregates(store, email, host);
+		return consent.ownerReportView(row, kind, loaded.dmarc, loaded.tls, now);
+	} catch (error) {
+		return null;
+	}
+}
+
 function stripMeta(row) {
 	return {
 		kind: row.kind,
@@ -157,6 +172,7 @@ module.exports = {
 	getConsent,
 	deleteCounts,
 	loadAggregates,
+	ownerReportsFor,
 	saveAggregate,
 	consentsForHost,
 	proofKindOf,
