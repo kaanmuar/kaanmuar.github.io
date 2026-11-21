@@ -32,6 +32,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
+          # gitleaks-action v3 defaults to 8.24.3, which ignores [[allowlists]] in .gitleaks.toml (#4059).
+          GITLEAKS_VERSION: 8.25.1
           GITLEAKS_ENABLE_COMMENTS: false
 
   lint:
