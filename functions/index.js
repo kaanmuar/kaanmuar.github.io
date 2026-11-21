@@ -2574,6 +2574,7 @@ function findPlaces() {
 const REVIEW_ALERT_TO = 'qa@carlosandmunoz.com';
 const customerMail = require('./url-review-customer-mail');
 const reviewAgency = require('./url-review-agency');
+const reviewApiToken = require('./url-review-api-token');
 const launchMail = require('./launch-mail');
 const reviewOffers = require('./url-review-offers');
 const reviewPass = require('./url-review-pass');
@@ -2811,6 +2812,20 @@ async function storePdf(base64, filename) {
 		'?alt=media&token=' +
 		token
 	);
+}
+
+/** Resolve url_review_accounts by apiToken.id for MCP auth (#3626). */
+async function lookupApiTokenAccount(tokenId) {
+  const id = String(tokenId || "").replace(/[^a-f0-9]/g, "").slice(0, 16);
+  if (!reviewApiToken.ID_RE.test(id)) return null;
+  const snap = await getFirestore().collection("url_review_accounts").where("apiToken.id", "==", id).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { email: doc.id, row: Object.assign({ email: doc.id }, doc.data() || {}) };
+}
+
+function apiTokenAuthOpts(req) {
+  return { lookup: lookupApiTokenAccount, headers: req.headers || {} };
 }
 
 async function brandingForEmail(email) {
@@ -6141,6 +6156,7 @@ async function reviewAccount(req, res, pathName) {
 				agency: agencyOk,
 				branding: reviewAgency.publicBranding(accountRow),
 				agencyCi: agencyOk ? reviewAgency.publicWebhook(accountRow) : null,
+			apiToken: reviewApiToken.publicToken(accountRow),
 				bundles: Object.keys(urlReview.FULL_STACK_BUNDLES).map((id) => {
 					const row = urlReview.FULL_STACK_BUNDLES[id];
 					return { id: row.id, name: row.name, usd: row.cents / 100, frameworks: row.frameworks, tools: row.tools };
@@ -6423,6 +6439,21 @@ async function reviewAccount(req, res, pathName) {
 			proofKind,
 			consent: dmarcStore.publicConsent(row),
 			on: !!(row && dmarcConsent.consentOn(row, proofKind, Date.now())),
+		});
+		return;
+	}
+	// Account API token for MCP full crawl (#3626). Any signed-in account; mint rotates the prior secret.
+	if (pathName.endsWith("/account/api-token") && req.method === "POST") {
+		const body = req.body || {};
+		if (body.termsAccepted !== true || (body.termsVersion !== urlReview.TERMS_VERSION && body.termsVersion !== urlReview.PREVIOUS_TERMS_VERSION)) {
+			res.status(400).json({ error: "Accept the current terms to mint an API token." });
+			return;
+		}
+		const made = reviewApiToken.mint(body.termsVersion || urlReview.TERMS_VERSION);
+		await db.collection("url_review_accounts").doc(signedIn.email).set({ apiToken: reviewApiToken.storedRow(made) }, { merge: true });
+		res.status(200).json({
+			ok: true,
+			apiToken: Object.assign(reviewApiToken.publicToken({ apiToken: reviewApiToken.storedRow(made) }), { token: made.token })
 		});
 		return;
 	}
@@ -7957,7 +7988,8 @@ exports.reviewUrl = functions
 						reviewAuth.firestoreStore(getFirestore()),
 						req.body || {},
 						reportData,
-						false
+						false,
+						apiTokenAuthOpts(req)
 					);
 					if (!access.ok && access.status !== 402) {
 						res
@@ -8235,7 +8267,8 @@ exports.reviewUrl = functions
 					reviewAuth.firestoreStore(getFirestore()),
 					{ session: body.session, deviceKey: body.deviceKey },
 					data,
-					free
+					free,
+					apiTokenAuthOpts(req)
 				);
 				if (access.status === 404) {
 					res.status(404).json({ error: access.error });
@@ -8301,7 +8334,13 @@ exports.reviewUrl = functions
 			const free = data.free === true || (await hasFreeRuns(data.email));
 			// A GET carries no session, so a bare link always lands on the preview.
 			const proof = req.method === 'GET' ? {} : { session: opening.session, deviceKey: opening.deviceKey };
-			const access = await reviewAuth.reportAccess(reviewAuth.firestoreStore(getFirestore()), proof, data, free);
+			const access = await reviewAuth.reportAccess(
+				reviewAuth.firestoreStore(getFirestore()),
+				proof,
+				data,
+				free,
+				req.method === 'GET' ? null : apiTokenAuthOpts(req)
+			);
 			if (access.status === 404) {
 				res.status(404).json({ error: access.error });
 				return;
@@ -8757,447 +8796,324 @@ async function runSoftPreview(req, res) {
 }
 
 async function runReview(req, res, placeOf) {
-	const signedIn = await reviewAuth.checkSession(reviewAuth.firestoreStore(getFirestore()), req.body || {});
-	if (!signedIn.ok) {
-		res.status(signedIn.status).json({ error: signedIn.error, signIn: true });
-		return;
-	}
-	req.body.email = signedIn.email;
-	const hintedDevice = String((req.body && req.body.deviceId) || '')
-		.replace(/[^a-f0-9]/g, '')
-		.slice(0, 32);
-	const free = await hasFreeRuns(req.body && req.body.email);
-	const intake = await urlReview.screenIntake(req.body || {}, req.headers, { trusted: free });
-	if (!intake.ok) {
-		res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
-		return;
-	}
-	let base = null;
-	if (intake.value.compareWith) {
-		const baseSnap = await getFirestore().collection('url_reviews').doc(intake.value.compareWith).get();
-		base = baseSnap.exists ? baseSnap.data() : null;
-		const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
-		if (refused) {
-			res.status(400).json({ error: refused, compare: true });
-			return;
-		}
-	}
-	const deviceId = String(intake.value.deviceId || hintedDevice)
-		.replace(/[^a-f0-9]/g, '')
-		.slice(0, 32);
-	const ip = req.ip || '';
-	const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
-	const testRun = urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY);
-	let decision = free
-		? { ok: true }
-		: urlReview.judgeAttempts(priorRows, { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
-	// Competitors run side by side, so two runs can pick the same credit from the same rows: the first to
-	// lock it spends it, and the other judges again without it.
-	const takenCredits = [];
-	let lockedCredit = '';
-	while (!free && decision.ok && decision.consumeId && !decision.pass) {
-		if (await lockCredit(decision.consumeId, req.body && req.body.runId)) {
-			lockedCredit = decision.consumeId;
-			break;
-		}
-		takenCredits.push({ status: 'run-credit-used', creditId: decision.consumeId, deviceId, ip });
-		decision = urlReview.judgeAttempts(
-			priorRows.concat(takenCredits),
-			{ deviceId, ip },
-			Object.assign({}, intake.value, { test: testRun })
-		);
-	}
-	// A credit bought for exactly this run is spent first; otherwise an open pass with a run left carries it.
-	if (!free && !decision.consumeId && decision.code !== 'stopped' && decision.code !== 'invalid') {
-		const onPass = await passDecision(signedIn.email, intake.value);
-		if (onPass) decision = onPass;
-	}
-	if (!decision.ok && decision.code === 'payment' && !decision.pass) {
-		const deal = await returnPrice(
-			{ usd: decision.priceUsd, count: decision.count, billing: decision.billing },
-			{
-				purpose: 'new-run',
-				rows: priorRows,
-				coupon: req.body && req.body.coupon,
-			}
-		);
-		Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
-	}
-	if (!decision.ok) {
-		const denied = {
-			createdAt: new Date().toISOString(),
-			expireAt: new Date(Date.now() + urlReview.RETAIN_MS),
-			status: decision.code === 'payment' ? 'payment-due' : 'blocked',
-			deviceId,
-			ip,
-			signInProvider: signedIn.provider,
-			name: intake.value.name,
-			email: intake.value.email,
-			reason: intake.value.reason,
-			requestedUrl: intake.value.url,
-			clientUrl: intake.value.clientUrl,
-			log: [{ at: new Date().toISOString(), text: decision.message }],
-		};
-		await getFirestore().collection('url_reviews').add(denied);
-		await rememberReview(denied.status === 'payment-due' ? 'payment-due' : 'blocked', denied);
-		await mailReviewedSites(ip, denied);
-		res.status(decision.code === 'payment' ? 402 : 429).json({
-			error: decision.message,
-			paymentRequired: decision.code === 'payment',
-			purpose: decision.code === 'payment' ? 'new-run' : '',
-			priceUsd: decision.priceUsd || 0,
-			frameworks: decision.frameworks || [],
-			tools: decision.tools || [],
-			pass: decision.pass || '',
-			runsLeft: decision.runsLeft,
-			pages: decision.pages,
-			depth: decision.depth,
-			billing: decision.billing || '',
-			listUsd: decision.listUsd,
-			percent: decision.percent || 0,
-			discountSource: decision.discountSource || '',
-			coupon: decision.coupon || '',
-			frameworkUsd: decision.frameworkUsd,
-			scopeUsd: decision.scopeUsd,
-			pageUsd: decision.pageUsd,
-			depthUsd: decision.depthUsd,
-		});
-		return;
-	}
-	const claim = await reviewAuth.claimRun(reviewAuth.firestoreStore(getFirestore()), {
-		runId: req.body && req.body.runId,
-		email: signedIn.email,
-		deviceKey: req.body && req.body.deviceKey,
-	});
-	if (!claim.ok) {
-		if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
-		if (lockedCredit) await unlockCredit(lockedCredit);
-		res.status(claim.status).json({ error: claim.error });
-		return;
-	}
-	let usedCredit = null;
-	if (decision.consumeId) {
-		usedCredit = await getFirestore()
-			.collection('url_reviews')
-			.add({
-				status: 'run-credit-used',
-				creditId: decision.consumeId,
-				deviceId,
-				email: String(signedIn.email || '')
-					.trim()
-					.toLowerCase(),
-				runId: claim.runId || '',
-				...(decision.pass ? { passId: decision.pass.id } : {}),
-				createdAt: new Date().toISOString(),
-				expireAt: urlReview.paymentExpireAt(),
-			});
-		await rememberReview('credit', { status: 'run-credit-used', deviceId, creditId: decision.consumeId });
-	}
-	const runId = claim.runId;
-	let stopped = false;
-	const stopTimer = runId
-		? setInterval(async () => {
-				try {
-					const snap = await getFirestore().collection('url_review_stops').doc(runId).get();
-					if (snap.exists && snap.get('stopped') === true) stopped = true;
-				} catch (error) {
-					console.error('URL review stop check failed:', error);
-				}
-			}, 800)
-		: null;
-	res.on('close', () => {
-		if (!res.writableEnded) stopped = true;
-	});
-	res.status(200);
-	res.set('Content-Type', 'application/x-ndjson; charset=utf-8');
-	const runStarted = Date.now();
-	const runLines = [];
-	// A customer's review in Jarvis's Processes (#2548); sandbox test runs stay out.
-	const reviewProcess = (state, extra) =>
-		testRun
-			? null
-			: jarvisProcess(
-					jarvisProcesses.reviewRow(
-						runId || 't' + runStarted,
-						state,
-						Object.assign({ url: intake.value.url, startedAt: new Date(runStarted).toISOString() }, extra)
-					)
-				);
-	const writeLine = (payload) => {
-		if (payload.type === 'log' && runLines.length < 5000)
-			runLines.push({ t: Date.now() - runStarted, text: payload.text });
-		if (!res.writableEnded) res.write(JSON.stringify(payload) + '\n');
-	};
-	// Answers the inconclusive promise the failure was saved with, or null.
-	const saveRunLog = async (kind, error) => {
-		try {
-			const record = reviewFailures.failureRecord(
-				Object.assign({}, intake.value, {
-					kind,
-					runId,
-					error,
-					lines: runLines,
-					startedAt: runStarted,
-					endedAt: Date.now(),
-				})
-			);
-			const promise = kind === 'failed' ? await promiseFor(record) : null;
-			if (promise) record.promise = promise;
-			const col = getFirestore().collection('url_review_failures');
-			await (runId ? col.doc(runId) : col.doc()).set(record);
-			return promise;
-		} catch (saveError) {
-			console.error('URL review log save failed:', saveError);
-			return null;
-		}
-	};
-	try {
-		await rememberReview('started', {
-			runId,
-			name: intake.value.name,
-			email: intake.value.email,
-			requestedUrl: intake.value.url,
-			status: 'running',
-			frameworks: intake.value.frameworks,
-			pages: intake.value.pages,
-			depth: intake.value.depth,
-			reason: intake.value.reason,
-			test: testRun,
-		});
-		await reviewProcess('running', { step: 'Up to ' + intake.value.pages + ' pages, depth ' + intake.value.depth });
-		if (decision.pass)
-			writeLine({
-				type: 'log',
-				text:
-					'This run uses your ' +
-					decision.pass.name +
-					' pass: ' +
-					decision.pass.left +
-					(decision.pass.left === 1 ? ' run' : ' runs') +
-					' left after it.',
-			});
-		const asked = (() => {
-			try {
-				return urlReview.registryDomain(new URL(intake.value.url).hostname);
-			} catch (error) {
-				return '';
-			}
-		})();
-		const ranksPromise = base
-			? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => [])
-			: null;
-		const report = await urlReview.reviewTarget(intake.value.url, {
-			log: (text) => writeLine({ type: 'log', text }),
-			stopped: () => stopped,
-			asker: {
-				reasonCode: intake.value.reasonCode,
-				email: intake.value.email,
-				proofs: await ownerProofRows(intake.value.email),
-				siteToken: siteTokenFor(intake.value.email),
-			},
-			maxPages: intake.value.pages,
-			maxDepth: intake.value.depth,
-			pageLang: intake.value.pageLang,
-			section: intake.value.section,
-			targeted: intake.value.targeted === false ? false : undefined,
-			passive: !!intake.value.compareWith,
-			customer: true,
-			browse: browseForReview,
-			pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
-			crux:
-				process.env.CRUX_KEY || process.env.PAGESPEED_KEY
-					? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY)
-					: undefined,
-			webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
-			doh: lookalikes.doh,
-			places: findPlaces(),
-		});
-		const record = urlReview.intakeRecord(
-			intake.value,
-			report,
-			Object.assign(
-				{
-					ip,
-					deviceId,
-					creditId: decision.consumeId || '',
-					userAgent: req.get('user-agent'),
-					acceptLanguage: req.get('accept-language'),
-				},
-				await placeOf(runId)
-			)
-		);
-		record.signInProvider = signedIn.provider;
-		if (testRun) record.test = true;
-		if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
-		if (decision.pass) {
-			Object.assign(record, {
-				paid: true,
-				priceUsd: decision.pass.extrasUsd,
-				passId: decision.pass.id,
-				passPlan: decision.pass.plan,
-			});
-			if (reviewOffers.passAddons(decision.pass.plan).length)
-				record.addons = reviewOffers.passAddons(decision.pass.plan);
-		}
-		if (report.ownerProof && report.ownerProof.checked) {
-			try {
-				await rememberSiteProof(intake.value.email, report.ownerProof.host, report.ownerProof.how);
-			} catch (error) {
-				console.error('Site verification save failed:', error);
-			}
-		}
-		writeLine({ type: 'log', text: 'Looking for your earlier reviews of ' + report.host + '.' });
-		const history = await previousRun(intake.value.email, report);
-		if (history) {
-			report.history = history;
-			writeLine({
-				type: 'log',
-				text:
-					'Compared with your review of ' +
-					report.host +
-					' from ' +
-					String(history.previousAt).slice(0, 10) +
-					': ' +
-					history.fixedCount +
-					' fixed, ' +
-					history.freshCount +
-					' new.',
-			});
-		} else writeLine({ type: 'log', text: 'No earlier review of ' + report.host + ' under this email.' });
-		if (base) {
-			writeLine({ type: 'log', text: 'Reading the Tranco ranks and your score history for both sites.' });
-			let [ownRank, rivalRank] = await ranksPromise;
-			if (urlReview.registryDomain(report.host) !== asked)
-				rivalRank = await reviewMarket.trancoRank(urlReview.registryDomain(report.host));
-			const trail = await scoreTrail(intake.value.email, base.report.host, report);
-			report.compare = reviewCompare.compareSites(
-				Object.assign({ id: intake.value.compareWith }, base.report),
-				report,
-				{ ranks: { own: ownRank, rival: rivalRank }, trail }
-			);
-			if (report.compare) {
-				const rankLine = (host, side) =>
-					host +
-					(side.rank
-						? ' is #' + side.rank.toLocaleString('en-US') + ' on Tranco'
-						: ' is outside the Tranco top million') +
-					(side.score == null ? '' : ', presence ' + side.score + '/100');
-				writeLine({
-					type: 'log',
-					text:
-						'Compared with your review of ' +
-						base.report.host +
-						': ' +
-						report.compare.rivalOnlyCount +
-						' open problems only ' +
-						report.host +
-						' has, ' +
-						report.compare.ownOnlyCount +
-						' only ' +
-						base.report.host +
-						' has, ' +
-						report.compare.shared +
-						' both have.',
-				});
-				writeLine({
-					type: 'log',
-					text:
-						'Market presence: ' +
-						rankLine(base.report.host, report.compare.market.own) +
-						'; ' +
-						rankLine(report.host, report.compare.market.rival) +
-						'.',
-				});
-			}
-		}
-		writeLine({ type: 'log', text: 'Saving the report.' });
-		await getFirestore().collection('url_reviews').doc(report.id).set(record);
-		await countReviewed(report);
-		await saveReviewThreats(record);
-		await rememberReview(record.status === 'stopped' ? 'stopped' : 'report', record);
-		const score = report.insights && report.insights.score ? report.insights.score.overall : null;
-		await reviewProcess(record.status === 'stopped' ? 'cancelled' : 'done', {
-			step: record.status === 'stopped' ? 'Stopped' : score == null ? 'Report saved' : 'Score ' + score + '/100',
-			link: customerMail.pageUrl('en', { report: report.id }),
-		});
-		if (record.status === 'stopped') await saveRunLog('stopped');
-		await mailReviewedSites(ip, record);
-		if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
-		writeLine({ type: 'log', text: 'Report saved. Emailing a copy to ' + intake.value.email + '.' });
-		// The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
-		const shown =
-			record.paid === true
-				? report
-				: Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
-		const liveBrand = await brandingForEmail(intake.value.email);
-		writeLine({
-			type: 'done',
-			report: shown,
-			frameworks: record.frameworks,
-			paid: record.paid === true,
-			free: record.free === true,
-			priceUsd: record.priceUsd,
-			branding: liveBrand ? { companyName: liveBrand.companyName, logoDataUrl: liveBrand.logoDataUrl || '' } : null,
-		});
-		try {
-			await mailReportToAsker(record);
-		} catch (error) {
-			console.error('Report mail to the asker failed:', error);
-		}
-		try {
-			await queueOwnerNotice(record);
-		} catch (error) {
-			console.error('Owner notice queue failed:', error);
-		}
-		res.end();
-	} catch (error) {
-		console.error('URL review failed:', error);
-		const failed = {
-			runId,
-			name: intake.value.name,
-			email: intake.value.email,
-			requestedUrl: intake.value.url,
-			clientUrl: intake.value.clientUrl,
-			status: 'failed',
-			reason: error.message || 'The review failed.',
-			creditId: decision.consumeId || '',
-		};
-		await rememberReview('failed', failed);
-		await reviewProcess('failed', { step: failed.reason });
-		if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
-		else if (usedCredit) {
-			try {
-				// A paid run that fails gives its credit back, so the same review can run again at no charge.
-				await usedCredit.update({
-					status: 'run-credit-returned',
-					returnedAt: new Date().toISOString(),
-					runId: runId || '',
-				});
-				if (lockedCredit) await unlockCredit(lockedCredit);
-				await rememberReview('credit-returned', Object.assign({ deviceId, test: testRun }, failed));
-			} catch (returnError) {
-				console.error('Credit return failed:', returnError);
-			}
-		}
-		const promise = await saveRunLog('failed', error);
-		await mailReviewedSites(ip, failed);
-		writeLine(reviewPromise.errorLine(error.message, promise));
-		res.end();
-	} finally {
-		if (stopTimer) clearInterval(stopTimer);
-		if (runId)
-			getFirestore()
-				.collection('url_review_stops')
-				.doc(runId)
-				.delete()
-				.catch(() => {});
-		if (runId)
-			getFirestore()
-				.collection('url_review_places')
-				.doc(runId)
-				.delete()
-				.catch(() => {});
-	}
+  const signedIn = await reviewAuth.checkAuth(
+    reviewAuth.firestoreStore(getFirestore()),
+    req.body || {},
+    req.headers || {},
+    { lookup: lookupApiTokenAccount }
+  );
+  if (!signedIn.ok) {
+    res.status(signedIn.status).json({ error: signedIn.error, signIn: true, apiToken: !!signedIn.apiToken });
+    return;
+  }
+  req.body = req.body || {};
+  req.body.email = signedIn.email;
+  // API token mint already accepted terms; IDE clients skip the browser humanCheck (#3626).
+  if (signedIn.via === "api-token") {
+    if (!req.body.name) req.body.name = signedIn.name || "QA-lab MCP";
+    if (req.body.termsAccepted !== true && signedIn.termsVersion) {
+      req.body.termsAccepted = true;
+      req.body.termsVersion = signedIn.termsVersion;
+    }
+    if (!req.body.reasonCode) req.body.reasonCode = "allowed";
+    if (!Array.isArray(req.body.frameworks) || !req.body.frameworks.length) req.body.frameworks = ["Playwright"];
+    if (!req.body.openedAt) req.body.openedAt = Date.now() - 5000;
+  }
+  const hintedDevice = String((req.body && req.body.deviceId) || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const free = await hasFreeRuns(req.body && req.body.email);
+  const intake = await urlReview.screenIntake(req.body || {}, req.headers, {
+    trusted: free || signedIn.via === "api-token"
+  });
+  if (!intake.ok) {
+    res.status(intake.status || 400).json({ error: intake.error, fields: intake.fields || [] });
+    return;
+  }
+  let base = null;
+  if (intake.value.compareWith) {
+    const baseSnap = await getFirestore().collection("url_reviews").doc(intake.value.compareWith).get();
+    base = baseSnap.exists ? baseSnap.data() : null;
+    const refused = reviewCompare.baseProblem(base, signedIn.email, intake.value.url);
+    if (refused) {
+      res.status(400).json({ error: refused, compare: true });
+      return;
+    }
+  }
+  const deviceId = String(intake.value.deviceId || hintedDevice).replace(/[^a-f0-9]/g, "").slice(0, 32);
+  const ip = req.ip || "";
+  const priorRows = free ? [] : await reviewRowsFor(deviceId, ip);
+  const testRun = urlReview.testKeyMatches(req.body && req.body.testKey, process.env.QA_TEST_KEY);
+  let decision = free
+    ? { ok: true }
+    : urlReview.judgeAttempts(priorRows, { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
+  // Competitors run side by side, so two runs can pick the same credit from the same rows: the first to
+  // lock it spends it, and the other judges again without it.
+  const takenCredits = [];
+  let lockedCredit = "";
+  while (!free && decision.ok && decision.consumeId && !decision.pass) {
+    if (await lockCredit(decision.consumeId, req.body && req.body.runId)) {
+      lockedCredit = decision.consumeId;
+      break;
+    }
+    takenCredits.push({ status: "run-credit-used", creditId: decision.consumeId, deviceId, ip });
+    decision = urlReview.judgeAttempts(priorRows.concat(takenCredits), { deviceId, ip }, Object.assign({}, intake.value, { test: testRun }));
+  }
+  // A credit bought for exactly this run is spent first; otherwise an open pass with a run left carries it.
+  if (!free && !decision.consumeId && decision.code !== "stopped" && decision.code !== "invalid") {
+    const onPass = await passDecision(signedIn.email, intake.value);
+    if (onPass) decision = onPass;
+  }
+  if (!decision.ok && decision.code === "payment" && !decision.pass) {
+    const deal = await returnPrice({ usd: decision.priceUsd, count: decision.count, billing: decision.billing }, {
+      purpose: "new-run",
+      rows: priorRows,
+      coupon: req.body && req.body.coupon
+    });
+    Object.assign(decision, { priceUsd: deal.usd }, dealFields(deal));
+  }
+  if (!decision.ok) {
+    const denied = {
+      createdAt: new Date().toISOString(),
+      expireAt: new Date(Date.now() + urlReview.RETAIN_MS),
+      status: decision.code === "payment" ? "payment-due" : "blocked",
+      deviceId,
+      ip,
+      signInProvider: signedIn.provider,
+      name: intake.value.name,
+      email: intake.value.email,
+      reason: intake.value.reason,
+      requestedUrl: intake.value.url,
+      clientUrl: intake.value.clientUrl,
+      log: [{ at: new Date().toISOString(), text: decision.message }]
+    };
+    await getFirestore().collection("url_reviews").add(denied);
+    await rememberReview(denied.status === "payment-due" ? "payment-due" : "blocked", denied);
+    await mailReviewedSites(ip, denied);
+    res.status(decision.code === "payment" ? 402 : 429).json({
+      error: decision.message,
+      paymentRequired: decision.code === "payment",
+      purpose: decision.code === "payment" ? "new-run" : "",
+      priceUsd: decision.priceUsd || 0,
+      frameworks: decision.frameworks || [],
+      tools: decision.tools || [],
+      pass: decision.pass || "",
+      runsLeft: decision.runsLeft,
+      pages: decision.pages,
+      depth: decision.depth,
+      billing: decision.billing || "",
+      listUsd: decision.listUsd,
+      percent: decision.percent || 0,
+      discountSource: decision.discountSource || "",
+      coupon: decision.coupon || "",
+      frameworkUsd: decision.frameworkUsd,
+      scopeUsd: decision.scopeUsd,
+      pageUsd: decision.pageUsd,
+      depthUsd: decision.depthUsd
+    });
+    return;
+  }
+  const claim = await reviewAuth.claimRun(reviewAuth.firestoreStore(getFirestore()), {
+    runId: req.body && req.body.runId,
+    email: signedIn.email,
+    deviceKey: req.body && req.body.deviceKey
+  });
+  if (!claim.ok) {
+    if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
+    if (lockedCredit) await unlockCredit(lockedCredit);
+    res.status(claim.status).json({ error: claim.error });
+    return;
+  }
+  let usedCredit = null;
+  if (decision.consumeId) {
+    usedCredit = await getFirestore().collection("url_reviews").add({
+      status: "run-credit-used",
+      creditId: decision.consumeId,
+      deviceId,
+      email: String(signedIn.email || "").trim().toLowerCase(),
+      runId: claim.runId || "",
+      ...(decision.pass ? { passId: decision.pass.id } : {}),
+      createdAt: new Date().toISOString(),
+      expireAt: urlReview.paymentExpireAt()
+    });
+    await rememberReview("credit", { status: "run-credit-used", deviceId, creditId: decision.consumeId });
+  }
+  const runId = claim.runId;
+  let stopped = false;
+  const stopTimer = runId ? setInterval(async () => {
+    try {
+      const snap = await getFirestore().collection("url_review_stops").doc(runId).get();
+      if (snap.exists && snap.get("stopped") === true) stopped = true;
+    } catch (error) {
+      console.error("URL review stop check failed:", error);
+    }
+  }, 800) : null;
+  res.on("close", () => {
+    if (!res.writableEnded) stopped = true;
+  });
+  res.status(200);
+  res.set("Content-Type", "application/x-ndjson; charset=utf-8");
+  const runStarted = Date.now();
+  const runLines = [];
+  // A customer's review in Jarvis's Processes (#2548); sandbox test runs stay out.
+  const reviewProcess = (state, extra) => testRun ? null : jarvisProcess(jarvisProcesses.reviewRow(runId || "t" + runStarted, state, Object.assign({ url: intake.value.url, startedAt: new Date(runStarted).toISOString() }, extra)));
+  const writeLine = (payload) => {
+    if (payload.type === "log" && runLines.length < 5000) runLines.push({ t: Date.now() - runStarted, text: payload.text });
+    if (!res.writableEnded) res.write(JSON.stringify(payload) + "\n");
+  };
+  // Answers the inconclusive promise the failure was saved with, or null.
+  const saveRunLog = async (kind, error) => {
+    try {
+      const record = reviewFailures.failureRecord(Object.assign({}, intake.value, { kind, runId, error, lines: runLines, startedAt: runStarted, endedAt: Date.now() }));
+      const promise = kind === "failed" ? await promiseFor(record) : null;
+      if (promise) record.promise = promise;
+      const col = getFirestore().collection("url_review_failures");
+      await (runId ? col.doc(runId) : col.doc()).set(record);
+      return promise;
+    } catch (saveError) {
+      console.error("URL review log save failed:", saveError);
+      return null;
+    }
+  };
+  try {
+    await rememberReview("started", {
+      runId,
+      name: intake.value.name,
+      email: intake.value.email,
+      requestedUrl: intake.value.url,
+      status: "running",
+      frameworks: intake.value.frameworks,
+      pages: intake.value.pages,
+      depth: intake.value.depth,
+      reason: intake.value.reason
+    });
+    await reviewProcess("running", { step: "Up to " + intake.value.pages + " pages, depth " + intake.value.depth });
+    if (decision.pass) writeLine({ type: "log", text: "This run uses your " + decision.pass.name + " pass: " + decision.pass.left + (decision.pass.left === 1 ? " run" : " runs") + " left after it." });
+    const asked = (() => { try { return urlReview.registryDomain(new URL(intake.value.url).hostname); } catch (error) { return ""; } })();
+    const ranksPromise = base ? reviewMarket.trancoRanks([urlReview.registryDomain(base.report.host), asked]).catch(() => []) : null;
+    const report = await urlReview.reviewTarget(intake.value.url, {
+      log: (text) => writeLine({ type: "log", text }),
+      stopped: () => stopped,
+      asker: { reasonCode: intake.value.reasonCode, email: intake.value.email, proofs: await ownerProofRows(intake.value.email), siteToken: siteTokenFor(intake.value.email) },
+      maxPages: intake.value.pages,
+      maxDepth: intake.value.depth,
+      pageLang: intake.value.pageLang,
+      section: intake.value.section,
+      targeted: intake.value.targeted === false ? false : undefined,
+      passive: !!intake.value.compareWith,
+      customer: true,
+      browse: browseForReview,
+      pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
+      crux: process.env.CRUX_KEY || process.env.PAGESPEED_KEY ? (url) => urlReview.cruxHistory(url, process.env.CRUX_KEY || process.env.PAGESPEED_KEY) : undefined,
+      webrisk: process.env.WEBRISK_KEY ? (url) => urlReview.webRisk(url, process.env.WEBRISK_KEY) : undefined,
+      doh: lookalikes.doh,
+      places: findPlaces()
+    });
+    const record = urlReview.intakeRecord(intake.value, report, Object.assign({
+      ip,
+      deviceId,
+      creditId: decision.consumeId || "",
+      userAgent: req.get("user-agent"),
+      acceptLanguage: req.get("accept-language")
+    }, await placeOf(runId)));
+    record.signInProvider = signedIn.provider;
+    if (testRun) record.test = true;
+    if (free) Object.assign(record, { paid: true, free: true, priceUsd: 0 });
+    if (decision.pass) {
+      Object.assign(record, { paid: true, priceUsd: decision.pass.extrasUsd, passId: decision.pass.id, passPlan: decision.pass.plan });
+      if (reviewOffers.passAddons(decision.pass.plan).length) record.addons = reviewOffers.passAddons(decision.pass.plan);
+    }
+    if (report.ownerProof && report.ownerProof.checked) {
+      try {
+        await rememberSiteProof(intake.value.email, report.ownerProof.host, report.ownerProof.how);
+      } catch (error) {
+        console.error("Site verification save failed:", error);
+      }
+    }
+    writeLine({ type: "log", text: "Looking for your earlier reviews of " + report.host + "." });
+    const history = await previousRun(intake.value.email, report);
+    if (history) {
+      report.history = history;
+      writeLine({ type: "log", text: "Compared with your review of " + report.host + " from " + String(history.previousAt).slice(0, 10) + ": " + history.fixedCount + " fixed, " + history.freshCount + " new." });
+    } else writeLine({ type: "log", text: "No earlier review of " + report.host + " under this email." });
+    if (base) {
+      writeLine({ type: "log", text: "Reading the Tranco ranks and your score history for both sites." });
+      let [ownRank, rivalRank] = await ranksPromise;
+      if (urlReview.registryDomain(report.host) !== asked) rivalRank = await reviewMarket.trancoRank(urlReview.registryDomain(report.host));
+      const trail = await scoreTrail(intake.value.email, base.report.host, report);
+      report.compare = reviewCompare.compareSites(Object.assign({ id: intake.value.compareWith }, base.report), report, { ranks: { own: ownRank, rival: rivalRank }, trail });
+      if (report.compare) {
+        const rankLine = (host, side) => host + (side.rank ? " is #" + side.rank.toLocaleString("en-US") + " on Tranco" : " is outside the Tranco top million") + (side.score == null ? "" : ", presence " + side.score + "/100");
+        writeLine({ type: "log", text: "Compared with your review of " + base.report.host + ": " + report.compare.rivalOnlyCount + " open problems only " + report.host + " has, " + report.compare.ownOnlyCount + " only " + base.report.host + " has, " + report.compare.shared + " both have." });
+        writeLine({ type: "log", text: "Market presence: " + rankLine(base.report.host, report.compare.market.own) + "; " + rankLine(report.host, report.compare.market.rival) + "." });
+      }
+    }
+    writeLine({ type: "log", text: "Saving the report." });
+    await getFirestore().collection("url_reviews").doc(report.id).set(record);
+    await countReviewed(report);
+    await saveReviewThreats(record);
+    await rememberReview(record.status === "stopped" ? "stopped" : "report", record);
+    const score = report.insights && report.insights.score ? report.insights.score.overall : null;
+    await reviewProcess(record.status === "stopped" ? "cancelled" : "done", { step: record.status === "stopped" ? "Stopped" : score == null ? "Report saved" : "Score " + score + "/100", link: customerMail.pageUrl("en", { report: report.id }) });
+    if (record.status === "stopped") await saveRunLog("stopped");
+    await mailReviewedSites(ip, record);
+    if (record.report && record.report.compare) await mailComparison(compareMail.runNotice(record));
+    writeLine({ type: "log", text: "Report saved. Emailing a copy to " + intake.value.email + "." });
+    // The page only blurs an unpaid report, so the stream carries the frosted copy; the asker keeps their own comparison.
+    const shown = record.paid === true ? report : Object.assign(urlReview.previewReport(report), report.compare ? { compare: report.compare } : {});
+    const liveBrand = await brandingForEmail(intake.value.email);
+    writeLine({
+      type: "done",
+      report: shown,
+      frameworks: record.frameworks,
+      paid: record.paid === true,
+      free: record.free === true,
+      priceUsd: record.priceUsd,
+      branding: liveBrand ? { companyName: liveBrand.companyName, logoDataUrl: liveBrand.logoDataUrl || "" } : null
+    });
+    try {
+      await mailReportToAsker(record);
+    } catch (error) {
+      console.error("Report mail to the asker failed:", error);
+    }
+    try {
+      await queueOwnerNotice(record);
+    } catch (error) {
+      console.error("Owner notice queue failed:", error);
+    }
+    res.end();
+  } catch (error) {
+    console.error("URL review failed:", error);
+    const failed = {
+      runId,
+      name: intake.value.name,
+      email: intake.value.email,
+      requestedUrl: intake.value.url,
+      clientUrl: intake.value.clientUrl,
+      status: "failed",
+      reason: error.message || "The review failed.",
+      creditId: decision.consumeId || ""
+    };
+    await rememberReview("failed", failed);
+    await reviewProcess("failed", { step: failed.reason });
+    if (decision.pass) await giveBackPassRun(decision.pass.id, decision.consumeId);
+    else if (usedCredit) {
+      try {
+        // A paid run that fails gives its credit back, so the same review can run again at no charge.
+        await usedCredit.update({ status: "run-credit-returned", returnedAt: new Date().toISOString(), runId: runId || "" });
+        if (lockedCredit) await unlockCredit(lockedCredit);
+        await rememberReview("credit-returned", Object.assign({ deviceId, test: testRun }, failed));
+      } catch (returnError) {
+        console.error("Credit return failed:", returnError);
+      }
+    }
+    const promise = await saveRunLog("failed", error);
+    await mailReviewedSites(ip, failed);
+    writeLine(reviewPromise.errorLine(error.message, promise));
+    res.end();
+  } finally {
+    if (stopTimer) clearInterval(stopTimer);
+    if (runId) getFirestore().collection("url_review_stops").doc(runId).delete().catch(() => {});
+    if (runId) getFirestore().collection("url_review_places").doc(runId).delete().catch(() => {});
+  }
 }
 
 // 1st gen holds a response until the handler returns, so the run stream is served from 2nd gen.

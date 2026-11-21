@@ -1,8 +1,8 @@
 {
   "name": "qa-lab-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Cursor stdio MCP for QA-lab soft preview + report read (#3480)",
+  "description": "Cursor stdio MCP for QA-lab soft preview, full crawl, and report read (#3480 / #3626)",
   "type": "module",
   "bin": {
     "qa-lab-mcp": "./src/server.js"

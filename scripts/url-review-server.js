@@ -14,6 +14,7 @@ const desk = require('../functions/url-review-desk');
 const offers = require('../functions/url-review-offers');
 const compare = require('../functions/url-review-compare');
 const auth = require('../functions/url-review-auth');
+const apiToken = require('../functions/url-review-api-token');
 const phraser = require('../functions/url-review-phrase');
 const accountData = require('../functions/url-review-account-data');
 const oauth = require('../functions/url-review-oauth');
@@ -306,6 +307,23 @@ function readBody(req) {
 
 // Sign-ins live in memory here; the code is printed instead of emailed.
 const signIns = auth.memoryStore();
+
+async function lookupLocalApiToken(tokenId) {
+	const id = String(tokenId || '')
+		.replace(/[^a-f0-9]/g, '')
+		.slice(0, 16);
+	if (!apiToken.ID_RE.test(id) || !signIns.cols.has('url_review_accounts')) return null;
+	for (const [email, row] of signIns.cols.get('url_review_accounts').entries()) {
+		if (row && row.apiToken && row.apiToken.id === id) {
+			return { email, row: Object.assign({ email }, row) };
+		}
+	}
+	return null;
+}
+
+function localAuthOpts(req) {
+	return { lookup: lookupLocalApiToken, headers: req.headers || {} };
+}
 
 async function localSignIn(req, res, pathName, origin, deviceHint) {
 	const enabled = process.env.REVIEW_SIGN_IN_PROVIDERS;
@@ -650,6 +668,7 @@ const server = http.createServer(async (req, res) => {
 		req.method === 'POST' &&
 		[
 			'/account/runs',
+			'/account/api-token',
 			'/account/compare',
 			'/account/stop',
 			'/account/export',
@@ -669,7 +688,38 @@ const server = http.createServer(async (req, res) => {
 			return;
 		}
 		if (url.pathname === '/account/runs') {
-			sendJson(res, 200, offers.accountFile(readStore(), signedIn.email), origin, deviceHint);
+			const account = await signIns.get('url_review_accounts', signedIn.email);
+			sendJson(
+				res,
+				200,
+				Object.assign(offers.accountFile(readStore(), signedIn.email), {
+					apiToken: apiToken.publicToken(account),
+				}),
+				origin,
+				deviceHint
+			);
+			return;
+		}
+		if (url.pathname === '/account/api-token') {
+			if (
+				accountBody.termsAccepted !== true ||
+				(accountBody.termsVersion !== core.TERMS_VERSION && accountBody.termsVersion !== core.PREVIOUS_TERMS_VERSION)
+			) {
+				sendJson(res, 400, { error: 'Accept the current terms to mint an API token.' }, origin, deviceHint);
+				return;
+			}
+			const made = apiToken.mint(accountBody.termsVersion || core.TERMS_VERSION);
+			await signIns.set('url_review_accounts', signedIn.email, { apiToken: apiToken.storedRow(made) });
+			sendJson(
+				res,
+				200,
+				{
+					ok: true,
+					apiToken: Object.assign(apiToken.publicToken({ apiToken: apiToken.storedRow(made) }), { token: made.token }),
+				},
+				origin,
+				deviceHint
+			);
 			return;
 		}
 		if (url.pathname === '/account/compare') {
@@ -807,12 +857,13 @@ const server = http.createServer(async (req, res) => {
 		const paidLater = readStore().some(
 			(row) => row && row.status === 'paid-report' && row.reportId === found.id && row.paid === true
 		);
-		const proof = req.method === 'GET' ? {} : { session: openBody.session, deviceKey: openBody.deviceKey };
+		const proof = req.method === 'GET' ? {} : openBody;
 		const access = await auth.reportAccess(
 			signIns,
 			proof,
 			Object.assign({}, found, { paid: found.paid === true || paidLater }),
-			found.free === true
+			found.free === true,
+			req.method === 'GET' ? null : localAuthOpts(req)
 		);
 		if (access.locked) {
 			sendJson(
@@ -1708,13 +1759,29 @@ const server = http.createServer(async (req, res) => {
 		return;
 	}
 	const deviceId = deviceFrom(req, body);
-	const signedIn = await auth.checkSession(signIns, body);
+	const signedIn = await auth.checkAuth(signIns, body, req.headers || {}, { lookup: lookupLocalApiToken });
 	if (!signedIn.ok) {
-		sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceId);
+		sendJson(
+			res,
+			signedIn.status,
+			{ error: signedIn.error, signIn: true, apiToken: !!signedIn.apiToken },
+			origin,
+			deviceId
+		);
 		return;
 	}
 	body.email = signedIn.email;
-	const intake = await core.screenIntake(body, req.headers);
+	if (signedIn.via === 'api-token') {
+		if (!body.name) body.name = signedIn.name || 'QA-lab MCP';
+		if (body.termsAccepted !== true && signedIn.termsVersion) {
+			body.termsAccepted = true;
+			body.termsVersion = signedIn.termsVersion;
+		}
+		if (!body.reasonCode) body.reasonCode = 'allowed';
+		if (!Array.isArray(body.frameworks) || !body.frameworks.length) body.frameworks = ['Playwright'];
+		if (!body.openedAt) body.openedAt = Date.now() - 5000;
+	}
+	const intake = await core.screenIntake(body, req.headers, { trusted: signedIn.via === 'api-token' });
 	if (!intake.ok) {
 		sendJson(res, intake.status || 400, { error: intake.error, fields: intake.fields || [] }, origin, deviceId);
 		return;
