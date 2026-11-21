@@ -50,8 +50,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { createRestAPIClient, MastoHttpError } = require('masto');
-const { extractPdsEndpoint } = require('@atproto/lex-password-session');
+// Lazy: url-review-unit CI does not npm-install the repo (only critical-css on NODE_PATH).
+// run-test-review.sh installs these when missing (#3841 / #4056 pattern).
+const mastoApi = () => require('masto');
+const extractPdsEndpoint = (...args) => require('@atproto/lex-password-session').extractPdsEndpoint(...args);
 const ledger = require('./social-ledger');
 const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
@@ -584,8 +586,11 @@ function bluesky(env = process.env) {
 function mastodon(env = process.env) {
 	const base = String(env.MASTODON_URL || '').replace(/\/$/, '');
 	const client =
-		base && env.MASTODON_TOKEN ? createRestAPIClient({ url: base, accessToken: env.MASTODON_TOKEN }) : null;
+		base && env.MASTODON_TOKEN
+			? mastoApi().createRestAPIClient({ url: base, accessToken: env.MASTODON_TOKEN })
+			: null;
 	// masto throws MastoHttpError; the queue and the ledger read .status and the "Mastodon <route> <status>: <why>" line.
+	const { MastoHttpError } = mastoApi();
 	const call = async (route, run) => {
 		try {
 			return await run(client);
