@@ -770,8 +770,8 @@ const SITE_REASONS = {
 const SITE_CERT =
 	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed|net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID/i;
 const SITE_TLS_HANDSHAKE =
-	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:.*unrecognized name/i;
-const ALT_HOST_RESCUED = /alt-host.*HTML page|status [23]\d\d/i;
+	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:[^\\n]{0,120}unrecognized name/i;
+const ALT_HOST_RESCUED = /alt-host[^\n]{0,80}HTML page|status [23]\d\d/i;
 
 function siteReason(lead) {
 	const probe = lead.probe || {};

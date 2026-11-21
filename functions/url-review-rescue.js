@@ -85,7 +85,7 @@ const RESCUABLE = [
 const SITE_CERT =
 	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed|net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID/i;
 const SITE_TLS_HANDSHAKE =
-	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:.*unrecognized name/i;
+	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:[^\\n]{0,120}unrecognized name/i;
 
 const clip = (value, max) =>
 	String(value == null ? '' : value)
