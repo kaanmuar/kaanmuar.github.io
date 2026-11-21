@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-LtzTyq9eFlpk7fJfXTlpd5NDe4QPdxtoBKvgy+n6P0o=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com 'sha256-O8RBgB4PUf79VGaO2LqGnfbfvTwHzEqUZJ1FmRBUnmg=' 'sha256-0TNxRsic1JqmisUytkt+v0Za9+CZz7YAI5J8pjBVM7g=' 'sha256-SiF2jXogt2PCZ7PODSvPRqgGV7Bt81YBsHGEF0D7tWM=' 'sha256-R6kjt5FwTd5vAw94Q08NLDZsSaGTzg4NsdIfKtECSp0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: https://hatscripts.github.io https://www.google-analytics.com https://www.googletagmanager.com https://fonts.gstatic.com https://www.gstatic.com https://translate.googleapis.com https://www.google.com; connect-src 'self' http://127.0.0.1:8768 http://localhost:8768 https://us-central1-carlosm-interactive-cv.cloudfunctions.net https://ipwho.is https://dns.google https://www.google-analytics.com https://www.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.googleapis.com https://translate.googleapis.com https://cloudflareinsights.com; frame-src 'self' https://translate.google.com https://carlosm-interactive-cv.firebaseapp.com https://www.paypal.com https://www.sandbox.paypal.com; form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com;">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#071116" data-fixed>
@@ -353,6 +353,24 @@
     .verify-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
     .verify-list strong { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
     .verify-until { font: 500 11.5px "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    #dmarc-status { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+    #dmarc-status:empty { display: none; }
+    #dmarc-status.ok { color: var(--green); }
+    #dmarc-status.bad { color: var(--red); }
+    #dmarc-notice { margin-top: 16px; display: grid; gap: 8px; padding: 16px 18px; border-radius: 16px; border: 1px solid var(--edge); background: color-mix(in srgb, var(--card) 45%, transparent); }
+    #dmarc-notice:empty { display: none; }
+    #dmarc-notice h3 { margin: 0; font-size: 15px; font-weight: 700; }
+    #dmarc-notice p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .dmarc-accept { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 0; font-size: 14px; color: var(--text); }
+    .dmarc-accept input { margin-top: 3px; }
+    .dmarc-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    #dmarc-state { display: inline-flex; align-items: center; min-height: 28px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--edge); font: 600 12px/1.2 "Fira Code", ui-monospace, monospace; color: var(--muted); }
+    #dmarc-state.ok { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, transparent); background: color-mix(in srgb, var(--green) 10%, transparent); }
+    #dmarc-steps { margin-top: 18px; }
+    #dmarc-steps ol { margin: 10px 0 0; padding-left: 1.2em; display: grid; gap: 10px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+    #dmarc-steps li { padding-left: 4px; }
+    #dmarc-need-proof { margin: 12px 0 0; font-size: 14px; }
+    #dmarc-need-proof[hidden] { display: none; }
 
     .foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 22px 0 40px; border-top: 1px solid var(--edge); font-size: 13px; color: var(--muted); }
     .foot nav { display: flex; gap: 16px; }
@@ -649,6 +667,39 @@
     <ul class="verify-list" id="verify-list"></ul>
     <p class="empty" id="verify-none" data-copy="none"></p>
   </section>
+  <section class="panel notranslate" id="dmarc" style="--i: 5" translate="no" hidden>
+    <div class="panel-head">
+      <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="M4 8l8 5 8-5"/></svg>
+      <div>
+        <h2 data-copy="title"></h2>
+        <p class="muted" data-copy="intro"></p>
+      </div>
+    </div>
+    <label for="dmarc-host" data-copy="host"></label>
+    <div class="sign-in-row">
+      <input id="dmarc-host" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="shop.example.com">
+      <button class="btn" id="dmarc-load" type="button" data-copy="load"></button>
+      <span id="dmarc-state" aria-live="polite"></span>
+    </div>
+    <p id="dmarc-need-proof" hidden><a href="#verify" data-copy="needProofLink"></a></p>
+    <div id="dmarc-notice" aria-live="polite"></div>
+    <label class="dmarc-accept"><input id="dmarc-accept" type="checkbox"><span data-copy="accept"></span></label>
+    <div class="dmarc-actions">
+      <button class="btn" id="dmarc-on" type="button" data-copy="turnOn" disabled></button>
+      <button class="btn btn-ghost" id="dmarc-off" type="button" data-copy="turnOff" disabled></button>
+    </div>
+    <div id="dmarc-steps" hidden>
+      <h3 class="verify-list-head" data-copy="setup"></h3>
+      <ol>
+        <li data-copy="step1"></li>
+        <li data-copy="step2"></li>
+        <li><span data-copy="step3"></span> <code class="verify-code" id="dmarc-dmarc-host"></code> <code class="verify-code" id="dmarc-rua"></code></li>
+        <li><span data-copy="step4"></span> <code class="verify-code" id="dmarc-tls-host"></code> <code class="verify-code" id="dmarc-tls"></code></li>
+        <li data-copy="step5"></li>
+      </ol>
+    </div>
+    <p id="dmarc-status" role="status"></p>
+  </section>
 </main>
 <footer class="foot">
   <span translate="no">QA-lab URL Review · Carlos Muñoz</span>
@@ -724,9 +775,15 @@
     fileEl.hidden = true;
     privacyEl.hidden = true;
     document.getElementById("compare").hidden = true;
+    const verifyEl = document.getElementById("verify");
+    if (verifyEl) verifyEl.hidden = true;
+    const dmarcEl = document.getElementById("dmarc");
+    if (dmarcEl) dmarcEl.hidden = true;
     window.ReviewAuth.expire("Your sign-in has ended. Sign in again to see your reviews.");
     return true;
   }
+  window.account = account;
+  window.signedOut = signedOut;
   document.getElementById("stop").addEventListener("click", async () => {
     const response = await account("/account/stop");
     if (signedOut(response)) return;
@@ -1527,6 +1584,10 @@
     if (signed) loadRuns();
     else {
       fileEl.hidden = privacyEl.hidden = compareEl.hidden = true;
+      const verifyEl = document.getElementById("verify");
+      if (verifyEl) verifyEl.hidden = true;
+      const dmarcEl = document.getElementById("dmarc");
+      if (dmarcEl) dmarcEl.hidden = true;
       cmpResult.replaceChildren();
       cmpWith.clear();
       runs = [];
@@ -1596,6 +1657,7 @@
   mountLanguage();
 </script>
 <script src="js/qa-review-verify.js?v=20261023b"></script>
+<script src="js/qa-review-dmarc-consent.js?v=20261121a"></script>
 <script src="js/url-suggest.js?v=20261120-3988"></script>
 <script type="module" src="js/fusion/boot.js?v=20261027a"></script>
 </body>
