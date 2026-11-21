@@ -35,6 +35,11 @@
    refused a login or a post, after trying the rest. A post that went out on a plainer plan than its first (the card
    for a refused clip or poll) counts as posted, and the run's line and a GitHub Actions warning name it (#3006).
 
+   Bluesky XRPC stays plain fetch; PDS discovery uses extractPdsEndpoint from @atproto/lex-password-session (MIT,
+   Node >=22). Full @atproto/lex Client + lexicon codegen is deferred (#3841). Mastodon HTTP goes through masto
+   8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are unchanged. Do not auto-post from this module
+   without --live / workflow secrets.
+
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
    read:accounts, read:statuses (Preferences > Development > New application). Threads: a long-lived user token with
@@ -45,6 +50,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { createRestAPIClient, MastoHttpError } = require('masto');
+const { extractPdsEndpoint } = require('@atproto/lex-password-session');
 const ledger = require('./social-ledger');
 const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
@@ -439,12 +446,10 @@ function bluesky(env = process.env) {
 			// The video service processes the clip before the post goes out, and stores it on our PDS with a service token.
 			const video = async () => {
 				const bytes = await download(args.clip.url);
-				const pds = ((session.didDoc && session.didDoc.service) || []).find((s) =>
-					String(s.id).endsWith('#atproto_pds')
-				);
+				const pds = extractPdsEndpoint(session.didDoc);
 				const { token } = await xrpc('com.atproto.server.getServiceAuth', {
 					query: {
-						aud: 'did:web:' + new URL(pds ? pds.serviceEndpoint : service).host,
+						aud: 'did:web:' + new URL(pds || service).host,
 						lxm: 'com.atproto.repo.uploadBlob',
 						exp: String(Math.floor(Date.now() / 1000) + 1800),
 					},
@@ -578,30 +583,44 @@ function bluesky(env = process.env) {
 
 function mastodon(env = process.env) {
 	const base = String(env.MASTODON_URL || '').replace(/\/$/, '');
-	const call = async (method, route, body, headers = {}) => {
-		const form = body instanceof FormData;
-		const res = await fetch(base + route, {
-			method,
-			headers: Object.assign(
-				{ Authorization: 'Bearer ' + env.MASTODON_TOKEN },
-				body && !form ? { 'Content-Type': 'application/json' } : {},
-				headers
-			),
-			body: form ? body : body ? JSON.stringify(body) : undefined,
-		});
-		return reply(res, 'Mastodon ' + route);
+	const client =
+		base && env.MASTODON_TOKEN ? createRestAPIClient({ url: base, accessToken: env.MASTODON_TOKEN }) : null;
+	// masto throws MastoHttpError; the queue and the ledger read .status and the "Mastodon <route> <status>: <why>" line.
+	const call = async (route, run) => {
+		try {
+			return await run(client);
+		} catch (error) {
+			if (!(error instanceof MastoHttpError)) throw error;
+			const why = error.message || error.description || 'request failed';
+			throw Object.assign(new Error('Mastodon ' + route + ' ' + error.statusCode + ': ' + String(why).slice(0, 300)), {
+				status: error.statusCode,
+			});
+		}
 	};
+	// A large image or a video is still processing when /api/v2/media answers; poll until it has a url. masto's own
+	// 60 s poll is off (skipPolling) so a video keeps its three minutes and a stuck one is refused by this loop.
+	const attach = async (params, tries, ms) => {
+		let made = await call('/api/v2/media', (c) => c.v2.media.create({ ...params, skipPolling: true }));
+		for (let i = 0; !made.url && i < tries; i += 1) {
+			await sleep(ms);
+			made = await call('/api/v1/media/' + made.id, (c) => c.v1.media.$select(made.id).fetch());
+		}
+		return made;
+	};
+	const publish = (body, key) =>
+		call('/api/v1/statuses', (c) =>
+			c.v1.statuses.create(body, { requestInit: { headers: { 'Idempotency-Key': key } } })
+		);
 	let me = null;
 	return {
 		ready: Boolean(base && env.MASTODON_TOKEN),
 		async login() {
-			me = await call('GET', '/api/v1/accounts/verify_credentials');
+			me = await call('/api/v1/accounts/verify_credentials', (c) => c.v1.accounts.verifyCredentials());
 			return me.acct + '@' + new URL(base).host;
 		},
 		async recent() {
-			const list = await call(
-				'GET',
-				'/api/v1/accounts/' + me.id + '/statuses?limit=40&exclude_replies=true&exclude_reblogs=true'
+			const list = await call('/api/v1/accounts/' + me.id + '/statuses', (c) =>
+				c.v1.accounts.$select(me.id).statuses.list({ limit: 40, excludeReplies: true, excludeReblogs: true })
 			);
 			return list.map((status) => ({ id: status.id, text: status.content || '', url: status.url }));
 		},
@@ -611,26 +630,21 @@ function mastodon(env = process.env) {
 		async post(args) {
 			const { text, image, alt, lang, key } = args;
 			const uploads = {};
-			const card = () => new Blob([fs.readFileSync(image)], { type: 'image/jpeg' });
+			// A File keeps its name through masto's multipart serializer (a bare Blob would go up as "blob").
+			const card = () => new File([fs.readFileSync(image)], path.basename(image), { type: 'image/jpeg' });
 			const upload = (kind) =>
 				uploads[kind] ||
 				(uploads[kind] = (async () => {
-					const form = new FormData();
-					if (kind === 'video') {
-						form.append(
-							'file',
-							new Blob([await download(args.clip.url)], { type: 'video/mp4' }),
-							path.basename(new URL(args.clip.url).pathname)
-						);
-						form.append('thumbnail', card(), path.basename(image));
-					} else form.append('file', card(), path.basename(image));
-					form.append('description', alt);
-					let media = await call('POST', '/api/v2/media', form);
-					for (let i = 0; !media.url && i < (kind === 'video' ? 60 : 15); i += 1) {
-						await sleep(kind === 'video' ? 3000 : 2000);
-						media = await call('GET', '/api/v1/media/' + media.id);
-					}
-					if (kind === 'video' && !media.url) throw new Error('Mastodon is still processing video ' + media.id);
+					const video = kind === 'video';
+					const params = { description: alt };
+					if (video) {
+						params.file = new File([await download(args.clip.url)], path.basename(new URL(args.clip.url).pathname), {
+							type: 'video/mp4',
+						});
+						params.thumbnail = card();
+					} else params.file = card();
+					const media = await attach(params, video ? 60 : 15, video ? 3000 : 2000);
+					if (video && !media.url) throw new Error('Mastodon is still processing video ' + media.id);
 					return media.id;
 				})());
 			let refused = null;
@@ -640,33 +654,14 @@ function mastodon(env = process.env) {
 				try {
 					const ids = [];
 					for (const slide of args.slides.slice(0, 4)) {
-						const form = new FormData();
 						const bytes =
 							slide.file && fs.existsSync(slide.file) ? fs.readFileSync(slide.file) : await download(slide.url);
-						form.append(
-							'file',
-							new Blob([bytes], { type: 'image/jpeg' }),
-							path.basename(slide.file || slide.url || 'slide.jpg')
-						);
-						form.append('description', slide.alt || alt);
-						let media = await call('POST', '/api/v2/media', form);
-						for (let i = 0; !media.url && i < 15; i += 1) {
-							await sleep(2000);
-							media = await call('GET', '/api/v1/media/' + media.id);
-						}
-						ids.push(media.id);
+						const file = new File([bytes], path.basename(slide.file || slide.url || 'slide.jpg'), {
+							type: 'image/jpeg',
+						});
+						ids.push((await attach({ file, description: slide.alt || alt }, 15, 2000)).id);
 					}
-					const status = await call(
-						'POST',
-						'/api/v1/statuses',
-						{
-							status: text,
-							visibility: 'public',
-							language: lang,
-							media_ids: ids,
-						},
-						{ 'Idempotency-Key': key }
-					);
+					const status = await publish({ status: text, visibility: 'public', language: lang, media_ids: ids }, key);
 					return sent({ id: status.id, url: status.url, uses: ['carousel', 'slides'] }, plainer);
 				} catch (error) {
 					refused = error;
@@ -689,7 +684,7 @@ function mastodon(env = process.env) {
 					continue;
 				}
 				try {
-					const status = await call('POST', '/api/v1/statuses', body, { 'Idempotency-Key': key });
+					const status = await publish(body, key);
 					return sent({ id: status.id, url: status.url, uses: plan.uses }, plainer);
 				} catch (error) {
 					if (error.status !== 422) throw error;
@@ -701,10 +696,10 @@ function mastodon(env = process.env) {
 			throw refused;
 		},
 		async profile({ avatar, banner }) {
-			const form = new FormData();
-			form.append('avatar', new Blob([fs.readFileSync(avatar)], { type: 'image/jpeg' }), path.basename(avatar));
-			form.append('header', new Blob([fs.readFileSync(banner)], { type: 'image/jpeg' }), path.basename(banner));
-			const account = await call('PATCH', '/api/v1/accounts/update_credentials', form);
+			const jpeg = (file) => new File([fs.readFileSync(file)], path.basename(file), { type: 'image/jpeg' });
+			const account = await call('/api/v1/accounts/update_credentials', (c) =>
+				c.v1.accounts.updateCredentials({ avatar: jpeg(avatar), header: jpeg(banner) })
+			);
 			return account.url;
 		},
 	};
