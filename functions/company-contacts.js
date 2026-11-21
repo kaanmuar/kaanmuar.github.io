@@ -220,12 +220,26 @@ function contactLinks(html, base) {
 		return [];
 	}
 	const out = [];
-	const re = /<a\b[^<>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)')/gi;
-	let m;
-	while ((m = re.exec(String(html || ''))) && out.length < CONTACT_PAGES) {
+	const source = String(html || '');
+	let at = 0;
+	// Linear scan: an open <a …> tag, then href= inside that tag only (no nested [^<>]*? quantifier).
+	while (out.length < CONTACT_PAGES) {
+		const open = source.toLowerCase().indexOf('<a', at);
+		if (open < 0) break;
+		const after = source.charAt(open + 2);
+		if (after && after !== ' ' && after !== '\t' && after !== '\n' && after !== '\r' && after !== '>') {
+			at = open + 2;
+			continue;
+		}
+		const gt = source.indexOf('>', open);
+		if (gt < 0) break;
+		at = gt + 1;
+		const tag = source.slice(open, Math.min(gt + 1, open + 500));
+		const href = tag.match(/\bhref\s*=\s*(?:"([^"#]*)"|'([^'#]*)')/i);
+		if (!href) continue;
 		let u;
 		try {
-			u = new URL(decode(m[1] || m[2]), home);
+			u = new URL(decode(href[1] || href[2]), home);
 		} catch (error) {
 			continue;
 		}
