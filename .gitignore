@@ -91,3 +91,7 @@ scripts/tool-scout/seen.json
 scripts/feature-deck/.cache/
 # Feature deck (#3931): the HTML deck is published at /presentation/; the PowerPoint is rebuilt on request
 presentation/*.pptx
+
+# GeoIP and heartbeat Workers (#4031, #4032): cf build output and the cached account id
+.cloudflare/
+workers/uptime-check/.cloudflare/
