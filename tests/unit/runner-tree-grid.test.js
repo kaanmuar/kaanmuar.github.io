@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { lineStatus, rowStatus, buildTree, filterTree, flatten, windowRows, summary } = require('../../js/runner-tree-grid.js');
+const { lineStatus, rowStatus, buildTree, filterTree, flatten, windowRows, summary, matchSegments } = require('../../js/runner-tree-grid.js');
 
 const groups = () => [
 	{
@@ -154,6 +154,39 @@ test('100 pages x 20 frameworks: filter then window stays cheap and correct', ()
 
 	const one = filterTree(tree, { framework: 'FW3', text: 'page-42' });
 	assert.deepEqual(one.map((n) => [n.name, n.children.length]), [['FW3', 1]]);
+});
+
+test('matchSegments splits text into match / non-match parts without regex injection', () => {
+	assert.deepEqual(matchSegments('Hello WORLD', ''), [{ text: 'Hello WORLD', match: false }]);
+	assert.deepEqual(matchSegments('Hello WORLD', '   '), [{ text: 'Hello WORLD', match: false }]);
+	assert.deepEqual(matchSegments(null, 'x'), [{ text: '', match: false }]);
+	assert.deepEqual(matchSegments('abc', 'nope'), [{ text: 'abc', match: false }]);
+
+	assert.deepEqual(matchSegments('Error: locator timeout', 'LOCATOR'), [
+		{ text: 'Error: ', match: false },
+		{ text: 'locator', match: true },
+		{ text: ' timeout', match: false },
+	]);
+	assert.deepEqual(matchSegments('aaa', 'a'), [
+		{ text: 'a', match: true },
+		{ text: 'a', match: true },
+		{ text: 'a', match: true },
+	]);
+	assert.deepEqual(matchSegments('ababa', 'aba'), [
+		{ text: 'aba', match: true },
+		{ text: 'ba', match: false },
+	]);
+	// query characters that look like regex stay literal
+	assert.deepEqual(matchSegments('cost is $5.00 (ok)', '$5.00'), [
+		{ text: 'cost is ', match: false },
+		{ text: '$5.00', match: true },
+		{ text: ' (ok)', match: false },
+	]);
+	assert.deepEqual(matchSegments('a.*b and a.*b', 'a.*b'), [
+		{ text: 'a.*b', match: true },
+		{ text: ' and ', match: false },
+		{ text: 'a.*b', match: true },
+	]);
 });
 
 test('module is dependency-free and not loaded by any HTML page (opt-in, loaded on demand by qa-lab.js)', () => {
