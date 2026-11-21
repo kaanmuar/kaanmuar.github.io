@@ -114,7 +114,8 @@ shift
 dry="" nodup="" args=()
 for a; do
 	case $a in
-	--dry-run) dry=1 ;;
+	# log prune forwards --dry-run to usage-prune.js (#3836); other cmds treat it as "file nothing".
+	--dry-run) if [ "$cmd" = log ]; then args+=("$a"); else dry=1; fi ;;
 	--no-dup-check) nodup=1 ;;
 	*) args+=("$a") ;;
 	esac
