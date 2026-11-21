@@ -50,10 +50,42 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
+    // Gate only on slackhq/compose-lints (#3836): the module's other Android Lint findings (e.g. wear's
+    // TilePreviewImageFormat) predate this and stay out of the gate until they are cleaned up.
+    lint {
+        checkOnly += listOf(
+            "ComposeCompositionLocalGetter",
+            "ComposeCompositionLocalUsage",
+            "ComposeContentEmitterReturningValues",
+            "ComposeModifierComposed",
+            "ComposeModifierMissing",
+            "ComposeModifierReused",
+            "ComposeModifierWithoutDefault",
+            "ComposeMultipleContentEmitters",
+            "ComposeMutableParameters",
+            "ComposeNamingLowercase",
+            "ComposeNamingUppercase",
+            "ComposeParameterOrder",
+            "ComposePreviewNaming",
+            "ComposePreviewPublic",
+            "ComposeRememberMissing",
+            "ComposeUnstableCollections",
+            "ComposeUnstableReceiver",
+            "ComposeViewModelForwarding",
+            "ComposeViewModelInjection"
+        )
+        abortOnError = true
+        // The 201 findings that predate the gate (80 ComposeModifierMissing, 59 UnstableCollections, 22 ViewModelForwarding...)
+        // live here; only new ones fail CI. Shrink it by regenerating: ./gradlew :app:updateLintBaseline
+        baseline = file("lint-baseline.xml")
+    }
     buildFeatures { compose = true; buildConfig = true }
 }
 
 dependencies {
+    // slackhq/compose-lints (Apache-2.0, #3836): Compose Android Lint checks, run by ./gradlew lintDebug.
+    lintChecks(libs.compose.lint.checks)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment)

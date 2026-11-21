@@ -1,0 +1,2215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.7.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.3)" variant="all" version="8.7.3">
+
+    <issue
+        id="ComposeModifierComposed"
+        message="Modifier.composed { ... } is no longer recommended due to performance issues.&#xA;&#xA;You should use the Modifier.Node API instead, as it was designed from the ground up to be far more performant than composed modifiers.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#migrate-to-modifiernode for more information."
+        errorLine1="fun Modifier.tilt(max: Float = 7f): Modifier = composed {"
+        errorLine2="                                               ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="161"
+            column="48"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierComposed"
+        message="Modifier.composed { ... } is no longer recommended due to performance issues.&#xA;&#xA;You should use the Modifier.Node API instead, as it was designed from the ground up to be far more performant than composed modifiers.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#migrate-to-modifiernode for more information."
+        errorLine1="fun Modifier.reveal(): Modifier = composed {"
+        errorLine2="                                  ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="185"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Accounts(g, s, vm, ::ask)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="255"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    OwnerTagsPanel(g, s, vm, names, ::ask)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="293"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Settings(g, s, vm, ::ask)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="362"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    GeoFlowPanels(g, picked, if (channel == GeoCost.CHANNEL.first) &quot;all&quot; else channel, s, vm) { text, run -> confirm = PendingAction(text, run) }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="536"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    GeoConfirm(g, s, vm) { text, run -> confirm = PendingAction(text, run) }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="537"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    GeoNext(g, s, vm, open = { picked = it }) { text, run -> confirm = PendingAction(text, run) }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="539"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    GeoTimeline(g.obj(&quot;timeline&quot;), cc, name, s, vm, ask)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoFlow.kt"
+            line="239"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    WorkerPanel(s, vm, span, ::ask, ::open)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="511"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Deck(s, vm, span, { agent = it }, ::ask) { syncBoard() }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="967"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    AgentDialog(agent, vm, Github.spend(s.worker)) { agent = null }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="970"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    DismissDialog(dismiss, vm) { dismiss = null }"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="971"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Approvals(s, vm, id = &quot;marketing-approvals&quot;)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Marketing.kt"
+            line="156"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    TargetsPanel(s, vm, id = &quot;marketing-targets&quot;)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Marketing.kt"
+            line="158"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Deck(s, vm, ::ask)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Marketing.kt"
+            line="384"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Proposals(s, vm, open)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="124"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    Approvals(s, vm, id = &quot;outreach-approvals&quot;)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="398"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    TargetsPanel(s, vm, id = &quot;outreach-targets&quot;)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="465"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    QalabLinksPanel(ou, vm)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="526"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    CallsPanel(s, vm)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="547"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    JarvisActions(s, vm)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="802"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    PageSpeedPanels(snap.ext(&quot;pagespeed&quot;), vm)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="823"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeViewModelForwarding"
+        message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
+        errorLine1="    StudioPanel(s, vm)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Social.kt"
+            line="163"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="val LocalChartPrefs = compositionLocalOf { ChartPrefs.Prefs() }"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="382"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="val LocalPanelStretch = compositionLocalOf { 1 }"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="383"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** Cycles a panel&apos;s stretch: (panel id, what it shows now, highest value). Set inside a tab (#3978); every chart panel then gets its ↕ button. */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="384"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** A chart calls this so its panel shows the ↕ button without each panel saying `charts = true` (#3978). */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="386"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="val LocalForm = compositionLocalOf { Form() }"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Fit.kt"
+            line="38"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** The tab whose panels a [Masonry] arranges, and its saved layout; null outside the tabs (Settings, Ask). */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Layouts.kt"
+            line="223"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="val LocalLayout = compositionLocalOf&lt;Layouts.Saved?> { null }"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Layouts.kt"
+            line="225"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** Saves one panel&apos;s continuous size (#3611) into settings.layout; null outside tab content. */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Layouts.kt"
+            line="226"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** Smaller cards when a foldable&apos;s inner screen or a tablet holds three columns (#2139). */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="76"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeCompositionLocalUsage"
+        message="`CompositionLocal`s are implicit dependencies and creating new ones should be avoided. See https://slackhq.github.io/compose-lints/rules/#compositionlocals for more information."
+        errorLine1="/** How many panel columns the tabs have; two or more gets the command deck and list-detail Products. */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="79"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun JarvisActions(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Actions.kt"
+            line="164"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ProposalActions(p: JsonObject, vm: JarvisViewModel, ask: (PendingAction) -> Unit, open: (String) -> Unit, mark: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Actions.kt"
+            line="211"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun PageSpeedButtons(pr: Int, vm: JarvisViewModel, proposal: String?, ask: (PendingAction) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Actions.kt"
+            line="267"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ActionSettings(actions: JsonObject?, save: (JsonObject) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Actions.kt"
+            line="277"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun EmailAddresses(a: JsonObject?) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Addresses.kt"
+            line="54"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun BriefSheet(item: JsonObject, s: UiState, vm: JarvisViewModel, open: (String) -> Unit, close: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/BriefSheet.kt"
+            line="64"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun BriefRow(b: JsonObject, dim: Boolean = false, onClick: () -> Unit) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/BriefSheet.kt"
+            line="208"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun FoldAllButton() {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="124"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun KpiPairs(items: List&lt;KpiData>, open: String? = null, onDrill: ((String) -> Unit)? = null) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="355"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Enlarged(scale: Int, scroll: androidx.compose.foundation.ScrollState = androidx.compose.foundation.rememberScrollState(), content: @Composable (androidx.compose.ui.unit.Dp) -> Unit) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="400"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Legend(items: List&lt;Pair&lt;String, Color>>) {"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="468"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun BarChart(values: List&lt;Double>, labels: List&lt;String> = emptyList(), color: Color = J.cyan, height: Int? = null,"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="504"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun DrillBody(d: Drill?, close: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="640"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun TopList(title: String, rows: List&lt;Pair&lt;String, Double>>, limit: Int = 8,"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="681"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun KeyRow(label: String, value: String, color: Color = J.text, url: String? = null) {"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="714"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun StatusRow(level: String?, title: String, detail: String? = null, url: String? = null, onClick: (() -> Unit)? = null) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="724"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Heatmap(grid: List&lt;List&lt;Double>>, peak: String?, title: String = &quot;When people come&quot;, id: String) {"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="738"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ActionButton(label: String, running: Boolean, onClick: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="761"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Needs(x: JsonObject?) {"
+        errorLine2="    ~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="770"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Title(text: String) = Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))"
+        errorLine2="    ~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="777"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ConsoleScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Console.kt"
+            line="110"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Backdrop(content: @Composable BoxScope.() -> Unit) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="97"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GlassChip(label: String, selected: Boolean, onClick: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="238"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun CubeGlyph(color: Color = J.cyan, size: Dp = 14.dp) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="257"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Reactor(percent: Double?, label: String, size: Dp = 92.dp) {"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="265"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GlowDot(color: Color, pulse: Boolean = false) {"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="298"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun EngagementScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="169"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun OffTheFold(content: @Composable BoxScope.() -> Unit) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Fit.kt"
+            line="97"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="426"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoPlan(g: JsonObject) {"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoActions.kt"
+            line="128"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoNext(g: JsonObject, s: UiState, vm: JarvisViewModel, open: (String) -> Unit, ask: (String, () -> Unit) -> Unit) {"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoActions.kt"
+            line="169"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoClicksSheet(r: JsonObject) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoClicks.kt"
+            line="67"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoCostLegend(g: JsonObject, tv: GeoTime.View, key: String) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoCost.kt"
+            line="197"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoCostPanel(g: JsonObject, tv: GeoTime.View, key: String, channel: String, pick: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoCost.kt"
+            line="212"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoCostSheet(g: JsonObject, cc: String, span: Int) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoCost.kt"
+            line="252"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoCostSettings(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoCost.kt"
+            line="271"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoHeatPanels(g: JsonObject, picked: String?, channel: String, pick: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoHeat.kt"
+            line="148"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoTimeControls(g: JsonObject, st: GeoTimeState, v: GeoTime.View) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="298"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoChangeLine(v: GeoTime.View, cc: String, key: String) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="352"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoChangeLegend(v: GeoTime.View, key: String) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="397"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun GeoTimeSheet(g: JsonObject, cc: String, span: Int) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="410"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, Layouts.Saved?) -> Unit) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Layouts.kt"
+            line="312"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun VoiceOrb(level: Float, active: Boolean, size: Dp = 64.dp, color: Color = J.cyan) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Listening.kt"
+            line="28"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun LocalPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Local.kt"
+            line="61"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun SignInScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="165"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun LockScreen(unlock: () -> Unit) = OffTheFold {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="198"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun MainScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, openTab: String?, tabOpened: () -> Unit, setLock: (Boolean) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="217"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun AskScreen(s: UiState, vm: JarvisViewModel, back: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="408"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun SettingsScreen(s: UiState, vm: JarvisViewModel, lockOn: Boolean, setLock: (Boolean) -> Unit, back: () -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="512"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun MarketingScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Marketing.kt"
+            line="129"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun CampaignRows(camps: JsonObject, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Marketing.kt"
+            line="600"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map&lt;String, String>, ask: (String, () -> Unit) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/OwnerTags.kt"
+            line="106"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun PageSpeedPanels(ps: JsonObject?, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/PageSpeed.kt"
+            line="49"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun PeoplePanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/People.kt"
+            line="67"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Proposals(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Proposals.kt"
+            line="37"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun QalabLinksPanel(ou: JsonObject?, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/QalabLinks.kt"
+            line="49"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun RescuePanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="150"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun FixesPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="223"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ChecksPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="251"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ThreatsPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="274"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun CyberMapPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="316"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ExposedPanel(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/ReviewRescue.kt"
+            line="399"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun OverviewScreen(s: UiState, vm: JarvisViewModel, open: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="78"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Goals(goals: List&lt;JsonObject>) {"
+        errorLine2="    ~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="177"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (String) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="196"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun TrafficScreen(s: UiState) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="668"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun SystemsScreen(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="783"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun SocialHub(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Social.kt"
+            line="63"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun StatusSlotsEditor(slots: List&lt;StatusSlot>, onChange: (List&lt;StatusSlot>) -> Unit) {"
+        errorLine2="    ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/StatusEditor.kt"
+            line="29"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun StudioPanel(s: UiState, vm: JarvisViewModel) {"
+        errorLine2="    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Studio.kt"
+            line="54"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun DeckStrip(deck: List&lt;JsonObject>) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="87"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Hologram(ready: Double?, visits: String, size: Dp = 180.dp) {"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="109"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun LineChart(series: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String> = emptyList(), colors: List&lt;Color> = SLICES, height: Int? = null,"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="186"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Legend(items: List&lt;Triple&lt;String, String, Color>>) {"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="273"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Donut(rows: List&lt;Pair&lt;String, Double>>, unit: String = &quot;&quot;) {"
+        errorLine2="    ~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="287"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun Funnel(steps: List&lt;Pair&lt;String, Double?>>) {"
+        errorLine2="    ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="333"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun TileMatrix(tiles: List&lt;JsonObject>) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="353"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun UptimeStrip(days: List&lt;Double?>) {"
+        errorLine2="    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="378"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun NoDataRow(items: List&lt;Pair&lt;String, String>>) {"
+        errorLine2="    ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="393"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierMissing"
+        message="This @Composable function emits content but doesn&apos;t have a modifier parameter.See https://slackhq.github.io/compose-lints/rules/#when-should-i-expose-modifier-parameters for more information."
+        errorLine1="fun ListDetail(list: @Composable ColumnScope.() -> Unit, detail: @Composable ColumnScope.() -> Unit) {"
+        errorLine2="    ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="418"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierReused"
+        message="Modifiers should only be used once and by the root level layout of a Composable. This is true even if appended to or with other modifiers e.g. modifier.fillMaxWidth().Use Modifier (with a capital &apos;M&apos;) to construct a new Modifier that you can pass to other composables.See https://slackhq.github.io/compose-lints/rules/#dont-re-use-modifiers for more information."
+        errorLine1="    if (title != null || unit != null || labels.isNotEmpty() || legend != null) { FramedSpark(values, color, modifier, title, unit, labels, legend, prefs); return }"
+        errorLine2="                                                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="583"
+            column="83"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierReused"
+        message="Modifiers should only be used once and by the root level layout of a Composable. This is true even if appended to or with other modifiers e.g. modifier.fillMaxWidth().Use Modifier (with a capital &apos;M&apos;) to construct a new Modifier that you can pass to other composables.See https://slackhq.github.io/compose-lints/rules/#dont-re-use-modifiers for more information."
+        errorLine1="    Canvas(modifier.height(30.dp).fillMaxWidth()) {"
+        errorLine2="    ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="586"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun FramedSpark(values: List&lt;Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List&lt;String>, legend: String?, prefs: ChartPrefs.Prefs) {"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="603"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun GeoCard(cc: String, r: JsonObject?, modifier: Modifier, open: () -> Unit, close: () -> Unit, change: (@Composable () -> Unit)? = null) {"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="390"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun StageArrow(st: Github.Stage, modifier: Modifier) {"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="1079"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun WorkerPanel(s: UiState, vm: JarvisViewModel, modifier: Modifier, ask: (String, () -> Unit) -> Unit, open: (String?) -> Unit) {"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="1117"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun ShotImage(url: String?, label: String, none: String, modifier: Modifier, open: (String?) -> Unit) {"
+        errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="1240"
+            column="66"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun Deck(s: UiState, vm: JarvisViewModel, modifier: Modifier, launch: (AgentDraft) -> Unit, ask: (String, () -> Unit) -> Unit, sync: () -> Unit) {"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="1315"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="ComposeModifierWithoutDefault"
+        message="This @Composable function has a modifier parameter but it doesn&apos;t have a default value.See https://slackhq.github.io/compose-lints/rules/#modifiers-should-have-default-parameters for more information."
+        errorLine1="private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, modifier: Modifier, pickProduct: (String) -> Unit, open: (String) -> Unit) {"
+        errorLine2="                                                                             ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="298"
+            column="78"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="/** Settings › Jarvis actions (#2145): the on-its-own switch, the daily caps and the Gemini confidence, as in Admin › Statistics › Settings. */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Actions.kt"
+            line="275"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@Composable"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoClicks.kt"
+            line="66"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="/** The range picker, change shading and week player; Play advances continuously between weeks (#3710). */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="296"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="/** The country sheet&apos;s changes over the picked range (30 days when none): sent, replies, positive, reply rate, GA4 visitors, engaged sessions and key events, prospects left and reviewed. */"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoTime.kt"
+            line="408"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMultipleContentEmitters"
+        message="Composable functions should only be emitting content into the composition from one source at their top level.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#do-not-emit-multiple-pieces-of-content for more information."
+        errorLine1="@Composable"
+        errorLine2="^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Main.kt"
+            line="400"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeMutableParameters"
+        message="Using mutable objects as state in Compose will cause your users to see incorrect or stale data in your app.Mutable objects that are not observable, such as ArrayList&lt;T> or a mutable data class, cannot be observed by Compose to trigger recomposition when they change.See https://slackhq.github.io/compose-lints/rules/#do-not-use-inherently-mutable-types-as-parameters for more information."
+        errorLine1="    private fun Drafts(draft: MutableMap&lt;String, String>, note: String, error: String?, busy: Boolean, queue: () -> Unit, drop: () -> Unit) = Column {"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="173"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="ComposeParameterOrder"
+        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [label: String, value: String, delta: String? = null, dir: Int = 0, alert: Boolean = false, modifier: Modifier = Modifier, labelLines: Int = 1, open: Boolean = false, onClick: (() -> Unit)? = null] but should be [label: String, value: String, modifier: Modifier = Modifier, delta: String? = null, dir: Int = 0, alert: Boolean = false, labelLines: Int = 1, open: Boolean = false, onClick: (() -> Unit)? = null].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
+        errorLine1="fun Kpi(label: String, value: String, delta: String? = null, dir: Int = 0, alert: Boolean = false, modifier: Modifier = Modifier, labelLines: Int = 1,"
+        errorLine2="       ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="317"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="ComposeParameterOrder"
+        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [values: List&lt;Double>, color: Color = J.cyan, modifier: Modifier = Modifier, title: String? = null, unit: String? = null, labels: List&lt;String> = emptyList(), legend: String? = null] but should be [values: List&lt;Double>, modifier: Modifier = Modifier, color: Color = J.cyan, title: String? = null, unit: String? = null, labels: List&lt;String> = emptyList(), legend: String? = null].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
+        errorLine1="fun Sparkline(values: List&lt;Double>, color: Color = J.cyan, modifier: Modifier = Modifier,"
+        errorLine2="             ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="580"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ComposeParameterOrder"
+        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [title: String, rows: List&lt;Pair&lt;String, Double>>, limit: Int = 8, yLabel: String? = null, unit: String? = null, legend: String? = null, open: String? = null, onRow: ((String) -> Unit)? = null, id: String, animateKey: Any? = null, footer: @Composable ColumnScope.() -> Unit = {}, format: (Double) -> String = { fmt(it) }] but should be [title: String, rows: List&lt;Pair&lt;String, Double>>, id: String, limit: Int = 8, yLabel: String? = null, unit: String? = null, legend: String? = null, open: String? = null, onRow: ((String) -> Unit)? = null, animateKey: Any? = null, footer: @Composable ColumnScope.() -> Unit = {}, format: (Double) -> String = { fmt(it) }].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
+        errorLine1="fun TopList(title: String, rows: List&lt;Pair&lt;String, Double>>, limit: Int = 8,"
+        errorLine2="           ^">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="681"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="ComposeParameterOrder"
+        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [grid: List&lt;List&lt;Double>>, peak: String?, title: String = &quot;When people come&quot;, id: String] but should be [grid: List&lt;List&lt;Double>>, peak: String?, id: String, title: String = &quot;When people come&quot;].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
+        errorLine1="fun Heatmap(grid: List&lt;List&lt;Double>>, peak: String?, title: String = &quot;When people come&quot;, id: String) {"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="738"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="ComposeParameterOrder"
+        message="Parameters in a composable function should be ordered following this pattern: params without defaults, modifiers, params with defaults and optionally, a trailing function that might not have a default param.&#xA;Current params are: [fraction: Float, color: Color = J.cyan, modifier: Modifier = Modifier] but should be [fraction: Float, modifier: Modifier = Modifier, color: Color = J.cyan].&#xA;See https://slackhq.github.io/compose-lints/rules/#ordering-composable-parameters-properly for more information."
+        errorLine1="fun GlowBar(fraction: Float, color: Color = J.cyan, modifier: Modifier = Modifier) {"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Depth.kt"
+            line="223"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `kpis: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class KpisList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun KpiGrid(kpis: List&lt;JsonObject>) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="344"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;KpiData> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;KpiData>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;KpiData>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun KpiPairs(items: List&lt;KpiData>, open: String? = null, onDrill: ((String) -> Unit)? = null) {"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="355"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Color>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Pair&lt;String, Color>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Pair&lt;String, Color>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Legend(items: List&lt;Pair&lt;String, Color>>) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="468"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="internal fun XTicks(labels: List&lt;String>) {"
+        errorLine2="                            ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="487"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `values: ImmutableList&lt;Double>` or create an `@Immutable` wrapper for this class: `@Immutable data class ValuesList(val items: List&lt;Double>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun BarChart(values: List&lt;Double>, labels: List&lt;String> = emptyList(), color: Color = J.cyan, height: Int? = null,"
+        errorLine2="                     ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="504"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun BarChart(values: List&lt;Double>, labels: List&lt;String> = emptyList(), color: Color = J.cyan, height: Int? = null,"
+        errorLine2="                                           ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="504"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `values: ImmutableList&lt;Double>` or create an `@Immutable` wrapper for this class: `@Immutable data class ValuesList(val items: List&lt;Double>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedBars(values: List&lt;Double>, labels: List&lt;String>, color: Color, height: Int, max: Double, title: String?, yLabel: String?, unit: String?, legend: String?, grid: String) {"
+        errorLine2="                               ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="544"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedBars(values: List&lt;Double>, labels: List&lt;String>, color: Color, height: Int, max: Double, title: String?, yLabel: String?, unit: String?, legend: String?, grid: String) {"
+        errorLine2="                                                     ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="544"
+            column="54"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `values: ImmutableList&lt;Double>` or create an `@Immutable` wrapper for this class: `@Immutable data class ValuesList(val items: List&lt;Double>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Sparkline(values: List&lt;Double>, color: Color = J.cyan, modifier: Modifier = Modifier,"
+        errorLine2="                      ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="580"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="              title: String? = null, unit: String? = null, labels: List&lt;String> = emptyList(), legend: String? = null) {"
+        errorLine2="                                                                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="581"
+            column="68"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `values: ImmutableList&lt;Double>` or create an `@Immutable` wrapper for this class: `@Immutable data class ValuesList(val items: List&lt;Double>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedSpark(values: List&lt;Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List&lt;String>, legend: String?, prefs: ChartPrefs.Prefs) {"
+        errorLine2="                                ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="603"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedSpark(values: List&lt;Double>, color: Color, modifier: Modifier, title: String?, unit: String?, labels: List&lt;String>, legend: String?, prefs: ChartPrefs.Prefs) {"
+        errorLine2="                                                                                                                       ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="603"
+            column="120"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Double>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;Pair&lt;String, Double>>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;Pair&lt;String, Double>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun TopList(title: String, rows: List&lt;Pair&lt;String, Double>>, limit: Int = 8,"
+        errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="681"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;List&lt;Double>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `grid: ImmutableList&lt;List&lt;Double>>` or create an `@Immutable` wrapper for this class: `@Immutable data class GridList(val items: List&lt;List&lt;Double>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Heatmap(grid: List&lt;List&lt;Double>>, peak: String?, title: String = &quot;When people come&quot;, id: String) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Components.kt"
+            line="738"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `list: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class ListList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun OnlyFilter(only: String, list: List&lt;JsonObject>, pick: (String) -> Unit) {"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="157"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;String, String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `names: ImmutableMap&lt;String, String>` or create an `@Immutable` wrapper for this class: `@Immutable data class NamesMap(val items: Map&lt;String, String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun Draft(p: JsonObject, names: Map&lt;String, String>, s: UiState, vm: JarvisViewModel, ask: (String, () -> Unit) -> Unit) {"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="368"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;String, String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `names: ImmutableMap&lt;String, String>` or create an `@Immutable` wrapper for this class: `@Immutable data class NamesMap(val items: Map&lt;String, String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun ReportReplies(r: JsonObject?, names: Map&lt;String, String>, waiting: Int, only: String, pick: (String) -> Unit) {"
+        errorLine2="                                                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Engagement.kt"
+            line="416"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="internal fun WorldMap(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>? = null, pins: Set&lt;String> = emptySet(), onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                              ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="324"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;String, Color>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `fills: ImmutableMap&lt;String, Color>?` or create an `@Immutable` wrapper for this class: `@Immutable data class FillsMap(val items: Map&lt;String, Color>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="internal fun WorldMap(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>? = null, pins: Set&lt;String> = emptySet(), onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                                                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="324"
+            column="104"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Set&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `pins: ImmutableSet&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class PinsSet(val items: Set&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="internal fun WorldMap(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>? = null, pins: Set&lt;String> = emptySet(), onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                                                                                                                         ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="324"
+            column="138"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun WorldMapCanvas(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>?, pins: Set&lt;String>, scale: Int, scrolled: () -> Int, onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="331"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;String, Color>? is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `fills: ImmutableMap&lt;String, Color>?` or create an `@Immutable` wrapper for this class: `@Immutable data class FillsMap(val items: Map&lt;String, Color>?)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun WorldMapCanvas(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>?, pins: Set&lt;String>, scale: Int, scrolled: () -> Int, onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                                                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="331"
+            column="109"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Set&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `pins: ImmutableSet&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class PinsSet(val items: Set&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun WorldMapCanvas(world: Geo.World, rows: List&lt;JsonObject>, key: String, selected: String?, fills: Map&lt;String, Color>?, pins: Set&lt;String>, scale: Int, scrolled: () -> Int, onTap: (String?, Offset) -> Unit) {"
+        errorLine2="                                                                                                                                       ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="331"
+            column="136"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, String>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Pair&lt;String, String>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Pair&lt;String, String>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun Chips(items: List&lt;Pair&lt;String, String>>, on: String, pick: (String) -> Unit) {"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Geo.kt"
+            line="414"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, String>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Pair&lt;String, String>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Pair&lt;String, String>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FlowChips(items: List&lt;Pair&lt;String, String>>, on: String, pick: (String) -> Unit) {"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoFlow.kt"
+            line="211"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GeoFlow.Group> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `groups: ImmutableList&lt;GeoFlow.Group>` or create an `@Immutable` wrapper for this class: `@Immutable data class GroupsList(val items: List&lt;GeoFlow.Group>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun TimelineChart(tl: JsonObject, groups: List&lt;GeoFlow.Group>, markers: List&lt;JsonObject>, selected: String?, tap: (String) -> Unit) {"
+        errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoFlow.kt"
+            line="269"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `markers: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class MarkersList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun TimelineChart(tl: JsonObject, groups: List&lt;GeoFlow.Group>, markers: List&lt;JsonObject>, selected: String?, tap: (String) -> Unit) {"
+        errorLine2="                                                                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoFlow.kt"
+            line="269"
+            column="81"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;GeoFlow.Link> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `shown: ImmutableList&lt;GeoFlow.Link>` or create an `@Immutable` wrapper for this class: `@Immutable data class ShownList(val items: List&lt;GeoFlow.Link>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FlowChart(shown: List&lt;GeoFlow.Link>) {"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoFlow.kt"
+            line="398"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, String>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Pair&lt;String, String>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Pair&lt;String, String>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun HeatChips(items: List&lt;Pair&lt;String, String>>, on: String, pick: (String) -> Unit) {"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoHeat.kt"
+            line="195"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun SectorTable(grid: JsonObject, rows: List&lt;JsonObject>, key: String, picked: String?, pick: (String) -> Unit) {"
+        errorLine2="                                                ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/GeoHeat.kt"
+            line="262"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, List&lt;Int>>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;Pair&lt;String, List&lt;Int>>>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;Pair&lt;String, List&lt;Int>>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun SeverityBars(rows: List&lt;Pair&lt;String, List&lt;Int>>>) {"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Github.kt"
+            line="1003"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;MapData.Stat> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `stats: ImmutableList&lt;MapData.Stat>` or create an `@Immutable` wrapper for this class: `@Immutable data class StatsList(val items: List&lt;MapData.Stat>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun StatRow(stats: List&lt;MapData.Stat>, w: Dp) {"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/MapWidgets.kt"
+            line="298"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;MapData.Line> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `lines: ImmutableList&lt;MapData.Line>` or create an `@Immutable` wrapper for this class: `@Immutable data class LinesList(val items: List&lt;MapData.Line>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun Lines(lines: List&lt;MapData.Line>, count: Int, w: Dp) {"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/MapWidgets.kt"
+            line="307"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a Map&lt;String, String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `names: ImmutableMap&lt;String, String>` or create an `@Immutable` wrapper for this class: `@Immutable data class NamesMap(val items: Map&lt;String, String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun OwnerTagsPanel(g: JsonObject, s: UiState, vm: JarvisViewModel, names: Map&lt;String, String>, ask: (String, () -> Unit) -> Unit) {"
+        errorLine2="                                                                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/OwnerTags.kt"
+            line="106"
+            column="75"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `series: ImmutableList&lt;Double>` or create an `@Immutable` wrapper for this class: `@Immutable data class SeriesList(val items: List&lt;Double>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun ProductRow(name: String, kpi: String, series: List&lt;Double>, delta: String?, dir: Int, onClick: () -> Unit) {"
+        errorLine2="                                                          ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="149"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `goals: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class GoalsList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Goals(goals: List&lt;JsonObject>) {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="177"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `codes: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class CodesList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun SignInCodes(codes: List&lt;JsonObject>) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Screens.kt"
+            line="732"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a MutableMap&lt;String, String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `draft: ImmutableMutableMap&lt;String, String>` or create an `@Immutable` wrapper for this class: `@Immutable data class DraftMutableMap(val items: MutableMap&lt;String, String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="    private fun Drafts(draft: MutableMap&lt;String, String>, note: String, error: String?, busy: Boolean, queue: () -> Unit, drop: () -> Unit) = Column {"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="173"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;StatusSlot> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `slots: ImmutableList&lt;StatusSlot>` or create an `@Immutable` wrapper for this class: `@Immutable data class SlotsList(val items: List&lt;StatusSlot>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun StatusSlotsEditor(slots: List&lt;StatusSlot>, onChange: (List&lt;StatusSlot>) -> Unit) {"
+        errorLine2="                             ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/StatusEditor.kt"
+            line="29"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `lines: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LinesList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun WhatsNewDialog(lines: List&lt;String>, close: () -> Unit) {"
+        errorLine2="                          ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/update/WhatsNew.kt"
+            line="49"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `deck: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class DeckList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun DeckStrip(deck: List&lt;JsonObject>) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="87"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Color> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `colors: ImmutableList&lt;Color>` or create an `@Immutable` wrapper for this class: `@Immutable data class ColorsList(val items: List&lt;Color>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun LineChart(series: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String> = emptyList(), colors: List&lt;Color> = SLICES, height: Int? = null,"
+        errorLine2="                                                                                                    ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="186"
+            column="101"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, List&lt;Double>>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `series: ImmutableList&lt;Pair&lt;String, List&lt;Double>>>` or create an `@Immutable` wrapper for this class: `@Immutable data class SeriesList(val items: List&lt;Pair&lt;String, List&lt;Double>>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun LineChart(series: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String> = emptyList(), colors: List&lt;Color> = SLICES, height: Int? = null,"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="186"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun LineChart(series: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String> = emptyList(), colors: List&lt;Color> = SLICES, height: Int? = null,"
+        errorLine2="                                                                ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="186"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Color> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `colors: ImmutableList&lt;Color>` or create an `@Immutable` wrapper for this class: `@Immutable data class ColorsList(val items: List&lt;Color>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedLineChart(shown: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String>, colors: List&lt;Color>, height: Int, max: Double,"
+        errorLine2="                                                                                                   ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="219"
+            column="100"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, List&lt;Double>>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `shown: ImmutableList&lt;Pair&lt;String, List&lt;Double>>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ShownList(val items: List&lt;Pair&lt;String, List&lt;Double>>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedLineChart(shown: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String>, colors: List&lt;Color>, height: Int, max: Double,"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="219"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;String> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `labels: ImmutableList&lt;String>` or create an `@Immutable` wrapper for this class: `@Immutable data class LabelsList(val items: List&lt;String>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun FramedLineChart(shown: List&lt;Pair&lt;String, List&lt;Double>>>, labels: List&lt;String>, colors: List&lt;Color>, height: Int, max: Double,"
+        errorLine2="                                                                             ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="219"
+            column="78"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Triple&lt;String, String, Color>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Triple&lt;String, String, Color>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Triple&lt;String, String, Color>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Legend(items: List&lt;Triple&lt;String, String, Color>>) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="273"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Double>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;Pair&lt;String, Double>>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;Pair&lt;String, Double>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Donut(rows: List&lt;Pair&lt;String, Double>>, unit: String = &quot;&quot;) {"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="287"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Double>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;Pair&lt;String, Double>>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;Pair&lt;String, Double>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun DonutRing(rows: List&lt;Pair&lt;String, Double>>, total: Double, unit: String) {"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="297"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Double>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `rows: ImmutableList&lt;Pair&lt;String, Double>>` or create an `@Immutable` wrapper for this class: `@Immutable data class RowsList(val items: List&lt;Pair&lt;String, Double>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun DonutLegend(rows: List&lt;Pair&lt;String, Double>>, total: Double) {"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="317"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, Double?>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `steps: ImmutableList&lt;Pair&lt;String, Double?>>` or create an `@Immutable` wrapper for this class: `@Immutable data class StepsList(val items: List&lt;Pair&lt;String, Double?>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun Funnel(steps: List&lt;Pair&lt;String, Double?>>) {"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="333"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;JsonObject> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `tiles: ImmutableList&lt;JsonObject>` or create an `@Immutable` wrapper for this class: `@Immutable data class TilesList(val items: List&lt;JsonObject>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun TileMatrix(tiles: List&lt;JsonObject>) {"
+        errorLine2="                      ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="353"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Double?> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `days: ImmutableList&lt;Double?>` or create an `@Immutable` wrapper for this class: `@Immutable data class DaysList(val items: List&lt;Double?>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun UptimeStrip(days: List&lt;Double?>) {"
+        errorLine2="                      ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="378"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Pair&lt;String, String>> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;Pair&lt;String, String>>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;Pair&lt;String, String>>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="fun NoDataRow(items: List&lt;Pair&lt;String, String>>) {"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ui/Wide.kt"
+            line="393"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Home.Need> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `needs: ImmutableList&lt;Home.Need>` or create an `@Immutable` wrapper for this class: `@Immutable data class NeedsList(val items: List&lt;Home.Need>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun NeedsBody(saved: Pair&lt;JsonObject, Long>?, needs: List&lt;Home.Need>) {"
+        errorLine2="                                                             ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/Widgets.kt"
+            line="194"
+            column="62"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;T> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `items: ImmutableList&lt;T>` or create an `@Immutable` wrapper for this class: `@Immutable data class ItemsList(val items: List&lt;T>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun &lt;T> Split(items: List&lt;T>, fits: Int, row: @Composable (T) -> Unit) {"
+        errorLine2="                             ~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/Widgets.kt"
+            line="362"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Home.Line> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `lines: ImmutableList&lt;Home.Line>` or create an `@Immutable` wrapper for this class: `@Immutable data class LinesList(val items: List&lt;Home.Line>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun HealthBody(saved: Pair&lt;JsonObject, Long>?, lines: List&lt;Home.Line>) {"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/Widgets.kt"
+            line="385"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableCollections"
+        message="The Compose Compiler cannot infer the stability of a parameter if a List&lt;Home.Line> is used in it, even if the item type is stable.&#xA;You should use Kotlinx Immutable Collections instead: `lines: ImmutableList&lt;Home.Line>` or create an `@Immutable` wrapper for this class: `@Immutable data class LinesList(val items: List&lt;Home.Line>)`&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-using-unstable-collections for more information."
+        errorLine1="private fun NextBody(saved: Pair&lt;JsonObject, Long>?, lines: List&lt;Home.Line>) {"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/home/Widgets.kt"
+            line="436"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun Form(url: String, setUrl: (String) -> Unit, lang: String, setLang: (String) -> Unit, step: Step, start: () -> Unit) = Column {"
+        errorLine2="                ~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ShareActivity.kt"
+            line="117"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun Queued(host: String) = Row(verticalAlignment = Alignment.CenterVertically) {"
+        errorLine2="                ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ShareActivity.kt"
+            line="139"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun SignedOut() = Column {"
+        errorLine2="                ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/ShareActivity.kt"
+            line="149"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun Form(m: Media, caption: String, setCaption: (String) -> Unit, working: String?, error: String?, start: () -> Unit) = Column {"
+        errorLine2="                ~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="153"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun Drafts(draft: MutableMap&lt;String, String>, note: String, error: String?, busy: Boolean, queue: () -> Unit, drop: () -> Unit) = Column {"
+        errorLine2="                ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="173"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun Queued() = Row(verticalAlignment = Alignment.CenterVertically) {"
+        errorLine2="                ~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="190"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun SignedOut() = Column {"
+        errorLine2="                ~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="200"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeUnstableReceiver"
+        message="Instance composable functions on non-stable classes will always be recomposed. If possible, make the receiver type stable or refactor this function if that isn&apos;t possible. See https://slackhq.github.io/compose-lints/rules/#unstable-receivers for more information."
+        errorLine1="    private fun fieldColors() = OutlinedTextFieldDefaults.colors(focusedBorderColor = J.cyan, unfocusedBorderColor = J.dim, focusedTextColor = J.text, unfocusedTextColor = J.text,"
+        errorLine2="                ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/carlosandmunoz/jarvis/SharePostActivity.kt"
+            line="207"
+            column="17"/>
+    </issue>
+
+</issues>
