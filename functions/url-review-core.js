@@ -15,6 +15,7 @@ const insights = require('./url-review-insights');
 const { replaceBlocks } = require('./tag-blocks');
 const headOrder = require('./url-review-head-order');
 const linkText = require('./url-review-link-text');
+const focusOrder = require('./url-review-focus-order');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
 const linkedRisk = require('./url-review-linked-risk');
@@ -3018,6 +3019,7 @@ function inspect(html, headers, pageUrl) {
 		analytics: analyticsScan(html),
 		headOrder: headOrder.analyze(html),
 		linkText: linkText.analyze(html),
+		focusOrder: focusOrder.analyze(html),
 		minhash: pageGraph.minhash(text),
 		socialLinks,
 		mailtos,

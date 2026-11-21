@@ -1556,6 +1556,64 @@ const EN = {
 	'a11y-axtree-landmark-main.evidence':
 		'The accessibility tree reports the wrong number of main landmarks ({examples}). Read out of band over CDP (WCAG 2.4.1).',
 	'a11y-axtree-landmark-main.fix': 'Wrap the page’s own content in one <main>.',
+	'a11y-focus.pass.title':
+		'The start page’s HTML shows no keyboard-order problems we check for',
+	'a11y-focus.pass.evidence':
+		'{n} tab stops read from the HTML as delivered: no tabindex above 0, no control taken out of the tab order, no mouse-only controls, no modal or inert trap. This reads attributes only, not CSS or scripts, so it is not a keyboard test.',
+	'a11y-focus-order.title':
+		'Positive tabindex values reorder the keyboard path on the start page',
+	'a11y-focus-order.evidence':
+		'Tabindex above 0 is set on {n} element(s) ({values}), so {moved} of {total} tab stops are reached in a different order than they appear on the page. Those values jump ahead of every element without one and break when content changes (WCAG 2.4.3).',
+	'a11y-focus-order.fix':
+		'Remove the positive tabindex values and put the elements in the order people should reach them; use tabindex="0" only to make a custom control focusable.',
+	'a11y-focus-skipped.title':
+		'A control on the start page is taken out of the keyboard order',
+	'a11y-focus-skipped.evidence':
+		'{n} control(s) in the HTML have tabindex="-1" and no other way to reach them with Tab ({examples}). Unless a script moves focus there another way, keyboard users cannot use them (WCAG 2.1.1).',
+	'a11y-focus-skipped.fix':
+		'Remove tabindex="-1" from controls people need, or keep it only on items inside a widget that moves focus with the arrow keys.',
+	'a11y-focus-mouse-only.title':
+		'Something on the start page responds to a mouse click but not to the keyboard',
+	'a11y-focus-mouse-only.evidence':
+		'{n} element(s) have a click handler or a button or link role but no tabindex and are not a real button or link ({examples}), so Tab skips them (WCAG 2.1.1, 4.1.2).',
+	'a11y-focus-mouse-only.fix':
+		'Use a real <button> or <a href>, or add tabindex="0" with a keyboard handler for Enter and Space.',
+	'a11y-focus-autofocus.title':
+		'Several elements on the start page ask for autofocus',
+	'a11y-focus-autofocus.evidence':
+		'{n} elements carry the autofocus attribute ({examples}). Only one can take focus on load, and moving focus on load disorients people who use a keyboard or screen reader (WCAG 2.4.3, 3.2.1).',
+	'a11y-focus-autofocus.fix':
+		'Keep autofocus on at most one element, and only where the visitor just chose to open that spot (a dialog or a search page).',
+	'a11y-focus-modal.title':
+		'A modal dialog in the HTML may trap keyboard users',
+	'a11y-focus-modal.evidence':
+		'{n} of {total} aria-modal dialog(s) contain nothing a keyboard can focus in the delivered HTML ({examples}), so focus cannot move inside and can only leave with Escape (WCAG 2.1.2).',
+	'a11y-focus-modal.evidence.noclose':
+		'{n} of {total} aria-modal dialog(s) have controls but none named or marked as close, cancel or dismiss ({examples}). A script may add one when the dialog opens; check by hand (WCAG 2.1.2).',
+	'a11y-focus-modal.fix':
+		'Put a close button inside every modal dialog, make it the first or last focusable element, and return focus to the opener when it closes.',
+	'a11y-focus-inert.title':
+		'The inert attribute cuts keyboard users off in the start page’s HTML',
+	'a11y-focus-inert.evidence.wide':
+		'{n} element(s) marked inert hold nearly all of the page’s controls ({examples}). Inert content cannot be focused or clicked, so unless a script removes it at load the page cannot be used (WCAG 2.1.1).',
+	'a11y-focus-inert.evidence.dialog':
+		'{n} element(s) marked inert contain an aria-modal dialog ({examples}). Nothing inside inert can take focus, so the dialog cannot be used when it opens.',
+	'a11y-focus-inert.evidence.autofocus':
+		'{n} element(s) marked inert contain an autofocus element ({examples}); inert content cannot take focus, so the autofocus does nothing.',
+	'a11y-focus-inert.fix':
+		'Mark inert only what sits behind an open modal, never the whole page or the dialog itself, and remove it when the modal closes.',
+	'a11y-focus-hidden.title':
+		'A control on the start page can be tabbed to but is hidden from screen readers',
+	'a11y-focus-hidden.evidence':
+		'{n} focusable control(s) are marked aria-hidden="true" or sit inside a body or main element that is ({examples}), so a keyboard lands on something a screen reader does not announce (WCAG 4.1.2).',
+	'a11y-focus-hidden.fix':
+		'Remove aria-hidden from controls people can reach, or add tabindex="-1" when the control duplicates another one.',
+	'a11y-focus-noname.title':
+		'Some keyboard stops on the start page have no name',
+	'a11y-focus-noname.evidence':
+		'{n} link(s) or button(s) in the HTML have no text, label or alt text ({examples}). Tab lands on them and a screen reader has nothing to say (WCAG 2.4.4, 4.1.2).',
+	'a11y-focus-noname.fix':
+		'Give each one visible text, an image with alt text, or an aria-label that says what it does.',
 	'a11y-zoom.title': 'The viewport stops people from zooming',
 	'a11y-zoom.evidence': 'The viewport tag sets user-scalable=no or maximum-scale=1.',
 	'a11y-zoom.fix': 'Remove user-scalable=no and maximum-scale from the viewport tag.',
