@@ -9,8 +9,8 @@
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
-	const VER = '?v=20261118a';
-	const CONSOLE_VER = '?v=20261120b';
+	const VER = '?v=20261120g';
+	const CONSOLE_VER = '?v=20261120g';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -56,7 +56,21 @@
 		{ id: 'save', kind: 'send' },
 	];
 	const BACKGROUND = { https: 1, dns: 1, robots: 1, webrisk: 1, lookalike: 1, wordpress: 1, mail: 1, lighthouse: 1 };
-	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow' };
+	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow', retry: 'retry' };
+	// Lab gaming scene cast (atlas-aligned). The art stays; these names drive hit-targets, tips and live reactions.
+	const LAB_STATION = {
+		dns: 'DNS/TLS', robots: 'robots.txt', crawl: 'Crawl', browser: 'Browser', axe: 'Axe', security: 'Security', a11y: 'A11y',
+		malware: 'Malware', webrisk: 'WebRisk', blocklist: 'Blocklist', lookalike: 'Lookalike', wordpress: 'WordPress',
+		mail: 'SPF/DMARC', lighthouse: 'Lighthouse', cases: 'Cases', score: 'Score', sign: 'Sign', save: 'Save/Mail'
+	};
+	const LAB_BAYS = [
+		{ id: 'timeout', label: 'TIMEOUT', blurb: 'A check waited too long and timed out.' },
+		{ id: 'stop', label: 'STOP', blurb: 'The run was stopped before every check finished.' },
+		{ id: 'retry', label: 'RETRY', blurb: 'A check is being tried again.' },
+		{ id: 'slow', label: 'SLOW WAIT', blurb: 'The site is answering slowly; the lab is waiting.' },
+		{ id: 'fail', label: 'FAIL', blurb: 'A check failed and needs a look.' }
+	];
+	const LAB_DOCTOR = { id: 'doctor', label: 'Lab doctor', blurb: 'Runs the browser pass and watches every station.' };
 	const COLOR = { idle: '#3a4a55', wip: '#5ec8d4', done: '#5dff9a', fail: '#ff5a4a', skip: '#8aa0aa', risk: '#f0c85a' };
 	const PRIORITY = ['wip', 'fail', 'risk'];
 
@@ -202,6 +216,16 @@
 				mark(id, fact.status || 'wip');
 			});
 		if (fact.stage) mark(fact.stage, fact.status || 'wip');
+		// Generic timeout/fail with no stage still fails the active station (#4107).
+		if (
+			!fact.stage &&
+			!(fact.stages && fact.stages.length) &&
+			state.activeId &&
+			(fact.anomaly === 'timeout' || fact.anomaly === 'fail') &&
+			(fact.status === 'fail' || fact.status === 'risk' || !fact.status)
+		) {
+			mark(state.activeId, fact.status === 'risk' ? 'risk' : 'fail');
+		}
 		if (fact.anomaly) setAnomaly(fact.anomaly);
 		else if ((fact.status === 'done' || fact.status === 'wip') && state.anomaly === 'slow' && fact.pose !== 'slow')
 			setAnomaly('');
@@ -235,8 +259,23 @@
 
 	function line(text) {
 		if (state.run !== 'running' && state.run !== 'stopping') return;
-		const fact = facts().matchFact(text);
-		if (/^Stop requested/.test(String(text || ''))) state.run = 'stopping';
+		let fact = facts().matchFact(text);
+		// Unmapped failure-shaped copy still drives a reaction on the active station (#4108).
+		if (
+			!fact &&
+			/\b(could not|did not answer|did not finish|timed out|no answer in time)\b/i.test(String(text || ''))
+		) {
+			fact = {
+				anomaly: /timed out|no answer in time|did not (answer|finish) in time/i.test(String(text || ''))
+					? 'timeout'
+					: 'fail',
+				pose: /timed out|no answer in time|did not (answer|finish) in time/i.test(String(text || ''))
+					? 'timeout'
+					: 'fail',
+				status: 'fail',
+			};
+		}
+		if (/^Stop requested|^Stop was requested/.test(String(text || ''))) state.run = 'stopping';
 		pushLog(text, fact);
 		if (fact) applyFact(fact);
 		else if (!state.anomaly) setPose('work');
@@ -432,17 +471,66 @@
 
 	function pushConsole() {
 		if (state.cons) state.cons.sync();
+		if (state.skin === 'lab') wake();
 	}
 
 	function dropConsole() {
 		if (state.cons) state.cons.destroy();
 		state.cons = null;
+		dropLabUi();
 		const panel = document.getElementById('run-panel');
-		if (panel) panel.classList.remove('ra-console-on');
+		if (panel) {
+			panel.classList.remove('ra-console-on');
+			panel.classList.remove('ra-lab-on');
+		}
+	}
+
+	function dropLabUi() {
+		if (state.labUi) {
+			if (state.labUi.onFull) document.removeEventListener('fullscreenchange', state.labUi.onFull);
+			if (state.labUi.onKey) document.removeEventListener('keydown', state.labUi.onKey);
+			if (state.labUi.root && state.labUi.root.parentNode) state.labUi.root.remove();
+		}
+		state.labUi = null;
+		if (state.wrap) {
+			state.wrap.classList.remove('is-labfull');
+			document.documentElement.classList.remove('rc-noscroll');
+		}
+	}
+
+	function attachLabBoard(host) {
+		if (!host || state.canvas) return;
+		const canvas = document.createElement('canvas');
+		canvas.className = 'ra-canvas';
+		canvas.width = W;
+		canvas.height = H;
+		host.textContent = '';
+		host.appendChild(canvas);
+		state.canvas = canvas;
+		state.ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+		if (state.ctx) {
+			state.ctx.imageSmoothingEnabled = true;
+			state.ctx.imageSmoothingQuality = 'high';
+		}
+		buildLabUi(host);
+		loadAssets('lab').then(function (a) {
+			if (state.canvas !== canvas) return;
+			state.assets = a;
+			wake();
+		});
+		fit();
+		if (!state.ro && typeof ResizeObserver === 'function') {
+			state.ro = new ResizeObserver(function () {
+				fit();
+				wake();
+			});
+			state.ro.observe(host);
+		}
 	}
 
 	function buildConsole(wrap) {
 		const id = state.buildId;
+		const skin = state.skin;
 		dropConsole();
 		wrap.setAttribute('aria-hidden', 'true');
 		wrap.removeAttribute('role');
@@ -450,13 +538,25 @@
 		wrap.textContent = '';
 		state.canvas = null;
 		state.ctx = null;
+		state.assets = null;
 		state.ents = buildEntities();
+		state.bays = {};
 		const panel = document.getElementById('run-panel');
-		if (panel) panel.classList.add('ra-console-on');
+		if (panel) {
+			panel.classList.add('ra-console-on');
+			panel.classList.remove('ra-lab-on');
+		}
 		loadConsole().then(function (C) {
-			if (!C || id !== state.buildId || state.skin !== 'console' || state.run === 'idle') return;
-			state.cons = C.mount(wrap, { model: consoleModel, hud: readHud, stages: facts().STAGES, css: 'css/qa-review-console.css' + CONSOLE_VER });
+			if (!C || id !== state.buildId || state.skin !== skin || state.run === 'idle') return;
+			state.cons = C.mount(wrap, {
+				model: consoleModel,
+				hud: readHud,
+				stages: facts().STAGES,
+				skin: skin,
+				css: 'css/qa-review-console.css' + CONSOLE_VER,
+			});
 			state.cons.sync();
+			if (skin === 'lab' && state.cons.boardHost) attachLabBoard(state.cons.boardHost());
 		});
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
@@ -468,42 +568,248 @@
 		}
 	}
 
+
+	function pctOf(rect, wrap) {
+		// atlas rect [x0,y0,x1,y1] → % box inside the 1280x720 scene
+		return {
+			left: (rect[0] / W) * 100,
+			top: (rect[1] / H) * 100,
+			width: ((rect[2] - rect[0]) / W) * 100,
+			height: ((rect[3] - rect[1]) / H) * 100,
+		};
+	}
+
+	function labStatusLabel(st) {
+		return st === 'wip' ? 'RUNNING' : st === 'done' ? 'DONE' : st === 'fail' ? 'ERROR' : st === 'risk' ? 'RISK' : st === 'skip' ? 'SKIPPED' : 'QUEUED';
+	}
+
+	function showLabTip(info) {
+		const ui = state.labUi;
+		if (!ui || !ui.tip) return;
+		ui.tip.hidden = false;
+		ui.tip.innerHTML = '';
+		const kind = document.createElement('b');
+		kind.textContent = info.kind;
+		const title = document.createElement('strong');
+		title.textContent = info.title;
+		const body = document.createElement('p');
+		body.textContent = info.body || '';
+		ui.tip.appendChild(kind);
+		ui.tip.appendChild(title);
+		ui.tip.appendChild(body);
+		if (info.status) {
+			const st = document.createElement('span');
+			st.className = 'ra-lab-st';
+			st.textContent = info.status;
+			st.style.color = COLOR[info.raw] || '#9fe8ee';
+			ui.tip.appendChild(st);
+		}
+		ui.active = info.id;
+		Array.prototype.forEach.call(ui.root.querySelectorAll('.ra-lab-hit'), function (el) {
+			el.classList.toggle('is-on', el.getAttribute('data-id') === info.id);
+		});
+	}
+
+	function hideLabTip() {
+		const ui = state.labUi;
+		if (!ui || !ui.tip) return;
+		ui.tip.hidden = true;
+		ui.active = '';
+		Array.prototype.forEach.call(ui.root.querySelectorAll('.ra-lab-hit'), function (el) {
+			el.classList.remove('is-on');
+		});
+	}
+
+	function inspectLabStation(i) {
+		const e = state.ents[i];
+		if (!e || !e.def) return;
+		const id = e.def.id;
+		const last = state.log.slice().reverse().find(function (r) { return r.stage === id || (e.def.aka || []).indexOf(r.stage) >= 0; });
+		showLabTip({
+			id: id,
+			kind: 'STATION',
+			title: LAB_STATION[id] || id,
+			body: (last && last.text) || 'Waiting for this check to start.',
+			status: labStatusLabel(e.status),
+			raw: e.status === 'wip' ? 'wip' : e.status,
+		});
+	}
+
+	function inspectLabBay(id) {
+		const bay = LAB_BAYS.find(function (b) { return b.id === id; }) || { label: id, blurb: '' };
+		const on = state.anomaly === id || (id === 'fail' && state.run === 'failed') || (id === 'stop' && (state.run === 'stopped' || state.run === 'stopping'));
+		showLabTip({
+			id: id,
+			kind: 'HAZARD',
+			title: bay.label,
+			body: bay.blurb + (on ? ' Active on this run.' : ' Idle right now.'),
+			status: on ? 'ACTIVE' : 'IDLE',
+			raw: on ? 'fail' : 'idle',
+		});
+	}
+
+	function inspectLabDoctor() {
+		showLabTip({
+			id: 'doctor',
+			kind: 'CHARACTER',
+			title: LAB_DOCTOR.label,
+			body: LAB_DOCTOR.blurb + (state.activeId ? ' Watching ' + (LAB_STATION[state.activeId] || state.activeId) + '.' : ''),
+			status: (state.pose || 'work').toUpperCase(),
+			raw: state.run === 'failed' ? 'fail' : state.run === 'ready' ? 'done' : 'wip',
+		});
+	}
+
+	function toggleLabFull() {
+		const wrap = state.wrap;
+		if (!wrap) return;
+		const on = wrap.classList.contains('is-labfull') || document.fullscreenElement === wrap;
+		if (on) {
+			if (document.fullscreenElement === wrap && document.exitFullscreen) document.exitFullscreen();
+			wrap.classList.remove('is-labfull');
+			document.documentElement.classList.remove('rc-noscroll');
+		} else if (wrap.requestFullscreen) {
+			wrap.requestFullscreen().catch(function () {
+				wrap.classList.add('is-labfull');
+				document.documentElement.classList.add('rc-noscroll');
+			});
+		} else {
+			wrap.classList.add('is-labfull');
+			document.documentElement.classList.add('rc-noscroll');
+		}
+		fit();
+		wake();
+	}
+
+	function buildLabUi(wrap) {
+		dropLabUi();
+		const A = state.atlas;
+		if (!A) return;
+		const root = document.createElement('div');
+		root.className = 'ra-lab-ui';
+		root.setAttribute('aria-label', 'Lab Tries controls');
+		// Hits live inside the console shadow root, so page CSS cannot reach them — style here.
+		const style = document.createElement('style');
+		style.textContent =
+			'.ra-lab-ui{position:absolute;inset:0;z-index:2;pointer-events:none;}' +
+			'.ra-lab-hit{position:absolute;pointer-events:auto;cursor:pointer;margin:0;padding:0;border:0;border-radius:8px;' +
+			'background:transparent!important;color:transparent;appearance:none;-webkit-appearance:none;box-shadow:none;}' +
+			'.ra-lab-hit:focus-visible{outline:2px solid #5ec8d4;outline-offset:2px;}' +
+			'.ra-lab-hit.is-on{box-shadow:inset 0 0 0 2px rgba(94,200,212,.75),0 0 16px rgba(94,200,212,.35);}' +
+			'.ra-lab-hit[data-kind="bay"].is-on{box-shadow:inset 0 0 0 2px rgba(255,154,74,.85),0 0 16px rgba(255,90,74,.35);}' +
+			'.ra-lab-tip{position:absolute;left:12px;bottom:12px;z-index:4;max-width:min(420px,70%);padding:10px 12px;' +
+			'border-radius:11px;border:1px solid rgba(94,200,212,.4);background:rgba(5,13,17,.92);color:#e8f3f4;' +
+			'pointer-events:auto;box-shadow:0 12px 28px rgba(0,0,0,.45);font:400 12.5px/1.4 Inter,system-ui,sans-serif;}' +
+			'.ra-lab-tip[hidden]{display:none!important;}' +
+			'.ra-lab-tip b{display:block;font:700 12px/1.2 Inter,system-ui,sans-serif;letter-spacing:.08em;color:#5ec8d4;}' +
+			'.ra-lab-tip strong{display:block;margin-top:4px;font:600 15px/1.25 Inter,system-ui,sans-serif;color:#fff;}' +
+			'.ra-lab-tip p{margin:6px 0 0;color:#b7c9ce;}' +
+			'.ra-lab-tip .ra-lab-st{display:inline-flex;margin-top:8px;padding:3px 8px;border-radius:999px;' +
+			'font:700 10px/1 Inter,sans-serif;letter-spacing:.1em;border:1px solid rgba(94,200,212,.35);}';
+		root.appendChild(style);
+		// Console chrome already has Update / full screen when the scene is embedded in .lab-stage.
+		if (!wrap.hasAttribute('data-lab-stage')) {
+			const tools = document.createElement('div');
+			tools.className = 'ra-lab-tools';
+			const upd = document.createElement('button');
+			upd.type = 'button';
+			upd.title = 'Update';
+			upd.setAttribute('aria-label', 'Update');
+			upd.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>';
+			upd.addEventListener('click', function () { syncEntities(); wake(); });
+			const full = document.createElement('button');
+			full.type = 'button';
+			full.title = 'Full screen';
+			full.setAttribute('aria-label', 'Full screen');
+			full.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+			full.addEventListener('click', toggleLabFull);
+			tools.appendChild(upd);
+			tools.appendChild(full);
+			root.appendChild(tools);
+		}
+		const tip = document.createElement('div');
+		tip.className = 'ra-lab-tip';
+		tip.hidden = true;
+		tip.setAttribute('role', 'status');
+		root.appendChild(tip);
+		(A.stations || []).forEach(function (st, i) {
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'station');
+			hit.setAttribute('data-id', (LAB[i] && LAB[i].id) || String(i));
+			hit.setAttribute('aria-label', LAB_STATION[(LAB[i] && LAB[i].id)] || 'Station');
+			const box = pctOf(st.item || st.box, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', function () { inspectLabStation(i); });
+			root.appendChild(hit);
+		});
+		if (A.doctor) {
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'doctor');
+			hit.setAttribute('data-id', 'doctor');
+			hit.setAttribute('aria-label', LAB_DOCTOR.label);
+			const box = pctOf(A.doctor, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', inspectLabDoctor);
+			root.appendChild(hit);
+		}
+		LAB_BAYS.forEach(function (bay) {
+			const rect = A.bays && A.bays[bay.id];
+			if (!rect) return;
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'bay');
+			hit.setAttribute('data-id', bay.id);
+			hit.setAttribute('aria-label', bay.label);
+			const box = pctOf(rect, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', function () { inspectLabBay(bay.id); });
+			root.appendChild(hit);
+		});
+		wrap.appendChild(root);
+		state.labUi = { root: root, tip: tip, active: '' };
+		const onFull = function () {
+			if (document.fullscreenElement !== wrap) {
+				wrap.classList.remove('is-labfull');
+				document.documentElement.classList.remove('rc-noscroll');
+			}
+			fit();
+			wake();
+		};
+		document.addEventListener('fullscreenchange', onFull);
+		const onKey = function (e) {
+			if (e.key === 'Escape') {
+				if (wrap.classList.contains('is-labfull')) toggleLabFull();
+				else hideLabTip();
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		state.labUi.onFull = onFull;
+		state.labUi.onKey = onKey;
+	}
+
 	function build(wrap) {
 		const skin = state.skin;
 		state.buildId++;
 		state.atlas = (window.ReviewArenaAtlas || {})[skin];
 		wrap.className = 'ra ra--' + skin;
 		wrap.setAttribute('data-skin', skin);
-		if (skin === 'console') {
-			buildConsole(wrap);
-			return;
-		}
-		dropConsole();
-		wrap.textContent = '';
-		const canvas = document.createElement('canvas');
-		canvas.className = 'ra-canvas';
-		canvas.width = W;
-		canvas.height = H;
-		wrap.appendChild(canvas);
-		state.canvas = canvas;
-		state.ctx = canvas.getContext('2d');
 		state.wrap = wrap;
-		state.assets = null;
-		state.ents = buildEntities();
-		state.bays = {};
-		loadAssets(skin).then(function (a) {
-			if (state.canvas !== canvas) return;
-			state.assets = a;
-			wake();
-		});
-		fit();
-		if (!state.ro && typeof ResizeObserver === 'function') {
-			state.ro = new ResizeObserver(function () {
-				fit();
-				wake();
-			});
-			state.ro.observe(wrap);
-		}
+		// Both skins use the console chrome (nav, Update, filter, auto-refresh, full screen, views).
+		// Lab keeps its gaming scene as a canvas mounted into the Processes stage.
+		buildConsole(wrap);
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
 				state.visible = list.some(function (x) {
@@ -518,13 +824,17 @@
 	function fit() {
 		if (!state.canvas) return;
 		const css = state.canvas.getBoundingClientRect().width || W;
-		const dpr = Math.min(2, window.devicePixelRatio || 1);
-		const px = clamp(Math.round(css * dpr), 640, 1920);
+		const dpr = Math.min(3, window.devicePixelRatio || 1);
+		const px = clamp(Math.round(css * dpr), 960, 3840);
 		if (state.canvas.width !== px) {
 			state.canvas.width = px;
 			state.canvas.height = Math.round((px * H) / W);
 		}
 		state.scale = state.canvas.width / W;
+		if (state.ctx) {
+			state.ctx.imageSmoothingEnabled = true;
+			state.ctx.imageSmoothingQuality = 'high';
+		}
 		state.big = css < 760; // phones: larger log type, fewer rows
 	}
 
@@ -1481,13 +1791,11 @@
 
 	function boot() {
 		hookProgress();
-		if (state.skin === 'console') {
-			const warm = function () {
-				loadConsole();
-			};
-			if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
-			else setTimeout(warm, 1500);
-		}
+		const warm = function () {
+			loadConsole();
+		};
+		if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
+		else setTimeout(warm, 1500);
 		if (!window.ReviewProgress) {
 			document.addEventListener('DOMContentLoaded', hookProgress);
 			setTimeout(hookProgress, 0);
@@ -1525,8 +1833,11 @@
 				activeId: state.activeId,
 				stages: Object.assign({}, state.stages),
 				items: items,
-				ready: state.skin === 'console' ? !!state.cons : !!(state.assets && state.assets.clean && state.assets.items),
+				ready: state.skin === 'lab' ? !!(state.cons && state.canvas) : !!state.cons,
 			};
+		},
+		labCast: function () {
+			return { doctor: LAB_DOCTOR, bays: LAB_BAYS.slice(), stations: LAB.map(function (d) { return { id: d.id, label: LAB_STATION[d.id] || d.id, kind: d.kind }; }) };
 		},
 		pickSkin: pickSkin,
 		forceSkin: function (skin) {

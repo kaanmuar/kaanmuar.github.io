@@ -184,11 +184,17 @@
 			o.y = 2 * (1 - exp(-age * 6));
 			o.a = 0.92;
 		} else if (status === 'risk') {
-			o.r = sin(tt * 5) * 0.05;
-			o.x = sin(tt * 11) * 0.8;
+			// Nervous wobble — stronger than idle, distinct from fail's slump (#4106).
+			o.r = sin(tt * 7) * 0.09;
+			o.x = sin(tt * 14) * 1.6;
+			o.y = sin(tt * 9) * 0.8;
+			o.sx = o.sy = 1 + 0.04 * sin(tt * 6);
 		} else if (status === 'skip') {
-			o.sy = 0.96;
-			o.a = 0.5;
+			// Stand down: smaller and faded, not shaken (#4106).
+			o.sy = 0.9;
+			o.sx = 0.94;
+			o.a = 0.42;
+			o.y = 1.5;
 		} else {
 			o.y = sin(tt * 1.3) * 0.5;
 			o.a = 0.5;
@@ -198,13 +204,13 @@
 
 	// Doctor reactions to the whole run: playback rate of his baked loop + extra motion + effects.
 	const DOCTOR = {
-		work: { rate: 1.0, tint: null, bubble: '', y: 0 },
-		cheer: { rate: 1.8, tint: '#5dff9a', bubble: '✓', y: -1 },
-		fail: { rate: 0, tint: '#ff5a4a', bubble: '✕', y: 2 },
-		stop: { rate: 0, tint: '#f0c85a', bubble: '■', y: 0 },
-		timeout: { rate: 0.35, tint: '#ff9a4a', bubble: '⏱', y: 1 },
-		retry: { rate: 1.6, tint: '#5ec8d4', bubble: '↻', y: 0 },
-		slow: { rate: 0.4, tint: null, bubble: '…', y: 0 },
+		work: { rate: 1.15, tint: null, bubble: '', y: 0 },
+		cheer: { rate: 2.2, tint: '#5dff9a', bubble: '✓', y: -3 },
+		fail: { rate: 0, tint: '#ff5a4a', bubble: '✕', y: 3 },
+		stop: { rate: 0, tint: '#f0c85a', bubble: '■', y: 1 },
+		timeout: { rate: 0.28, tint: '#ff9a4a', bubble: '⏱', y: 2 },
+		retry: { rate: 1.9, tint: '#5ec8d4', bubble: '↻', y: -1 },
+		slow: { rate: 0.32, tint: '#8ad0e8', bubble: '…', y: 1 },
 	};
 
 	// Which station reacts to which anomaly (the bay the unexpected robot lives in).
@@ -216,11 +222,24 @@
 		fail: '#ff5a4a',
 	};
 
+	const QUALITY = 1.4; // punchier action / reaction without changing the art
+	function poseQ(kind, status, t, age, phase) {
+		const o = pose(kind, status, t, age, phase);
+		if (!o) return o;
+		o.x = (o.x || 0) * QUALITY;
+		o.y = (o.y || 0) * QUALITY;
+		o.r = (o.r || 0) * Math.min(QUALITY, 1.25);
+		if (status === 'wip' || status === 'fail' || status === 'risk') {
+			o.sx = 1 + ((o.sx || 1) - 1) * QUALITY;
+			o.sy = 1 + ((o.sy || 1) - 1) * QUALITY;
+		}
+		return o;
+	}
 	root.ReviewArenaMotion = {
 		KINDS: KINDS,
 		GLOW: GLOW,
 		DOCTOR: DOCTOR,
 		BAY_COLOR: BAY_COLOR,
-		pose: pose,
+		pose: poseQ,
 	};
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -9,7 +9,8 @@
 	const LANG = String(document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
 	const T = {
 		en: {
-			brand: 'REVIEW MONITOR', region: 'Live review monitor',
+			brand: 'REVIEW MONITOR', brandLab: 'LAB TRIES', region: 'Live review monitor', regionLab: 'Browser pass / Lab tries',
+			lanesTitleLab: 'LAB TRIES', lanesSubLab: 'The browser pass across every check',
 			overview: 'Overview', systems: 'Systems', processes: 'Processes', agents: 'Agents', workflows: 'Workflows',
 			infrastructure: 'Infrastructure', logs: 'Logs', alerts: 'Alerts', settings: 'Settings', all: 'All Processes',
 			sub_overview: 'The review at a glance.',
@@ -63,7 +64,8 @@
 			saved: 'Saved on this device only.'
 		},
 		es: {
-			brand: 'MONITOR DE REVISIÓN', region: 'Monitor de la revisión en vivo',
+			brand: 'MONITOR DE REVISIÓN', brandLab: 'PRUEBAS DE LAB', region: 'Monitor de la revisión en vivo', regionLab: 'Pase del navegador / Pruebas de lab',
+			lanesTitleLab: 'PRUEBAS DE LAB', lanesSubLab: 'El pase del navegador por cada comprobación',
 			overview: 'Resumen', systems: 'Sistemas', processes: 'Procesos', agents: 'Agentes', workflows: 'Flujos',
 			infrastructure: 'Infraestructura', logs: 'Registro', alerts: 'Alertas', settings: 'Ajustes', all: 'Todos los procesos',
 			sub_overview: 'La revisión de un vistazo.', sub_systems: 'Cada sistema que revisa esta revisión, agrupado por lo que protege.',
@@ -407,6 +409,8 @@
 	let live = null;
 
 	function create(wrap, api) {
+		const SKIN = api.skin === 'lab' ? 'lab' : 'console';
+		const isLab = SKIN === 'lab';
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 		const stages = api.stages;
 		const stageIds = stages.map((s) => s.id);
@@ -477,9 +481,9 @@
 		// ------------------------------------------------ shell
 		wrap.removeAttribute('aria-hidden');
 		wrap.setAttribute('role', 'region');
-		wrap.setAttribute('aria-label', L.region);
+		wrap.setAttribute('aria-label', isLab ? L.regionLab : L.region);
 		wrap.textContent = '';
-		const root = h('div', { class: 'rc', 'data-view': R.view });
+		const root = h('div', { class: 'rc', 'data-view': R.view, 'data-skin': SKIN });
 		E.root = root;
 
 		// sidebar
@@ -503,7 +507,7 @@
 		const side = h('aside', { class: 'rc-side' }, [
 			h('div', { class: 'rc-brand' }, [
 				h('img', { class: 'rc-mark', src: 'assets/qa-review-mark.svg', alt: '', width: '34', height: '34', decoding: 'async' }),
-				h('div', { class: 'rc-brandtxt' }, [h('b', { text: 'QA-lab' }), h('small', { text: L.brand })])
+				h('div', { class: 'rc-brandtxt' }, [h('b', { text: 'QA-lab' }), h('small', { text: isLab ? L.brandLab : L.brand })])
 			]),
 			nav,
 			h('div', { class: 'rc-syscard' }, [
@@ -622,7 +626,30 @@
 		}
 
 		// ---- PROCESSES
+		function buildLabStageProcesses() {
+			// Keep the Lab gaming scene (canvas) inside this panel; the arena mounts into E.labStage.
+			E.labStage = h('div', { class: 'lab-stage', 'data-lab-stage': '1' });
+			E.nodes = [[]];
+			E.lanes = [];
+			E.pods = {};
+			E.procTable = makeTable({ all: false });
+			E.viewAll = h('button', { class: 'rc-btn rc-ghost', type: 'button' }, [h('span', { text: L.viewAll }), icon('arrow')]);
+			E.viewAll.addEventListener('click', () => go('all'));
+			const lanesPanel = h('section', { class: 'panel panel-lanes panel-lab-stage' }, [
+				h('div', { class: 'panel-head' }, [h('div', {}, [h('h4', { text: L.lanesTitleLab }), h('p', { text: L.lanesSubLab })])]),
+				E.labStage
+			]);
+			const procPanel = h('section', { class: 'panel panel-proc' }, [
+				h('div', { class: 'panel-head' }, [h('div', {}, [h('h4', { text: L.procTitle }), h('p', { text: L.procSub })]), E.viewAll]),
+				E.procTable.el
+			]);
+			view('processes', h('div', { class: 'v-processes' }, [lanesPanel, procPanel]), (m) => E.procTable.update(m));
+		}
 		function buildProcesses() {
+			if (isLab) {
+				buildLabStageProcesses();
+				return;
+			}
 			const board = api.model().ents.filter((e) => e.lane === 0).map((e) => e.def);
 			const lanesEl = h('div', { class: 'lanes' });
 			E.lanes = [];
@@ -1578,7 +1605,10 @@
 				stageIds.forEach((id) => (statuses[id] = pstatus(id, m)));
 				return { view: R.view, filter: session.filter, auto: prefs.auto, paused: R.paused, statuses, counts: countsOf(m), alerts: alertRows(m).length, moods: AGENTS.reduce((o, a) => ((o[a.id] = moodOf(a.stages, m)), o), {}), full: isFull() };
 			},
-			go: go
+			go: go,
+			boardHost() {
+				return E.labStage || null;
+			}
 		};
 	}
 

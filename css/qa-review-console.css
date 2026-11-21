@@ -412,6 +412,26 @@
 .face.is-poked .f-bob { animation: rc-poke .8s cubic-bezier(.3, 1.5, .5, 1); }
 .face.is-poked .f-cheeks { display: inline; }
 
+
+/* ---------------------------------------------------------------- Lab stage host (canvas scene stays; chrome is the console) */
+.rc[data-skin="lab"] .rc-brandtxt small { color: var(--green); }
+.rc[data-skin="lab"] .rc-navbtn.is-on { background: linear-gradient(90deg, rgba(93, 255, 154, .18), rgba(93, 255, 154, .05)); border-color: rgba(93, 255, 154, .38); box-shadow: inset 2px 0 0 var(--green); }
+.rc[data-skin="lab"] .rc-navbtn.is-on .rc-i { color: var(--green); }
+.panel-lab-stage { padding: 10px 12px 12px; }
+.lab-stage { position: relative; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #02070a; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); pointer-events: none; }
+.lab-stage .ra-canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; pointer-events: none; }
+.lab-stage .ra-lab-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.lab-stage .ra-lab-tools { display: none; }
+.lab-stage .ra-lab-hit, .lab-stage .ra-lab-tip { pointer-events: auto; }
+/* Hits are <button>s; without this they paint UA white/gray over the baked scene. */
+.lab-stage .ra-lab-hit {
+	appearance: none; -webkit-appearance: none; margin: 0; padding: 0; border: 0; border-radius: 8px;
+	background: transparent; color: transparent; box-shadow: none; cursor: pointer;
+}
+.lab-stage .ra-lab-hit:focus-visible { outline: 2px solid #5ec8d4; outline-offset: 2px; }
+.lab-stage .ra-lab-hit.is-on { box-shadow: inset 0 0 0 2px rgba(94,200,212,.75), 0 0 16px rgba(94,200,212,.35); }
+.lab-stage .ra-lab-hit[data-kind="bay"].is-on { box-shadow: inset 0 0 0 2px rgba(255,154,74,.85), 0 0 16px rgba(255,90,74,.35); }
+
 /* ---------------------------------------------------------------- motion */
 @keyframes rc-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes rc-hop { 0% { transform: scale(1); } 40% { transform: translateY(-5px) scale(1.14); } 100% { transform: none; } }
