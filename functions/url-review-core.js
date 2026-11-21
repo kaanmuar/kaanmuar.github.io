@@ -290,6 +290,25 @@ function plainConnectionFailed(error) {
 		/^connect ECONNREFUSED|^connect EHOSTUNREACH|^connect ENETUNREACH/i.test(message)
 	);
 }
+// Chrome net errors and plain TLS strings on the refused-read path: name a certificate failure, not HTTP status.
+const BROWSER_CERT =
+	/net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|SELF_SIGNED_CERT|CERT_HAS_EXPIRED|certificate has expired|self[- ]signed|altnames/i;
+
+function browserCertDetail(browsed, view) {
+	const err = clean((browsed && browsed.error) || '', 200);
+	if (BROWSER_CERT.test(err)) return err;
+	const raw = view && view.finalUrl ? String(view.finalUrl) : '';
+	if (/^chrome-error:\/\/chromewebdata/i.test(raw)) return 'net::ERR_CERT_INVALID';
+	return '';
+}
+
+function refusedBrowserCertMessage(detail, plainStatus, notePlainOk) {
+	const body =
+		"Headless Chrome could not verify the site's certificate (" + (detail || 'certificate error') + ').';
+	return notePlainOk && plainStatus >= 200 && plainStatus < 300
+		? body + ' The plain request returned status ' + plainStatus + '.'
+		: body;
+}
 // Node's own limit is 16 KB, which large storefronts pass with their cookies and security headers.
 const MAX_HEADER_BYTES = 65536;
 const HEADERS_TOO_LARGE =
@@ -6268,6 +6287,18 @@ async function reviewTarget(rawUrl, hooks) {
 		if (!view || !view.html || !finalUrl || view.docStatus >= 400 || viewChallenge) {
 			const status = (view && view.docStatus) || first.status;
 			const guarded = (code) => [401, 403, 429].includes(code);
+			const certDetail = browserCertDetail(browsed, view);
+			if (certDetail) {
+				const error = new Error(
+					refusedBrowserCertMessage(
+						certDetail,
+						first.status,
+						!slowFirst && !firstChallenge && !guarded(first.status)
+					)
+				);
+				error.status = 422;
+				throw error;
+			}
 			const hung =
 				slowFirst === 'headers'
 					? HEADERS_TOO_LARGE
