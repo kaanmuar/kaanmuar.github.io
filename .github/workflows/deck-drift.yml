@@ -1,0 +1,77 @@
+name: Living deck drift
+
+# On main (and daily), fail when URL Review shipped after the last changes.js commit
+# without updating the living deck (#4102). Opens or refreshes a drift issue so the
+# gap is never silent.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/url-review*.js"
+      - "qa-review*.html"
+      - "js/qa-review*.js"
+      - "css/qa-review*.css"
+      - "llms.txt"
+      - "llms/**"
+      - "scripts/feature-deck/changes.js"
+      - "presentation/**"
+      - "scripts/check-deck-parity.js"
+  schedule:
+    - cron: "17 12 * * *" # 12:17 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Deck matches URL Review commits since the last changes.js commit
+        id: check
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(node scripts/check-deck-parity.js --drift HEAD 2>&1)
+          code=$?
+          echo "$out"
+          {
+            echo "code=$code"
+            echo "log<<EOF"
+            echo "$out"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Open or refresh a drift issue when the deck lagged
+        if: steps.check.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LOG: ${{ steps.check.outputs.log }}
+        run: |
+          set -euo pipefail
+          title='Living deck lagged behind URL Review on main (#4102)'
+          short=${GITHUB_SHA:0:9}
+          existing=$(gh issue list --state open --search "in:title Living deck lagged behind URL Review" --json number,title --jq '.[0].number // empty')
+          {
+            echo "Detected by deck-drift on ${short}."
+            echo
+            echo "## Drift"
+            echo
+            echo '```'
+            echo "${LOG}"
+            echo '```'
+            echo
+            echo "Parent: #4102. Update scripts/feature-deck/changes.js,"
+            echo "run npm --prefix scripts/feature-deck run deck, commit presentation/."
+          } > /tmp/deck-drift-body.md
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file /tmp/deck-drift-body.md
+            echo "Refreshed #${existing}"
+          else
+            gh issue create --title "$title" --body-file /tmp/deck-drift-body.md --label "bug" --label "area:Ops"
+          fi
+          exit 1

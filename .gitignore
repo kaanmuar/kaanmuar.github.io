@@ -87,3 +87,7 @@ scripts/tool-scout/seen.json
 
 # Edge GeoIP databases (#4031): downloaded into R2 by scripts/geoip-fetch.js, never committed
 *.mmdb
+# Feature deck (#3931): pictures made for the PowerPoint, rebuilt by scripts/feature-deck/render-pptx-assets.js
+scripts/feature-deck/.cache/
+# Feature deck (#3931): the HTML deck is published at /presentation/; the PowerPoint is rebuilt on request
+presentation/*.pptx
