@@ -300,10 +300,10 @@ function ownerReportChecks(view, domain, add) {
 	const dmarc = view.dmarc;
 	if (dmarc && dmarc.verdict !== 'not-enough-data') {
 		const vars = { domain, messages: dmarc.messages, days: dmarc.days, rate: pct(dmarc.passRate) };
+		const failingList = () =>
+			dmarc.failing.map((row) => say('sec-dmarc-data.source', { ip: row.ip, fail: row.fail, messages: row.messages }));
 		if (dmarc.verdict === 'not-yet') {
-			const list = dmarc.failing.map((row) =>
-				say('sec-dmarc-data.source', { ip: row.ip, fail: row.fail, messages: row.messages })
-			);
+			const list = failingList();
 			add(
 				'Security',
 				'risk',
@@ -317,14 +317,32 @@ function ownerReportChecks(view, domain, add) {
 				say('sec-dmarc-data.notYet.fix'),
 				{ effort: 'hours' }
 			);
+		} else if (dmarc.verdict === 'at-reject-check') {
+			// p=reject is already in force and some mail fails it: that mail is being dropped now, so the owner must tell
+			// their own senders from spoofers. This never reads as "working".
+			const list = failingList();
+			add(
+				'Security',
+				'risk',
+				'low',
+				'sec-dmarc-data',
+				say('sec-dmarc-data.atRejectCheck.title'),
+				say(
+					list.length ? 'sec-dmarc-data.atRejectCheck.evidence' : 'sec-dmarc-data.atRejectCheck.rate',
+					Object.assign({ list: { items: list, join: 'and' } }, vars)
+				),
+				say('sec-dmarc-data.atRejectCheck.fix'),
+				{ effort: 'hours' }
+			);
 		} else {
+			const which = dmarc.verdict === 'safe' ? 'safe' : 'atReject';
 			add(
 				'Security',
 				'pass',
 				'info',
 				'sec-dmarc-data',
-				say('sec-dmarc-data.' + (dmarc.verdict === 'safe' ? 'safe' : 'atReject') + '.title'),
-				say('sec-dmarc-data.' + (dmarc.verdict === 'safe' ? 'safe' : 'atReject') + '.evidence', vars),
+				say('sec-dmarc-data.' + which + '.title'),
+				say('sec-dmarc-data.' + which + '.evidence', vars),
 				''
 			);
 		}
