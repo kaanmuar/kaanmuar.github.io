@@ -16,6 +16,7 @@
 		"quick": "node build-html.js && node build-pptx.js",
 		"check": "node check.js",
 		"deck": "npm run build && npm run check",
-		"parity": "node ../check-deck-parity.js --drift HEAD"
+		"parity": "node ../check-deck-parity.js --drift HEAD",
+		"propose": "node propose-from-drift.js"
 	}
 }
