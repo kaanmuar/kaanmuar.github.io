@@ -304,6 +304,54 @@ async function checkSession(store, input) {
   return { ok: true, email: row.email, provider: row.provider, uid: row.uid || "", sessionId: id };
 }
 
+/**
+ * Account API token (#3626): Bearer / x-qa-lab-api-token / body.apiToken.
+ * opts.lookup(id) → account row with apiToken { id, hash, ... } or null.
+ */
+async function checkApiToken(store, rawToken, opts) {
+  const apiToken = require("./url-review-api-token");
+  const parsed = apiToken.parseToken(rawToken);
+  if (!parsed) return fail(401, "Use a QA-lab account API token (qlat_…).", { signIn: true, apiToken: true });
+  let row = null;
+  let email = "";
+  if (opts && typeof opts.lookup === "function") {
+    const found = await opts.lookup(parsed.id);
+    if (found && found.email) {
+      email = cleanEmail(found.email);
+      row = found.row || found;
+    }
+  }
+  if (!row && store && typeof store.queryApiToken === "function") {
+    const found = await store.queryApiToken(parsed.id);
+    if (found) {
+      email = cleanEmail(found.email);
+      row = found.row || found;
+    }
+  }
+  if (!row || !email || !apiToken.verifyStored(row, parsed.token)) {
+    return fail(401, "That account API token is unknown or revoked.", { signIn: true, apiToken: true });
+  }
+  const profile = (row.profile) || {};
+  return {
+    ok: true,
+    email,
+    provider: "api-token",
+    uid: "",
+    via: "api-token",
+    name: profile.name || "",
+    termsVersion: (row.apiToken && row.apiToken.termsVersion) || "",
+    apiTokenId: parsed.id
+  };
+}
+
+/** Session+deviceKey, or account API token for MCP/IDE (#3626). */
+async function checkAuth(store, input, headers, opts) {
+  const apiToken = require("./url-review-api-token");
+  const raw = apiToken.extractToken(input, headers);
+  if (raw) return checkApiToken(store, raw, opts);
+  return checkSession(store, input || {});
+}
+
 function cleanRunId(runId) {
   return String(runId || "").replace(/[^a-f0-9]/g, "").slice(0, 32);
 }
@@ -314,15 +362,16 @@ function ownsRun(row, email, device) {
 
 // A stored report opens in full only for the signed-in account that ran it, once it is paid or free.
 // Everyone else, including whoever holds the link, gets the blurred preview and a sign-in prompt.
-async function reportAccess(store, input, row, free) {
+// Account API token (#3626) counts as that account for MCP/IDE clients.
+async function reportAccess(store, input, row, free, opts) {
   if (!row || !row.report || row.report.preview) return fail(404, "That report was not found.");
-  const signedIn = await checkSession(store, Object.assign({}, input, { touch: false }));
+  const signedIn = await checkAuth(store, Object.assign({}, input, { touch: false }), (opts && opts.headers) || {}, opts);
   if (!signedIn.ok) return fail(401, "Sign in with the account that ran this report to read it in full.", { signIn: true, locked: true });
   if (!row.email || row.email !== signedIn.email) {
     return fail(403, "This report belongs to another account. Sign in with the account that ran it to read it in full.", { signIn: true, locked: true });
   }
   if (row.paid !== true && free !== true) return fail(402, "This report opens in full once it is paid.", { email: signedIn.email });
-  return { ok: true, email: signedIn.email };
+  return { ok: true, email: signedIn.email, via: signedIn.via || "session" };
 }
 
 // Opens of the link by another signed-in account are counted on the report, never who opened it.
@@ -452,6 +501,8 @@ module.exports = {
   providerSignIn,
   openSession,
   checkSession,
+  checkApiToken,
+  checkAuth,
   reportAccess,
   sharedOpenStep,
   claimRun,

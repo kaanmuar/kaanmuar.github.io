@@ -16,6 +16,7 @@ paths = [
   '''(?i)^android/app/src/test/''',
   '''(?i)^media/social-posts/''',
   '''(?i)features/robot/''',
+  '''(?i)^packages/qa-lab-mcp/test/''',
 ]
 
 # Public by design (#3920). Each entry names the identifier it covers.
@@ -50,4 +51,18 @@ description = "Published captions and scraped report data: prose and URL paramet
 paths = [
   '''(?i)^assets/social/captions[^/]*\.json$''',
   '''(?i)^assets/live-reports/u-pcgamer-com\.json$''',
+]
+
+# Fake qlat_ fixtures from #3626 (PR #3651). Commit allowlist covers the historical patch; regex covers the string.
+[[allowlists]]
+description = "QA-lab account API token unit-test commit (#3626)"
+commits = [
+  '''dd9e11fbd7a79b1452e7a8fdea77e8a2d67dbcd8''',
+]
+
+[[allowlists]]
+description = "Obvious qlat_ fixture prefix in tests (#3626)"
+regexTarget = "line"
+regexes = [
+  '''qlat_aabbccddeeff0011_''',
 ]

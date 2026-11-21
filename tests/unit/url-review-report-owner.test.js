@@ -39,7 +39,11 @@ async function people() {
 
 test('the account that ran a paid report reads it in full', async () => {
 	const { store, ana } = await people();
-	assert.deepEqual(await auth.reportAccess(store, ana, run(), false), { ok: true, email: 'ana@example.com' });
+	assert.deepEqual(await auth.reportAccess(store, ana, run(), false), {
+		ok: true,
+		email: 'ana@example.com',
+		via: 'session',
+	});
 });
 
 test('a free-allowance report opens in full for its account only, like a paid one', async () => {

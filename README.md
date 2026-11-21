@@ -198,7 +198,7 @@ Each command serves the folder on port `8767` and stays on `http://127.0.0.1:876
 
 ### QA-lab MCP (Cursor)
 
-Soft-preview + report-read tools for Cursor (`packages/qa-lab-mcp`, #3480):
+Soft-preview, full crawl (account API token), and report-read tools for Cursor (`packages/qa-lab-mcp`, #3480 / #3626):
 
 ```bash
 cd packages/qa-lab-mcp && npm install
@@ -210,13 +210,16 @@ cd packages/qa-lab-mcp && npm install
     "qa-lab": {
       "command": "node",
       "args": ["packages/qa-lab-mcp/src/server.js"],
-      "cwd": "/absolute/path/to/kaanmuar.github.io"
+      "cwd": "/absolute/path/to/kaanmuar.github.io",
+      "env": {
+        "QA_LAB_API_TOKEN": "qlat_…"
+      }
     }
   }
 }
 ```
 
-Env vars and local server notes: [packages/qa-lab-mcp/README.md](packages/qa-lab-mcp/README.md).
+Env vars, minting `QA_LAB_API_TOKEN`, and the separate prod `QA_LAB_MCP_KEY` Turnstile skip: [packages/qa-lab-mcp/README.md](packages/qa-lab-mcp/README.md).
 
 ### 2. Clone the Repository
 
