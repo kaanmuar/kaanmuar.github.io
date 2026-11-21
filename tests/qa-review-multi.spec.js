@@ -3050,3 +3050,59 @@ test('a review that comparisons were made from opens them all as one full compar
 	});
 	await expect(box.locator('.multi-sec[data-sec="exec"] .multi-cell')).toHaveCount(2);
 });
+
+// Two to six sites, long reports beside short ones, in English and Spanish: what the PDF prints keeps every site's
+// block level with the same block of the others, no table runs into the next column, no card has a black edge (#4035).
+for (const [label, kinds, file] of [
+	['2 sites', ['long', 'short'], '/qa-review.html?comparison=cmp1'],
+	['6 sites in Spanish', ['long', 'short', 'mid', 'long', 'short', 'mid'], '/qa-review-es.html?comparison=cmp1'],
+]) {
+	test('the printed comparison keeps its sites level: ' + label + ' (#4035)', async ({ page }) => {
+		const fixtures = { long: ours, mid: own, short: rival };
+		const records = kinds.map((kind, index) => ({
+			id: 'id' + index,
+			email: EMAIL,
+			status: 'complete',
+			paid: true,
+			createdAt: '2026-10-24T10:0' + index + ':00Z',
+			report: Object.assign({}, fixtures[kind], {
+				id: 'id' + index,
+				host: (index ? 'site' + index + '.' : '') + fixtures[kind].host,
+			}),
+		}));
+		const seen = { saved: [], deleted: [], pdf: [] };
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await signIn(page, records, file, seen);
+		await expect(page.locator('#multi-overlay .multi-sec > h2').first()).toBeVisible({ timeout: 20000 });
+		const download = page.waitForEvent('download');
+		await page.locator('#multi-pdf').click();
+		await download;
+		const printed = await page.context().newPage();
+		await printed.route(/^https?:/, (route) => route.abort());
+		await printed.emulateMedia({ media: 'print' });
+		await printed.setContent(multi.withLogos(seen.pdf[0], records.map(() => '')), { waitUntil: 'load' });
+		const found = await printed.evaluate(() => {
+			const tops = (selector) =>
+				[...document.querySelectorAll(selector)].map((el) => Math.round(el.getBoundingClientRect().top));
+			const uneven = [
+				'.multi-sec[data-sec="health"] .ring',
+				'.multi-sec[data-sec="health"] .area[data-area="Performance"]',
+				'.multi-sec[data-sec="exec"] .exec-head',
+				'.multi-sec[data-sec="exec"] .exec-cols > :nth-child(3)',
+				'.multi-sec[data-sec="glance"] [data-card="practices"]',
+				'.multi-sec[data-sec="previews"] .previews > div:nth-child(2)',
+			].filter((selector) => new Set(tops(selector)).size > 1);
+			const wide = [...document.querySelectorAll('.multi-cell table:not(.page-table)')].filter((table) => {
+				const box = table.closest('.card, [data-part], [data-card], .multi-cell');
+				return table.getBoundingClientRect().right > box.getBoundingClientRect().right + 1;
+			}).length;
+			const black = [...document.querySelectorAll('.card, .kpi, .tick')].filter((el) => {
+				const style = getComputedStyle(el);
+				return parseFloat(style.borderTopWidth) > 0 && style.borderTopColor === 'rgb(0, 0, 0)';
+			}).length;
+			return { uneven, wide, black, cells: document.querySelectorAll('.multi-sec[data-sec="cover"] .multi-cell').length };
+		});
+		expect(found).toEqual({ uneven: [], wide: 0, black: 0, cells: kinds.length });
+		await printed.close();
+	});
+}

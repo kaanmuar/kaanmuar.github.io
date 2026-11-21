@@ -1,1 +1,27 @@
-{"source":"https://raw.githubusercontent.com/RetireJS/retire.js/master/repository/jsrepository-v6-combined.json","license":"Apache-2.0, RetireJS contributors","fetched":"2026-11-20","entries":[{"name":"polyfill.io","severity":"high","summary":"Reports indiciate that new owner of polyfill.io is serving malicious code. See info for more details.","extractors":["^https://polyfill\\.io/","^https://cdn\\.polyfill\\.io/","^https://[a-z0-9\\-]+\\.polyfill\\.io/","^https://www\\.googie-anaiytics\\.com/","^https://kuurza\\.com/redirect\\?from=bitget","^https://bootcdn.net/","^https://bootcss.com/","^https://staticfile.net/","^https://staticfile.org/","^https://unionadjs.com/","^https://xhsbpza.com/","^https://union.macoms.la/","^https://newcrbpc.com/"]}]}
+{
+	"source": "https://raw.githubusercontent.com/RetireJS/retire.js/master/repository/jsrepository-v6-combined.json",
+	"license": "Apache-2.0, RetireJS contributors",
+	"fetched": "2026-11-20",
+	"entries": [
+		{
+			"name": "polyfill.io",
+			"severity": "high",
+			"summary": "Reports indiciate that new owner of polyfill.io is serving malicious code. See info for more details.",
+			"extractors": [
+				"^https://polyfill\\.io/",
+				"^https://cdn\\.polyfill\\.io/",
+				"^https://[a-z0-9\\-]+\\.polyfill\\.io/",
+				"^https://www\\.googie-anaiytics\\.com/",
+				"^https://kuurza\\.com/redirect\\?from=bitget",
+				"^https://bootcdn.net/",
+				"^https://bootcss.com/",
+				"^https://staticfile.net/",
+				"^https://staticfile.org/",
+				"^https://unionadjs.com/",
+				"^https://xhsbpza.com/",
+				"^https://union.macoms.la/",
+				"^https://newcrbpc.com/"
+			]
+		}
+	]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Cut the Lab / Jarvis base animations into individual game assets.
+"""Cut the Lab base animation into individual game assets.
 
-Input : assets/review-arena/{lab,jarvis}-full-pipeline-v2-animated.mp4 (the reference art)
+Input : assets/review-arena/lab-full-pipeline-v2-animated.mp4 (the reference art)
 Output: assets/review-arena/v3/{skin}/clean.jpg    plate with every animated entity erased
         assets/review-arena/v3/{skin}/items.png    RGBA atlas: every item / character cut out alone
         assets/review-arena/v3/{skin}/bay-*.webp   baked character loops (Lab robots, doctor)
@@ -183,73 +183,10 @@ def build_lab(files):
     return geo
 
 
-def build_jarvis(files):
-    skin = "jarvis"
-    os.makedirs(f"{OUT}/{skin}", exist_ok=True)
-    orig = np.asarray(Image.open(files[0]).convert("RGB")).astype(np.float32)
-    lum = orig.mean(axis=2)
-    clean = orig.copy()
-    atlas = Atlas()
-    geo = {"skin": skin, "w": W, "h": H}
-
-    lanes_y = [147, 230, 318]
-    node_x = [269, 336, 402, 470, 535, 590, 647, 721, 788, 855, 920, 982, 1047, 1106, 1162, 1223]
-    nodes = []
-    for li, cy in enumerate(lanes_y):
-        for ni, cx in enumerate(node_x):
-            rect = [cx - 19, cy - 21, cx + 19, cy + 17]
-            nodes.append({"lane": li, "n": ni, "cx": cx, "cy": cy, "rect": rect})
-    for nd in nodes:
-        erase(clean, nd["rect"], pad_x=3)
-    for nd in nodes:
-        spr = cutout(orig, clean, nd["rect"], lo=10, hi=50)
-        key = f"n{nd['lane']}_{nd['n']}"
-        atlas.add(key, spr)
-        nd["sprite"] = atlas.items[key]
-    geo["nodes"] = nodes
-    geo["laneY"] = lanes_y
-    geo["nodeX"] = node_x
-
-    # hazard row (detour lane): stopwatch, warning, spark, gavel, then rejoin nodes
-    hz_y = 399
-    hz = [("timeout", 390), ("stop", 574), ("fail", 705), ("slow", 825),
-          ("score", 938), ("sign", 1067), ("save", 1170)]
-    haz = []
-    for key, cx in hz:
-        rect = [cx - 26, hz_y - 24, cx + 26, hz_y + 18]
-        haz.append({"id": key, "cx": cx, "cy": hz_y, "rect": rect})
-    for h in haz:
-        erase(clean, h["rect"], pad_x=3)
-    for h in haz:
-        spr = cutout(orig, clean, h["rect"], lo=10, hi=50)
-        atlas.add(f"h_{h['id']}", spr)
-        h["sprite"] = atlas.items[f"h_{h['id']}"]
-    geo["hazard"] = haz
-    geo["hazardY"] = hz_y
-
-    # process table rows: replaced live by the real log lines
-    tx0, ty0, tx1, ty1 = 233, 508, 1256, 664
-    med = np.median(clean[ty0:ty1, tx0:tx1].reshape(-1, 3), axis=0)
-    clean[ty0:ty1, tx0:tx1] = med
-    geo["hud"] = {"log": [tx0, ty0, tx1, ty1]}
-
-    Image.fromarray(np.clip(clean, 0, 255).astype(np.uint8)).save(f"{OUT}/{skin}/clean.jpg", quality=90)
-    atlas.save(f"{OUT}/{skin}/items.png")
-    if DEBUG:
-        dbg = Image.fromarray(orig.astype(np.uint8))
-        d = ImageDraw.Draw(dbg)
-        for n in nodes:
-            d.rectangle(n["rect"], outline=(0, 255, 255))
-        for h in haz:
-            d.rectangle(h["rect"], outline=(255, 128, 0))
-        dbg.save(f"{OUT}/{skin}/debug-boxes.png")
-    return geo
-
-
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = {}
-    for skin, fn in (("lab", build_lab), ("jarvis", build_jarvis)):
+    for skin, fn in (("lab", build_lab),):
         files = frames(skin)
         geos[skin] = fn(files)
         print(skin, "frames", len(files), "ok")

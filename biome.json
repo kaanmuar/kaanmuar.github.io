@@ -48,6 +48,7 @@
 		{
 			"includes": [
 				"js/qa-review-findings-copy*.js",
+				"functions/url-review-findings-copy.js",
 				"js/qa-review-report-copy.js",
 				"js/qa-review-multi.js",
 				"js/qa-review-compare-copy.js",

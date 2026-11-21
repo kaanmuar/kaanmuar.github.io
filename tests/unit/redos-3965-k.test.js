@@ -9,14 +9,12 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..', '..');
 const CORE = fs.readFileSync(path.join(ROOT, 'functions', 'url-review-core.js'), 'utf8');
+const { locate } = require('./_loose-head');
 const LIT = /\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[dgimsuy]*/y;
 
 /** The regex literal right after `head` in url-review-core.js; head must be unique and end just before the literal. */
 function lit(head) {
-	const at = CORE.indexOf(head);
-	assert.ok(at >= 0, head);
-	assert.equal(CORE.indexOf(head, at + 1), -1, `${head} is not unique`);
-	LIT.lastIndex = at + head.length;
+	LIT.lastIndex = locate(CORE, head, 'url-review-core.js').end;
 	const found = LIT.exec(CORE)[0];
 	const last = found.lastIndexOf('/');
 	return new RegExp(found.slice(1, last), found.slice(last + 1));

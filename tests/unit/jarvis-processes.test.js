@@ -621,8 +621,8 @@ test('every scheduled job goes through track, so each one reports to Processes',
 		index.indexOf('async function track('),
 		index.indexOf('// A v1 schedule from the ops table')
 	);
-	assert.match(body, /jarvisProcesses\.jobRow\(job, "running"/);
-	assert.match(body, /jarvisProcesses\.jobRow\(job, ok \? "done" : "failed"/);
+	assert.match(body, /jarvisProcesses\.jobRow\(job, ['\"]running['\"]/);
+	assert.match(body, /jarvisProcesses\.jobRow\(job, ok \? ['\"]done['\"] : ['\"]failed['\"]/);
 });
 
 test('the Cursor hook: a prompt runs, an answer ending in a question waits on Carlos, others finish', () => {

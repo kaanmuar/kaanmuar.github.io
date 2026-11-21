@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /*
  * Social engagement (#1988): what the scout does with each post it reads, without I/O, so tests/unit can run it.
  *
@@ -18,9 +18,9 @@
  *   trend      log2(1 + velocity / (scale / 10)), velocity = (likes + 2 replies + 3 reposts + views / 100) / hours^0.8
  *   freshness  halves every 24 hours
  */
-const crypto = require("crypto");
-const Trials = require("./chain-trials");
-const Trends = require("./engagement-trends");
+const crypto = require('crypto');
+const Trials = require('./chain-trials');
+const Trends = require('./engagement-trends');
 
 const HOUR = 3600000;
 const DAY = 24 * HOUR;
@@ -29,11 +29,11 @@ const REPLY_TTL = 6 * HOUR;
 const CHAIN_TTL = DAY;
 // Comments we can like: through the API, or the Mac's browser for X (#2424); YouTube has no comment likes. A like on
 // Telegram is a reaction from the bot (#2614); the Reddit app cannot vote.
-const CHAIN_LIKES = ["bluesky", "mastodon", "x", "threads", "instagram", "tiktok", "linkedin", "facebook", "telegram"];
-const LANGS = ["en", "es", "pt", "de", "fr", "it"];
-const ACTIONS = ["like", "repost", "follow", "reply"];
+const CHAIN_LIKES = ['bluesky', 'mastodon', 'x', 'threads', 'instagram', 'tiktok', 'linkedin', 'facebook', 'telegram'];
+const LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
+const ACTIONS = ['like', 'repost', 'follow', 'reply'];
 // A join is planned per group, not per post (functions/engagement-joins.js), but has its daily cap with the rest.
-const CAPS = ACTIONS.concat("join");
+const CAPS = ACTIONS.concat('join');
 
 // acts: the network takes likes, reposts, follows and replies (through its API, or the Mac's browser when browser).
 // only: the actions it has when not all four (YouTube has no repost; a follow is a subscribe there).
@@ -48,149 +48,480 @@ const CAPS = ACTIONS.concat("join");
 // joins (caps.join), the most a young account takes before both networks ban it for volume, warmed up by joinCap.
 // LinkedIn joins student groups (#3138) as Carlos's personal profile: a company page cannot join a group.
 const NETWORKS = {
-  bluesky: { name: "Bluesky", acts: true, api: true, limit: 300, scale: 20, weight: 1 },
-  mastodon: { name: "Mastodon", acts: true, api: true, limit: 500, scale: 10, weight: 1 },
-  youtube: { name: "YouTube", acts: true, api: true, only: ["like", "follow", "reply"], limit: 500, scale: 200, weight: 0.9, caps: { like: 60, follow: 15, reply: 15 } },
-  x: { name: "X", acts: true, browser: true, limit: 280, scale: 40, weight: 1, caps: { like: 62, repost: 12, follow: 18, reply: 12 } },
-  linkedin: { name: "LinkedIn", acts: true, browser: true, only: ["like", "reply"], limit: 1200, scale: 15, weight: 1.2, caps: { like: 25, reply: 8, join: 2 } },
-  facebook: { name: "Facebook", acts: true, browser: true, only: ["like", "reply"], limit: 1000, scale: 20, weight: 0.8, caps: { like: 25, reply: 6 } },
-  instagram: { name: "Instagram", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 1000, scale: 60, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
-  threads: { name: "Threads", acts: true, browser: true, limit: 500, scale: 30, weight: 0.9, caps: { like: 62, repost: 12, follow: 18, reply: 12 } },
-  tiktok: { name: "TikTok", acts: true, browser: true, only: ["like", "follow", "reply"], limit: 150, scale: 300, weight: 0.8, caps: { like: 50, follow: 15, reply: 8 } },
-  telegram: { name: "Telegram", acts: true, api: true, browser: true, only: ["like", "repost", "reply"], limit: 1000, scale: 10, weight: 0.8, caps: { like: 20, repost: 2, reply: 3, join: 3 } },
-  reddit: { name: "Reddit", acts: true, devvit: true, browser: true, limit: 1500, scale: 20, weight: 1, caps: { like: 20, repost: 2, follow: 5, reply: 3, join: 3 } },
-  hn: { name: "Hacker News", acts: false, scale: 30, weight: 1 },
-  devto: { name: "DEV", acts: false, scale: 20, weight: 0.8 },
-  lobsters: { name: "Lobsters", acts: false, scale: 10, weight: 0.9 },
-  qiita: { name: "Qiita", acts: false, scale: 15, weight: 0.9 },
-  stackexchange: { name: "Stack Exchange", acts: false, scale: 25, weight: 1 },
-  zenn: { name: "Zenn", acts: false, scale: 15, weight: 0.85 },
-  fieldsweep: { name: "Field sweep", acts: false, scale: 5, weight: 0.5 }
+	bluesky: { name: 'Bluesky', acts: true, api: true, limit: 300, scale: 20, weight: 1 },
+	mastodon: { name: 'Mastodon', acts: true, api: true, limit: 500, scale: 10, weight: 1 },
+	youtube: {
+		name: 'YouTube',
+		acts: true,
+		api: true,
+		only: ['like', 'follow', 'reply'],
+		limit: 500,
+		scale: 200,
+		weight: 0.9,
+		caps: { like: 60, follow: 15, reply: 15 },
+	},
+	x: {
+		name: 'X',
+		acts: true,
+		browser: true,
+		limit: 280,
+		scale: 40,
+		weight: 1,
+		caps: { like: 62, repost: 12, follow: 18, reply: 12 },
+	},
+	linkedin: {
+		name: 'LinkedIn',
+		acts: true,
+		browser: true,
+		only: ['like', 'reply'],
+		limit: 1200,
+		scale: 15,
+		weight: 1.2,
+		caps: { like: 25, reply: 8, join: 2 },
+	},
+	facebook: {
+		name: 'Facebook',
+		acts: true,
+		browser: true,
+		only: ['like', 'reply'],
+		limit: 1000,
+		scale: 20,
+		weight: 0.8,
+		caps: { like: 25, reply: 6 },
+	},
+	instagram: {
+		name: 'Instagram',
+		acts: true,
+		browser: true,
+		only: ['like', 'follow', 'reply'],
+		limit: 1000,
+		scale: 60,
+		weight: 0.8,
+		caps: { like: 50, follow: 15, reply: 8 },
+	},
+	threads: {
+		name: 'Threads',
+		acts: true,
+		browser: true,
+		limit: 500,
+		scale: 30,
+		weight: 0.9,
+		caps: { like: 62, repost: 12, follow: 18, reply: 12 },
+	},
+	tiktok: {
+		name: 'TikTok',
+		acts: true,
+		browser: true,
+		only: ['like', 'follow', 'reply'],
+		limit: 150,
+		scale: 300,
+		weight: 0.8,
+		caps: { like: 50, follow: 15, reply: 8 },
+	},
+	telegram: {
+		name: 'Telegram',
+		acts: true,
+		api: true,
+		browser: true,
+		only: ['like', 'repost', 'reply'],
+		limit: 1000,
+		scale: 10,
+		weight: 0.8,
+		caps: { like: 20, repost: 2, reply: 3, join: 3 },
+	},
+	reddit: {
+		name: 'Reddit',
+		acts: true,
+		devvit: true,
+		browser: true,
+		limit: 1500,
+		scale: 20,
+		weight: 1,
+		caps: { like: 20, repost: 2, follow: 5, reply: 3, join: 3 },
+	},
+	hn: { name: 'Hacker News', acts: false, scale: 30, weight: 1 },
+	devto: { name: 'DEV', acts: false, scale: 20, weight: 0.8 },
+	lobsters: { name: 'Lobsters', acts: false, scale: 10, weight: 0.9 },
+	qiita: { name: 'Qiita', acts: false, scale: 15, weight: 0.9 },
+	stackexchange: { name: 'Stack Exchange', acts: false, scale: 25, weight: 1 },
+	zenn: { name: 'Zenn', acts: false, scale: 15, weight: 0.85 },
+	fieldsweep: { name: 'Field sweep', acts: false, scale: 5, weight: 0.5 },
 };
 
 // Our field, as in scripts/field-sweep/sources.js, plus the web security and privacy a URL review checks.
 const TOPICS = {
-  Testing: ["test automation", "automated testing", "software testing", "testautomation", "softwaretesting", "unit testing", "e2e testing", "end-to-end testing", "api testing", "load testing", "visual testing", "flaky tests?", "quality assurance", "qa engineers?", "qa", "testers?", "playwright", "cypress", "selenium", "webdriver", "test suites?"],
-  SEO: ["seo", "search console", "googlebot", "crawl budget", "indexing", "structured data", "schema\\.org", "core update", "search ranking", "sitemaps?", "canonical", "backlinks?", "technical seo"],
-  GEO: ["generative engine optimi[sz]ation", "ai overviews?", "ai mode", "llms\\.txt", "ai search", "answer engine", "chatgpt search", "perplexity", "geo"],
-  Accessibility: ["accessibility", "a11y", "wcag", "aria", "screen readers?", "inclusive design", "colou?r contrast", "keyboard navigation", "european accessibility act", "eaa", "ada compliance"],
-  Performance: ["web performance", "webperf", "core web vitals", "corewebvitals", "inp", "lcp", "cls", "page ?speed", "lighthouse", "load time", "time to first byte", "ttfb", "speculation rules"],
-  Analytics: ["ga4", "google analytics", "tag manager", "gtm", "conversion tracking", "server-side tagging", "consent mode"],
-  Security: ["security headers", "content security policy", "csp", "hsts", "owasp", "xss", "tls certificates?", "web security", "websecurity"],
-  Privacy: ["gdpr", "cookie banners?", "cookie consent", "privacy policy", "dsgvo", "rgpd", "lgpd"],
-  // Next to our field (#3814): the conversations people already have about AI search, outages, breaches and dev life.
-  Trends: Trends.ADJACENT,
-  Procurement: ["tender", "procurement", "rft", "rfp", "invitation to tender", "public contract", "framework agreement", "notice of award", "contract notice"]
+	Testing: [
+		'test automation',
+		'automated testing',
+		'software testing',
+		'testautomation',
+		'softwaretesting',
+		'unit testing',
+		'e2e testing',
+		'end-to-end testing',
+		'api testing',
+		'load testing',
+		'visual testing',
+		'flaky tests?',
+		'quality assurance',
+		'qa engineers?',
+		'qa',
+		'testers?',
+		'playwright',
+		'cypress',
+		'selenium',
+		'webdriver',
+		'test suites?',
+	],
+	SEO: [
+		'seo',
+		'search console',
+		'googlebot',
+		'crawl budget',
+		'indexing',
+		'structured data',
+		'schema\\.org',
+		'core update',
+		'search ranking',
+		'sitemaps?',
+		'canonical',
+		'backlinks?',
+		'technical seo',
+	],
+	GEO: [
+		'generative engine optimi[sz]ation',
+		'ai overviews?',
+		'ai mode',
+		'llms\\.txt',
+		'ai search',
+		'answer engine',
+		'chatgpt search',
+		'perplexity',
+		'geo',
+	],
+	Accessibility: [
+		'accessibility',
+		'a11y',
+		'wcag',
+		'aria',
+		'screen readers?',
+		'inclusive design',
+		'colou?r contrast',
+		'keyboard navigation',
+		'european accessibility act',
+		'eaa',
+		'ada compliance',
+	],
+	Performance: [
+		'web performance',
+		'webperf',
+		'core web vitals',
+		'corewebvitals',
+		'inp',
+		'lcp',
+		'cls',
+		'page ?speed',
+		'lighthouse',
+		'load time',
+		'time to first byte',
+		'ttfb',
+		'speculation rules',
+	],
+	Analytics: [
+		'ga4',
+		'google analytics',
+		'tag manager',
+		'gtm',
+		'conversion tracking',
+		'server-side tagging',
+		'consent mode',
+	],
+	Security: [
+		'security headers',
+		'content security policy',
+		'csp',
+		'hsts',
+		'owasp',
+		'xss',
+		'tls certificates?',
+		'web security',
+		'websecurity',
+	],
+	Privacy: ['gdpr', 'cookie banners?', 'cookie consent', 'privacy policy', 'dsgvo', 'rgpd', 'lgpd'],
+	// Next to our field (#3814): the conversations people already have about AI search, outages, breaches and dev life.
+	Trends: Trends.ADJACENT,
+	Procurement: [
+		'tender',
+		'procurement',
+		'rft',
+		'rfp',
+		'invitation to tender',
+		'public contract',
+		'framework agreement',
+		'notice of award',
+		'contract notice',
+	],
 };
 // The same topics in other languages (#2614), so a post or group in any of them is in our field and the Mac's browser
 // searches in them too (DISCOVERY: every phrase per topic, discoveryForRun picks a budget per slot). Lowercase; regex like TOPICS.
 const INTL = {
-  Testing: {
-    es: ["pruebas de software", "automatización de pruebas", "pruebas automatizadas", "aseguramiento de la calidad"], pt: ["testes de software", "automação de testes", "testes automatizados", "garantia de qualidade"],
-    de: ["softwaretests?", "testautomatisierung", "automatisierte tests", "qualitätssicherung"], fr: ["tests logiciels", "automatisation des tests", "tests automatisés", "assurance qualité"],
-    it: ["test del software", "automazione dei test", "test automatizzati"], nl: ["softwaretesten", "testautomatisering", "geautomatiseerd testen"],
-    pl: ["testowanie oprogramowania", "automatyzacja testów", "testy automatyczne"], tr: ["yazılım testi", "test otomasyonu"],
-    ru: ["тестирование программного обеспечения", "автоматизация тестирования", "автотест\\p{L}*", "тестировщик\\p{L}*"], uk: ["тестування програмного забезпечення", "автоматизація тестування", "тестувальник\\p{L}*"],
-    id: ["pengujian perangkat lunak", "otomasi pengujian"], vi: ["kiểm thử phần mềm", "kiểm thử tự động"], ja: ["ソフトウェアテスト", "テスト自動化", "自動テスト"],
-    ko: ["소프트웨어 테스트", "테스트 자동화"], zh: ["软件测试", "自动化测试"], ar: ["اختبار البرمجيات", "أتمتة الاختبارات"], hi: ["सॉफ्टवेयर टेस्टिंग", "टेस्ट ऑटोमेशन"]
-  },
-  SEO: {
-    es: ["posicionamiento web", "posicionamiento en buscadores", "seo técnico"], pt: ["otimização para mecanismos de busca", "seo técnico"], de: ["suchmaschinenoptimierung", "technisches seo"],
-    fr: ["référencement naturel", "seo technique"], it: ["posizionamento sui motori di ricerca", "seo tecnico"], nl: ["zoekmachineoptimalisatie"], pl: ["pozycjonowanie stron", "optymalizacja pod wyszukiwarki"],
-    tr: ["arama motoru optimizasyonu", "teknik seo"], ru: ["поисковая оптимизация", "продвижение сайтов?"], uk: ["пошукова оптимізація", "просування сайтів?"], id: ["optimasi mesin pencari"],
-    vi: ["tối ưu hóa công cụ tìm kiếm"], ja: ["検索エンジン最適化", "seo対策"], ko: ["검색엔진 최적화", "검색 엔진 최적화"], zh: ["搜索引擎优化"], ar: ["تحسين محركات البحث"], hi: ["सर्च इंजन ऑप्टिमाइजेशन"]
-  },
-  GEO: {
-    es: ["optimización para motores generativos", "búsqueda con ia"], pt: ["otimização para motores generativos", "busca com ia"], de: ["ki-suche"], fr: ["recherche par ia"], it: ["ricerca con ia"],
-    ru: ["генеративный поиск"], ja: ["ai検索"], ko: ["ai 검색"], zh: ["生成式引擎优化", "ai搜索"]
-  },
-  Accessibility: {
-    es: ["accesibilidad web", "accesibilidad digital"], pt: ["acessibilidade web", "acessibilidade digital"], de: ["digitale barrierefreiheit", "barrierefreiheit", "barrierefreie websites?"],
-    fr: ["accessibilité numérique", "accessibilité web", "rgaa"], it: ["accessibilità web", "accessibilità digitale"], nl: ["digitale toegankelijkheid", "webtoegankelijkheid"],
-    pl: ["dostępność cyfrowa", "dostępność stron"], tr: ["web erişilebilirliği", "dijital erişilebilirlik"], ru: ["цифровая доступность", "доступность сайтов?", "веб-доступность"],
-    uk: ["цифрова доступність", "вебдоступність"], id: ["aksesibilitas web"], vi: ["khả năng truy cập web"], ja: ["ウェブアクセシビリティ", "アクセシビリティ"], ko: ["웹 접근성"],
-    zh: ["网页无障碍", "无障碍", "可访问性"], ar: ["إمكانية الوصول"], hi: ["वेब एक्सेसिबिलिटी"]
-  },
-  Performance: {
-    es: ["rendimiento web", "velocidad de carga"], pt: ["desempenho web", "velocidade de carregamento"], de: ["webperformance", "ladezeit", "seitengeschwindigkeit"], fr: ["performance web", "temps de chargement"],
-    it: ["prestazioni web", "velocità di caricamento"], nl: ["websitesnelheid", "laadtijd"], pl: ["wydajność stron", "szybkość ładowania"], tr: ["web performansı", "sayfa hızı"],
-    ru: ["скорость загрузки", "производительность сайтов?"], uk: ["швидкість завантаження"], id: ["kecepatan website"], vi: ["tốc độ tải trang"], ja: ["ウェブパフォーマンス", "表示速度"],
-    ko: ["웹 성능", "페이지 속도"], zh: ["网页性能", "页面加载速度"], ar: ["سرعة تحميل"], hi: ["वेबसाइट स्पीड"]
-  },
-  Analytics: {
-    es: ["analítica web"], pt: ["análise web"], de: ["webanalyse"], fr: ["analytique web"], it: ["analisi web"], nl: ["webanalyse"], pl: ["analityka internetowa"], tr: ["web analitiği"],
-    ru: ["веб-аналитика"], uk: ["вебаналітика"], ja: ["アクセス解析"], ko: ["웹 분석"], zh: ["网站分析"], ar: ["تحليلات الويب"]
-  },
-  Security: {
-    es: ["seguridad web"], pt: ["segurança web"], de: ["websicherheit"], fr: ["sécurité web"], it: ["sicurezza web"], nl: ["webbeveiliging"], pl: ["bezpieczeństwo aplikacji webowych"],
-    tr: ["web güvenliği"], ru: ["веб-безопасность", "безопасность веб-приложений"], uk: ["безпека вебзастосунків"], id: ["keamanan web"], vi: ["bảo mật web"],
-    ja: ["ウェブセキュリティ", "脆弱性診断"], ko: ["웹 보안"], zh: ["网站安全"], ar: ["أمن الويب"], hi: ["वेब सुरक्षा"]
-  },
-  Privacy: {
-    es: ["protección de datos", "banner de cookies"], pt: ["proteção de dados"], de: ["datenschutz", "cookie-banner"], fr: ["protection des données", "bandeau cookies"], it: ["protezione dei dati"],
-    nl: ["gegevensbescherming"], pl: ["rodo", "ochrona danych"], tr: ["kvkk"], ru: ["защита персональных данных"], uk: ["захист персональних даних"], ja: ["個人情報保護"], ko: ["개인정보 보호"],
-    zh: ["个人信息保护"], ar: ["حماية البيانات"], hi: ["डेटा संरक्षण"]
-  }
+	Testing: {
+		es: ['pruebas de software', 'automatización de pruebas', 'pruebas automatizadas', 'aseguramiento de la calidad'],
+		pt: ['testes de software', 'automação de testes', 'testes automatizados', 'garantia de qualidade'],
+		de: ['softwaretests?', 'testautomatisierung', 'automatisierte tests', 'qualitätssicherung'],
+		fr: ['tests logiciels', 'automatisation des tests', 'tests automatisés', 'assurance qualité'],
+		it: ['test del software', 'automazione dei test', 'test automatizzati'],
+		nl: ['softwaretesten', 'testautomatisering', 'geautomatiseerd testen'],
+		pl: ['testowanie oprogramowania', 'automatyzacja testów', 'testy automatyczne'],
+		tr: ['yazılım testi', 'test otomasyonu'],
+		ru: [
+			'тестирование программного обеспечения',
+			'автоматизация тестирования',
+			'автотест\\p{L}*',
+			'тестировщик\\p{L}*',
+		],
+		uk: ['тестування програмного забезпечення', 'автоматизація тестування', 'тестувальник\\p{L}*'],
+		id: ['pengujian perangkat lunak', 'otomasi pengujian'],
+		vi: ['kiểm thử phần mềm', 'kiểm thử tự động'],
+		ja: ['ソフトウェアテスト', 'テスト自動化', '自動テスト'],
+		ko: ['소프트웨어 테스트', '테스트 자동화'],
+		zh: ['软件测试', '自动化测试'],
+		ar: ['اختبار البرمجيات', 'أتمتة الاختبارات'],
+		hi: ['सॉफ्टवेयर टेस्टिंग', 'टेस्ट ऑटोमेशन'],
+	},
+	SEO: {
+		es: ['posicionamiento web', 'posicionamiento en buscadores', 'seo técnico'],
+		pt: ['otimização para mecanismos de busca', 'seo técnico'],
+		de: ['suchmaschinenoptimierung', 'technisches seo'],
+		fr: ['référencement naturel', 'seo technique'],
+		it: ['posizionamento sui motori di ricerca', 'seo tecnico'],
+		nl: ['zoekmachineoptimalisatie'],
+		pl: ['pozycjonowanie stron', 'optymalizacja pod wyszukiwarki'],
+		tr: ['arama motoru optimizasyonu', 'teknik seo'],
+		ru: ['поисковая оптимизация', 'продвижение сайтов?'],
+		uk: ['пошукова оптимізація', 'просування сайтів?'],
+		id: ['optimasi mesin pencari'],
+		vi: ['tối ưu hóa công cụ tìm kiếm'],
+		ja: ['検索エンジン最適化', 'seo対策'],
+		ko: ['검색엔진 최적화', '검색 엔진 최적화'],
+		zh: ['搜索引擎优化'],
+		ar: ['تحسين محركات البحث'],
+		hi: ['सर्च इंजन ऑप्टिमाइजेशन'],
+	},
+	GEO: {
+		es: ['optimización para motores generativos', 'búsqueda con ia'],
+		pt: ['otimização para motores generativos', 'busca com ia'],
+		de: ['ki-suche'],
+		fr: ['recherche par ia'],
+		it: ['ricerca con ia'],
+		ru: ['генеративный поиск'],
+		ja: ['ai検索'],
+		ko: ['ai 검색'],
+		zh: ['生成式引擎优化', 'ai搜索'],
+	},
+	Accessibility: {
+		es: ['accesibilidad web', 'accesibilidad digital'],
+		pt: ['acessibilidade web', 'acessibilidade digital'],
+		de: ['digitale barrierefreiheit', 'barrierefreiheit', 'barrierefreie websites?'],
+		fr: ['accessibilité numérique', 'accessibilité web', 'rgaa'],
+		it: ['accessibilità web', 'accessibilità digitale'],
+		nl: ['digitale toegankelijkheid', 'webtoegankelijkheid'],
+		pl: ['dostępność cyfrowa', 'dostępność stron'],
+		tr: ['web erişilebilirliği', 'dijital erişilebilirlik'],
+		ru: ['цифровая доступность', 'доступность сайтов?', 'веб-доступность'],
+		uk: ['цифрова доступність', 'вебдоступність'],
+		id: ['aksesibilitas web'],
+		vi: ['khả năng truy cập web'],
+		ja: ['ウェブアクセシビリティ', 'アクセシビリティ'],
+		ko: ['웹 접근성'],
+		zh: ['网页无障碍', '无障碍', '可访问性'],
+		ar: ['إمكانية الوصول'],
+		hi: ['वेब एक्सेसिबिलिटी'],
+	},
+	Performance: {
+		es: ['rendimiento web', 'velocidad de carga'],
+		pt: ['desempenho web', 'velocidade de carregamento'],
+		de: ['webperformance', 'ladezeit', 'seitengeschwindigkeit'],
+		fr: ['performance web', 'temps de chargement'],
+		it: ['prestazioni web', 'velocità di caricamento'],
+		nl: ['websitesnelheid', 'laadtijd'],
+		pl: ['wydajność stron', 'szybkość ładowania'],
+		tr: ['web performansı', 'sayfa hızı'],
+		ru: ['скорость загрузки', 'производительность сайтов?'],
+		uk: ['швидкість завантаження'],
+		id: ['kecepatan website'],
+		vi: ['tốc độ tải trang'],
+		ja: ['ウェブパフォーマンス', '表示速度'],
+		ko: ['웹 성능', '페이지 속도'],
+		zh: ['网页性能', '页面加载速度'],
+		ar: ['سرعة تحميل'],
+		hi: ['वेबसाइट स्पीड'],
+	},
+	Analytics: {
+		es: ['analítica web'],
+		pt: ['análise web'],
+		de: ['webanalyse'],
+		fr: ['analytique web'],
+		it: ['analisi web'],
+		nl: ['webanalyse'],
+		pl: ['analityka internetowa'],
+		tr: ['web analitiği'],
+		ru: ['веб-аналитика'],
+		uk: ['вебаналітика'],
+		ja: ['アクセス解析'],
+		ko: ['웹 분석'],
+		zh: ['网站分析'],
+		ar: ['تحليلات الويب'],
+	},
+	Security: {
+		es: ['seguridad web'],
+		pt: ['segurança web'],
+		de: ['websicherheit'],
+		fr: ['sécurité web'],
+		it: ['sicurezza web'],
+		nl: ['webbeveiliging'],
+		pl: ['bezpieczeństwo aplikacji webowych'],
+		tr: ['web güvenliği'],
+		ru: ['веб-безопасность', 'безопасность веб-приложений'],
+		uk: ['безпека вебзастосунків'],
+		id: ['keamanan web'],
+		vi: ['bảo mật web'],
+		ja: ['ウェブセキュリティ', '脆弱性診断'],
+		ko: ['웹 보안'],
+		zh: ['网站安全'],
+		ar: ['أمن الويب'],
+		hi: ['वेब सुरक्षा'],
+	},
+	Privacy: {
+		es: ['protección de datos', 'banner de cookies'],
+		pt: ['proteção de dados'],
+		de: ['datenschutz', 'cookie-banner'],
+		fr: ['protection des données', 'bandeau cookies'],
+		it: ['protezione dei dati'],
+		nl: ['gegevensbescherming'],
+		pl: ['rodo', 'ochrona danych'],
+		tr: ['kvkk'],
+		ru: ['защита персональных данных'],
+		uk: ['захист персональних даних'],
+		ja: ['個人情報保護'],
+		ko: ['개인정보 보호'],
+		zh: ['个人信息保护'],
+		ar: ['حماية البيانات'],
+		hi: ['डेटा संरक्षण'],
+	},
 };
 // Chinese, Japanese and Korean run words together, so their keywords match anywhere in the text.
 // Languages topic search covers (#2614 / #2630). Replies are drafted in whatever language the post is in
 // (#3735), including ones outside this list; Jarvis shows an English translation beside a non-English draft.
 // LANGS stays the clip and report languages.
-const REPLY_LANGS = ["en"].concat(Array.from(new Set([].concat(...Object.values(INTL).map(Object.keys)))));
+const REPLY_LANGS = ['en'].concat(Array.from(new Set([].concat(...Object.values(INTL).map(Object.keys)))));
 const ENGLISH_KEY = '"english": the reply translated to English when it is in another language, else ""';
-const REPLY_IN_POST_LANG = "write in the post's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English.";
+const REPLY_IN_POST_LANG =
+	"write in the post's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English.";
 
 const UNSPACED = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
-const wordRe = (w) => (UNSPACED.test(w) ? new RegExp(w, "iu") : new RegExp("(^|[^\\p{L}\\p{N}])#?" + w + "($|[^\\p{L}\\p{N}])", "iu"));
-const TOPIC_RES = Object.fromEntries(Object.entries(TOPICS).map(([t, words]) => [t, words.concat(...Object.values(INTL[t] || {})).map((w) => [w, wordRe(w)])]));
-const phrase = (w) => w.replace(/\\p\{L\}\*|\?|\\/g, "").replace(/\s+/g, " ").trim();
+const wordRe = (w) =>
+	UNSPACED.test(w) ? new RegExp(w, 'iu') : new RegExp('(^|[^\\p{L}\\p{N}])#?' + w + '($|[^\\p{L}\\p{N}])', 'iu');
+const TOPIC_RES = Object.fromEntries(
+	Object.entries(TOPICS).map(([t, words]) => [
+		t,
+		words.concat(...Object.values(INTL[t] || {})).map((w) => [w, wordRe(w)]),
+	])
+);
+const phrase = (w) =>
+	w
+		.replace(/\\p\{L\}\*|\?|\\/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
 // Topic searches in other languages for the Mac's browser: [{ q, lang, topic }], languages interleaved.
 // Every phrase per topic, not only the first; discoveryForRun picks DISCOVERY_BUDGET per slot (#3613).
 const DISCOVERY = (() => {
-  const by = {};
-  Object.entries(INTL).forEach(([topic, langs]) => Object.entries(langs).forEach(([lang, words]) => {
-    (by[lang] = by[lang] || []).push(...words.map((w) => ({ q: phrase(w), lang, topic })));
-  }));
-  const lists = Object.values(by);
-  const out = [];
-  for (let i = 0; lists.some((l) => l[i]); i += 1) lists.forEach((l) => { if (l[i]) out.push(l[i]); });
-  return out;
+	const by = {};
+	Object.entries(INTL).forEach(([topic, langs]) =>
+		Object.entries(langs).forEach(([lang, words]) => {
+			(by[lang] = by[lang] || []).push(...words.map((w) => ({ q: phrase(w), lang, topic })));
+		})
+	);
+	const lists = Object.values(by);
+	const out = [];
+	for (let i = 0; lists.some((l) => l[i]); i += 1)
+		lists.forEach((l) => {
+			if (l[i]) out.push(l[i]);
+		});
+	return out;
 })();
 const DISCOVERY_SLOT = 30 * 60 * 1000;
 /** How many topic searches the Mac (and Mastodon field search) ask per half-hour slot (#3613). */
 const DISCOVERY_BUDGET = 12;
 const MASTODON_DISCOVERY_BUDGET = 3;
 
-const Regions = require("./engagement-regions");
+const Regions = require('./engagement-regions');
 
 function discoveryForRun(now, budget, settings) {
-  return Regions.discoveryForRun(now, budget, settings || { discoveryPack: "auto" });
+	return Regions.discoveryForRun(now, budget, settings || { discoveryPack: 'auto' });
 }
 
 // As scripts/trending-tags.js: no post rides on news about deaths, wars, elections or layoffs. Words our field also
 // uses ("dead links", "killed the process", "fired an event") are left to Gemini's political and tone flags.
-const SENSITIVE = /\b(dies|died|death|rip|passed away|condolences|murder\w*|shooting|war|terror\w*|bomb\w*|hostage|election\w*|vote|president|senat\w*|congress|gaza|israel|ukraine|russia|earthquake|hurricane|flood\w*|wildfire|funeral|suicide|abuse|arrest\w*|detention|deport\w*|immigration|lawsuit|sued|layoffs?|scandal|trump|biden|maga|nazi\w*|genocide)\b/i;
+const SENSITIVE =
+	/\b(dies|died|death|rip|passed away|condolences|murder\w*|shooting|war|terror\w*|bomb\w*|hostage|election\w*|vote|president|senat\w*|congress|gaza|israel|ukraine|russia|earthquake|hurricane|flood\w*|wildfire|funeral|suicide|abuse|arrest\w*|detention|deport\w*|immigration|lawsuit|sued|layoffs?|scandal|trump|biden|maga|nazi\w*|genocide)\b/i;
 const HASHTAG_SPAM = 8;
 
 // Vendors whose own posts we never answer under; edited in Jarvis > Engagement > Settings.
-const COMPETITORS = ["semrush", "ahrefs", "moz", "screamingfrog", "screaming frog", "sitebulb", "seranking", "se ranking", "browserstack", "lambdatest", "saucelabs", "sauce labs", "accessibe", "userway", "siteimprove", "audioeye", "gtmetrix", "pingdom", "debugbear", "contentsquare", "hotjar", "conductor", "brightedge", "sucuri", "wordfence", "mxtoolbox", "securityheaders", "ssllabs", "ssl labs", "detectify", "upguard"];
+const COMPETITORS = [
+	'semrush',
+	'ahrefs',
+	'moz',
+	'screamingfrog',
+	'screaming frog',
+	'sitebulb',
+	'seranking',
+	'se ranking',
+	'browserstack',
+	'lambdatest',
+	'saucelabs',
+	'sauce labs',
+	'accessibe',
+	'userway',
+	'siteimprove',
+	'audioeye',
+	'gtmetrix',
+	'pingdom',
+	'debugbear',
+	'contentsquare',
+	'hotjar',
+	'conductor',
+	'brightedge',
+	'sucuri',
+	'wordfence',
+	'mxtoolbox',
+	'securityheaders',
+	'ssllabs',
+	'ssl labs',
+	'detectify',
+	'upguard',
+];
 
 // live: planned likes, reposts and follows are carried out; off (the default, a dry run) marks them "dry" instead.
 // Approved replies go out either way: Carlos approved each one.
 const DEFAULTS = {
-  paused: false,
-  live: false,
-  caps: { reply: 19, like: 75, repost: 19, follow: 19, join: 2 },
-  thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
-  worth: 0.6,
-  maxAgeHours: 48,
-  perRun: 12,
-  competitors: COMPETITORS,
-  own: ["carlosandmunoz", "qalabreview", "qalaburlreview", "qaurlreview", "qalab-url-review", "kaanmuar"],
-  discoveryPack: "auto"
+	paused: false,
+	live: false,
+	caps: { reply: 19, like: 75, repost: 19, follow: 19, join: 2 },
+	thresholds: { like: 1.5, repost: 3, follow: 3.5, reply: 2 },
+	worth: 0.6,
+	maxAgeHours: 48,
+	perRun: 12,
+	competitors: COMPETITORS,
+	own: ['carlosandmunoz', 'qalabreview', 'qalaburlreview', 'qaurlreview', 'qalab-url-review', 'kaanmuar'],
+	discoveryPack: 'auto',
 };
 
-const clip = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
+const clip = (v, n) =>
+	String(v == null ? '' : v)
+		.replace(/\s+/g, ' ')
+		.trim()
+		.slice(0, n);
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : 0);
 const round = (n, d) => Math.round(n * 10 ** (d || 2)) / 10 ** (d || 2);
 const lower = (list) => (Array.isArray(list) ? list : []).map((s) => clip(s, 60).toLowerCase()).filter(Boolean);
@@ -198,56 +529,88 @@ const lower = (list) => (Array.isArray(list) ? list : []).map((s) => clip(s, 60)
 /** The stored settings with every field present and in range. */
 // Saved competitor list plus any default added since it was saved; defaults removed in the form stay removed.
 function withDefaults(saved, dropped) {
-  const own = Array.isArray(saved) ? lower(saved) : [];
-  const added = DEFAULTS.competitors.filter((c) => !own.includes(c) && !dropped.includes(c));
-  return [...new Set(own.concat(added))].slice(0, 200);
+	const own = Array.isArray(saved) ? lower(saved) : [];
+	const added = DEFAULTS.competitors.filter((c) => !own.includes(c) && !dropped.includes(c));
+	return [...new Set(own.concat(added))].slice(0, 200);
 }
 
 function settings(doc) {
-  const d = doc || {};
-  const capsIn = d.caps || {};
-  const thIn = d.thresholds || {};
-  const between = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
-  const dropped = Array.isArray(d.competitorsDropped) ? lower(d.competitorsDropped).filter((c) => DEFAULTS.competitors.includes(c)) : [];
-  return {
-    paused: d.paused === true,
-    live: d.live === true,
-    autoReplies: d.autoReplies !== false,
-    liveAt: clip(d.liveAt, 30),
-    caps: Object.fromEntries(CAPS.map((a) => [a, Math.round(between(capsIn[a], 0, a === "join" ? 20 : 500, DEFAULTS.caps[a]))])),
-    thresholds: Object.fromEntries(ACTIONS.map((a) => [a, between(thIn[a], 0, 1000, DEFAULTS.thresholds[a])])),
-    worth: between(d.worth, 0, 1, DEFAULTS.worth),
-    maxAgeHours: between(d.maxAgeHours, 1, 24 * 14, DEFAULTS.maxAgeHours),
-    perRun: Math.round(between(d.perRun, 0, 30, DEFAULTS.perRun)),
-    competitors: withDefaults(d.competitors, dropped),
-    competitorsDropped: dropped,
-    own: Array.isArray(d.own) ? lower(d.own).slice(0, 40) : DEFAULTS.own.slice(),
-    trials: Trials.trialSettings(d.trials),
-    discoveryPack: (() => { const v = String(d.discoveryPack || DEFAULTS.discoveryPack).toLowerCase(); return v === "auto" || Regions.PACK_IDS.includes(v) ? v : "auto"; })(),
-    updatedAt: clip(d.updatedAt, 30),
-    by: clip(d.by, 120)
-  };
+	const d = doc || {};
+	const capsIn = d.caps || {};
+	const thIn = d.thresholds || {};
+	const between = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
+	const dropped = Array.isArray(d.competitorsDropped)
+		? lower(d.competitorsDropped).filter((c) => DEFAULTS.competitors.includes(c))
+		: [];
+	return {
+		paused: d.paused === true,
+		live: d.live === true,
+		autoReplies: d.autoReplies !== false,
+		liveAt: clip(d.liveAt, 30),
+		caps: Object.fromEntries(
+			CAPS.map((a) => [a, Math.round(between(capsIn[a], 0, a === 'join' ? 20 : 500, DEFAULTS.caps[a]))])
+		),
+		thresholds: Object.fromEntries(ACTIONS.map((a) => [a, between(thIn[a], 0, 1000, DEFAULTS.thresholds[a])])),
+		worth: between(d.worth, 0, 1, DEFAULTS.worth),
+		maxAgeHours: between(d.maxAgeHours, 1, 24 * 14, DEFAULTS.maxAgeHours),
+		perRun: Math.round(between(d.perRun, 0, 30, DEFAULTS.perRun)),
+		competitors: withDefaults(d.competitors, dropped),
+		competitorsDropped: dropped,
+		own: Array.isArray(d.own) ? lower(d.own).slice(0, 40) : DEFAULTS.own.slice(),
+		trials: Trials.trialSettings(d.trials),
+		discoveryPack: (() => {
+			const v = String(d.discoveryPack || DEFAULTS.discoveryPack).toLowerCase();
+			return v === 'auto' || Regions.PACK_IDS.includes(v) ? v : 'auto';
+		})(),
+		updatedAt: clip(d.updatedAt, 30),
+		by: clip(d.by, 120),
+	};
 }
 
 /** A settings change from Jarvis, merged over the current settings. Throws on nothing to change. */
 function settingsPatch(current, body) {
-  const b = body || {};
-  const next = Object.assign({}, current);
-  let changed = false;
-  if (typeof b.paused === "boolean") { next.paused = b.paused; changed = true; }
-  if (typeof b.live === "boolean") { next.live = b.live; changed = true; }
-  if (typeof b.autoReplies === "boolean") { next.autoReplies = b.autoReplies; changed = true; }
-  if (b.discoveryPack !== undefined) { next.discoveryPack = String(b.discoveryPack || "auto"); changed = true; }
-  ["caps", "thresholds", "trials"].forEach((k) => { if (b[k] && typeof b[k] === "object") { next[k] = Object.assign({}, current[k], b[k]); changed = true; } });
-  ["worth", "maxAgeHours", "perRun"].forEach((k) => { if (b[k] !== undefined) { next[k] = b[k]; changed = true; } });
-  ["competitors", "own"].forEach((k) => {
-    if (b[k] === undefined) return;
-    next[k] = Array.isArray(b[k]) ? b[k] : String(b[k]).split(/[\n,]+/);
-    if (k === "competitors") { const kept = lower(next[k]); next.competitorsDropped = DEFAULTS.competitors.filter((c) => !kept.includes(c)); }
-    changed = true;
-  });
-  if (!changed) throw new Error("Nothing to change.");
-  return settings(next);
+	const b = body || {};
+	const next = Object.assign({}, current);
+	let changed = false;
+	if (typeof b.paused === 'boolean') {
+		next.paused = b.paused;
+		changed = true;
+	}
+	if (typeof b.live === 'boolean') {
+		next.live = b.live;
+		changed = true;
+	}
+	if (typeof b.autoReplies === 'boolean') {
+		next.autoReplies = b.autoReplies;
+		changed = true;
+	}
+	if (b.discoveryPack !== undefined) {
+		next.discoveryPack = String(b.discoveryPack || 'auto');
+		changed = true;
+	}
+	['caps', 'thresholds', 'trials'].forEach((k) => {
+		if (b[k] && typeof b[k] === 'object') {
+			next[k] = Object.assign({}, current[k], b[k]);
+			changed = true;
+		}
+	});
+	['worth', 'maxAgeHours', 'perRun'].forEach((k) => {
+		if (b[k] !== undefined) {
+			next[k] = b[k];
+			changed = true;
+		}
+	});
+	['competitors', 'own'].forEach((k) => {
+		if (b[k] === undefined) return;
+		next[k] = Array.isArray(b[k]) ? b[k] : String(b[k]).split(/[\n,]+/);
+		if (k === 'competitors') {
+			const kept = lower(next[k]);
+			next.competitorsDropped = DEFAULTS.competitors.filter((c) => !kept.includes(c));
+		}
+		changed = true;
+	});
+	if (!changed) throw new Error('Nothing to change.');
+	return settings(next);
 }
 
 /**
@@ -256,9 +619,9 @@ function settingsPatch(current, body) {
  * bot and the app (#2614).
  */
 function carrier(doc) {
-  const n = NETWORKS[(doc || {}).network] || {};
-  if (n.browser && (doc.via === "mac" || (!n.api && !n.devvit))) return "mac";
-  return n.api ? "api" : n.devvit ? "devvit" : "";
+	const n = NETWORKS[(doc || {}).network] || {};
+	if (n.browser && (doc.via === 'mac' || (!n.api && !n.devvit))) return 'mac';
+	return n.api ? 'api' : n.devvit ? 'devvit' : '';
 }
 
 // Joins warm up like the outreach mailboxes (#2614): one a day for the first two weeks after the first live join, two in
@@ -268,157 +631,256 @@ const WEEK = 7 * DAY;
 
 /** Today's join cap on a network, since: when its first live join went out ("" before any). */
 function joinCap(conf, network, since, now) {
-  const own = ((NETWORKS[network] || {}).caps || {}).join || 0;
-  const at = Date.parse(since);
-  const week = Number.isFinite(at) ? Math.floor(Math.max(0, now - at) / WEEK) : 0;
-  return Math.min(conf.caps.join, own, week < JOIN_WARMUP.length ? JOIN_WARMUP[week] : Infinity);
+	const own = ((NETWORKS[network] || {}).caps || {}).join || 0;
+	const at = Date.parse(since);
+	const week = Number.isFinite(at) ? Math.floor(Math.max(0, now - at) / WEEK) : 0;
+	return Math.min(conf.caps.join, own, week < JOIN_WARMUP.length ? JOIN_WARMUP[week] : Infinity);
 }
 
-const keyOf = (network, id) => network + "_" + crypto.createHash("sha1").update(String(id)).digest("hex").slice(0, 20);
+const keyOf = (network, id) => network + '_' + crypto.createHash('sha1').update(String(id)).digest('hex').slice(0, 20);
 /** The conversation a post belongs to, as "network:root id"; posts stored before #2421 have no thread and stand alone. */
-const threadKey = (p) => p.network + ":" + String(p.thread || p.id || "");
+const threadKey = (p) => p.network + ':' + String(p.thread || p.id || '');
 
 /** Topic keyword hits: the topic named most, every topic named, and the keywords. */
 function relevance(text) {
-  const t = String(text || "");
-  const byTopic = {};
-  const words = [];
-  Object.entries(TOPIC_RES).forEach(([topic, res]) => {
-    res.forEach(([w, re]) => { if (re.test(t)) { byTopic[topic] = (byTopic[topic] || 0) + 1; words.push(w.replace(/\\p\{L\}\*/g, "").replace(/\\\./g, ".").replace(/\[(.)[^\]]*\]|(\[.[^\]]*$)/g, "$1$2").replace(/ ?\?|\\/g, (m) => (m === " ?" ? " " : ""))); } });
-  });
-  const ranked = Object.entries(byTopic).sort((a, b) => b[1] - a[1]);
-  return { hits: Math.min(6, words.length), topic: ranked.length ? ranked[0][0] : "", topics: ranked.map(([k]) => k), words: words.slice(0, 12) };
+	const t = String(text || '');
+	const byTopic = {};
+	const words = [];
+	Object.entries(TOPIC_RES).forEach(([topic, res]) => {
+		res.forEach(([w, re]) => {
+			if (re.test(t)) {
+				byTopic[topic] = (byTopic[topic] || 0) + 1;
+				words.push(
+					w
+						.replace(/\\p\{L\}\*/g, '')
+						.replace(/\\\./g, '.')
+						.replace(/\[(.)[^\]]*\]|(\[.[^\]]*$)/g, '$1$2')
+						.replace(/ ?\?|\\/g, (m) => (m === ' ?' ? ' ' : ''))
+				);
+			}
+		});
+	});
+	const ranked = Object.entries(byTopic).sort((a, b) => b[1] - a[1]);
+	return {
+		hits: Math.min(6, words.length),
+		topic: ranked.length ? ranked[0][0] : '',
+		topics: ranked.map(([k]) => k),
+		words: words.slice(0, 12),
+	};
 }
 
 function ageHours(post, now) {
-  const at = Date.parse(post && post.createdAt);
-  return Number.isFinite(at) ? Math.max(0.25, (now - at) / HOUR) : 24;
+	const at = Date.parse(post && post.createdAt);
+	return Number.isFinite(at) ? Math.max(0.25, (now - at) / HOUR) : 24;
 }
 
 function trend(post, now) {
-  const net = NETWORKS[post.network] || { scale: 20 };
-  const m = post.metrics || {};
-  const weighted = num(m.likes) + 2 * num(m.replies) + 3 * num(m.reposts) + num(m.views) / 100;
-  const velocity = weighted / Math.pow(ageHours(post, now), 0.8);
-  return round(Math.log2(1 + velocity / (net.scale / 10)));
+	const net = NETWORKS[post.network] || { scale: 20 };
+	const m = post.metrics || {};
+	const weighted = num(m.likes) + 2 * num(m.replies) + 3 * num(m.reposts) + num(m.views) / 100;
+	const velocity = weighted / Math.pow(ageHours(post, now), 0.8);
+	return round(Math.log2(1 + velocity / (net.scale / 10)));
 }
 
 function score(post, now) {
-  const net = NETWORKS[post.network] || { weight: 1 };
-  const rel = relevance([post.title, post.text, (post.tags || []).map((t) => "#" + t).join(" ")].join("\n"));
-  const tr = trend(post, now);
-  const fresh = Math.pow(0.5, ageHours(post, now) / 24);
-  return { relevance: rel.hits, topic: rel.topic, topics: rel.topics, words: rel.words, trend: tr, score: round(net.weight * (1 + rel.hits) * (1 + tr) * fresh) };
+	const net = NETWORKS[post.network] || { weight: 1 };
+	const rel = relevance([post.title, post.text, (post.tags || []).map((t) => '#' + t).join(' ')].join('\n'));
+	const tr = trend(post, now);
+	const fresh = Math.pow(0.5, ageHours(post, now) / 24);
+	return {
+		relevance: rel.hits,
+		topic: rel.topic,
+		topics: rel.topics,
+		words: rel.words,
+		trend: tr,
+		score: round(net.weight * (1 + rel.hits) * (1 + tr) * fresh),
+	};
 }
 
-const lang2 = (v) => String(v || "").toLowerCase().slice(0, 2);
-const has = (hay, list) => list.find((w) => w && hay.includes(w)) || "";
+const lang2 = (v) =>
+	String(v || '')
+		.toLowerCase()
+		.slice(0, 2);
+const has = (hay, list) => list.find((w) => w && hay.includes(w)) || '';
 
 /** Why a post is left alone whatever it scores, or "". */
 function guard(post, conf, now) {
-  // Field-sweep posts (tenders, CVEs, advisories) are for the scouts to read; no automatic reply goes to them (#3940).
-  if (post.discoveryOnly || post.via === "field-sweep") return "discovery";
-  const a = post.author || {};
-  const who = [a.handle, a.name, a.url].map((s) => String(s || "").toLowerCase()).join(" ");
-  const text = [post.title, post.text].join(" ");
-  if (has(who + " " + String(post.url || "").toLowerCase(), conf.own) || /carlosandmunoz\.com|qalabreview\.com/i.test(text)) return "own";
-  if (has(who, conf.competitors)) return "competitor";
-  if (SENSITIVE.test(text)) return "sensitive";
-  if (Trends.drama(post)) return "drama";
-  if ((String(post.text || "").match(/(^|\s)#[\p{L}\p{N}_]+/gu) || []).length > HASHTAG_SPAM) return "spam";
-  if (ageHours(post, now) > conf.maxAgeHours) return "old";
-  return "";
+	// Field-sweep posts (tenders, CVEs, advisories) are for the scouts to read; no automatic reply goes to them (#3940).
+	if (post.discoveryOnly || post.via === 'field-sweep') return 'discovery';
+	const a = post.author || {};
+	const who = [a.handle, a.name, a.url].map((s) => String(s || '').toLowerCase()).join(' ');
+	const text = [post.title, post.text].join(' ');
+	if (
+		has(who + ' ' + String(post.url || '').toLowerCase(), conf.own) ||
+		/carlosandmunoz\.com|qalabreview\.com/i.test(text)
+	)
+		return 'own';
+	if (has(who, conf.competitors)) return 'competitor';
+	if (SENSITIVE.test(text)) return 'sensitive';
+	if (Trends.drama(post)) return 'drama';
+	if ((String(post.text || '').match(/(^|\s)#[\p{L}\p{N}_]+/gu) || []).length > HASHTAG_SPAM) return 'spam';
+	if (ageHours(post, now) > conf.maxAgeHours) return 'old';
+	return '';
 }
 
 /** The Gemini prompt for a batch of posts: what each is about, its tone, and a reply when one adds something. */
 function aiPrompt(items) {
-  const list = items.map((p) => ({
-    id: p.key, network: (NETWORKS[p.network] || {}).name || p.network, lang: lang2(p.lang) || "?", author: clip((p.author || {}).name || (p.author || {}).handle, 60),
-    title: clip(p.title, 160), text: clip(p.text, 900), likes: num((p.metrics || {}).likes), replies: num((p.metrics || {}).replies), reposts: num((p.metrics || {}).reposts),
-    topic: p.topic, viral: (p.trend || 0) >= Trends.VIRAL_TREND, maxReply: ((NETWORKS[p.network] || {}).limit || 300) - (Trends.TAG_NETWORKS.includes(p.network) ? 30 : 0)
-  }));
-  return [
-    "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
-    "For each post below, return one JSON object in a JSON array, same order, with exactly these keys:",
-    '{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "drama": true when the thread is about a named person or company being attacked, boycotted, exposed or mocked, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument, drama or promo, ' + ENGLISH_KEY + '}',
-    "Reply rules: " + REPLY_IN_POST_LANG + " Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject. " + WIT + " " + SCOPE + " " + SOFT + " " + REGISTER,
-    NEVER,
-    "Posts:",
-    JSON.stringify(list)
-  ].join("\n");
+	const list = items.map((p) => ({
+		id: p.key,
+		network: (NETWORKS[p.network] || {}).name || p.network,
+		lang: lang2(p.lang) || '?',
+		author: clip((p.author || {}).name || (p.author || {}).handle, 60),
+		title: clip(p.title, 160),
+		text: clip(p.text, 900),
+		likes: num((p.metrics || {}).likes),
+		replies: num((p.metrics || {}).replies),
+		reposts: num((p.metrics || {}).reposts),
+		topic: p.topic,
+		viral: (p.trend || 0) >= Trends.VIRAL_TREND,
+		maxReply: ((NETWORKS[p.network] || {}).limit || 300) - (Trends.TAG_NETWORKS.includes(p.network) ? 30 : 0),
+	}));
+	return [
+		'You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.',
+		'For each post below, return one JSON object in a JSON array, same order, with exactly these keys:',
+		'{"id": same id, "about": what the post is about in at most 20 English words, "lang": the post\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when the thread is a fight or a pile-on, "drama": true when the thread is about a named person or company being attacked, boycotted, exposed or mocked, "asksForTool": true only when the post asks for a tool, service or audit, "promo": true when the post advertises the author\'s own product, service, course or tool, "worth": 0 to 1, how much a short expert reply from us would add to this conversation, "why": at most 15 English words, "reply": the reply, or "" when worth is under 0.6 or the post is political, angry, an argument, drama or promo, ' +
+			ENGLISH_KEY +
+			'}',
+		'Reply rules: ' +
+			REPLY_IN_POST_LANG +
+			" Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Open with the substance, not with praise. Add one concrete insight, tip, caveat or question that the post did not already say, about the post's own subject. " +
+			WIT +
+			' ' +
+			SCOPE +
+			' ' +
+			SOFT +
+			' ' +
+			REGISTER,
+		NEVER,
+		'Posts:',
+		JSON.stringify(list),
+	].join('\n');
 }
 
 // Tone, scope and mention rules for replies in the field and next to it (#3814).
-const WIT = "Be the sharpest, funniest practitioner in the thread: playful and meme-aware, a dry one-liner or a wink at a pain every dev, tester or marketer knows is welcome when the post invites it, never at the author's expense, and never instead of the insight. Match the thread's mood: no jokes under bad news, an outage that hurts people, or a sad post.";
-const SCOPE = "Posts may be next to our field (AI search and chatbots, outages, breaches, dev life, launches) or viral (viral: true). There, reply only when you can add an angle that connects for real to testing, SEO or GEO, accessibility, speed, analytics, security or privacy; otherwise reply \"\". Never reply to a viral post just to be seen.";
-const SOFT = "You may close with one light, curious half-sentence that we built a free URL review that checks a site's security, SEO and GEO, analytics, accessibility and speed, but only when it flows from what they said, never twice in one thread, never as a pitch, and without a link unless asksForTool is true. When it would feel forced, leave it out.";
-const REGISTER = "Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French; elsewhere use the register usual between strangers online.";
-const NEVER = "Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags (we add the one tag ourselves), more than one emoji, em dashes, flattery like \"Great post!\" or \"impressive\", made-up numbers or studies, claims about work we did, or anything about the author's person. Stay under maxReply characters.";
+const WIT =
+	"Be the sharpest, funniest practitioner in the thread: playful and meme-aware, a dry one-liner or a wink at a pain every dev, tester or marketer knows is welcome when the post invites it, never at the author's expense, and never instead of the insight. Match the thread's mood: no jokes under bad news, an outage that hurts people, or a sad post.";
+const SCOPE =
+	'Posts may be next to our field (AI search and chatbots, outages, breaches, dev life, launches) or viral (viral: true). There, reply only when you can add an angle that connects for real to testing, SEO or GEO, accessibility, speed, analytics, security or privacy; otherwise reply "". Never reply to a viral post just to be seen.';
+const SOFT =
+	"You may close with one light, curious half-sentence that we built a free URL review that checks a site's security, SEO and GEO, analytics, accessibility and speed, but only when it flows from what they said, never twice in one thread, never as a pitch, and without a link unless asksForTool is true. When it would feel forced, leave it out.";
+const REGISTER =
+	'Address people as tú in Spanish, você in Portuguese, tu in Italian, Sie in German and vous in French; elsewhere use the register usual between strangers online.';
+const NEVER =
+	'Never: a link or a website address unless asksForTool is true (then at most one mention of carlosandmunoz.com), a sales pitch, hashtags (we add the one tag ourselves), more than one emoji, em dashes, flattery like "Great post!" or "impressive", made-up numbers or studies, claims about work we did, or anything about the author\'s person. Stay under maxReply characters.';
 
 // The invite ladder (#3137, functions/chain-trials.js): how far an answer to this person may go. It overrides the link rule only on "link".
-const LADDER = "Invite ladder (invite says how far the answer to this person may go; when unsure, step down a rung): none: pure value and wit about their point, nothing about us; soft: you may add one light, curious half-sentence that we built a free URL review that checks sites, no link, only when it flows from what they said; link: you may end with one natural hook tied to their site (site) or their post, and the link " + Trials.REVIEW_URL + " once (the only link allowed). active: true means this person talks with us regularly: always answer, briefly and warmly, even a thanks, unless the comment is hostile or spam.";
+const LADDER =
+	'Invite ladder (invite says how far the answer to this person may go; when unsure, step down a rung): none: pure value and wit about their point, nothing about us; soft: you may add one light, curious half-sentence that we built a free URL review that checks sites, no link, only when it flows from what they said; link: you may end with one natural hook tied to their site (site) or their post, and the link ' +
+	Trials.REVIEW_URL +
+	' once (the only link allowed). active: true means this person talks with us regularly: always answer, briefly and warmly, even a thanks, unless the comment is hostile or spam.';
 
 /** The Gemini prompt for comments on our replies and posts: items carry parent, the stored post we replied on, or our own post ({ own: true }). */
 function chainPrompt(items) {
-  const list = items.map((c) => {
-    const p = c.parent || {};
-    return {
-      id: c.key, network: (NETWORKS[c.network] || {}).name || c.network, lang: lang2(c.lang) || "?", author: clip((c.author || {}).name || (c.author || {}).handle, 60),
-      on: p.own ? "our post" : "our reply", post: clip((p.chain || {}).post || p.title || p.text, 400), ours: clip(((p.actions || {}).reply || {}).draft, 500),
-      comment: clip(c.text, 900), maxReply: (NETWORKS[c.network] || {}).limit || 300, invite: c.invite || "none", active: c.active === true, site: c.site || ""
-    };
-  });
-  return [
-    "You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.",
-    "Each item below is a comment someone left on one of our posts or replies (on says which): ours is what we wrote (it may be empty when we could not read it), post is what we were replying to (empty on our own posts), comment is theirs.",
-    "For each comment, return one JSON object in a JSON array, same order, with exactly these keys:",
-    '{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "tone": "nice" when it is friendly, appreciative or warmly engaged | "neutral" when matter-of-fact | "hostile" when rude, mocking or aggressive | "spam" when it is promo, a bot or a link drop, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only, unless active is true) or it is political, angry, an argument or promo, "invited": the invite rung your reply used ("none", "soft" or "link"), ' + ENGLISH_KEY + '}',
-    "Reply rules: write in the comment's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English. Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " + REGISTER,
-    NEVER,
-    LADDER,
-    "Comments:",
-    JSON.stringify(list)
-  ].join("\n");
+	const list = items.map((c) => {
+		const p = c.parent || {};
+		return {
+			id: c.key,
+			network: (NETWORKS[c.network] || {}).name || c.network,
+			lang: lang2(c.lang) || '?',
+			author: clip((c.author || {}).name || (c.author || {}).handle, 60),
+			on: p.own ? 'our post' : 'our reply',
+			post: clip((p.chain || {}).post || p.title || p.text, 400),
+			ours: clip(((p.actions || {}).reply || {}).draft, 500),
+			comment: clip(c.text, 900),
+			maxReply: (NETWORKS[c.network] || {}).limit || 300,
+			invite: c.invite || 'none',
+			active: c.active === true,
+			site: c.site || '',
+		};
+	});
+	return [
+		'You help Carlos & Munoz (carlosandmunoz.com), a small consultancy for QA and test automation, SEO and GEO, web accessibility, web performance, analytics and web security, take part in conversations on social networks.',
+		'Each item below is a comment someone left on one of our posts or replies (on says which): ours is what we wrote (it may be empty when we could not read it), post is what we were replying to (empty on our own posts), comment is theirs.',
+		'For each comment, return one JSON object in a JSON array, same order, with exactly these keys:',
+		'{"id": same id, "lang": the comment\'s language as an ISO 639-1 code, "sentiment": "positive" | "neutral" | "negative" | "angry", "political": true when it is about politics, elections, wars or culture-war topics, "argument": true when it picks a fight or piles on, "asksForTool": true only when it asks for a tool, service or audit, "promo": true when it advertises the author\'s own product, service, course or tool, or is spam, "like": true when a like is a fitting thank-you (false for hostile, spam or off-topic comments), "worth": 0 to 1, how much an answer from us is owed or would help, "why": at most 15 English words, "tone": "nice" when it is friendly, appreciative or warmly engaged | "neutral" when matter-of-fact | "hostile" when rude, mocking or aggressive | "spam" when it is promo, a bot or a link drop, "reply": the answer, or "" when the comment needs none (thanks or plain agreement get a like only, unless active is true) or it is political, angry, an argument or promo, "invited": the invite rung your reply used ("none", "soft" or "link"), ' +
+			ENGLISH_KEY +
+			'}',
+		"Reply rules: write in the comment's own language (any ISO 639-1 code Gemini detects; never leave reply empty just because the language is uncommon). Always set english when the reply is not English. Speak as a helpful practitioner, first person plural, friendly and specific, in one to three short sentences. Answer what they asked or said, without repeating our reply; when they correct us and are right, say so plainly. " +
+			REGISTER,
+		NEVER,
+		LADDER,
+		'Comments:',
+		JSON.stringify(list),
+	].join('\n');
 }
 
 const URLS = /\bhttps?:\/\/\S+|\b(?<![a-z0-9]-{0,62})(?:www\.)?[a-z0-9-]+\.(?:com|net|org|io|dev|app|co)\b\S*/gi;
 
 /** Gemini's answer as rows by id; a reply loses links unless the post asked for a tool, and is cut to the network's limit. */
 function parseAi(text, items) {
-  let rows;
-  try { rows = JSON.parse(String(text || "").replace(/^```(?:json)?|```$/gm, "").trim()); } catch (error) { return {}; }
-  if (!Array.isArray(rows)) return {};
-  const byKey = Object.fromEntries((items || []).map((p) => [p.key, p]));
-  const out = {};
-  rows.forEach((r) => {
-    const p = r && byKey[r.id];
-    if (!p) return;
-    const ask = r.asksForTool === true;
-    const ours = p.invite === "link";
-    const tidy = (t) => (ask ? t : t.replace(URLS, (u) => (ours && /^(https:\/\/)?carlosandmunoz\.com\b/i.test(u) ? u : "")).replace(/\s{2,}/g, " ")).trim().replace(/(^|\s)#[\p{L}\p{N}_]+/gu, "$1").replace(/(?<!\s)\s+—\s*|—\s*/g, ", ").trim();
-    let reply = tidy(String(r.reply || ""));
-    const lang = lang2(r.lang) || lang2(p.lang);
-    const limit = (NETWORKS[p.network] || {}).limit || 300;
-    if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/(?<!\s)\s+\S*$/, "") + "…";
-    out[r.id] = {
-      about: clip(r.about, 200), lang, sentiment: ["positive", "neutral", "negative", "angry"].includes(r.sentiment) ? r.sentiment : "neutral",
-      political: r.political === true, argument: r.argument === true, drama: r.drama === true, promo: r.promo === true, asksForTool: ask, worth: Math.min(1, Math.max(0, Number(r.worth) || 0)), why: clip(r.why, 160),
-      reply: reply.length >= 12 ? reply : "", english: reply.length >= 12 && lang !== "en" ? clip(tidy(String(r.english || "")), 600) : "", like: r.like !== false,
-      tone: Trials.TONES.includes(r.tone) ? r.tone : "", invited: Trials.RUNGS.includes(r.invited) ? r.invited : ""
-    };
-  });
-  return out;
+	let rows;
+	try {
+		rows = JSON.parse(
+			String(text || '')
+				.replace(/^```(?:json)?|```$/gm, '')
+				.trim()
+		);
+	} catch (error) {
+		return {};
+	}
+	if (!Array.isArray(rows)) return {};
+	const byKey = Object.fromEntries((items || []).map((p) => [p.key, p]));
+	const out = {};
+	rows.forEach((r) => {
+		const p = r && byKey[r.id];
+		if (!p) return;
+		const ask = r.asksForTool === true;
+		const ours = p.invite === 'link';
+		const tidy = (t) =>
+			(ask
+				? t
+				: t
+						.replace(URLS, (u) => (ours && /^(https:\/\/)?carlosandmunoz\.com\b/i.test(u) ? u : ''))
+						.replace(/\s{2,}/g, ' ')
+			)
+				.trim()
+				.replace(/(^|\s)#[\p{L}\p{N}_]+/gu, '$1')
+				.replace(/(?<!\s)\s+—\s*|—\s*/g, ', ')
+				.trim();
+		let reply = tidy(String(r.reply || ''));
+		const lang = lang2(r.lang) || lang2(p.lang);
+		const limit = (NETWORKS[p.network] || {}).limit || 300;
+		if (reply.length > limit) reply = reply.slice(0, limit - 1).replace(/(?<!\s)\s+\S*$/, '') + '…';
+		out[r.id] = {
+			about: clip(r.about, 200),
+			lang,
+			sentiment: ['positive', 'neutral', 'negative', 'angry'].includes(r.sentiment) ? r.sentiment : 'neutral',
+			political: r.political === true,
+			argument: r.argument === true,
+			drama: r.drama === true,
+			promo: r.promo === true,
+			asksForTool: ask,
+			worth: Math.min(1, Math.max(0, Number(r.worth) || 0)),
+			why: clip(r.why, 160),
+			reply: reply.length >= 12 ? reply : '',
+			english: reply.length >= 12 && lang !== 'en' ? clip(tidy(String(r.english || '')), 600) : '',
+			like: r.like !== false,
+			tone: Trials.TONES.includes(r.tone) ? r.tone : '',
+			invited: Trials.RUNGS.includes(r.invited) ? r.invited : '',
+		};
+	});
+	return out;
 }
 
 /** used[network][action] counts what today's runs already planned; decide adds to it. */
 function capped(used, network, action, conf) {
-  const n = ((used[network] || {})[action]) || 0;
-  const own = ((NETWORKS[network] || {}).caps || {})[action];
-  return n >= Math.min(conf.caps[action], own === undefined ? Infinity : own);
+	const n = (used[network] || {})[action] || 0;
+	const own = ((NETWORKS[network] || {}).caps || {})[action];
+	return n >= Math.min(conf.caps[action], own === undefined ? Infinity : own);
 }
 function take(used, network, action) {
-  used[network] = used[network] || {};
-  used[network][action] = (used[network][action] || 0) + 1;
+	used[network] = used[network] || {};
+	used[network][action] = (used[network][action] || 0) + 1;
 }
 
 /**
@@ -428,45 +890,73 @@ function take(used, network, action) {
  * threadKeys we already answered or have an answer waiting in).
  */
 function decide(post, ai, conf, used, now, followed, replied, trends) {
-  const net = NETWORKS[post.network] || {};
-  if (!net.acts) return { verdict: "trend", skip: "", actions: {} };
-  const why = guard(post, conf, now);
-  if (why) return { verdict: "skip", skip: why, actions: {} };
-  const a = ai || null;
-  if (flagged(a)) return { verdict: "skip", skip: flagged(a), actions: {} };
-  const actions = {};
-  const plan = (action, ok, extra) => {
-    if (!ok || (net.only && !net.only.includes(action))) return;
-    if (conf.paused) actions[action] = { status: "paused" };
-    else if (capped(used, post.network, action, conf)) actions[action] = { status: "capped" };
-    else { take(used, post.network, action); actions[action] = Object.assign({ status: "planned" }, extra || {}); }
-  };
-  const s = post.score || 0;
-  const handle = String((post.author || {}).handle || "").toLowerCase();
-  plan("like", s >= conf.thresholds.like);
-  plan("repost", s >= conf.thresholds.repost && !post.isReply && (!a || a.sentiment !== "negative"));
-  plan("follow", s >= conf.thresholds.follow && handle && !(followed && followed.has(post.network + ":" + handle)));
-  const lang = (a && a.lang) || lang2(post.lang);
-  if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && lang) {
-    if (replied && replied.has(threadKey(post))) actions.reply = { status: "replied", error: "We already replied in this conversation." };
-    else {
-      // One trending hashtag where a tag in a reply is normal (#3814); trendSafe replies may go out without waiting for Carlos (jarvis-engagement.js takeIn).
-      const tag = Trends.pickTag(post, trends, relevance);
-      const draft = Trends.withTag(a.reply, tag, net.limit);
-      const tagged = draft !== a.reply;
-      const english = a.english && tagged ? Trends.withTag(a.english, tag, 600) : a.english;
-      const safe = Trends.autoReply(post, a, conf, trends, tag);
-      plan("reply", true, Object.assign({ draft, lang }, english ? { english } : {}, tagged ? { tag } : {}, safe ? { trendSafe: true } : {}, { expiresAt: new Date(now + REPLY_TTL).toISOString() }));
-      if (actions.reply && actions.reply.status === "planned") actions.reply.status = "waiting";
-    }
-  }
-  return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions };
+	const net = NETWORKS[post.network] || {};
+	if (!net.acts) return { verdict: 'trend', skip: '', actions: {} };
+	const why = guard(post, conf, now);
+	if (why) return { verdict: 'skip', skip: why, actions: {} };
+	const a = ai || null;
+	if (flagged(a)) return { verdict: 'skip', skip: flagged(a), actions: {} };
+	const actions = {};
+	const plan = (action, ok, extra) => {
+		if (!ok || (net.only && !net.only.includes(action))) return;
+		if (conf.paused) actions[action] = { status: 'paused' };
+		else if (capped(used, post.network, action, conf)) actions[action] = { status: 'capped' };
+		else {
+			take(used, post.network, action);
+			actions[action] = Object.assign({ status: 'planned' }, extra || {});
+		}
+	};
+	const s = post.score || 0;
+	const handle = String((post.author || {}).handle || '').toLowerCase();
+	plan('like', s >= conf.thresholds.like);
+	plan('repost', s >= conf.thresholds.repost && !post.isReply && (!a || a.sentiment !== 'negative'));
+	plan('follow', s >= conf.thresholds.follow && handle && !(followed && followed.has(post.network + ':' + handle)));
+	const lang = (a && a.lang) || lang2(post.lang);
+	if (a && a.reply && a.worth >= conf.worth && s >= conf.thresholds.reply && lang) {
+		if (replied && replied.has(threadKey(post)))
+			actions.reply = { status: 'replied', error: 'We already replied in this conversation.' };
+		else {
+			// One trending hashtag where a tag in a reply is normal (#3814); trendSafe replies may go out without waiting for Carlos (jarvis-engagement.js takeIn).
+			const tag = Trends.pickTag(post, trends, relevance);
+			const draft = Trends.withTag(a.reply, tag, net.limit);
+			const tagged = draft !== a.reply;
+			const english = a.english && tagged ? Trends.withTag(a.english, tag, 600) : a.english;
+			const safe = Trends.autoReply(post, a, conf, trends, tag);
+			plan(
+				'reply',
+				true,
+				Object.assign(
+					{ draft, lang },
+					english ? { english } : {},
+					tagged ? { tag } : {},
+					safe ? { trendSafe: true } : {},
+					{ expiresAt: new Date(now + REPLY_TTL).toISOString() }
+				)
+			);
+			if (actions.reply && actions.reply.status === 'planned') actions.reply.status = 'waiting';
+		}
+	}
+	return {
+		verdict: Object.values(actions).some((x) => x.status === 'planned' || x.status === 'waiting') ? 'engage' : 'watch',
+		skip: '',
+		actions,
+	};
 }
 
 /** Why Gemini's read rules out engaging (political, an argument, promo, angry), or "". */
 function flagged(a) {
-  if (!a) return "";
-  return a.political ? "political" : a.argument ? "argument" : a.drama ? "drama" : a.promo ? "promo" : a.sentiment === "angry" ? "angry" : "";
+	if (!a) return '';
+	return a.political
+		? 'political'
+		: a.argument
+			? 'argument'
+			: a.drama
+				? 'drama'
+				: a.promo
+					? 'promo'
+					: a.sentiment === 'angry'
+						? 'angry'
+						: '';
 }
 
 /**
@@ -475,40 +965,62 @@ function flagged(a) {
  * Same shape as decide; the like counts toward the day but is not capped, since the comment is addressed to us.
  */
 function chainDecide(comment, ai, conf, now) {
-  const at = new Date(now).toISOString();
-  const g = guard(Object.assign({}, comment, { createdAt: at }), conf, now);
-  // Someone naming our site is still answered; only comments by our own accounts are left alone.
-  const tone = Trials.tone(ai);
-  const why = (g === "own" && !guard(Object.assign({}, comment, { title: "", text: "", createdAt: at }), conf, now) ? "" : g) || flagged(ai);
-  if (why) return { verdict: "skip", skip: why, actions: {}, tone };
-  const a = ai || {};
-  const status = (s) => (conf.paused ? "paused" : s);
-  const actions = {};
-  if (!comment.liked && CHAIN_LIKES.includes(comment.network) && a.like !== false) actions.like = { status: status("planned") };
-  const lang = a.lang || lang2(comment.lang);
-  // An active person's comment is always answered (#3137), so no thread with them is left hanging.
-  const owed = comment.active === true && (conf.trials || Trials.TRIALS).answerAll;
-  if (!comment.answered && a.reply && (a.worth >= conf.worth || owed) && lang) {
-    actions.reply = Object.assign({ status: status("waiting"), draft: a.reply, lang }, a.english ? { english: a.english } : {}, { expiresAt: new Date(now + CHAIN_TTL).toISOString() },
-      { invite: Trials.used(comment.invite || "none", a.invited, a.reply) });
-  }
-  return { verdict: Object.values(actions).some((x) => x.status === "planned" || x.status === "waiting") ? "engage" : "watch", skip: "", actions, tone };
+	const at = new Date(now).toISOString();
+	const g = guard(Object.assign({}, comment, { createdAt: at }), conf, now);
+	// Someone naming our site is still answered; only comments by our own accounts are left alone.
+	const tone = Trials.tone(ai);
+	const why =
+		(g === 'own' && !guard(Object.assign({}, comment, { title: '', text: '', createdAt: at }), conf, now) ? '' : g) ||
+		flagged(ai);
+	if (why) return { verdict: 'skip', skip: why, actions: {}, tone };
+	const a = ai || {};
+	const status = (s) => (conf.paused ? 'paused' : s);
+	const actions = {};
+	if (!comment.liked && CHAIN_LIKES.includes(comment.network) && a.like !== false)
+		actions.like = { status: status('planned') };
+	const lang = a.lang || lang2(comment.lang);
+	// An active person's comment is always answered (#3137), so no thread with them is left hanging.
+	const owed = comment.active === true && (conf.trials || Trials.TRIALS).answerAll;
+	if (!comment.answered && a.reply && (a.worth >= conf.worth || owed) && lang) {
+		actions.reply = Object.assign(
+			{ status: status('waiting'), draft: a.reply, lang },
+			a.english ? { english: a.english } : {},
+			{ expiresAt: new Date(now + CHAIN_TTL).toISOString() },
+			{ invite: Trials.used(comment.invite || 'none', a.invited, a.reply) }
+		);
+	}
+	return {
+		verdict: Object.values(actions).some((x) => x.status === 'planned' || x.status === 'waiting') ? 'engage' : 'watch',
+		skip: '',
+		actions,
+		tone,
+	};
 }
 
 /** A stored post the chain pass may take over: one the scout read on its own and never drafted an answer for. */
-const reopens = (doc) => !doc.chain && !["waiting", "approved", "posted", "failed", "dismissed"].includes(((doc.actions || {}).reply || {}).status);
+const reopens = (doc) =>
+	!doc.chain &&
+	!['waiting', 'approved', 'posted', 'failed', 'dismissed'].includes(((doc.actions || {}).reply || {}).status);
 
 /** A post kept on "watch" whose score now clears an action threshold is decided again, so posts that start to trend after we first saw them still get acted on. */
 function rises(doc, post, conf, now) {
-  if (!doc || doc.verdict !== "watch" || doc.skip || !(NETWORKS[post.network] || {}).acts) return false;
-  if (doc.decidedAgainAt && Date.parse(doc.decidedAgainAt) > now - REPLY_TTL) return false;
-  return (post.score || 0) >= Math.min(conf.thresholds.like, conf.thresholds.reply);
+	if (!doc || doc.verdict !== 'watch' || doc.skip || !(NETWORKS[post.network] || {}).acts) return false;
+	if (doc.decidedAgainAt && Date.parse(doc.decidedAgainAt) > now - REPLY_TTL) return false;
+	return (post.score || 0) >= Math.min(conf.thresholds.like, conf.thresholds.reply);
 }
 
 /** Gemini's earlier read of a stored post, without a draft: a new draft needs a new read. */
 function storedAi(doc) {
-  if (!doc || doc.worth === null || doc.worth === undefined) return null;
-  return { about: doc.about || "", lang: doc.lang || "", sentiment: doc.sentiment || "neutral", worth: doc.worth, why: doc.why || "", asksForTool: doc.asksForTool === true, reply: "" };
+	if (!doc || doc.worth === null || doc.worth === undefined) return null;
+	return {
+		about: doc.about || '',
+		lang: doc.lang || '',
+		sentiment: doc.sentiment || 'neutral',
+		worth: doc.worth,
+		why: doc.why || '',
+		asksForTool: doc.asksForTool === true,
+		reply: '',
+	};
 }
 
 /** A risen post goes back to Gemini only if it never had a read, or the read said a reply was worth it. */
@@ -516,25 +1028,63 @@ const askAgain = (doc, conf) => doc.worth === null || doc.worth === undefined ||
 
 /** Posts worth a Gemini read this run: new, on a network we act on, not guarded, best first. */
 function forAi(posts, conf, now) {
-  if (conf.paused) return [];
-  return posts.filter((p) => (NETWORKS[p.network] || {}).acts && p.score >= conf.thresholds.reply && !guard(p, conf, now))
-    .sort((a, b) => b.score - a.score).slice(0, conf.perRun);
+	if (conf.paused) return [];
+	return posts
+		.filter((p) => (NETWORKS[p.network] || {}).acts && p.score >= conf.thresholds.reply && !guard(p, conf, now))
+		.sort((a, b) => b.score - a.score)
+		.slice(0, conf.perRun);
 }
 
 /** The Firestore document for a new post (Firestore adds seenAt as a timestamp-free ISO string so ranges sort). */
 function postDoc(post, ai, decision, now) {
-  const a = ai || {};
-  return Object.assign(post.via ? { via: post.via } : {}, post.discoveryOnly ? { discoveryOnly: true } : {}, post.credit ? { credit: clip(post.credit, 120) } : {}, {
-    network: post.network, id: clip(post.id, 300), thread: clip(post.thread || post.id, 300), url: clip(post.url, 500), cid: clip(post.cid, 120),
-    author: { handle: clip((post.author || {}).handle, 120), name: clip((post.author || {}).name, 120), id: clip((post.author || {}).id, 200), followers: num((post.author || {}).followers) },
-    title: clip(post.title, 300), text: clip(post.text, 1200), lang: a.lang || lang2(post.lang), createdAt: clip(post.createdAt, 30), isReply: post.isReply === true,
-    metrics: { likes: num((post.metrics || {}).likes), replies: num((post.metrics || {}).replies), reposts: num((post.metrics || {}).reposts), views: num((post.metrics || {}).views) },
-    tags: (post.tags || []).map((t) => clip(t, 40)).slice(0, 10), topic: post.topic || "", topics: post.topics || [], words: post.words || [],
-    relevance: post.relevance || 0, trend: post.trend || 0, score: post.score || 0,
-    about: a.about || "", sentiment: a.sentiment || "", worth: a.worth === undefined ? null : a.worth, why: a.why || "", asksForTool: a.asksForTool === true,
-    verdict: decision.verdict, skip: decision.skip, actions: decision.actions,
-    seenAt: new Date(now).toISOString(), updatedAt: new Date(now).toISOString(), day: bogotaDay(now)
-  });
+	const a = ai || {};
+	return Object.assign(
+		post.via ? { via: post.via } : {},
+		post.discoveryOnly ? { discoveryOnly: true } : {},
+		post.credit ? { credit: clip(post.credit, 120) } : {},
+		{
+			network: post.network,
+			id: clip(post.id, 300),
+			thread: clip(post.thread || post.id, 300),
+			url: clip(post.url, 500),
+			cid: clip(post.cid, 120),
+			author: {
+				handle: clip((post.author || {}).handle, 120),
+				name: clip((post.author || {}).name, 120),
+				id: clip((post.author || {}).id, 200),
+				followers: num((post.author || {}).followers),
+			},
+			title: clip(post.title, 300),
+			text: clip(post.text, 1200),
+			lang: a.lang || lang2(post.lang),
+			createdAt: clip(post.createdAt, 30),
+			isReply: post.isReply === true,
+			metrics: {
+				likes: num((post.metrics || {}).likes),
+				replies: num((post.metrics || {}).replies),
+				reposts: num((post.metrics || {}).reposts),
+				views: num((post.metrics || {}).views),
+			},
+			tags: (post.tags || []).map((t) => clip(t, 40)).slice(0, 10),
+			topic: post.topic || '',
+			topics: post.topics || [],
+			words: post.words || [],
+			relevance: post.relevance || 0,
+			trend: post.trend || 0,
+			score: post.score || 0,
+			about: a.about || '',
+			sentiment: a.sentiment || '',
+			worth: a.worth === undefined ? null : a.worth,
+			why: a.why || '',
+			asksForTool: a.asksForTool === true,
+			verdict: decision.verdict,
+			skip: decision.skip,
+			actions: decision.actions,
+			seenAt: new Date(now).toISOString(),
+			updatedAt: new Date(now).toISOString(),
+			day: bogotaDay(now),
+		}
+	);
 }
 
 /**
@@ -542,271 +1092,596 @@ function postDoc(post, ai, decision, now) {
  * with chain { parent, root, depth, ours, post }. YouTube comments keep parentId (the comment thread) and videoId.
  */
 function chainDoc(comment, parent, decision, ai, now) {
-  const up = parent.chain || {};
-  const post = Object.assign({}, comment, {
-    title: "", thread: parent.thread || parent.id, topic: parent.topic || "", topics: parent.topics || [], words: parent.words || [],
-    relevance: parent.relevance || 0, trend: 0, score: parent.score || 0
-  });
-  const rootAuthor = parent.own ? "" : up.rootAuthor || Trials.handleOf(parent.author);
-  const rootUrl = up.rootUrl || (!parent.own && /^https?:\/\//.test(String(parent.url || "")) ? clip(parent.url, 500) : "");
-  const doc = Object.assign(postDoc(post, ai, decision, now), {
-    chain: Object.assign({
-      parent: parent.key, root: up.root || parent.key, depth: (up.depth || 0) + 1, on: parent.own ? "post" : "reply",
-      ours: clip(((parent.actions || {}).reply || {}).draft, 500), post: clip(up.post || parent.title || parent.text, 400)
-    }, rootAuthor ? { rootAuthor } : {}, rootUrl ? { rootUrl } : {})
-  }, decision.tone ? { tone: decision.tone } : {});
-  if (comment.parentId) Object.assign(doc, { parentId: clip(comment.parentId, 120), videoId: clip(comment.videoId, 40) });
-  return doc;
+	const up = parent.chain || {};
+	const post = Object.assign({}, comment, {
+		title: '',
+		thread: parent.thread || parent.id,
+		topic: parent.topic || '',
+		topics: parent.topics || [],
+		words: parent.words || [],
+		relevance: parent.relevance || 0,
+		trend: 0,
+		score: parent.score || 0,
+	});
+	const rootAuthor = parent.own ? '' : up.rootAuthor || Trials.handleOf(parent.author);
+	const rootUrl =
+		up.rootUrl || (!parent.own && /^https?:\/\//.test(String(parent.url || '')) ? clip(parent.url, 500) : '');
+	const doc = Object.assign(
+		postDoc(post, ai, decision, now),
+		{
+			chain: Object.assign(
+				{
+					parent: parent.key,
+					root: up.root || parent.key,
+					depth: (up.depth || 0) + 1,
+					on: parent.own ? 'post' : 'reply',
+					ours: clip(((parent.actions || {}).reply || {}).draft, 500),
+					post: clip(up.post || parent.title || parent.text, 400),
+				},
+				rootAuthor ? { rootAuthor } : {},
+				rootUrl ? { rootUrl } : {}
+			),
+		},
+		decision.tone ? { tone: decision.tone } : {}
+	);
+	if (comment.parentId)
+		Object.assign(doc, { parentId: clip(comment.parentId, 120), videoId: clip(comment.videoId, 40) });
+	return doc;
 }
 
 const bogotaDay = (ms) => new Date(ms - 5 * HOUR).toISOString().slice(0, 10);
-const safeKey = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40) || "other";
+const safeKey = (s) =>
+	String(s || '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '_')
+		.replace(/^_|_$/g, '')
+		.slice(0, 40) || 'other';
 
 /** Counters a run adds to engagement_daily/<day>, as plain numbers (index.js turns them into increments). Posts decided again count only their new actions. */
 function rollup(read, docs, run, again) {
-  const out = { runs: 1, runErrors: run && run.errors ? run.errors : 0, n: {}, topic: {}, lang: {}, tag: {}, skip: {}, verdict: {} };
-  const bump = (map, k, n) => { map[k] = (map[k] || 0) + (n === undefined ? 1 : n); };
-  const net = (k) => { out.n[k] = out.n[k] || {}; return out.n[k]; };
-  Object.entries(read || {}).forEach(([k, n]) => bump(net(k), "read", n));
-  const acts = (d) => Object.entries(d.actions || {}).forEach(([act, x]) => {
-    if (x.status === "planned" || x.status === "waiting" || (x.status === "approved" && x.auto)) bump(net(d.network), act === "reply" ? "drafted" : act);
-    else if (x.status === "capped") bump(out.skip, "cap_" + act);
-    else if (x.status === "replied") bump(net(d.network), "already");
-  });
-  (docs || []).forEach((d) => {
-    bump(net(d.network), "candidates");
-    bump(out.verdict, d.verdict);
-    if (d.topic) bump(out.topic, safeKey(d.topic));
-    if (d.lang) bump(out.lang, safeKey(d.lang));
-    (d.words || []).slice(0, 4).forEach((w) => bump(out.tag, safeKey(w)));
-    if (d.skip) bump(out.skip, d.skip);
-    acts(d);
-  });
-  (again || []).forEach(acts);
-  return out;
+	const out = {
+		runs: 1,
+		runErrors: run && run.errors ? run.errors : 0,
+		n: {},
+		topic: {},
+		lang: {},
+		tag: {},
+		skip: {},
+		verdict: {},
+	};
+	const bump = (map, k, n) => {
+		map[k] = (map[k] || 0) + (n === undefined ? 1 : n);
+	};
+	const net = (k) => {
+		out.n[k] = out.n[k] || {};
+		return out.n[k];
+	};
+	Object.entries(read || {}).forEach(([k, n]) => bump(net(k), 'read', n));
+	const acts = (d) =>
+		Object.entries(d.actions || {}).forEach(([act, x]) => {
+			if (x.status === 'planned' || x.status === 'waiting' || (x.status === 'approved' && x.auto))
+				bump(net(d.network), act === 'reply' ? 'drafted' : act);
+			else if (x.status === 'capped') bump(out.skip, 'cap_' + act);
+			else if (x.status === 'replied') bump(net(d.network), 'already');
+		});
+	(docs || []).forEach((d) => {
+		bump(net(d.network), 'candidates');
+		bump(out.verdict, d.verdict);
+		if (d.topic) bump(out.topic, safeKey(d.topic));
+		if (d.lang) bump(out.lang, safeKey(d.lang));
+		(d.words || []).slice(0, 4).forEach((w) => bump(out.tag, safeKey(w)));
+		if (d.skip) bump(out.skip, d.skip);
+		acts(d);
+	});
+	(again || []).forEach(acts);
+	return out;
 }
 
 const sumInto = (into, from) => {
-  Object.entries(from || {}).forEach(([k, v]) => {
-    if (typeof v === "number") into[k] = (into[k] || 0) + v;
-    else if (v && typeof v === "object") { into[k] = into[k] || {}; sumInto(into[k], v); }
-  });
-  return into;
+	Object.entries(from || {}).forEach(([k, v]) => {
+		if (typeof v === 'number') into[k] = (into[k] || 0) + v;
+		else if (v && typeof v === 'object') {
+			into[k] = into[k] || {};
+			sumInto(into[k], v);
+		}
+	});
+	return into;
 };
 
-const FUNNEL = ["drafted", "approved", "edited", "dismissed", "expired", "posted", "failed"];
+const FUNNEL = ['drafted', 'approved', 'edited', 'dismissed', 'expired', 'posted', 'failed'];
 // What the poster did with the planned likes, reposts and follows: done, done in a dry run, or failed.
-const CARRIED = ["like_done", "repost_done", "follow_done", "like_dry", "repost_dry", "follow_dry", "act_failed"];
+const CARRIED = ['like_done', 'repost_done', 'follow_done', 'like_dry', 'repost_dry', 'follow_dry', 'act_failed'];
 // Conversations (#2421): replies not drafted or not sent because we had already answered, and comments found under our replies.
-const THREADS = ["already", "chained"];
-const pairs = (map, n) => Object.entries(map || {}).sort((a, b) => b[1] - a[1]).slice(0, n || 12).map(([label, value]) => ({ label, value }));
+const THREADS = ['already', 'chained'];
+const pairs = (map, n) =>
+	Object.entries(map || {})
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, n || 12)
+		.map(([label, value]) => ({ label, value }));
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
 
 /** A report over engagement_daily documents, against the window before; top lists the window's best posts. */
 /** Format signals from scout posts for the creative-intel digest (#3558). */
 function formatOf(post) {
-  const text = String((post && (post.title || post.text)) || "");
-  const len = text.replace(/\s+/g, " ").trim().length;
-  const band = len < 80 ? "short" : len < 220 ? "medium" : "long";
-  const link = /\bhttps?:\/\//i.test(text) || /\bhttps?:\/\//i.test(String((post && post.url) || ""));
-  const thread = !!(post && (post.isReply || post.thread));
-  return { network: (post && post.network) || "", band, link: !!link, thread, topic: (post && post.topic) || "" };
+	const text = String((post && (post.title || post.text)) || '');
+	const len = text.replace(/\s+/g, ' ').trim().length;
+	const band = len < 80 ? 'short' : len < 220 ? 'medium' : 'long';
+	const link = /\bhttps?:\/\//i.test(text) || /\bhttps?:\/\//i.test(String((post && post.url) || ''));
+	const thread = !!(post && (post.isReply || post.thread));
+	return { network: (post && post.network) || '', band, link: !!link, thread, topic: (post && post.topic) || '' };
 }
 
 function formatsFrom(top) {
-  const counts = {};
-  (top || []).forEach((d) => {
-    const f = formatOf(d);
-    const key = [f.network || "?", f.band, f.link ? "link" : "text", f.thread ? "thread" : "root"].join("|");
-    counts[key] = (counts[key] || 0) + 1;
-  });
-  return pairs(counts, 12).map((row) => {
-    const [network, band, link, thread] = String(row.label).split("|");
-    return { label: row.label, value: row.value, network, band, link: link === "link", thread: thread === "thread" };
-  });
+	const counts = {};
+	(top || []).forEach((d) => {
+		const f = formatOf(d);
+		const key = [f.network || '?', f.band, f.link ? 'link' : 'text', f.thread ? 'thread' : 'root'].join('|');
+		counts[key] = (counts[key] || 0) + 1;
+	});
+	return pairs(counts, 12).map((row) => {
+		const [network, band, link, thread] = String(row.label).split('|');
+		return { label: row.label, value: row.value, network, band, link: link === 'link', thread: thread === 'thread' };
+	});
 }
 
 function report(period, days, priorDays, top, now) {
-  const sum = sumInto({}, {});
-  (days || []).forEach((d) => sumInto(sum, d));
-  const prior = sumInto({}, {});
-  (priorDays || []).forEach((d) => sumInto(prior, d));
-  const totals = (s) => {
-    const t = { read: 0, candidates: 0, like: 0, repost: 0, follow: 0 };
-    FUNNEL.concat(CARRIED, THREADS).forEach((k) => { t[k] = 0; });
-    Object.values(s.n || {}).forEach((n) => Object.keys(t).forEach((k) => { t[k] += n[k] || 0; }));
-    return t;
-  };
-  const t = totals(sum);
-  const p = totals(prior);
-  const networks = Object.keys(NETWORKS).filter((k) => sum.n && sum.n[k]).map((k) => {
-    const n = sum.n[k];
-    const row = { network: k, name: NETWORKS[k].name, read: n.read || 0, candidates: n.candidates || 0, like: n.like || 0, repost: n.repost || 0, follow: n.follow || 0 };
-    FUNNEL.concat(CARRIED, THREADS).forEach((f) => { row[f] = n[f] || 0; });
-    return row;
-  });
-  const decided = t.approved + t.edited + t.dismissed;
-  const posts = (top || []).slice(0, 15).map((d) => ({
-    key: d.key, network: d.network, url: d.url, author: (d.author || {}).name || (d.author || {}).handle || "", title: d.title || clip(d.text, 120), about: d.about || "",
-    topic: d.topic, lang: d.lang, score: d.score, trend: d.trend, likes: (d.metrics || {}).likes || 0, replies: (d.metrics || {}).replies || 0, reposts: (d.metrics || {}).reposts || 0,
-    verdict: d.verdict, reply: (d.actions && d.actions.reply && d.actions.reply.status) || "", format: formatOf(d)
-  }));
-  const authors = {};
-  (top || []).forEach((d) => { const a = (d.author || {}).handle; if (a) authors[d.network + ":" + a] = (authors[d.network + ":" + a] || 0) + 1; });
-  return {
-    period, at: new Date(now).toISOString(), from: days && days.length ? days[0].day || "" : "", to: days && days.length ? days[days.length - 1].day || "" : "",
-    runs: sum.runs || 0, runErrors: sum.runErrors || 0, totals: t, prior: p,
-    delta: Object.fromEntries(Object.keys(t).map((k) => [k, p[k] ? Math.round(((t[k] - p[k]) / p[k]) * 100) : null])),
-    approvalRate: pct(t.approved + t.edited, decided), editRate: pct(t.edited, t.approved + t.edited), expiredRate: pct(t.expired, t.drafted),
-    avgDecideMin: sum.decided ? Math.round((sum.decideMs || 0) / sum.decided / 60000) : null,
-    networks, topics: pairs(sum.topic), langs: pairs(sum.lang), tags: pairs(sum.tag, 20), skips: pairs(sum.skip), verdicts: pairs(sum.verdict),
-    formats: formatsFrom(top), posts, authors: pairs(authors, 10), invites: invitesOf(sum.report)
-  };
+	const sum = sumInto({}, {});
+	(days || []).forEach((d) => sumInto(sum, d));
+	const prior = sumInto({}, {});
+	(priorDays || []).forEach((d) => sumInto(prior, d));
+	const totals = (s) => {
+		const t = { read: 0, candidates: 0, like: 0, repost: 0, follow: 0 };
+		FUNNEL.concat(CARRIED, THREADS).forEach((k) => {
+			t[k] = 0;
+		});
+		Object.values(s.n || {}).forEach((n) =>
+			Object.keys(t).forEach((k) => {
+				t[k] += n[k] || 0;
+			})
+		);
+		return t;
+	};
+	const t = totals(sum);
+	const p = totals(prior);
+	const networks = Object.keys(NETWORKS)
+		.filter((k) => sum.n && sum.n[k])
+		.map((k) => {
+			const n = sum.n[k];
+			const row = {
+				network: k,
+				name: NETWORKS[k].name,
+				read: n.read || 0,
+				candidates: n.candidates || 0,
+				like: n.like || 0,
+				repost: n.repost || 0,
+				follow: n.follow || 0,
+			};
+			FUNNEL.concat(CARRIED, THREADS).forEach((f) => {
+				row[f] = n[f] || 0;
+			});
+			return row;
+		});
+	const decided = t.approved + t.edited + t.dismissed;
+	const posts = (top || []).slice(0, 15).map((d) => ({
+		key: d.key,
+		network: d.network,
+		url: d.url,
+		author: (d.author || {}).name || (d.author || {}).handle || '',
+		title: d.title || clip(d.text, 120),
+		about: d.about || '',
+		topic: d.topic,
+		lang: d.lang,
+		score: d.score,
+		trend: d.trend,
+		likes: (d.metrics || {}).likes || 0,
+		replies: (d.metrics || {}).replies || 0,
+		reposts: (d.metrics || {}).reposts || 0,
+		verdict: d.verdict,
+		reply: (d.actions && d.actions.reply && d.actions.reply.status) || '',
+		format: formatOf(d),
+	}));
+	const authors = {};
+	(top || []).forEach((d) => {
+		const a = (d.author || {}).handle;
+		if (a) authors[d.network + ':' + a] = (authors[d.network + ':' + a] || 0) + 1;
+	});
+	return {
+		period,
+		at: new Date(now).toISOString(),
+		from: days && days.length ? days[0].day || '' : '',
+		to: days && days.length ? days[days.length - 1].day || '' : '',
+		runs: sum.runs || 0,
+		runErrors: sum.runErrors || 0,
+		totals: t,
+		prior: p,
+		delta: Object.fromEntries(Object.keys(t).map((k) => [k, p[k] ? Math.round(((t[k] - p[k]) / p[k]) * 100) : null])),
+		approvalRate: pct(t.approved + t.edited, decided),
+		editRate: pct(t.edited, t.approved + t.edited),
+		expiredRate: pct(t.expired, t.drafted),
+		avgDecideMin: sum.decided ? Math.round((sum.decideMs || 0) / sum.decided / 60000) : null,
+		networks,
+		topics: pairs(sum.topic),
+		langs: pairs(sum.lang),
+		tags: pairs(sum.tag, 20),
+		skips: pairs(sum.skip),
+		verdicts: pairs(sum.verdict),
+		formats: formatsFrom(top),
+		posts,
+		authors: pairs(authors, 10),
+		invites: invitesOf(sum.report),
+	};
 }
 
 /** Report replies (#2465, functions/engagement-reports.js) summed over the window. */
 function invitesOf(r) {
-  const x = r || {};
-  return { searched: x.searched || 0, matched: x.matched || 0, drafted: x.drafted || 0, reruns: x.reruns || 0, approved: x.approved || 0, edited: x.edited || 0, dismissed: x.dismissed || 0, posted: x.posted || 0, skips: pairs(x.skip, 6), networks: pairs(x.net, 9), by: pairs(x.by, 4) };
+	const x = r || {};
+	return {
+		searched: x.searched || 0,
+		matched: x.matched || 0,
+		drafted: x.drafted || 0,
+		reruns: x.reruns || 0,
+		approved: x.approved || 0,
+		edited: x.edited || 0,
+		dismissed: x.dismissed || 0,
+		posted: x.posted || 0,
+		skips: pairs(x.skip, 6),
+		networks: pairs(x.net, 9),
+		by: pairs(x.by, 4),
+	};
 }
 
-const PERIOD_NAME = { daily: "Daily", weekly: "Weekly", monthly: "Monthly" };
-const signed = (d) => (d === null || d === undefined ? "" : " (" + (d > 0 ? "+" : "") + d + "%)");
-const doneLine = (t) => t.like_done + " likes, " + t.repost_done + " reposts, " + t.follow_done + " follows"
-  + (t.like_dry + t.repost_dry + t.follow_dry ? "; dry run: " + t.like_dry + " likes, " + t.repost_dry + " reposts, " + t.follow_dry + " follows" : "")
-  + (t.act_failed ? "; " + t.act_failed + " failed" : "");
+const PERIOD_NAME = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+const signed = (d) => (d === null || d === undefined ? '' : ' (' + (d > 0 ? '+' : '') + d + '%)');
+const doneLine = (t) =>
+	t.like_done +
+	' likes, ' +
+	t.repost_done +
+	' reposts, ' +
+	t.follow_done +
+	' follows' +
+	(t.like_dry + t.repost_dry + t.follow_dry
+		? '; dry run: ' + t.like_dry + ' likes, ' + t.repost_dry + ' reposts, ' + t.follow_dry + ' follows'
+		: '') +
+	(t.act_failed ? '; ' + t.act_failed + ' failed' : '');
 
 /** The owner email for a report: rows for the numbers, body for the lists. */
 function reportMail(r) {
-  const t = r.totals;
-  const window = r.from && r.to && r.from !== r.to ? r.from + " to " + r.to : r.to || r.from;
-  const rows = [
-    { heading: "Activity" },
-    { label: "Scout runs", value: r.runs + (r.runErrors ? " (" + r.runErrors + " with a failing network)" : "") },
-    { label: "Posts read", value: t.read + signed(r.delta.read) },
-    { label: "In our field", value: t.candidates + signed(r.delta.candidates) },
-    { label: "Likes planned", value: t.like + signed(r.delta.like) },
-    { label: "Reposts planned", value: t.repost + signed(r.delta.repost) },
-    { label: "Follows planned", value: t.follow + signed(r.delta.follow) },
-    { label: "Done", value: doneLine(t) },
-    { heading: "Replies" },
-    { label: "Drafted", value: t.drafted + signed(r.delta.drafted) },
-    { label: "Approved", value: t.approved + " (" + t.edited + " edited)" },
-    { label: "Dismissed", value: String(t.dismissed) },
-    { label: "Expired unanswered", value: String(t.expired) },
-    { label: "Posted", value: String(t.posted) + (t.failed ? " (" + t.failed + " failed)" : "") },
-    { label: "Already answered, not sent again", value: String(t.already) },
-    { label: "Comments on our replies", value: String(t.chained) },
-    { label: "Approval rate", value: r.approvalRate === null ? "—" : r.approvalRate + "%" },
-    { label: "Average time to decide", value: r.avgDecideMin === null ? "—" : r.avgDecideMin + " min" }
-  ];
-  const iv = r.invites || {};
-  if (iv.searched || iv.matched || iv.reruns) {
-    rows.push({ heading: "Report replies" }, { label: "Sites looked for", value: String(iv.searched) },
-      { label: "Posts about a reviewed site or its niche", value: iv.matched + (iv.skips.length ? " (left alone: " + iv.skips.map((x) => x.label.replace(/_/g, " ") + " " + x.value).join(", ") + ")" : "") },
-      ...(iv.by.length ? [{ label: "Tied by", value: iv.by.map((x) => x.label + " " + x.value).join(", ") }] : []),
-      { label: "Invites drafted", value: String(iv.drafted) + (iv.reruns ? " (" + iv.reruns + " follow-ups with a re-run's new score)" : "") }, { label: "Approved", value: (iv.approved + iv.edited) + " (" + iv.edited + " edited), " + iv.dismissed + " dismissed" },
-      { label: "Posted", value: String(iv.posted) });
-  }
-  const list = (title, items, fmt) => (items.length ? [title + ":", ...items.map(fmt), ""] : []);
-  const body = [
-    ...list("By network", r.networks, (n) => "- " + n.name + ": " + n.read + " read, " + n.candidates + " in field, " + n.like + " likes, " + n.repost + " reposts, " + n.follow + " follows planned (done: " + doneLine(n) + "), " + n.drafted + " replies drafted, " + n.posted + " posted"),
-    ...list("Topics", r.topics, (x) => "- " + x.label + ": " + x.value),
-    ...list("Formats in our field", r.formats || [], (x) => "- " + ((NETWORKS[x.network] || {}).name || x.network || "?") + " · " + x.band + (x.link ? " · with link" : " · text") + (x.thread ? " · thread" : " · root") + ": " + x.value),
-    ...list("Trending keywords", r.tags.slice(0, 12), (x) => "- " + x.label.replace(/_/g, " ") + ": " + x.value),
-    ...list("Languages", r.langs, (x) => "- " + x.label + ": " + x.value),
-    ...list("Left alone", r.skips, (x) => "- " + x.label.replace(/_/g, " ") + ": " + x.value),
-    ...list("Top posts in our field", r.posts.slice(0, 10), (x) => "- [" + ((NETWORKS[x.network] || {}).name || x.network) + ", score " + x.score + "] " + clip(x.title, 100) + (x.about ? " (" + x.about + ")" : "") + " " + x.url),
-    ...list("Authors seen most", r.authors, (x) => "- " + x.label + ": " + x.value)
-  ].join("\n");
-  return {
-    subject: PERIOD_NAME[r.period] + " social engagement · " + window + " · " + t.candidates + " posts, " + t.drafted + " replies drafted",
-    intro: PERIOD_NAME[r.period] + " engagement report, " + window + ". Likes, reposts and follows are planned within the daily caps and carried out on the networks that are connected and live; replies wait for you in Jarvis.",
-    rows, body
-  };
+	const t = r.totals;
+	const window = r.from && r.to && r.from !== r.to ? r.from + ' to ' + r.to : r.to || r.from;
+	const rows = [
+		{ heading: 'Activity' },
+		{ label: 'Scout runs', value: r.runs + (r.runErrors ? ' (' + r.runErrors + ' with a failing network)' : '') },
+		{ label: 'Posts read', value: t.read + signed(r.delta.read) },
+		{ label: 'In our field', value: t.candidates + signed(r.delta.candidates) },
+		{ label: 'Likes planned', value: t.like + signed(r.delta.like) },
+		{ label: 'Reposts planned', value: t.repost + signed(r.delta.repost) },
+		{ label: 'Follows planned', value: t.follow + signed(r.delta.follow) },
+		{ label: 'Done', value: doneLine(t) },
+		{ heading: 'Replies' },
+		{ label: 'Drafted', value: t.drafted + signed(r.delta.drafted) },
+		{ label: 'Approved', value: t.approved + ' (' + t.edited + ' edited)' },
+		{ label: 'Dismissed', value: String(t.dismissed) },
+		{ label: 'Expired unanswered', value: String(t.expired) },
+		{ label: 'Posted', value: String(t.posted) + (t.failed ? ' (' + t.failed + ' failed)' : '') },
+		{ label: 'Already answered, not sent again', value: String(t.already) },
+		{ label: 'Comments on our replies', value: String(t.chained) },
+		{ label: 'Approval rate', value: r.approvalRate === null ? '—' : r.approvalRate + '%' },
+		{ label: 'Average time to decide', value: r.avgDecideMin === null ? '—' : r.avgDecideMin + ' min' },
+	];
+	const iv = r.invites || {};
+	if (iv.searched || iv.matched || iv.reruns) {
+		rows.push(
+			{ heading: 'Report replies' },
+			{ label: 'Sites looked for', value: String(iv.searched) },
+			{
+				label: 'Posts about a reviewed site or its niche',
+				value:
+					iv.matched +
+					(iv.skips.length
+						? ' (left alone: ' + iv.skips.map((x) => x.label.replace(/_/g, ' ') + ' ' + x.value).join(', ') + ')'
+						: ''),
+			},
+			...(iv.by.length ? [{ label: 'Tied by', value: iv.by.map((x) => x.label + ' ' + x.value).join(', ') }] : []),
+			{
+				label: 'Invites drafted',
+				value: String(iv.drafted) + (iv.reruns ? ' (' + iv.reruns + " follow-ups with a re-run's new score)" : ''),
+			},
+			{
+				label: 'Approved',
+				value: iv.approved + iv.edited + ' (' + iv.edited + ' edited), ' + iv.dismissed + ' dismissed',
+			},
+			{ label: 'Posted', value: String(iv.posted) }
+		);
+	}
+	const list = (title, items, fmt) => (items.length ? [title + ':', ...items.map(fmt), ''] : []);
+	const body = [
+		...list(
+			'By network',
+			r.networks,
+			(n) =>
+				'- ' +
+				n.name +
+				': ' +
+				n.read +
+				' read, ' +
+				n.candidates +
+				' in field, ' +
+				n.like +
+				' likes, ' +
+				n.repost +
+				' reposts, ' +
+				n.follow +
+				' follows planned (done: ' +
+				doneLine(n) +
+				'), ' +
+				n.drafted +
+				' replies drafted, ' +
+				n.posted +
+				' posted'
+		),
+		...list('Topics', r.topics, (x) => '- ' + x.label + ': ' + x.value),
+		...list(
+			'Formats in our field',
+			r.formats || [],
+			(x) =>
+				'- ' +
+				((NETWORKS[x.network] || {}).name || x.network || '?') +
+				' · ' +
+				x.band +
+				(x.link ? ' · with link' : ' · text') +
+				(x.thread ? ' · thread' : ' · root') +
+				': ' +
+				x.value
+		),
+		...list('Trending keywords', r.tags.slice(0, 12), (x) => '- ' + x.label.replace(/_/g, ' ') + ': ' + x.value),
+		...list('Languages', r.langs, (x) => '- ' + x.label + ': ' + x.value),
+		...list('Left alone', r.skips, (x) => '- ' + x.label.replace(/_/g, ' ') + ': ' + x.value),
+		...list(
+			'Top posts in our field',
+			r.posts.slice(0, 10),
+			(x) =>
+				'- [' +
+				((NETWORKS[x.network] || {}).name || x.network) +
+				', score ' +
+				x.score +
+				'] ' +
+				clip(x.title, 100) +
+				(x.about ? ' (' + x.about + ')' : '') +
+				' ' +
+				x.url
+		),
+		...list('Authors seen most', r.authors, (x) => '- ' + x.label + ': ' + x.value),
+	].join('\n');
+	return {
+		subject:
+			PERIOD_NAME[r.period] +
+			' social engagement · ' +
+			window +
+			' · ' +
+			t.candidates +
+			' posts, ' +
+			t.drafted +
+			' replies drafted',
+		intro:
+			PERIOD_NAME[r.period] +
+			' engagement report, ' +
+			window +
+			'. Likes, reposts and follows are planned within the daily caps and carried out on the networks that are connected and live; replies wait for you in Jarvis.',
+		rows,
+		body,
+	};
 }
 
 /** The push for a report: the numbers that matter in one notification. */
 function reportPush(r) {
-  const t = r.totals;
-  return {
-    kind: "engagement",
-    title: PERIOD_NAME[r.period] + " engagement: " + t.candidates + " posts in our field",
-    body: t.like + " likes, " + t.repost + " reposts, " + t.follow + " follows planned; done: " + doneLine(t) + ". " + t.drafted + " replies drafted, " + (t.approved + t.edited) + " approved, " + t.posted + " posted, " + t.expired + " expired."
-      + ((r.invites || {}).drafted ? " Report invites: " + r.invites.drafted + " drafted, " + r.invites.posted + " posted." : ""),
-    lines: r.topics.slice(0, 3).map((x) => x.label + ": " + x.value).concat(r.posts.slice(0, 2).map((p) => "Top: " + clip(p.title, 80))),
-    tab: "products:engagement",
-    tag: "jarvis-engagement-" + r.period,
-    quiet: r.period === "daily"
-  };
+	const t = r.totals;
+	return {
+		kind: 'engagement',
+		title: PERIOD_NAME[r.period] + ' engagement: ' + t.candidates + ' posts in our field',
+		body:
+			t.like +
+			' likes, ' +
+			t.repost +
+			' reposts, ' +
+			t.follow +
+			' follows planned; done: ' +
+			doneLine(t) +
+			'. ' +
+			t.drafted +
+			' replies drafted, ' +
+			(t.approved + t.edited) +
+			' approved, ' +
+			t.posted +
+			' posted, ' +
+			t.expired +
+			' expired.' +
+			((r.invites || {}).drafted
+				? ' Report invites: ' + r.invites.drafted + ' drafted, ' + r.invites.posted + ' posted.'
+				: ''),
+		lines: r.topics
+			.slice(0, 3)
+			.map((x) => x.label + ': ' + x.value)
+			.concat(r.posts.slice(0, 2).map((p) => 'Top: ' + clip(p.title, 80))),
+		tab: 'products:engagement',
+		tag: 'jarvis-engagement-' + r.period,
+		quiet: r.period === 'daily',
+	};
 }
 
 /** How a report reply's post was tied to its site (functions/engagement-reports.js). */
-const matchLine = (rep) => rep.match === "rerun" ? "re-run, was " + rep.was
-  : rep.match === "problem" ? "a complaint about " + (rep.problem || "it")
-  : rep.match === "niche" ? "about its niche (" + (rep.niche || "?") + (rep.problem ? ", " + rep.problem : "") + ")"
-    : "names it by " + rep.match;
+const matchLine = (rep) =>
+	rep.match === 'rerun'
+		? 're-run, was ' + rep.was
+		: rep.match === 'problem'
+			? 'a complaint about ' + (rep.problem || 'it')
+			: rep.match === 'niche'
+				? 'about its niche (' + (rep.niche || '?') + (rep.problem ? ', ' + rep.problem : '') + ')'
+				: 'names it by ' + rep.match;
 
 /** A reply draft waiting for Carlos: Approve, Edit (typed inline) or Dismiss. */
 function replyPush(doc) {
-  const r = (doc.actions || {}).reply || {};
-  const name = (NETWORKS[doc.network] || {}).name || doc.network;
-  const who = clip((doc.author || {}).name || (doc.author || {}).handle, 60);
-  const rep = doc.report;
-  return {
-    kind: "engagement",
-    title: doc.chain ? "Answer " + who + " on " + name + "? " + clip(doc.text, 90)
-      : rep && rep.match === "rerun" ? "New score for " + (rep.name || rep.host) + ": go back to " + who + " on " + name + "?"
-      : rep ? "Invite to the " + (rep.name || rep.host) + " report on " + name + "? " + clip(doc.about || doc.title || doc.text, 70)
-        : "Reply on " + name + "? " + clip(doc.about || doc.title || doc.text, 90),
-    body: clip(r.draft, 220),
-    lines: (doc.chain && doc.chain.ours ? ["We said: " + clip(doc.chain.ours, 140)] : []).concat([rep && rep.match === "rerun" ? "We said: " + clip(doc.text, 140) : who + ": " + clip(doc.title || doc.text, 140)],
-      rep ? ["Report: " + rep.host + " scores " + rep.score + (rep.shown ? "" : " (not named)") + " · " + matchLine(rep) + " · " + (r.lang || doc.lang || "")] : ["Score " + doc.score + " · " + (doc.topic || "") + " · " + (r.lang || doc.lang || "")],
-      r.english ? ["In English: " + clip(r.english, 220)] : []),
-    tab: "products:engagement",
-    tag: "jarvis-engage-" + doc.key,
-    url: /^https:\/\//.test(doc.url || "") ? doc.url : "",
-    ref: "engagement:" + doc.key,
-    actions: [{ act: "approve", label: "Approve" }, { act: "edit", label: "Edit", input: "Your reply" }, { act: "dismiss", label: "Dismiss" }]
-  };
+	const r = (doc.actions || {}).reply || {};
+	const name = (NETWORKS[doc.network] || {}).name || doc.network;
+	const who = clip((doc.author || {}).name || (doc.author || {}).handle, 60);
+	const rep = doc.report;
+	return {
+		kind: 'engagement',
+		title: doc.chain
+			? 'Answer ' + who + ' on ' + name + '? ' + clip(doc.text, 90)
+			: rep && rep.match === 'rerun'
+				? 'New score for ' + (rep.name || rep.host) + ': go back to ' + who + ' on ' + name + '?'
+				: rep
+					? 'Invite to the ' +
+						(rep.name || rep.host) +
+						' report on ' +
+						name +
+						'? ' +
+						clip(doc.about || doc.title || doc.text, 70)
+					: 'Reply on ' + name + '? ' + clip(doc.about || doc.title || doc.text, 90),
+		body: clip(r.draft, 220),
+		lines: (doc.chain && doc.chain.ours ? ['We said: ' + clip(doc.chain.ours, 140)] : []).concat(
+			[
+				rep && rep.match === 'rerun'
+					? 'We said: ' + clip(doc.text, 140)
+					: who + ': ' + clip(doc.title || doc.text, 140),
+			],
+			rep
+				? [
+						'Report: ' +
+							rep.host +
+							' scores ' +
+							rep.score +
+							(rep.shown ? '' : ' (not named)') +
+							' · ' +
+							matchLine(rep) +
+							' · ' +
+							(r.lang || doc.lang || ''),
+					]
+				: ['Score ' + doc.score + ' · ' + (doc.topic || '') + ' · ' + (r.lang || doc.lang || '')],
+			r.english ? ['In English: ' + clip(r.english, 220)] : []
+		),
+		tab: 'products:engagement',
+		tag: 'jarvis-engage-' + doc.key,
+		url: /^https:\/\//.test(doc.url || '') ? doc.url : '',
+		ref: 'engagement:' + doc.key,
+		actions: [
+			{ act: 'approve', label: 'Approve' },
+			{ act: 'edit', label: 'Edit', input: 'Your reply' },
+			{ act: 'dismiss', label: 'Dismiss' },
+		],
+	};
 }
 
 // A GIF goes with a reply only when Carlos's edit asks for one: "[gif: applause]" anywhere in it (#2710). The marker
 // never goes out; only GIF_NETS keep the ask.
-const GIF_NETS = ["threads"];
+const GIF_NETS = ['threads'];
 const GIF_ASK = /(?<!\s)\s*\[gif:\s*([^\]\n\s][^\]\n]{0,39}?)\s*\]\s*/i;
 function gifAsk(text) {
-  const t = String(text || "");
-  const m = GIF_ASK.exec(t);
-  return { text: (m ? t.replace(GIF_ASK, " ") : t).trim(), gif: m ? m[1] : "" };
+	const t = String(text || '');
+	const m = GIF_ASK.exec(t);
+	return { text: (m ? t.replace(GIF_ASK, ' ') : t).trim(), gif: m ? m[1] : '' };
 }
 
 /** A decision on a waiting reply: the reply's next state and the daily counters it moves. Throws when it cannot. */
 function decideReply(doc, decision, text, by, now) {
-  const r = ((doc || {}).actions || {}).reply;
-  if (!r) throw new Error("That post has no reply draft.");
-  if (r.status !== "waiting") throw new Error("That reply is already " + r.status + ".");
-  if (Date.parse(r.expiresAt) < now) throw new Error("That reply expired; the conversation has moved on.");
-  if (!["approve", "edit", "dismiss"].includes(decision)) throw new Error("Approve, edit or dismiss.");
-  const at = new Date(now).toISOString();
-  const waited = Math.max(0, now - Date.parse((doc || {}).seenAt || at));
-  if (decision === "dismiss") return { reply: Object.assign({}, r, { status: "dismissed", decidedAt: at, by }), counter: "dismissed", waited };
-  let draft = r.draft;
-  let gif = "";
-  if (decision === "edit") {
-    ({ text: draft, gif } = gifAsk(text));
-    const limit = (NETWORKS[doc.network] || {}).limit || 300;
-    if (draft.length < 5) throw new Error("Write the reply first.");
-    if (draft.length > limit) throw new Error((NETWORKS[doc.network] || {}).name + " takes at most " + limit + " characters; this is " + draft.length + ".");
-  }
-  // An edit leaves Gemini's English translation behind; it described the draft, not Carlos's text.
-  return { reply: Object.assign({}, r, { status: "approved", draft, edited: decision === "edit", original: decision === "edit" ? r.draft : r.original || "", decidedAt: at, by },
-    decision === "edit" ? { english: "" } : {},
-    gif && GIF_NETS.includes(doc.network) ? { gif } : {}), counter: decision === "edit" ? "edited" : "approved", waited };
+	const r = ((doc || {}).actions || {}).reply;
+	if (!r) throw new Error('That post has no reply draft.');
+	if (r.status !== 'waiting') throw new Error('That reply is already ' + r.status + '.');
+	if (Date.parse(r.expiresAt) < now) throw new Error('That reply expired; the conversation has moved on.');
+	if (!['approve', 'edit', 'dismiss'].includes(decision)) throw new Error('Approve, edit or dismiss.');
+	const at = new Date(now).toISOString();
+	const waited = Math.max(0, now - Date.parse((doc || {}).seenAt || at));
+	if (decision === 'dismiss')
+		return { reply: Object.assign({}, r, { status: 'dismissed', decidedAt: at, by }), counter: 'dismissed', waited };
+	let draft = r.draft;
+	let gif = '';
+	if (decision === 'edit') {
+		({ text: draft, gif } = gifAsk(text));
+		const limit = (NETWORKS[doc.network] || {}).limit || 300;
+		if (draft.length < 5) throw new Error('Write the reply first.');
+		if (draft.length > limit)
+			throw new Error(
+				(NETWORKS[doc.network] || {}).name + ' takes at most ' + limit + ' characters; this is ' + draft.length + '.'
+			);
+	}
+	// An edit leaves Gemini's English translation behind; it described the draft, not Carlos's text.
+	return {
+		reply: Object.assign(
+			{},
+			r,
+			{
+				status: 'approved',
+				draft,
+				edited: decision === 'edit',
+				original: decision === 'edit' ? r.draft : r.original || '',
+				decidedAt: at,
+				by,
+			},
+			decision === 'edit' ? { english: '' } : {},
+			gif && GIF_NETS.includes(doc.network) ? { gif } : {}
+		),
+		counter: decision === 'edit' ? 'edited' : 'approved',
+		waited,
+	};
 }
 
 module.exports = {
-  Trends, NETWORKS, TOPICS, INTL, DISCOVERY, DISCOVERY_SLOT, DISCOVERY_BUDGET, MASTODON_DISCOVERY_BUDGET, discoveryForRun, Regions, LANGS, REPLY_LANGS, ACTIONS, CAPS, JOIN_WARMUP, carrier, joinCap, DEFAULTS, COMPETITORS, SENSITIVE, REPLY_TTL, CHAIN_TTL, CHAIN_LIKES, FUNNEL, CARRIED, THREADS,
-  settings, settingsPatch, keyOf, threadKey, relevance, trend, score, guard, aiPrompt, chainPrompt, parseAi, decide, chainDecide, reopens, rises, storedAi, askAgain, forAi,
-  postDoc, chainDoc, rollup, sumInto, formatOf, formatsFrom, report, reportMail, reportPush, replyPush, decideReply, bogotaDay, GIF_NETS, gifAsk
+	Trends,
+	NETWORKS,
+	TOPICS,
+	INTL,
+	DISCOVERY,
+	DISCOVERY_SLOT,
+	DISCOVERY_BUDGET,
+	MASTODON_DISCOVERY_BUDGET,
+	discoveryForRun,
+	Regions,
+	LANGS,
+	REPLY_LANGS,
+	ACTIONS,
+	CAPS,
+	JOIN_WARMUP,
+	carrier,
+	joinCap,
+	DEFAULTS,
+	COMPETITORS,
+	SENSITIVE,
+	REPLY_TTL,
+	CHAIN_TTL,
+	CHAIN_LIKES,
+	FUNNEL,
+	CARRIED,
+	THREADS,
+	settings,
+	settingsPatch,
+	keyOf,
+	threadKey,
+	relevance,
+	trend,
+	score,
+	guard,
+	aiPrompt,
+	chainPrompt,
+	parseAi,
+	decide,
+	chainDecide,
+	reopens,
+	rises,
+	storedAi,
+	askAgain,
+	forAi,
+	postDoc,
+	chainDoc,
+	rollup,
+	sumInto,
+	formatOf,
+	formatsFrom,
+	report,
+	reportMail,
+	reportPush,
+	replyPush,
+	decideReply,
+	bogotaDay,
+	GIF_NETS,
+	gifAsk,
 };

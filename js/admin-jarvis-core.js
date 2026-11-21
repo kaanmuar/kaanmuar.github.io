@@ -200,6 +200,63 @@
 		return /^(hub|post)_/.test(String((row && row.name) || ''));
 	}
 
+	// url_reviews also holds payments, owner claims and runs turned away; only the rest are review runs.
+	const NOT_RUNS = [
+		'owner-claim',
+		'paid-report',
+		'paid-addon',
+		'run-credit',
+		'run-credit-used',
+		'run-credit-refunded',
+		'monthly-pass',
+		'checkout-open',
+		'payment-due',
+		'blocked',
+	];
+	function isReviewRun(row) {
+		return !!row && !NOT_RUNS.includes(row.status);
+	}
+
+	// Runs nobody outside asked for (#3194). Sweep and rival runs have no asker email, and stored Jarvis days before
+	// #3194 have no source, so an empty email counts as ours too.
+	const REVIEW_ORIGINS = {
+		sweep: 'country sweep',
+		rivals: 'rival sweep',
+		jarvis: 'shared from Jarvis',
+		test: 'test',
+		team: 'our address',
+		automated: 'no asker email',
+	};
+	// Carlos, Ginna (two Gmail addresses) and our own domains.
+	const TEAM_EMAIL =
+		/^(kaanmuar|gicohiro|ingsofgicohiro)@gmail\.com$|@(carlosandmunoz\.com|qalabreview\.com|qa-lab\.co)$/;
+	function reviewOrigin(row) {
+		if (!isReviewRun(row)) return '';
+		if (row.source === 'sweep' || row.sweep) return 'sweep';
+		if (row.source === 'rivals' || row.rivalOf) return 'rivals';
+		if (row.source === 'jarvis') return 'jarvis';
+		const email = String(row.email || '')
+			.trim()
+			.toLowerCase();
+		if (!email) return 'automated';
+		if (row.test === true || isTestEmail(email)) return 'test';
+		return TEAM_EMAIL.test(email) ? 'team' : '';
+	}
+
+	function splitReviews(rows) {
+		const out = { people: [], ours: [], kinds: {} };
+		(rows || []).filter(isReviewRun).forEach((row) => {
+			const origin = reviewOrigin(row);
+			if (!origin) {
+				out.people.push(row);
+				return;
+			}
+			out.ours.push(row);
+			bump(out.kinds, REVIEW_ORIGINS[origin]);
+		});
+		return out;
+	}
+
 	function heatmap(rows, pick) {
 		const grid = WEEKDAYS.map(() => new Array(24).fill(0));
 		rows.forEach((row) => {
@@ -305,14 +362,16 @@
 	}
 
 	// URL Review: page opens, reviews, payments, and the qa_review_* clicks on the review pages.
+	// Reviews are the runs people asked for; our sweeps, Jarvis runs and tests are counted apart as ours (#3194).
 	function summarizeReview(data, window) {
 		const opens = data.opens || [];
-		const reviews = data.reviews || [];
+		const split = splitReviews(data.reviews);
+		const reviews = split.people;
 		const clicks = (data.events || []).filter(
 			(row) => row.site === 'review' && !isHubEvent(row) && row.kind !== 'visit' && row.kind !== 'view'
 		);
 		const prior = data.prior || null;
-		const paid = reviews.filter((row) => row.paid === true && row.test !== true);
+		const paid = (data.reviews || []).filter((row) => row.paid === true && row.test !== true && !reviewOrigin(row));
 		const usd = Math.round(paid.reduce((sum, row) => sum + (Number(row.priceUsd) || 0), 0) * 100) / 100;
 		const complete = reviews.filter((row) => row.status === 'complete').length;
 		const scores = reviews.map((row) => Number(row.score)).filter((n) => Number.isFinite(n) && n > 0);
@@ -329,6 +388,7 @@
 			langs: {},
 			screens: {},
 			actions: {},
+			ourRuns: split.kinds,
 		};
 		opens.forEach((row) => {
 			bump(maps.sources, openSource(row));
@@ -356,13 +416,24 @@
 		const conversion = openTotal ? Math.round((reviewTotal / openTotal) * 1000) / 10 : 0;
 		const opensSeries = dailySeries(opens, window.start, window.end);
 		const reviewSeries = dailySeries(reviews, window.start, window.end);
+		const oursSeries = dailySeries(split.ours, window.start, window.end);
 		const grid = heatmap(opens);
 		return {
 			key: 'review',
-			totals: { opens: openTotal, reviews: reviewTotal, paid: paid.length, usd, complete, conversion, avgScore },
+			totals: {
+				opens: openTotal,
+				reviews: reviewTotal,
+				ours: split.ours.length,
+				paid: paid.length,
+				usd,
+				complete,
+				conversion,
+				avgScore,
+			},
 			kpis: [
 				kpi('Opens', openTotal, prior ? prior.opens : undefined),
-				kpi('Reviews', reviewTotal, prior ? prior.reviews : undefined),
+				kpi('Reviews by people', reviewTotal, prior ? prior.reviews : undefined),
+				kpi('Our runs', split.ours.length, prior && prior.ours !== undefined ? prior.ours : undefined),
 				kpi('Open → review', conversion + '%', undefined, { raw: conversion }),
 				kpi('Paid', paid.length, undefined),
 				kpi('Revenue', usd + ' USD', undefined, { raw: usd }),
@@ -376,10 +447,11 @@
 			],
 			series: opensSeries,
 			reviewSeries,
+			oursSeries,
 			anomaly: anomaly(opensSeries.values),
 			heatmap: grid,
 			peak: peak(grid),
-			truncated: (data.openTotal || 0) > opens.length || (data.reviewTotal || 0) > reviews.length,
+			truncated: (data.openTotal || 0) > opens.length || (data.reviewTotal || 0) > (data.reviews || []).length,
 			lists: Object.keys(maps).reduce((out, key) => {
 				out[key] = topList(maps[key]);
 				return out;
@@ -992,12 +1064,20 @@
 				(r.opens || [])
 					.slice(0, 20)
 					.map((x) => ({ at: iso(x.createdAt), text: `URL Review: open from ${openSource(x)}` })),
-				(r.reviews || []).slice(0, 20).map((x) => ({
-					at: iso(x.createdAt),
-					text: `URL Review: ${x.paid ? 'paid ' : ''}review of ${String(x.requestedUrl || x.url || '')
-						.replace(/^https?:\/\//, '')
-						.slice(0, 50)} (${x.status || '…'})`,
-				}))
+				(r.reviews || [])
+					.filter(isReviewRun)
+					.slice(0, 20)
+					.map((x) => {
+						const origin = reviewOrigin(x);
+						return {
+							at: iso(x.createdAt),
+							text: `URL Review: ${origin ? 'our ' : x.paid ? 'paid ' : ''}review of ${String(
+								x.requestedUrl || x.url || ''
+							)
+								.replace(/^https?:\/\//, '')
+								.slice(0, 50)} (${origin ? REVIEW_ORIGINS[origin] + ', ' : ''}${x.status || '…'})`,
+						};
+					})
 			)
 			.filter((x) => x.at)
 			.sort((a, b) => b.at.localeCompare(a.at))
@@ -4196,6 +4276,10 @@
 		actionTitle,
 		isHubEvent,
 		isTestEmail,
+		isReviewRun,
+		REVIEW_ORIGINS,
+		reviewOrigin,
+		splitReviews,
 		heatmap,
 		peak,
 		summarizeSite,

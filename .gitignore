@@ -10,6 +10,7 @@ cypress/videos/
 cypress/reports/
 cypress/downloads/
 playwright-report/
+monocart-report/
 test-results/
 robot-results/
 .venv-robot/
@@ -83,3 +84,6 @@ assets/review-arena/*-v2.jpg
 # Tool scout output (#3857): Tailwind scans tracked text, so the weekly files are force-added by the workflow
 scripts/tool-scout/reports/
 scripts/tool-scout/seen.json
+
+# Edge GeoIP databases (#4031): downloaded into R2 by scripts/geoip-fetch.js, never committed
+*.mmdb

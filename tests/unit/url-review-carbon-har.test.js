@@ -360,7 +360,10 @@ const KEY_START = /^(perf-carbon|perf-head-order|perf-waterfall|seo-page-rank|se
 
 function dictionary(text) {
   const out = {};
-  for (const match of text.matchAll(/^\s+("(?:[^"\\]|\\.)*"): ("(?:[^"\\]|\\.)*"),?$/gm)) out[JSON.parse(match[1])] = JSON.parse(match[2]);
+  // Biome writes functions/ with single quotes (#3577), so a key or text may be in either quote.
+  const quoted = String.raw`(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')`;
+  const read = (literal) => new Function("return " + literal)();
+  for (const match of text.matchAll(new RegExp("^\\s+(" + quoted + "):\\s+(" + quoted + "),?$", "gm"))) out[read(match[1])] = read(match[2]);
   return out;
 }
 

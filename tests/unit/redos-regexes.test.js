@@ -6,15 +6,13 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', '..');
+const { locate } = require('./_loose-head');
 const LIT = /\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[dgimsuy]*/y;
 
 /** The regex literal that follows `head` (which ends in "= /...") in functions/<file>; head must be unique. */
 function fromSource(file, head) {
 	const text = fs.readFileSync(path.join(ROOT, 'functions', file), 'utf8');
-	const at = text.indexOf(head);
-	assert.ok(at >= 0, `${file}: ${head}`);
-	assert.equal(text.indexOf(head, at + 1), -1, `${file}: ${head} is not unique`);
-	LIT.lastIndex = at + head.indexOf('= /') + 2;
+	LIT.lastIndex = locate(text, head, file, head.indexOf('= /') + 2).end;
 	const lit = LIT.exec(text)[0];
 	const last = lit.lastIndexOf('/');
 	return new RegExp(lit.slice(1, last), lit.slice(last + 1));

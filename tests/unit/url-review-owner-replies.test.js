@@ -294,10 +294,13 @@ test("the decision page offers every address in the reply, the proposal checked,
 
 test('POST do=resend only accepts an address offered on the page; answer and draft are wired (#3670)', () => {
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
-	assert.match(index, /action === "resend"\) problem = ownerReplies\.resendChoices\(row\)\.includes\(email\) \?/);
-	assert.match(index, /action === "answer"\) problem = await sendOwnerAnswer/);
-	assert.match(index, /action === "draft"/);
-	assert.match(index, /value=\\"answer\\"/);
+	assert.match(
+		index,
+		/action === ['"]resend['"]\)\s*problem = ownerReplies\.resendChoices\(row\)\.includes\(email\)\s*\?/
+	);
+	assert.match(index, /action === ['"]answer['"]\) problem = await sendOwnerAnswer/);
+	assert.match(index, /action === ['"]draft['"]/);
+	assert.match(index, /value=\\?"answer\\?"/);
 	assert.match(index, /Send answer/);
 });
 

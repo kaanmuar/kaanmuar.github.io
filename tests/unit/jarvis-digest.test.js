@@ -90,15 +90,15 @@ test('the digest job is on the ops schedule at 20:00 Bogotá and in the function
 	assert.equal(ops.cron('jarvisEveningDigest'), '0 20 * * *');
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 	assert.match(index, /exports\.jarvisEveningDigest = scheduled\(/);
-	assert.match(index, /op === "digest-now"/);
+	assert.match(index, /op === ['\"]digest-now['\"]/);
 });
 
 test('each moved email checks its switch, and payment problems stay instant', () => {
 	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
-	jarvis.MOVED_MAIL.forEach((key) => assert.match(index, new RegExp('mailOn\\("' + key + '"\\)'), key));
+	jarvis.MOVED_MAIL.forEach((key) => assert.match(index, new RegExp('mailOn\\([\'"]' + key + '[\'"]\\)'), key));
 	assert.match(
 		index,
-		/INSTANT_REVIEW_MAIL = new Set\(\["payment-refunded", "payment-disputed", "payment-unmatched"\]\)/
+		/INSTANT_REVIEW_MAIL = new Set\(\[['"]payment-refunded['"], ['"]payment-disputed['"], ['"]payment-unmatched['"]\]\)/
 	);
 	const web = fs.readFileSync(path.join(__dirname, '../../js/admin-jarvis.js'), 'utf8');
 	jarvis.MOVED_MAIL.forEach((key) => assert.match(web, new RegExp('\\b' + key + ': [\'"]'), key));

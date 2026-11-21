@@ -1,37 +1,37 @@
 /* Live URL-review log facts → arena stage / anomaly / pose.
-   Cast lives in lab/jarvis-full-pipeline-v2-animated.mp4 — overlays only adapt moods. */
+   The Lab art lives in lab-full-pipeline-v2-animated.mp4; the console draws its own cast. */
 (function (root) {
 	'use strict';
 
 	// kind = field motion while that station is verifying (matches the plate icon).
-	// lab/jarvis = whether that station is drawn on that skin's board.
+	// lab/console = whether that station is drawn on that skin's board.
 	const STAGES = [
-		{ id: 'fields', label: 'Fields', kind: 'form', lab: false, jarvis: true },
-		{ id: 'https', label: 'HTTPS', kind: 'lock', lab: false, jarvis: true },
-		{ id: 'dns', label: 'DNS/TLS', kind: 'rack', lab: true, jarvis: true },
-		{ id: 'open', label: 'Open', kind: 'door', lab: false, jarvis: false },
-		{ id: 'psi-ask', label: 'PSI ask', kind: 'ask', lab: false, jarvis: false },
-		{ id: 'robots', label: 'robots.txt', kind: 'doc', lab: true, jarvis: true },
-		{ id: 'crawl', label: 'Crawl', kind: 'glass', lab: true, jarvis: true },
-		{ id: 'pages', label: 'Pages', kind: 'pages', lab: false, jarvis: false },
-		{ id: 'browser', label: 'Browser', kind: 'screen', lab: true, jarvis: true },
-		{ id: 'axe', label: 'axe', kind: 'hammer', lab: true, jarvis: true },
-		{ id: 'security', label: 'Security', kind: 'shield', lab: true, jarvis: false },
-		{ id: 'a11y', label: 'A11Y', kind: 'bot', lab: true, jarvis: false },
-		{ id: 'malware', label: 'Threats', kind: 'radar', lab: true, jarvis: false },
-		{ id: 'webrisk', label: 'WebRisk', kind: 'target', lab: true, jarvis: true },
-		{ id: 'blocklist', label: 'Blocklist', kind: 'list', lab: true, jarvis: false },
-		{ id: 'lookalike', label: 'Lookalike', kind: 'mirror', lab: true, jarvis: true },
-		{ id: 'wordpress', label: 'WordPress', kind: 'wp', lab: true, jarvis: true },
-		{ id: 'mail', label: 'SPF/DMARC', kind: 'mail', lab: true, jarvis: true },
-		{ id: 'lighthouse', label: 'Lighthouse', kind: 'tower', lab: true, jarvis: false },
-		{ id: 'cases', label: 'Cases', kind: 'cases', lab: true, jarvis: true },
-		{ id: 'score', label: 'Score', kind: 'chart', lab: true, jarvis: true },
-		{ id: 'sign', label: 'Sign', kind: 'sign', lab: true, jarvis: true },
-		{ id: 'save', label: 'Save/Mail', kind: 'send', lab: true, jarvis: true },
+		{ id: 'fields', label: 'Fields', kind: 'form', lab: false, console: true },
+		{ id: 'https', label: 'HTTPS', kind: 'lock', lab: false, console: true },
+		{ id: 'dns', label: 'DNS/TLS', kind: 'rack', lab: true, console: true },
+		{ id: 'open', label: 'Open', kind: 'door', lab: false, console: false },
+		{ id: 'psi-ask', label: 'PSI ask', kind: 'ask', lab: false, console: false },
+		{ id: 'robots', label: 'robots.txt', kind: 'doc', lab: true, console: true },
+		{ id: 'crawl', label: 'Crawl', kind: 'glass', lab: true, console: true },
+		{ id: 'pages', label: 'Pages', kind: 'pages', lab: false, console: false },
+		{ id: 'browser', label: 'Browser', kind: 'screen', lab: true, console: true },
+		{ id: 'axe', label: 'axe', kind: 'hammer', lab: true, console: true },
+		{ id: 'security', label: 'Security', kind: 'shield', lab: true, console: false },
+		{ id: 'a11y', label: 'A11Y', kind: 'bot', lab: true, console: false },
+		{ id: 'malware', label: 'Threats', kind: 'radar', lab: true, console: false },
+		{ id: 'webrisk', label: 'WebRisk', kind: 'target', lab: true, console: true },
+		{ id: 'blocklist', label: 'Blocklist', kind: 'list', lab: true, console: false },
+		{ id: 'lookalike', label: 'Lookalike', kind: 'mirror', lab: true, console: true },
+		{ id: 'wordpress', label: 'WordPress', kind: 'wp', lab: true, console: true },
+		{ id: 'mail', label: 'SPF/DMARC', kind: 'mail', lab: true, console: true },
+		{ id: 'lighthouse', label: 'Lighthouse', kind: 'tower', lab: true, console: false },
+		{ id: 'cases', label: 'Cases', kind: 'cases', lab: true, console: true },
+		{ id: 'score', label: 'Score', kind: 'chart', lab: true, console: true },
+		{ id: 'sign', label: 'Sign', kind: 'sign', lab: true, console: true },
+		{ id: 'save', label: 'Save/Mail', kind: 'send', lab: true, console: true },
 	];
 
-	// Robots on the Lab floor / Jarvis hazard lane — moods of the baked sprites.
+	// Robots on the Lab floor and the console's watchdog pods.
 	const ANOMALIES = ['timeout', 'stop', 'retry', 'slow', 'fail'];
 
 	// Doctor / overall cast mood from the run (varies the bed video + doc spotlight).
@@ -226,7 +226,7 @@
 
 	function stagesForSkin(skin) {
 		return STAGES.filter(function (s) {
-			if (skin === 'jarvis') return s.jarvis !== false;
+			if (skin === 'console') return s.console !== false;
 			return s.lab !== false;
 		});
 	}

@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', '..');
+const { locate } = require('./_loose-head');
 const LIT = /\/(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n[])+\/[dgimsuy]*/y;
 const failures = require('../../functions/url-review-failures');
 const hackSigns = require('../../functions/url-review-hack-signs');
@@ -15,10 +16,7 @@ const { LEGAL } = require('../../functions/url-review-legal');
 /** The regex literal right after `head` in functions/<file>; head must be unique and end just before the literal. */
 function fromSource(file, head) {
 	const text = fs.readFileSync(path.join(ROOT, 'functions', file), 'utf8');
-	const at = text.indexOf(head);
-	assert.ok(at >= 0, `${file}: ${head}`);
-	assert.equal(text.indexOf(head, at + 1), -1, `${file}: ${head} is not unique`);
-	LIT.lastIndex = at + head.length;
+	LIT.lastIndex = locate(text, head, file).end;
 	const lit = LIT.exec(text)[0];
 	const last = lit.lastIndexOf('/');
 	return new RegExp(lit.slice(1, last), lit.slice(last + 1));
