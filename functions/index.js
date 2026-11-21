@@ -9978,6 +9978,28 @@ exports.jarvisGithubHook = functions
 		res.json({ ok: true, kept: !!row, changed: !!(out && out.changed) });
 	});
 
+// Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
+// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; does not Accept Follows automatically.
+const socialInbox = require('./social-inbox');
+exports.socialInbox = functions
+	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = await socialInbox.handleRequest(req, {
+				db: socialInbox.enabled() ? getFirestore() : null,
+				fetchImpl: fetch,
+			});
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('socialInbox failed:', error);
+			res.status(500).json({ error: 'Inbox failed.' });
+		}
+	});
+
 exports.cubeRunStart = functions
 	.runWith({ timeoutSeconds: 60, memory: '256MB' })
 	.firestore.document(cube.RUNS + '/{id}')
