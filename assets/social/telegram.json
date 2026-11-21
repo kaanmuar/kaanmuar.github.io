@@ -588,11 +588,11 @@
    {
     "channel": "telegram",
     "profile": "Telegram @qalab_live",
-    "id": "127",
-    "at": "2026-11-21T04:18:39.415Z",
+    "id": "128",
+    "at": "2026-11-21T05:37:44.587Z",
     "result": "sent",
-    "url": "https://t.me/qalab_live/127",
-    "checked": "2026-11-21T04:18:44.769Z"
+    "url": "https://t.me/qalab_live/128",
+    "checked": "2026-11-21T05:37:49.092Z"
    }
   ],
   "evergreen-2026-11/07-pre-release": [
