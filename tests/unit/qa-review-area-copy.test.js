@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
 const AREAS = ['SEO', 'GEO', 'Analytics', 'Security', 'Accessibility', 'Performance'];
 const copySource = fs.readFileSync(path.join(__dirname, '../../js/qa-review-compare-copy.js'), 'utf8');
+const reportCopySource = fs.readFileSync(path.join(__dirname, '../../js/qa-review-report-copy.js'), 'utf8');
 const reviewSource = fs.readFileSync(path.join(__dirname, '../../js/qa-review.js'), 'utf8');
 
 function copyFor(lang) {
@@ -28,6 +29,17 @@ test('every page language has its own area notes, area counts and verdict labels
 		for (const name of AREAS) assert.notEqual(cc.areaNote(name), en.areaNote(name), lang + ' ' + name);
 		for (const key of ['fail', 'risk', 'pass', 'person'])
 			assert.notEqual(cc.verdict(key), en.verdict(key), lang + ' ' + key);
+	}
+});
+
+test('the report grid security states use the same verdict words as the guide (#4014)', () => {
+	for (const lang of LANGS) {
+		const cc = copyFor(lang);
+		const sandbox = { window: {}, document: { documentElement: { lang }, querySelectorAll: () => [] } };
+		vm.runInNewContext(reportCopySource, sandbox);
+		const rc = sandbox.window.QAReviewReportCopy;
+		for (const key of ['fail', 'risk', 'pass'])
+			assert.equal(rc.word('secState', key), cc.verdict(key), lang + ' ' + key);
 	}
 });
 
