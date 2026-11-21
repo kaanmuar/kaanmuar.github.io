@@ -268,7 +268,7 @@ test.describe('judging the conversation', () => {
 		});
 		assert.match(
 			result.checks.find((check) => check.key === 'talk-invent').evidence,
-			/name a price of 39, 60 days, 15%, which the page read does not state/
+			/name a price of 39, 60 days, 15%, which the page analyzed does not state/
 		);
 	});
 
