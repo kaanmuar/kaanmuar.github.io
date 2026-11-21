@@ -1,0 +1,20 @@
+{
+	"name": "feature-deck",
+	"private": true,
+	"description": "Builds the plain-language feature presentation (HTML and PowerPoint), #3931",
+	"license": "UNLICENSED",
+	"dependencies": {
+		"jszip": "3.10.1",
+		"pptxgenjs": "3.12.0",
+		"sharp": "^0.35.5"
+	},
+	"devDependencies": {
+		"playwright-core": "^1.65.1"
+	},
+	"scripts": {
+		"build": "node prep-media.js && node build-html.js && node render-pptx-assets.js && node build-pptx.js",
+		"quick": "node build-html.js && node build-pptx.js",
+		"check": "node check.js",
+		"deck": "npm run build && npm run check"
+	}
+}
