@@ -34,6 +34,20 @@ test('scoutBrief keeps noPost and waiting status, never trendSafe', () => {
 	assert.ok(!('trendSafe' in b.actions.reply));
 });
 
+test('scoutBrief shows the real thread it would answer, https links only, and stays noPost', () => {
+	const thread = { network: 'mastodon', url: 'https://m.example/@a/1', author: 'a@m.example', excerpt: 'Our #WebSecurity checklist, thoughts?', replies: 3, likes: 5 };
+	const b = J.scoutBrief(Object.assign({}, ROW, { id: 'scout-websecurity-mastodon-2026-11-20', network: 'mastodon', thread }), NOW);
+	assert.equal(b.url, thread.url);
+	assert.equal(b.author.handle, 'a@m.example');
+	assert.equal(b.text, thread.excerpt);
+	assert.equal(b.metrics.replies, 3);
+	assert.equal(b.actions.reply.draft, ROW.draft);
+	assert.equal(b.noPost, true);
+	const bad = J.scoutBrief(Object.assign({}, ROW, { thread: Object.assign({}, thread, { url: 'javascript:alert(1)' }) }), NOW);
+	assert.equal(bad.url, '');
+	assert.equal(bad.text, ROW.draft);
+});
+
 test('loadScoutDrafts drops decided, non-draft and posting rows', async () => {
 	const payload = [
 		ROW,

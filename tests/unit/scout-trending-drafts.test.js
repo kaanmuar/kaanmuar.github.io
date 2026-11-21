@@ -65,7 +65,7 @@ test('the CLI writes only the draft file, from a fixture, and makes no network c
 	const out = path.join(dir, 'queue.json');
 	const file = path.join(dir, 'trends.json');
 	fs.writeFileSync(file, JSON.stringify(Object.assign({}, FIXTURE, { date: new Date().toISOString().slice(0, 10) })));
-	const run = spawnSync(process.execPath, ['scripts/scout-trending-drafts.js', '--file', file, '--out', out, '--keep', '2'], { encoding: 'utf8', cwd: path.join(__dirname, '../..'), env: Object.assign({}, process.env, { HTTPS_PROXY: 'http://127.0.0.1:1', HTTP_PROXY: 'http://127.0.0.1:1' }) });
+	const run = spawnSync(process.execPath, ['scripts/scout-trending-drafts.js', '--file', file, '--out', out, '--keep', '2', '--no-threads'], { encoding: 'utf8', cwd: path.join(__dirname, '../..'), env: Object.assign({}, process.env, { HTTPS_PROXY: 'http://127.0.0.1:1', HTTP_PROXY: 'http://127.0.0.1:1' }) });
 	assert.equal(run.status, 0, run.stderr);
 	const queue = JSON.parse(fs.readFileSync(out, 'utf8'));
 	assert.ok(queue.length > 0 && queue.every((r) => r.status === 'draft' && r.noPost === true));
@@ -78,4 +78,66 @@ test('a stale or missing trending file writes nothing', () => {
 	const run = spawnSync(process.execPath, ['scripts/scout-trending-drafts.js', '--file', path.join(dir, 'none.json'), '--out', out], { encoding: 'utf8', cwd: path.join(__dirname, '../..') });
 	assert.equal(run.status, 0);
 	assert.ok(!fs.existsSync(out));
+});
+
+const status = (o) => Object.assign({
+	id: '1', uri: 'https://m.example/users/a/statuses/1', url: 'https://m.example/@a/1', content: '<p>Our #WebSecurity checklist for headers and cookies, thoughts?</p>',
+	language: 'en', created_at: '2026-11-20T10:00:00Z', in_reply_to_id: null, favourites_count: 4, replies_count: 2, reblogs_count: 1,
+	account: { acct: 'a@m.example', username: 'a', display_name: 'A', followers_count: 10, bot: false }, tags: [{ name: 'websecurity' }]
+}, o);
+
+test('pickThread takes the busiest recent English original post with replies under the tag', () => {
+	const busy = status({ id: '2', url: 'https://m.example/@b/2', uri: 'https://m.example/users/b/statuses/2', replies_count: 9 });
+	const t = S.pickThread('WebSecurity', [status(), busy], NOW);
+	assert.equal(t.network, 'mastodon');
+	assert.equal(t.url, 'https://m.example/@b/2');
+	assert.equal(t.replies, 9);
+	assert.ok(t.excerpt.includes('#WebSecurity') && t.excerpt.length <= 200);
+});
+
+test('pickThread skips replies, bots, other languages, stale, no replies, wrong tag, sensitive and drama posts', () => {
+	const bad = [
+		status({ in_reply_to_id: '9' }), status({ account: { acct: 'b', bot: true } }), status({ language: 'es' }), status({ language: '' }),
+		status({ created_at: '2026-11-10T10:00:00Z' }), status({ replies_count: 0 }), status({ tags: [{ name: 'cats' }] }),
+		status({ content: '<p>The election result and our #WebSecurity worries today, thoughts?</p>' }),
+		status({ content: '<p>Boycott this vendor now, their #WebSecurity is a scam and a disgrace</p>' }),
+		status({ url: 'http://m.example/@a/1', uri: 'http://m.example/u/1' }), status({ content: '<p>#WebSecurity</p>' })
+	];
+	bad.forEach((s) => assert.equal(S.pickThread('WebSecurity', [s], NOW), null));
+	assert.equal(S.pickThread('WebSecurity', undefined, NOW), null);
+});
+
+test('only the Mastodon draft carries a thread; the other networks stay tag-level; no row gains a send flag', () => {
+	const threads = { WebSecurity: [status()] };
+	const rows = S.buildDrafts(FIXTURE, S.ownTopics(OUR_POSTS), { now: NOW, keep: 3, threads });
+	const withThread = rows.filter((r) => r.thread);
+	assert.deepEqual(withThread.map((r) => r.network), ['mastodon']);
+	assert.equal(withThread[0].tag, 'WebSecurity');
+	rows.forEach((r) => assert.ok(r.status === 'draft' && r.noPost === true && !('trendSafe' in r)));
+	assert.ok(rows.filter((r) => r.network !== 'mastodon').every((r) => !r.thread));
+});
+
+test('readThreads only GETs the public tag timeline and a failing tag gives no thread', async () => {
+	const calls = [];
+	const fetchImpl = async (url, opts) => {
+		calls.push([url, opts && opts.method]);
+		if (url.includes('/seo')) throw new Error('down');
+		return { ok: true, json: async () => [status()] };
+	};
+	const got = await S.readThreads(['WebSecurity', 'seo'], { fetch: fetchImpl, base: 'https://m.example/' });
+	assert.equal(got.WebSecurity.length, 1);
+	assert.deepEqual(got.seo, []);
+	assert.ok(calls.every(([u, m]) => u.startsWith('https://m.example/api/v1/timelines/tag/') && !m));
+});
+
+test('a later run adds the thread to an undecided draft without touching its text, and never to a decided one', () => {
+	const own = S.ownTopics(OUR_POSTS);
+	const plain = S.buildDrafts(FIXTURE, own, { now: NOW, networks: ['mastodon'] });
+	const withThread = S.buildDrafts(FIXTURE, own, { now: NOW, networks: ['mastodon'], threads: { WebSecurity: [status()] } });
+	const edited = plain.map((r, i) => Object.assign({}, r, { draft: 'edited ' + i }, i ? { status: 'approved' } : {}));
+	const merged = S.mergeQueue(edited, withThread);
+	const first = merged.find((r) => r.id === plain[0].id);
+	assert.equal(first.draft, 'edited 0');
+	assert.ok(first.thread && first.thread.url);
+	assert.ok(merged.filter((r) => r.status === 'approved').every((r) => !r.thread));
 });

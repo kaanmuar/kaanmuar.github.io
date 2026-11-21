@@ -3,6 +3,7 @@
 # assets/social/scout-drafts.json. Jarvis shows them in Engagement for review.
 # This job NEVER posts to any network, NEVER sets trendSafe or approved, and
 # NEVER auto-approves. It commits only the draft queue file (like field-sweep.yml).
+# The Mastodon draft also links the real thread it would answer (public tag timeline, GET only, no key).
 # Schedule: functions/ops-schedule.js.
 
 name: Scout trending drafts
