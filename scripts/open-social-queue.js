@@ -36,10 +36,10 @@
    refused a login or a post, after trying the rest. A post that went out on a plainer plan than its first (the card
    for a refused clip or poll) counts as posted, and the run's line and a GitHub Actions warning name it (#3006).
 
-   Bluesky XRPC stays plain fetch; PDS discovery uses extractPdsEndpoint from @atproto/lex-password-session (MIT,
-   Node >=22). Full @atproto/lex Client + lexicon codegen is deferred (#3841). Mastodon HTTP goes through masto
-   8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are unchanged. Do not auto-post from this module
-   without --live / workflow secrets.
+   Bluesky createRecord goes through scripts/bluesky-lex.js (@atproto/lex-client Client, MIT, Node >=22);
+   PDS discovery uses extractPdsEndpoint from @atproto/lex-password-session. Other Bluesky XRPC stays plain
+   fetch. Mastodon HTTP goes through masto 8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are
+   unchanged. Do not auto-post from this module without --live / workflow secrets.
 
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
@@ -55,6 +55,7 @@ const path = require('path');
 // run-test-review.sh installs these when missing (#3841 / #4056 pattern).
 const mastoApi = () => require('masto');
 const extractPdsEndpoint = (...args) => require('@atproto/lex-password-session').extractPdsEndpoint(...args);
+const blueskyLex = require('./bluesky-lex');
 const ledger = require('./social-ledger');
 const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
@@ -541,8 +542,11 @@ function bluesky(env = process.env) {
 					continue;
 				}
 				try {
-					const { uri } = await xrpc('com.atproto.repo.createRecord', {
-						body: { repo: session.did, collection: 'app.bsky.feed.post', record },
+					const { uri } = await blueskyLex.createFeedPost({
+						service,
+						did: session.did,
+						accessJwt: session.accessJwt,
+						record,
 					});
 					return sent(
 						{
