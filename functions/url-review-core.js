@@ -3743,7 +3743,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		layer: 'Security',
 		title: 'http://' + host + '/ redirects to https://' + host + '/',
 		why:
-			'The review read ' +
+			'The review analyzed ' +
 			home.url +
 			' over https. A browser case would request http://' +
 			host +
@@ -4023,7 +4023,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		title: 'A sitemap for ' + host + ' is advertised in robots.txt',
 		why:
 			(sig.sitemap ? 'The word sitemap appears on ' + here + '.' : 'No sitemap reference was seen on ' + here + '.') +
-			' The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it read.',
+			' The review fetches the sitemap from robots.txt or /sitemap.xml and compares it with the pages it analyzed.',
 		fw: browser,
 	});
 	const types = [].concat.apply(
@@ -4260,7 +4260,7 @@ function propose(pages, robotsBlocked, limits, dom) {
 		why:
 			(failed.length
 				? 'This review already saw a non-success status on ' + on(failed[0].path) + '.'
-				: 'This review did not see a 404 among the pages it read.') +
+				: 'This review did not see a 404 among the pages it analyzed.') +
 			' A later case would request one unknown path on ' +
 			host +
 			' and expect status 404 with a branded page, not a stack trace or a 200.',
@@ -5644,8 +5644,8 @@ async function probeReadAs(raw) {
 }
 
 function answered(name, res) {
-	if (!res) return name + ' was not read.';
-	if (res.error) return name + ' could not be read (' + res.error + ').';
+	if (!res) return name + ' was not checked.';
+	if (res.error) return name + ' could not be checked (' + res.error + ').';
 	return name + ' answered ' + res.status + (res.html ? ' with an HTML page' : '') + '.';
 }
 
@@ -5857,7 +5857,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 					' listed ' +
 					map.urls.length +
 					' URLs' +
-					(map.partial ? ', read in part' : '') +
+					(map.partial ? ', fetched in part' : '') +
 					'.'
 				: 'No sitemap with URLs was found (status ' + (map.status || 'none') + ').'
 		),
@@ -5903,7 +5903,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 								' and ' +
 								(res.kept ? 'kept' : 'dropped') +
 								' the tags.'
-							: 'The start page with UTM tags could not be read.'
+							: 'The start page with UTM tags could not be checked.'
 				)
 			: Promise.resolve(null).then(() => {
 					say('The UTM check was skipped: robots.txt disallows that address.');
@@ -5926,7 +5926,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 				}),
 		done(plainHttp(origin.hostname, halt), (res) =>
 			res.error
-				? 'Plain http could not be read (' + res.error + ').'
+				? 'Plain http could not be checked (' + res.error + ').'
 				: 'Plain http answered ' + res.statuses.join(' → ') + (res.location ? ', ending at ' + res.location : '') + '.'
 		),
 		done(
@@ -5987,7 +5987,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 						(facts.bimi ? 'found' : 'missing') +
 						(facts.unread.length ? '. Not answered in time: ' + facts.unread.join(', ') : '') +
 						'.'
-					: 'The DNS records could not be read.'
+					: 'The DNS records could not be checked.'
 		),
 		done(
 			withTimeout(domainFacts(origin.hostname, halt), 10000, null).catch(() => null),
@@ -5995,7 +5995,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 				!facts
 					? 'The RDAP registration did not answer in time.'
 					: !facts.read
-						? 'The RDAP registration for ' + facts.domain + ' was not read: ' + facts.reason + '.'
+						? 'The RDAP registration for ' + facts.domain + ' was not checked: ' + facts.reason + '.'
 						: 'RDAP for ' +
 							facts.domain +
 							': ' +
@@ -6013,7 +6013,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 						.catch((error) => ({ ok: false, error: clean((error && error.message) || '', 120) })),
 					(res) =>
 						!res || !res.ok
-							? "Google's Safe Browsing lists could not be read" +
+							? "Google's Safe Browsing lists could not be checked" +
 								(res && res.error ? ' (' + res.error + ')' : '') +
 								'.'
 							: res.threats.length
@@ -6045,7 +6045,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 						')' +
 						(res.website.reach
 							? res.website.reach.error
-								? '; its website link could not be read (' + res.website.reach.error + ')'
+								? '; its website link could not be checked (' + res.website.reach.error + ')'
 								: '; its website link answered ' +
 									res.website.reach.status +
 									(res.website.reach.hops
@@ -6115,7 +6115,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 async function reviewTarget(rawUrl, hooks) {
 	if (hooks && hooks.readAs === 'chrome' && READ_AS.getStore() !== 'chrome') {
 		if (hooks.log)
-			hooks.log("This rescue reads the site as a person's Chrome, without the review's name in its user agent.");
+			hooks.log("This rescue checks the site as a person's Chrome, without the review's name in its user agent.");
 		return READ_AS.run('chrome', () => reviewTarget(rawUrl, hooks));
 	}
 	const controls = hooks || {};
@@ -6136,7 +6136,7 @@ async function reviewTarget(rawUrl, hooks) {
 	const begun = Date.now();
 	let deadline = begun + (softPreview ? SOFT_PREVIEW_MS : budgetMs(chosen.pages));
 	note('Checking that the address is public https.');
-	if (softPreview) note('Soft preview: this run reads only the pasted URL (1 page), then frosts the rest.');
+	if (softPreview) note('Soft preview: this run analyzes only the pasted URL (1 page), then frosts the rest.');
 	note(
 		acceptLanguage
 			? 'Pages are requested in ' + PAGE_LANG_LABEL[acceptLanguage] + '.'
@@ -6347,23 +6347,23 @@ async function reviewTarget(rawUrl, hooks) {
 	const mentionsPromise = controls.mentions === false ? Promise.resolve([]) : lookupMentions(origin.hostname);
 	let robots = [];
 	let robotsText = '';
-	let robotsNote = 'robots.txt was not read.';
+	let robotsNote = 'robots.txt was not checked.';
 	let stopped = halt();
 	try {
 		if (!stopped) {
-			note('Reading robots.txt.');
+			note('Checking robots.txt.');
 			const robotsUrl = origin.origin + '/robots.txt';
 			const robotsRes = await fetchPublic(robotsUrl, halt, note, false, acceptLanguage);
 			if (robotsRes.status === 200 && !/^\s*<(!doctype|html)/i.test(robotsRes.body)) {
 				robotsText = robotsRes.body.slice(0, 200000);
 				robots = parseRobots(robotsRes.body);
 				robotsNote =
-					'robots.txt was read (' + robots.length + ' rules). Linked pages that disallow this agent are skipped.';
+					'robots.txt was checked (' + robots.length + ' rules). Linked pages that disallow this agent are skipped.';
 			} else robotsNote = 'robots.txt returned status ' + robotsRes.status + '. Linked pages stay inside the page cap.';
 		}
 	} catch (error) {
 		if (error && error.code === 'STOPPED') stopped = true;
-		else robotsNote = 'robots.txt could not be read. Linked pages were still capped.';
+		else robotsNote = 'robots.txt could not be checked. Linked pages were still capped.';
 	}
 	const prefix = controls.section === true ? sectionPrefix(first.url) : '';
 	if (prefix) note('Later pages stay under ' + prefix + '.');
@@ -6717,7 +6717,7 @@ async function reviewTarget(rawUrl, hooks) {
 					stopped = true;
 					break;
 				}
-				note(path + ' could not be read (' + clean(error.message, 160) + ').');
+				note(path + ' could not be checked (' + clean(error.message, 160) + ').');
 				pages.push({
 					url: next,
 					requested: next,
@@ -6881,7 +6881,7 @@ async function reviewTarget(rawUrl, hooks) {
 			)
 			.concat((browser && browser.ok && browser.libraries) || []);
 		const runTargeted = typeof controls.targeted === 'function' ? controls.targeted : targeted.check;
-		note('Reading attack and exploit sources for ' + origin.hostname + '.');
+		note('Checking attack and exploit sources for ' + origin.hostname + '.');
 		extras.targeted = await runTargeted(
 			{
 				url: first.url,
@@ -8463,13 +8463,26 @@ function summarizeCruxHistory(data, scope) {
 async function cruxHistory(url, key) {
 	if (!key) return null;
 	const api = 'https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=' + encodeURIComponent(key);
+	// Retries 5xx with backoff (not 429: the quota), and pauses after repeated failures (#3838); a paused breaker
+	// answers like a failed call. 404 stays "no history" (null) per form.
 	const ask = async (target, scope) => {
-		const res = await fetch(api, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(Object.assign({ metrics: Object.values(CRUX_METRICS) }, target)),
-			signal: AbortSignal.timeout(10000),
-		});
+		const res = await resilience.resilientFetch(
+			api,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(Object.assign({ metrics: Object.values(CRUX_METRICS) }, target)),
+			},
+			{
+				retries: 2,
+				baseMs: 300,
+				maxMs: 2000,
+				maxRetryAfterMs: 3000,
+				timeoutMs: 10000,
+				noRetryStatuses: [429],
+				breaker: resilience.breakers.crux,
+			}
+		);
 		if (res.status === 404) return null;
 		if (!res.ok) throw new Error(res.status === 429 ? 'the quota is used up' : 'status ' + res.status);
 		return summarizeCruxHistory(await res.json(), scope);
@@ -8477,13 +8490,18 @@ async function cruxHistory(url, key) {
 	const page = new URL(url);
 	page.hash = '';
 	const out = { ok: true };
-	await Promise.all(
-		Object.keys(CRUX_FORMS).map(async (form) => {
-			out[form] =
-				(await ask({ url: page.toString(), formFactor: CRUX_FORMS[form] }, 'page')) ||
-				(await ask({ origin: page.origin, formFactor: CRUX_FORMS[form] }, 'origin'));
-		})
-	);
+	try {
+		await Promise.all(
+			Object.keys(CRUX_FORMS).map(async (form) => {
+				out[form] =
+					(await ask({ url: page.toString(), formFactor: CRUX_FORMS[form] }, 'page')) ||
+					(await ask({ origin: page.origin, formFactor: CRUX_FORMS[form] }, 'origin'));
+			})
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	return out;
 }
 

@@ -51,12 +51,35 @@ test("a booking is kept until 24 months after its call, even when made long befo
 	assert.equal(R.decide(policy("bookings"), past, NOW), "delete");
 });
 
-test("an unpaid fix request goes 12 months after its last change; a paid one is kept for its tax period", () => {
+test("an unpaid fix request goes 12 months after its last change; a paid one follows the tax period", () => {
 	const p = policy("url_review_fix_requests");
 	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(13), status: "new" }, NOW), "delete");
 	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(3), status: "quoted" }, NOW), "keep");
 	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(15), status: "done", paidAt: ago(15) }, NOW), "keep");
-	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(15), paid: { priceUsd: 99 } }, NOW), "keep");
+	assert.equal(R.decide(p, { createdAt: ago(20), updatedAt: ago(15), paid: { priceUsd: 99 }, paidAt: ago(15) }, NOW), "keep");
+	assert.equal(
+		R.decide(p, { createdAt: "2018-06-01T00:00:00Z", paidAt: "2018-06-01T00:00:00Z", paid: true }, NOW),
+		"delete"
+	);
+	assert.equal(
+		R.decide(p, { createdAt: "2018-06-01T00:00:00Z", paidAt: "2018-06-01T00:00:00Z", paid: true, taxHold: true }, NOW),
+		"keep"
+	);
+});
+
+test("payment rows and coupon redemptions go on January 1 of the sixth year after the payment", () => {
+	const pay = policy("url_reviews");
+	const redeem = policy("url_review_redemptions");
+	assert.equal(R.decide(pay, { status: "done", createdAt: "2018-06-01T00:00:00Z" }, NOW), "keep");
+	assert.equal(R.decide(pay, { status: "paid-report", createdAt: "2018-06-01T00:00:00Z" }, NOW), "delete");
+	assert.equal(R.decide(pay, { status: "run-credit", createdAt: "2026-10-01T00:00:00Z" }, NOW), "keep");
+	assert.equal(R.decide(pay, { status: "monthly-pass", createdAt: "2018-06-01T00:00:00Z", taxHold: true }, NOW), "keep");
+	assert.equal(
+		R.decide(pay, { status: "paid-addon", createdAt: "2018-06-01T00:00:00Z", expireAt: "2099-01-01T00:00:00Z" }, NOW),
+		"keep"
+	);
+	assert.equal(R.decide(redeem, { at: "2018-06-01T00:00:00Z" }, NOW), "delete");
+	assert.equal(R.decide(redeem, { at: "2026-10-01T00:00:00Z" }, NOW), "keep");
 });
 
 test("a row without a readable date is kept, not deleted", () => {

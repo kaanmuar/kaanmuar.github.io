@@ -122,6 +122,14 @@ function summarize(rows, stats) {
   return summary;
 }
 
+// The free sample (#1945) runs the first cases a browser checks on its own: no person, and no load profile against someone's site.
+const SAMPLE_SKIP = ["manual", "load"];
+
+function sampleOf(report, size) {
+  const ctx = scripts.context(report);
+  return (report.cases || []).filter((item) => (item.fw || []).indexOf("Playwright") !== -1 && SAMPLE_SKIP.indexOf(scripts.checkFor(item, ctx).kind) === -1).slice(0, size);
+}
+
 async function run(report, options) {
   const opts = options || {};
   const dir = opts.dir;
@@ -138,4 +146,4 @@ async function run(report, options) {
   return Object.assign({ base: scripts.context(report).base, frameworks, startedAt: new Date(started).toISOString(), finishedAt: new Date().toISOString() }, out);
 }
 
-module.exports = { RUNNABLE, prepare, execute, collect, triage, caseId, run };
+module.exports = { RUNNABLE, prepare, execute, collect, triage, caseId, sampleOf, run };

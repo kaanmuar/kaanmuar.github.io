@@ -1,0 +1,68 @@
+# .github/workflows/scout-trending-drafts.yml
+# Daily (#3814): refresh free trending tags, write draft-only playful posts to
+# assets/social/scout-drafts.json. Jarvis shows them in Engagement for review.
+# This job NEVER posts to any network, NEVER sets trendSafe or approved, and
+# NEVER auto-approves. It commits only the draft queue file (like field-sweep.yml).
+# Schedule: functions/ops-schedule.js.
+
+name: Scout trending drafts
+
+on:
+  schedule:
+    - cron: '41 14 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: scout-trending-drafts
+  cancel-in-progress: false
+
+jobs:
+  drafts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Refresh trending tags and write drafts only
+        id: scout
+        run: |
+          set -euo pipefail
+          node scripts/trending-tags.js || true
+          node scripts/scout-trending-drafts.js
+          if [ -f assets/social/scout-drafts.json ]; then
+            echo "count=$(node -e 'const q=require("./assets/social/scout-drafts.json"); process.stdout.write(String(Array.isArray(q)?q.length:0))')" >> "$GITHUB_OUTPUT"
+          else
+            echo "count=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Commit draft queue only
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add assets/social/scout-drafts.json
+          if git diff --cached --quiet; then
+            echo "No scout draft changes."
+            exit 0
+          fi
+          git commit -q -m "Scout trending drafts: ${{ steps.scout.outputs.count }} in queue [skip ci]" \
+            -m "Draft-only (#3814). Never posts; Carlos reviews in Jarvis Engagement."
+          for attempt in 1 2 3 4 5; do
+            git push origin HEAD:main && break
+            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; scout drafts were not pushed."; exit 1; fi
+            sleep $((attempt * 5))
+            DATA=$(git rev-parse HEAD)
+            git fetch -q --depth=1 origin main
+            git reset -q --hard FETCH_HEAD
+            if ! git cherry-pick -X theirs "$DATA"; then
+              [ -z "$(git status --porcelain)" ] || exit 1
+              echo "main already has these scout drafts."; exit 0
+            fi
+          done

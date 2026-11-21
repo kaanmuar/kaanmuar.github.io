@@ -1529,6 +1529,8 @@ export function mountJarvis({
 								tags: e.engagement.report.tags.slice(0, 10),
 								networks: e.engagement.report.networks,
 								waiting: e.engagement.waiting.length,
+								scoutDrafts:
+									e.engagement.scoutDrafts || e.engagement.waiting.filter((d) => d.campaign === 'scout-trend').length,
 								topPosts: e.engagement.posts
 									.slice(0, 5)
 									.map((d) => `${d.network}: ${d.title || String(d.text || '').slice(0, 100)} (score ${d.score})`),
@@ -1966,6 +1968,7 @@ export function mountJarvis({
 		'gh-remove-worktree': 'remove the merged worktree',
 		'gh-agent': 'launch a fix agent',
 		'gh-worker': "start Jarvis's worker on a fix",
+		'worker-drop': 'drop a fix main no longer needs',
 		'gh-quarantine': 'file a flaky-workflow ticket',
 		'gh-security-ticket': 'file a ticket for a security alert',
 		'gh-dismiss-alert': 'dismiss a security alert',
@@ -3535,9 +3538,54 @@ export function mountJarvis({
 				alert: okMail && em.rates.bad >= th.emailBadPct,
 			},
 			{ label: 'Social posts', value: okSocial ? so.sent : '—', alert: okSocial && so.failed > 0 },
+			{ label: 'Clip plays', value: okSocial && so.media ? so.media.total.plays : '—' },
 			{ label: 'Google clicks', value: gsc && gsc.ok ? gsc.clicks : '—' },
 		]);
 		const social = socialVisits();
+		const media = okSocial ? so.media : null;
+		const num = (n, on) => (on ? fmt(n) : '—');
+		const mediaNets = media
+			? table(
+					[
+						['Network', (n) => `<strong>${esc(n.name)}</strong>`],
+						['Posts', (n) => fmt(n.posts)],
+						['Plays', (n) => num(n.plays, n.measured)],
+						['Reach', (n) => num(n.reach, n.measured)],
+						['Likes', (n) => num(n.likes, n.measured)],
+						['Shares', (n) => num(n.shares, n.measured)],
+						['Comments', (n) => num(n.comments, n.measured)],
+						['', (n) => (n.state ? `<span class="jv-note">${esc(n.state)}</span>` : '')],
+					],
+					media.networks
+				) +
+				bars(
+					media.networks.filter((n) => n.plays).map((n) => ({ label: n.name, value: n.plays })),
+					{ color: COLORS.pink, empty: '' }
+				)
+			: waiting('social', 'Reading the social ledgers…');
+		const mediaClips = media
+			? table(
+					[
+						['Clip', (c) => `<strong>${esc(c.title)}</strong><br><span class="jv-note">${esc(when(c.at))}</span>`],
+						['Plays', (c) => fmt(c.total.plays)],
+						['Likes', (c) => fmt(c.total.likes)],
+						['Shares', (c) => fmt(c.total.shares)],
+						['Comments', (c) => fmt(c.total.comments)],
+						[
+							'On',
+							(c) =>
+								c.networks
+									.map(
+										(n) =>
+											`<a class="jv-chip" href="${esc(n.url)}" target="_blank" rel="noopener" title="${esc(n.network)}: ${n.plays} plays, ${n.likes} likes, ${n.shares} shares, ${n.comments} comments">${esc(n.network)}${n.plays ? ' ' + fmt(n.plays) : ''}</a>`
+									)
+									.join(' '),
+						],
+					],
+					media.clips,
+					'No clip has gone out yet.'
+				)
+			: waiting('social', '');
 		const pp = okMoney ? mo.paypal || {} : {};
 		const W = S.wide;
 		const steps = W.funnel
@@ -3546,6 +3594,8 @@ export function mountJarvis({
 		return (
 			head +
 			`<div class="jv-grid">${briefPanel('business')}
+            ${panel('business-media', `Media per network${media ? ' · ' + fmt(media.total.plays) + ' plays' : ''}`, mediaNets, { wide: true, data: media && media.networks, note: `Every clip we posted, all time. YouTube plays come from the YouTube Data API; LinkedIn, TikTok, X and YouTube numbers from Buffer, Facebook from the Graph API, Bluesky and Mastodon from their public APIs, read once a day${media && media.updatedAt ? ' (last ' + esc(when(media.updatedAt)) + ')' : ''}. Instagram and Threads have no stats reader yet.` })}
+            ${panel('business-clips', `Plays per clip${media ? ' · ' + fmt(media.total.clips) : ''}`, mediaClips, { wide: true, data: media && media.clips.map((c) => Object.assign({ key: c.key, title: c.title, at: c.at }, c.total, Object.fromEntries(c.networks.map((n) => [n.network, n.plays])))) })}
             ${callsPanel()}
             ${panel('business-mix', 'Revenue by product', okMoney ? pie(W.revenue, { unit: 'USD', empty: 'No sales in this range.' }) : waiting('money', 'Reading payments…'), { data: W.revenue })}
             ${panel('business-funnel', 'Outreach funnel', steps ? funnel(steps) : waiting('outreach', 'Reading the outreach pipeline…'), { data: W.funnel, note: steps ? 'Reviewed by the nightly sweep in range, emailed through Instantly, replied, and paid through a qalabreview.com link. Instantly counts every contact it emailed, so Notified can pass Reviewed.' : '' })}
@@ -7155,7 +7205,71 @@ export function mountJarvis({
 	}
 	const workerSpend = () => (S.worker && S.worker.spend) || null;
 	const workerTone = (sp) => (sp.level === 'over' ? COLORS.pink : sp.level === 'warn' ? COLORS.amber : COLORS.green);
-	const WORKER_CHIP = { queued: 'c-average', running: 'c-average', done: 'c-fast', nochange: '', failed: 'c-slow' };
+	const WORKER_CHIP = {
+		queued: 'c-average',
+		running: 'c-average',
+		done: 'c-fast',
+		nochange: '',
+		failed: 'c-slow',
+		dropped: '',
+		rejected: '',
+	};
+	const GATE_CHIP = {
+		destructive: [
+			'c-slow',
+			'Destructive',
+			'Deletes files or data, or touches deploys, money, secrets or accounts: never merges on its own.',
+		],
+		visible: ['c-average', 'Visible', 'Changes what people see: waits for your Approve.'],
+		safe: ['c-fast', 'Safe', 'Tests, docs or internal code: merges on green after the countdown.'],
+	};
+	const gateChip = (g) => {
+		if (!g) return '';
+		if (g.decision)
+			return `<span class="jv-chip ${g.decision === 'approved' ? 'c-fast' : ''}">${g.decision === 'approved' ? 'Approved' : 'Rejected'}</span>`;
+		const [cls, label, title] = GATE_CHIP[g.level] || ['', g.level, ''];
+		return `<span class="jv-chip ${cls}" title="${esc(title)}">${label}</span>`;
+	};
+
+	// A worker PR at the gate (#2959): its risky files, the run's before and after screenshots, and Approve or Reject.
+	function workerGate(t) {
+		const g = t.gate;
+		const side = (s, k) =>
+			s[k]
+				? `<a href="${esc(s[k])}" target="_blank" rel="noopener"><img src="${esc(s[k])}" alt="${esc(s.page)}, ${k}" loading="lazy" width="320" height="200"><span>${k === 'before' ? 'Before' : 'After'}</span></a>`
+				: `<span class="jv-shot-none">${k === 'before' ? 'New page' : 'Page removed'}</span>`;
+		const shots = g.shots
+			.map(
+				(s) =>
+					`<figure class="jv-shot"><figcaption>${esc(s.page)}</figcaption><div class="jv-shot-pair">${side(s, 'before')}${side(s, 'after')}</div></figure>`
+			)
+			.join('');
+		const more = (n) => (n > 8 ? ` and ${n - 8} more` : '');
+		return `<div class="jv-gate is-${esc(g.level)}">
+            <p class="jv-gate-head">${gateChip(g)} <strong>${esc(t.title)}</strong> ${t.pr ? ghLink(t.url, '#' + t.pr) : ''}</p>
+            <p class="jv-note">${esc(GATE_CHIP[g.level] ? GATE_CHIP[g.level][2] : '')}</p>
+            ${
+							g.destructive.length
+								? `<ul class="jv-gate-files">${g.destructive
+										.slice(0, 8)
+										.map((d) => `<li><code>${esc(d.file)}</code> ${esc(d.why)}</li>`)
+										.join('')}${g.destructive.length > 8 ? `<li>${more(g.destructive.length)}</li>` : ''}</ul>`
+								: ''
+						}
+            ${
+							g.visible.length
+								? `<p class="jv-note">Visible: ${g.visible
+										.slice(0, 8)
+										.map((f) => `<code>${esc(f)}</code>`)
+										.join(', ')}${more(g.visible.length)}</p>`
+								: ''
+						}
+            ${shots ? `<div class="jv-shots">${shots}</div>` : `<p class="jv-note">${esc(g.note || 'No screenshots for this change.')}</p>`}
+            ${shots && g.note ? `<p class="jv-note">${esc(g.note)}</p>` : ''}
+            ${g.stale ? '<p class="jv-note is-alert">New commits since the screenshots: look at the PR before you approve.</p>' : ''}
+            <div class="jv-gate-actions"><button type="button" class="jv-btn small is-primary" data-worker-decide="approve" data-worker-id="${esc(t.id)}">Approve</button>
+            <button type="button" class="jv-btn small" data-worker-decide="reject" data-worker-id="${esc(t.id)}">Reject</button></div>${ghResult('gate:' + t.id)}</div>`;
+	}
 
 	function workerPanel() {
 		const w = S.worker,
@@ -7207,6 +7321,7 @@ export function mountJarvis({
 							: `<span class="jv-chip ${WORKER_CHIP[t.state] || ''}">${esc(t.state === 'nochange' ? 'no change' : t.state)}</span>`) +
 						(t.escalatedTo ? '<span class="jv-note"> → Pro</span>' : ''),
 				],
+				['Gate', (t) => gateChip(t.gate)],
 				['Cost', (t) => '$' + Number(t.usd || 0).toFixed(2)],
 				['When', (t) => esc(ghAgo(t.at))],
 				[
@@ -7220,17 +7335,54 @@ export function mountJarvis({
 			w.tasks || [],
 			'No worker runs yet.'
 		);
+		const gated = (w.tasks || []).filter((t) => t.gate && t.gate.waiting);
+		const gates = gated.length
+			? `<h4 class="jv-sub">At the gate · ${gated.length}</h4>${gated.map(workerGate).join('')}`
+			: '';
 		return panel(
 			'github-worker',
 			`Jarvis's worker · $${sp.usd.toFixed(2)} of $${sp.cap}`,
-			meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + tasks,
+			meter + `<p class="jv-note${sp.level === 'ok' ? '' : ' is-alert'}">${esc(said)}</p>` + kpis + gates + tasks,
 			{
 				wide: true,
 				keep: true,
 				data: w.tasks,
-				note: "Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini's request quota waits twice, then moves to Flash. Prices are rounded up, so the meter overstates.",
+				note: "Flash takes test and config fixes and Pro takes code; a failed Flash run tries once more on Pro. The hourly pass starts one task at a time; a run that hits Gemini's request quota waits twice, then moves to Flash. Safe PRs merge on green after the countdown; visible and destructive ones wait for your Approve, and a fix main no longer needs is dropped. Prices are rounded up, so the meter overstates.",
 			}
 		);
+	}
+
+	async function workerDecide(id, decision) {
+		const t = ((S.worker && S.worker.tasks) || []).find((x) => x.id === id);
+		if (!t || !t.gate) return;
+		let why = '';
+		if (decision === 'approve') {
+			const risky =
+				t.gate.level === 'destructive'
+					? `It touches destructive files:\n${t.gate.destructive.map((d) => `- ${d.file}: ${d.why}`).join('\n')}\n\n`
+					: '';
+			if (
+				!window.confirm(
+					`Jarvis: approve PR #${t.pr} "${t.title}"?\n\n${risky}It merges once CI is green and the countdown ends, and then goes to production.`
+				)
+			)
+				return;
+		} else {
+			why = window.prompt(`Jarvis: reject PR #${t.pr} "${t.title}"? It closes the PR. Why (optional)?`, '');
+			if (why === null) return;
+		}
+		ghMark('gate:' + id, 'running', decision === 'approve' ? 'Approving…' : 'Closing the PR…');
+		const out = await call('worker-decide', { id, decision, why }).catch((error) => ({
+			ok: false,
+			error: error.message,
+		}));
+		ghMark(
+			'gate:' + id,
+			out.ok ? 'done' : 'failed',
+			out.message || 'Not done: ' + out.error,
+			out.url ? { url: out.url, link: 'Open the PR' } : null
+		);
+		if (out.ok || out.stale) loadWorker();
 	}
 
 	async function workerCursor(id) {
@@ -7515,7 +7667,9 @@ export function mountJarvis({
 				? ' <span class="jv-chip">trend only</span>'
 				: '');
 	// Report replies (#2465, #2471): invites under posts that name a site we reviewed.
+	// Scout trend drafts (#3814): assets/social/scout-drafts.json rows merged into waiting; Approve never posts.
 	const egIsReport = (d) => d.campaign === 'report-reply';
+	const egIsScout = (d) => d.campaign === 'scout-trend' || d.noPost === true;
 	const EG_ONLY = [
 		['all', 'All'],
 		['report', 'Report replies'],
@@ -7525,7 +7679,9 @@ export function mountJarvis({
 	const egReportChip = (d) =>
 		egIsReport(d)
 			? ` <span class="jv-chip c-report" title="An invite to the free report we ran on ${esc((d.report || {}).host || 'the site')}">Report reply</span>`
-			: '';
+			: egIsScout(d)
+				? ' <span class="jv-chip" title="Trending-tag draft from scout-drafts.json; Save records your edit and never posts">Trend draft</span>'
+				: '';
 	const egReportLine = (d) => {
 		const x = d.report;
 		if (!egIsReport(d) || !x) return '';
@@ -7706,11 +7862,11 @@ export function mountJarvis({
             <details><summary>${d.chain ? 'Show the comment' : 'Show the post'}</summary><pre class="jv-pre">${esc(d.text)}</pre></details>
             <textarea rows="3" class="jv-eg-draft" data-keep="eg-${esc(d.key)}" data-eg-draft="${esc(d.key)}" maxlength="${EG_NETWORK_LIMIT[d.network] || 300}" aria-label="Reply to ${esc(who(d))}">${esc(draftOf(d))}</textarea>
             ${d.actions.reply.english ? `<p class="jv-prop-why jv-eg-english"><strong>In English${draftOf(d) === d.actions.reply.draft ? '' : ' (the original draft)'}:</strong> ${esc(d.actions.reply.english)}</p>` : ''}
-            <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Approve</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
-            <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}</span></div></div></li>`
+            <div class="jv-prop-acts"><button type="button" data-eg-decide="approve" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>${egIsScout(d) ? 'Save (no post)' : 'Approve'}</button><button type="button" data-eg-decide="dismiss" data-key="${esc(d.key)}"${S.pending['eg:' + d.key] ? ' disabled' : ''}>Dismiss</button>${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Open the post ↗</a>` : ''}
+            <span class="jv-note">${fmt(draftOf(d).length)} / ${fmt(EG_NETWORK_LIMIT[d.network] || 300)} · expires ${esc(when(d.actions.reply.expiresAt))}${egIsScout(d) ? ' · never posts automatically' : ''}</span></div></div></li>`
 						)
 						.join('')}</ol>${more}`
-				: `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Drafts arrive here and on your phone as the scout finds posts worth answering.'}</p>`);
+				: `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Field drafts arrive as the engagement scout finds posts; trending-tag drafts arrive from scout-drafts.json.'}</p>`);
 		const last = g.lastRun;
 		const scoutMeta = g.metaScout;
 		const metaTitles = { cloud: 'Cloud', mac: 'Mac', reddit: 'Reddit', ownerTags: 'Owner tags', students: 'Students' };
@@ -7948,7 +8104,7 @@ export function mountJarvis({
 				{ label: 'Scout', value: g.paused ? 'paused' : last ? when(last.at) : 'never', alert: g.paused || g.stale },
 			]) +
 			`<div class="jv-grid">${briefPanel('engagement')}
-            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: "Approve tells Jarvis to send it (never a clipboard paste). Your edit goes when you changed the text. A draft in a language other than English shows Gemini's English translation under it (#2630). Drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461)." })}
+            ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: "Approve tells Jarvis to send a field reply (never a clipboard paste). Trend drafts (scout-drafts.json, #3814) use Save (no post): the decision is stored and nothing goes to any network. Your edit goes when you changed the text. A draft in a language other than English shows Gemini's English translation under it (#2630). Field drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved field reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461)." })}
             ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs.' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: "The poster acts as these accounts. Connect signs in on the network's own page and comes back here; Mastodon is marked as a bot when it connects." })}
@@ -11200,6 +11356,10 @@ export function mountJarvis({
 		}
 		if (t.dataset.workerCursor) {
 			workerCursor(t.dataset.workerCursor);
+			return;
+		}
+		if (t.dataset.workerDecide) {
+			workerDecide(t.dataset.workerId, t.dataset.workerDecide);
 			return;
 		}
 		if (t.dataset.ghFix) {

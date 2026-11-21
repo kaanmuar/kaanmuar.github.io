@@ -29,14 +29,14 @@ test("a line with no stage still gets the generic timeout", () => {
 });
 
 test("robots.txt could not paints risk, not done (#4106)", () => {
-	const fact = matchFact("robots.txt could not be read. Linked pages were still capped.");
+	const fact = matchFact("robots.txt could not be checked. Linked pages were still capped.");
 	assert.equal(fact.stage, "robots");
 	assert.equal(fact.status, "risk");
 	assert.equal(fact.anomaly, "fail");
 });
 
-test("robots.txt was read still paints done (#4106)", () => {
-	const fact = matchFact("robots.txt was read (12 rules). Linked pages that disallow this agent are skipped.");
+test("robots.txt was checked still paints done (#4106, #281)", () => {
+	const fact = matchFact("robots.txt was checked (12 rules). Linked pages that disallow this agent are skipped.");
 	assert.equal(fact.stage, "robots");
 	assert.equal(fact.status, "done");
 });

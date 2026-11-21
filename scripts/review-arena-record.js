@@ -17,8 +17,8 @@ const FRONT = [
   [900, 'Opening the first page.'],
   [1000, 'The server sent its certificate and the chain was verified.'],
   [800, 'First page answered with 200 in 0.4 s.'],
-  [900, 'Reading robots.txt.'],
-  [1000, 'robots.txt was read.'],
+  [900, 'Checking robots.txt.'],
+  [1000, 'robots.txt was checked.'],
   [900, 'In the background: crawl, security, mail, DNS and web risk reads.'],
   [1100, '12 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.']
 ];

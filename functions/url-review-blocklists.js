@@ -252,7 +252,7 @@ function note(result) {
 	return (
 		'Spam blocklists: ' +
 		(result.read.length ? result.read.map(nameOf).join(', ') + ' answered' : 'none answered') +
-		(result.unread.length ? '; ' + result.unread.map(nameOf).join(', ') + ' not read' : '') +
+		(result.unread.length ? '; ' + result.unread.map(nameOf).join(', ') + ' not checked' : '') +
 		(listed.length ? '; listed: ' + listed.join(', ') : '; nothing listed') +
 		'.'
 	);

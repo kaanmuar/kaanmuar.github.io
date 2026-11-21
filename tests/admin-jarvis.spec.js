@@ -373,6 +373,81 @@ const EXTERNAL = {
 			views: 39,
 		},
 		needs: [],
+		media: {
+			updatedAt: '2026-11-01T11:00:00Z',
+			total: { clips: 2, plays: 323, reach: 0, likes: 14, shares: 4, comments: 2 },
+			networks: [
+				{
+					network: 'youtube',
+					name: 'YouTube',
+					api: true,
+					posts: 2,
+					measured: 2,
+					state: '',
+					plays: 123,
+					reach: 0,
+					likes: 5,
+					shares: 0,
+					comments: 0,
+				},
+				{
+					network: 'tiktok',
+					name: 'TikTok',
+					api: true,
+					posts: 1,
+					measured: 1,
+					state: '',
+					plays: 200,
+					reach: 0,
+					likes: 9,
+					shares: 4,
+					comments: 2,
+				},
+				{
+					network: 'instagram',
+					name: 'Instagram',
+					api: false,
+					posts: 0,
+					measured: 0,
+					state: 'no posts yet, no stats yet',
+					plays: 0,
+					reach: 0,
+					likes: 0,
+					shares: 0,
+					comments: 0,
+				},
+			],
+			clips: [
+				{
+					key: 'auto-2026-10-21/01-u-uni-edu',
+					title: 'uni.edu: 71. The gap: alt text',
+					at: '2026-10-22T10:00:00Z',
+					total: { plays: 295, reach: 0, likes: 14, shares: 4, comments: 2 },
+					networks: [
+						{
+							network: 'youtube',
+							url: 'https://www.youtube.com/shorts/AAAAAAAA',
+							measured: true,
+							plays: 95,
+							reach: 0,
+							likes: 5,
+							shares: 0,
+							comments: 0,
+						},
+						{
+							network: 'tiktok',
+							url: 'https://tiktok.com/@q/video/1',
+							measured: true,
+							plays: 200,
+							reach: 0,
+							likes: 9,
+							shares: 4,
+							comments: 2,
+						},
+					],
+				},
+			],
+		},
 	},
 	safety: {
 		ok: true,
@@ -2138,6 +2213,8 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(business).toContainText('Transaction Search');
 		await expect(business).toContainText('rival.example');
 		await expect(business).toContainText('The release is close');
+		await expect(business.locator('[data-panel-id="business-media"]')).toContainText('no posts yet, no stats yet');
+		await expect(business.locator('[data-panel-id="business-clips"]')).toContainText('uni.edu: 71. The gap: alt text');
 
 		await tabs.filter({ hasText: 'Outreach' }).click();
 		const outreach = page.locator('[data-view="outreach"]');
@@ -3958,6 +4035,157 @@ test.describe('admin statistics (Jarvis)', () => {
 			.toEqual([['cursor', 'Update the sitemap test for the new pages.', 'main']]);
 		await expect(panel).toContainText('Asked @cursor; it uses your weekly Cursor usage');
 		expect(calls.filter((c) => c.op === 'worker').length).toBeGreaterThan(0);
+		expect(errors).toEqual([]);
+	});
+
+	test("a worker PR at the gate shows its files and the run's screenshots, with Approve and Reject (#2959)", async ({
+		page,
+	}) => {
+		const errors = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		const GH = 'https://github.com/kaanmuar/kaanmuar.github.io';
+		const STORE = 'https://firebasestorage.googleapis.com/v0/b/x/o/';
+		const shots = {};
+		for (const [name, url] of [
+			['before', '/index.html'],
+			['after', '/qa-review.html'],
+		]) {
+			await page.setViewportSize({ width: 1280, height: 800 });
+			await page.goto(url);
+			shots[name] = await page.screenshot({ type: 'jpeg', quality: 60 });
+		}
+		await page.route(STORE + '**', (route) =>
+			route.fulfill({
+				contentType: 'image/jpeg',
+				body: shots[route.request().url().includes('before') ? 'before' : 'after'],
+			})
+		);
+		const at = new Date(Date.now() - 1800000).toISOString();
+		const worker = {
+			ok: true,
+			spend: {
+				month: '2026-11',
+				usd: 6.2,
+				runs: 12,
+				input: 2100000,
+				output: 98000,
+				cap: 40,
+				warn: 20,
+				over: false,
+				warned: false,
+				level: 'ok',
+				left: 33.8,
+			},
+			tasks: [
+				{
+					id: 'w5',
+					title: 'Tighten the review hero spacing',
+					state: 'done',
+					tier: 'pro',
+					at,
+					usd: 0.64,
+					pr: 3101,
+					url: GH + '/pull/3101',
+					gate: {
+						level: 'visible',
+						destructive: [],
+						visible: ['css/site.css', 'qa-review.html'],
+						safe: 1,
+						note: '',
+						decision: null,
+						stale: false,
+						waiting: true,
+						shots: [{ page: 'qa-review.html', before: STORE + 'w5%2F0-before.jpg', after: STORE + 'w5%2F0-after.jpg' }],
+					},
+				},
+				{
+					id: 'w4',
+					title: 'Clean up old review exports',
+					state: 'done',
+					tier: 'pro',
+					at,
+					usd: 0.31,
+					pr: 3100,
+					url: GH + '/pull/3100',
+					gate: {
+						level: 'destructive',
+						destructive: [
+							{
+								file: 'functions/review-export.js',
+								why: 'deletes data: await db.collection("exports").doc(id).delete();',
+							},
+						],
+						visible: [],
+						safe: 2,
+						shots: [],
+						note: '',
+						decision: null,
+						stale: false,
+						waiting: true,
+					},
+				},
+				{
+					id: 'w3',
+					title: 'Fix the flaky sitemap test',
+					state: 'done',
+					tier: 'flash',
+					at,
+					usd: 0.05,
+					pr: 3099,
+					url: GH + '/pull/3099',
+					gate: {
+						level: 'safe',
+						destructive: [],
+						visible: [],
+						safe: 1,
+						shots: [],
+						note: '',
+						decision: null,
+						stale: false,
+						waiting: false,
+					},
+				},
+			],
+		};
+		const calls = await openStats(page, '#stats/github/30', {
+			'github-work': actionsWork(),
+			worker,
+			'worker-decide': {
+				ok: true,
+				message: 'Approved #3101; it merges once CI is green and the countdown ends.',
+				url: GH + '/pull/3101',
+			},
+		});
+		const panel = page.locator('[data-view="github"] [data-panel-id="github-worker"]');
+		await expect(panel).toContainText('At the gate · 2');
+		const cards = panel.locator('.jv-gate');
+		await expect(cards).toHaveCount(2);
+		await expect(cards.nth(0)).toContainText('Visible');
+		await expect(cards.nth(0).locator('img')).toHaveCount(2);
+		await expect(cards.nth(1)).toContainText('functions/review-export.js');
+		await expect(cards.nth(1)).toContainText('never merges on its own');
+		await expect(panel.locator('tbody tr').nth(2)).toContainText('Safe');
+		await expect
+			.poll(() =>
+				cards
+					.nth(0)
+					.locator('img')
+					.evaluateAll((imgs) => imgs.every((i) => i.complete && i.naturalWidth > 0))
+			)
+			.toBe(true);
+		await cards.nth(0).scrollIntoViewIfNeeded();
+		await panel.screenshot({ path: 'test-results/jarvis-worker-gate.png' });
+		page.once('dialog', (d) => d.accept());
+		await cards.nth(0).locator('[data-worker-decide="approve"]').click();
+		await expect
+			.poll(() => calls.filter((c) => c.op === 'worker-decide').map((c) => [c.body.id, c.body.decision]))
+			.toEqual([['w5', 'approve']]);
+		await expect(panel).toContainText('Approved #3101');
+		page.once('dialog', (d) => d.accept('It deletes exports customers still download.'));
+		await panel.locator('[data-worker-decide="reject"][data-worker-id="w4"]').click();
+		await expect
+			.poll(() => calls.filter((c) => c.op === 'worker-decide').map((c) => [c.body.id, c.body.decision, c.body.why]))
+			.toContainEqual(['w4', 'reject', 'It deletes exports customers still download.']);
 		expect(errors).toEqual([]);
 	});
 

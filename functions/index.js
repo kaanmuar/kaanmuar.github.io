@@ -2593,6 +2593,9 @@ const ownerMail = require('./url-review-owner-mail');
 const mailFace = require('./mail-face');
 const accountData = require('./url-review-account-data');
 const ownerProofs = require('./url-review-owner-proof');
+const dmarcConsent = require('./url-review-dmarc-consent');
+const dmarcStore = require('./url-review-dmarc-store');
+const dmarcInbound = require('./url-review-dmarc-inbound');
 const domainOffer = require('./url-review-domain-offer');
 const outreachTrials = require('./outreach-trials');
 const outreachSend = require('./outreach-send');
@@ -3795,7 +3798,7 @@ exports.sweepReviews = require('firebase-functions/v2/scheduler').onSchedule(
 	() => track('sweepReviews', () => sweepReviews())
 );
 
-// Retention (#3823): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
+// Retention (#3823 #4026): weekly. Dry run unless RETENTION_APPLY=on in functions/.env; the counts go to retention_runs.
 exports.retentionSweep = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('retentionSweep'),
@@ -4456,6 +4459,7 @@ async function opsWatchdog() {
 exports.opsWatchdog = scheduled(withMailAndGithub, 'opsWatchdog', () => opsWatchdog());
 
 const ownerReplies = require('./url-review-owner-replies');
+const headsUpSend = require('./url-review-heads-up-send');
 const OWNER_REPLIES_URL =
 	process.env.OWNER_REPLIES_URL || 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/ownerReplies';
 
@@ -4498,6 +4502,9 @@ async function applyReplyAction(action, row) {
 					.set({ at, via: 'reply-' + row.kind, domain })
 			)
 		);
+	}
+	if (action === 'false-positive' && row.threatId) {
+		await db.collection('url_review_threats').doc(row.threatId).set(headsUpSend.FALSE_POSITIVE_PATCH, { merge: true });
 	}
 	if (action === 'unlist' && row.host) {
 		await db
@@ -4660,6 +4667,12 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 	if (matchedOnly && ownerReplies.OPERATORS.includes(reply.from)) return { id: '', outcome: 'operator' };
 	const { link, ref, notice } = await noticeForReply(reply);
 	if (matchedOnly && !ref && !link) return { id: '', outcome: 'unmatched' };
+	// A reply to a security heads-up (#3997) that is only STOP or FALSE POSITIVE is read by that word, not by the owner-notice rules.
+	const headsUpKind =
+		link && link.kind === 'heads-up' && !ownerReplies.OPERATORS.includes(reply.from)
+			? headsUpSend.replyKind(reply.words)
+			: '';
+	if (headsUpKind) reply.kind = headsUpKind;
 	const decision = ownerReplies.plan(reply, notice);
 	const id = ownerReplies.replyId(mail.messageId) || crypto.randomBytes(16).toString('hex');
 	const host = (notice && notice.host) || (link && link.host) || '';
@@ -4670,7 +4683,8 @@ async function takeOwnerReply(mail, auth, matchedOnly) {
 		reply,
 		{
 			at: new Date().toISOString(),
-			noticeDomain: ref ? ref.id : '',
+			noticeDomain: ref ? ref.id : (link && link.domain) || '',
+			threatId: (link && link.kind === 'heads-up' && link.threatId) || '',
 			host,
 			noticeEmail: (link && link.email) || (notice && notice.email) || '',
 			messageId: String(mail.messageId || '')
@@ -6366,6 +6380,52 @@ async function reviewAccount(req, res, pathName) {
 		res.status(200).json(Object.assign({ available: true }, given, { proofs: await proofs() }));
 		return;
 	}
+	// DMARC / TLS-RPT consent on/off for an owner-proven host (#3777). Session required; turning on needs a live proof.
+	if (pathName.endsWith('/account/dmarc-consent') || pathName.endsWith('/account/dmarc-consent-set')) {
+		const store = reviewAuth.firestoreStore(db);
+		const host = ownerProofs.hostOf(req.body && req.body.host);
+		const proofRows = await ownerProofRows(signedIn.email);
+		const proofKind = host ? dmarcStore.proofKindOf(proofRows, signedIn.email, host, Date.now()) : '';
+		if (pathName.endsWith('/account/dmarc-consent-set')) {
+			if (!host) {
+				res.status(400).json({ error: 'Enter a public host name, such as shop.example.com.' });
+				return;
+			}
+			const result = await dmarcStore.setConsent(
+				store,
+				{
+					email: signedIn.email,
+					host,
+					accept: !!(req.body && req.body.accept === true),
+					noticeVersion: req.body && req.body.noticeVersion,
+				},
+				proofRows,
+				Date.now()
+			);
+			if (!result.ok) {
+				res.status(result.status).json({ error: result.error, notice: dmarcConsent.NOTICE, proofKind });
+				return;
+			}
+			res.status(200).json({
+				ok: true,
+				notice: dmarcConsent.NOTICE,
+				consent: result.consent,
+				proofKind: result.proofKind,
+				deleted: result.deleted || 0,
+			});
+			return;
+		}
+		const row = host ? await dmarcStore.getConsent(store, signedIn.email, host) : null;
+		res.status(200).json({
+			ok: true,
+			notice: dmarcConsent.NOTICE,
+			host: host || '',
+			proofKind,
+			consent: dmarcStore.publicConsent(row),
+			on: !!(row && dmarcConsent.consentOn(row, proofKind, Date.now())),
+		});
+		return;
+	}
 	res.status(404).json({ error: 'Not found.' });
 }
 
@@ -7445,7 +7505,34 @@ exports.reviewUrl = functions
 			res.status(204).send('');
 			return;
 		}
-		if (pathName.indexOf('/review/fix/') !== -1 && (await fixRequests.route(req, res, pathName, fixDeps()))) return;
+		if (req.method === 'POST' && (pathName.endsWith('/review/run/sample') || pathName.endsWith('/review/run/status'))) {
+		const body = req.body || {};
+		const db = getFirestore();
+		const id = String(body.id || '').replace(/[^a-f0-9]/g, '').slice(0, 32);
+		const snap = id ? await db.collection('url_reviews').doc(id).get() : null;
+		const row = snap && snap.exists ? snap.data() || {} : null;
+		const access = await reviewAuth.runAccess(reviewAuth.firestoreStore(db), body, row);
+		if (!access.ok) {
+			res.status(access.status).json({ error: access.error, code: access.code || '', signIn: !!access.signIn });
+			return;
+		}
+		const now = Date.now();
+		try {
+			if (pathName.endsWith('/sample')) {
+				const started = await cube.startSample(db, { reviewId: id, host: row.report.host, email: access.email }, now);
+				if (started.used) {
+					res.status(429).json({ error: 'The free sample for this site already ran today.', code: 'sample-used', next: started.next });
+					return;
+				}
+			}
+			res.status(200).json({ run: await cube.latestFor(db, id), sample: await cube.sampleState(db, row.report.host, now), size: cube.SAMPLE_SIZE });
+		} catch (error) {
+			console.error('Run tab failed for ' + id + ':', error);
+			res.status(500).json({ error: 'The run did not load. Try again in a moment.', code: 'failed' });
+		}
+		return;
+	}
+	if (pathName.indexOf('/review/fix/') !== -1 && (await fixRequests.route(req, res, pathName, fixDeps()))) return;
 		if (req.method === 'POST' && pathName.endsWith('/review/owner-notice')) {
 			const body = req.body || {};
 			if (body.attackOffer !== true) {
@@ -9758,7 +9845,7 @@ exports.jarvisReviewRun = functions
 					Object.assign({ url: row.url, startedAt: new Date(startedAt).toISOString() }, extra)
 				)
 			);
-		await desk('running', { step: 'Reading the site' });
+		await desk('running', { step: 'Analyzing the site' });
 		try {
 			const value = jarvisReview.intake(row);
 			const report = await urlReview.reviewTarget(value.url, {
@@ -9979,20 +10066,16 @@ exports.cubeRunStart = functions
 		}
 	});
 
-exports.cubeRunDone = functions
-	.runWith({ timeoutSeconds: 60, memory: '256MB' })
-	.firestore.document(cube.RUNS + '/{id}')
-	.onUpdate(async (change) => {
-		const run = change.after.data() || {};
-		if ((change.before.data() || {}).status !== run.status) await cubeProcess(change.after.id, run);
-		if (!cube.finished(change.before.data(), run)) return;
-		const db = getFirestore();
-		const tokens = run.token ? [run.token] : await jarvisPush.targets(db, 'alerts');
-		const link = customerMail.pageUrl('en', { report: run.reviewId });
-		await jarvisPush
-			.send(getMessaging(), db, tokens, cube.doneMessage(run, link))
-			.catch((error) => console.error('Cube run push failed:', error));
-	});
+exports.cubeRunDone = functions.runWith({ timeoutSeconds: 60, memory: "256MB" }).firestore.document(cube.RUNS + "/{id}").onUpdate(async (change) => {
+  const run = change.after.data() || {};
+  if ((change.before.data() || {}).status !== run.status) await cubeProcess(change.after.id, run);
+  if (!cube.finished(change.before.data(), run)) return;
+  const db = getFirestore();
+  await cube.releaseSample(db, run, change.after.id).catch((error) => console.error("Cube sample slot was not released:", error));
+  const tokens = run.token ? [run.token] : await jarvisPush.targets(db, "alerts");
+  const link = customerMail.pageUrl("en", { report: run.reviewId });
+  await jarvisPush.send(getMessaging(), db, tokens, cube.doneMessage(run, link)).catch((error) => console.error("Cube run push failed:", error));
+});
 
 async function jarvisUsers() {
 	const users = [];
@@ -10840,54 +10923,30 @@ function jarvisAutoOps(settings, now, th) {
 	return out;
 }
 
-// A PR Jarvis may merge after the countdown: labelled jarvis-merge, not a draft, not a PageSpeed branch (those merge
-// through pagespeed-merge.yml), mergeable and every check passed.
+// A PR Jarvis may merge after the countdown: not a PageSpeed branch (those merge through pagespeed-merge.yml), past mergeBlock
+// (open, the worker's gate, mergeable, every check passed) and labelled jarvis-merge. -> { pr, why, dropped?, gate? }
 async function jarvisGreenPr(number, token) {
-	const pr = await githubGet('/repos/' + BUG_REPO + '/pulls/' + Number(number), token);
-	const why =
-		pr.state !== 'open'
-			? pr.merged
-				? 'already merged'
-				: 'closed'
-			: !(pr.labels || []).some((l) => l.name === jarvisCountdown.MERGE_LABEL)
-				? 'no longer labelled ' + jarvisCountdown.MERGE_LABEL
-				: jarvisPageSpeed.BRANCH.test((pr.head || {}).ref || '')
-					? 'a PageSpeed PR'
-					: pr.draft
-						? 'a draft'
-						: pr.mergeable_state !== 'clean'
-							? 'not mergeable (' + pr.mergeable_state + ')'
-							: '';
-	if (why) return { pr, why };
-	const checks =
-		(await githubGet('/repos/' + BUG_REPO + '/commits/' + pr.head.sha + '/check-runs?per_page=100', token))
-			.check_runs || [];
-	const red = checks.filter(
-		(c) => c.status !== 'completed' || !['success', 'skipped', 'neutral'].includes(c.conclusion)
-	);
-	return {
-		pr,
-		why: !checks.length
-			? 'without checks'
-			: red.length
-				? red.length + ' check' + (red.length === 1 ? '' : 's') + ' not green (' + red[0].name + ')'
-				: '',
-	};
+  const pr = await githubGet("/repos/" + BUG_REPO + "/pulls/" + Number(number), token);
+  if (pr.state === "open" && jarvisPageSpeed.BRANCH.test((pr.head || {}).ref || "")) return { pr, why: "a PageSpeed PR" };
+  const state = await jarvisGithubFix.mergeState(jarvisGithubCtx(Date.now()), BUG_REPO, pr);
+  if (state.why) return Object.assign({ pr }, state);
+  if (!(pr.labels || []).some((l) => l.name === jarvisCountdown.MERGE_LABEL)) return { pr, why: "no longer labelled " + jarvisCountdown.MERGE_LABEL };
+  return { pr, why: "", gate: state.gate };
 }
 
+// Open PRs labelled jarvis-merge that may merge, and worker PRs waiting at the gate (jarvis-gate) that were dropped on the way.
 async function jarvisMergeCandidates() {
-	const token = await githubApp.token();
-	if (!token) return [];
-	const list = await githubGet(
-		'/repos/' + BUG_REPO + '/issues?state=open&labels=' + jarvisCountdown.MERGE_LABEL + '&per_page=20',
-		token
-	);
-	const out = [];
-	for (const issue of list.filter((i) => i.pull_request)) {
-		const { pr, why } = await jarvisGreenPr(issue.number, token);
-		if (!why) out.push({ number: pr.number, sha: pr.head.sha, title: pr.title, url: pr.html_url });
-	}
-	return out;
+  const token = await githubApp.token();
+  if (!token) return [];
+  const lists = await Promise.all([jarvisCountdown.MERGE_LABEL, jarvisWorker.GATE_LABEL].map((label) => githubGet("/repos/" + BUG_REPO + "/issues?state=open&labels=" + label + "&per_page=20", token)));
+  const numbers = Array.from(new Set(lists.flat().filter((i) => i.pull_request).map((i) => i.number)));
+  const out = [];
+  for (const n of numbers) {
+    const { pr, why, dropped, gate } = await jarvisGreenPr(n, token);
+    if (dropped) out.push({ number: pr.number, title: pr.title, url: pr.html_url, dropped });
+    else if (!why) out.push({ number: pr.number, sha: pr.head.sha, title: pr.title, url: pr.html_url, gate: gate || null });
+  }
+  return out;
 }
 
 async function jarvisMergePr(number, sha) {
@@ -11254,6 +11313,14 @@ async function jarvisClickAction(body, by) {
 }
 
 // #2526: what jarvis-github-fix.js needs.
+// A file in storage behind a download token, so the app and GitHub show it without a sign-in: the worker's screenshots (#2959).
+async function jarvisStore(path, data, contentType) {
+  const token = crypto.randomUUID();
+  const file = getStorage().bucket(SHARE_BUCKET).file(path);
+  await file.save(data, { resumable: false, contentType, metadata: { cacheControl: "public, max-age=86400", metadata: { firebaseStorageDownloadTokens: token } } });
+  return "https://firebasestorage.googleapis.com/v0/b/" + SHARE_BUCKET + "/o/" + encodeURIComponent(file.name) + "?alt=media&token=" + token;
+}
+
 function jarvisGithubCtx(now) {
 	return {
 		fetch,
@@ -11261,6 +11328,7 @@ function jarvisGithubCtx(now) {
 		db: getFirestore(),
 		now,
 		github: (scope) => githubApp.token(scope || 'repo'),
+		store: jarvisStore,
 		gemini: Gemini.ready(process.env)
 			? (prompt, maxTokens) => jarvis.gemini(fetch, process.env, prompt, maxTokens)
 			: null,
@@ -12164,6 +12232,15 @@ exports.mailboxGraduate = scheduled(
 const mailInbound = require('./mail-inbound');
 const mailCodes = () => getFirestore().collection('jarvis_mail_codes');
 
+async function ingestDmarcReport(payload) {
+	const store = reviewAuth.firestoreStore(getFirestore());
+	return dmarcInbound.ingest(payload, {
+		store,
+		proofsFor: (email) => ownerProofRows(email),
+		now: Date.now(),
+	});
+}
+
 async function mailCodeRows() {
 	const now = Date.now();
 	const snap = await mailCodes()
@@ -12228,6 +12305,7 @@ exports.mailCanary = scheduled(
 // ImprovMX posts each mail to qa@ and the per-channel aliases here as JSON (#1898). A code or a checked confirm
 // link is kept for a day and pushed to Jarvis once; a retry of the same mail finds its row and pushes nothing.
 // Other mail to qa@ or a face address that matches an owner notice goes into the owner-replies queue (#1899, #2312).
+// DMARC aggregate / TLS-RPT mail is reduced to counts only when consent is on for that domain (#3777); raw report discarded.
 // The daily canary to canary@ only marks its round trip back (#1900).
 exports.mailInbound = functions
 	.runWith({ timeoutSeconds: 60, memory: '256MB', maxInstances: 5, secrets: SECRETS.mailInbound })
@@ -12252,6 +12330,17 @@ exports.mailInbound = functions
 						(await mailCanaryBack(mailHealth.tokenOf(mail.subject), Date.now()))
 							? 'canary back'
 							: 'canary not in flight'
+					);
+				return;
+			}
+			if (dmarcInbound.looksLikeReport(req.body)) {
+				const report = await ingestDmarcReport(req.body);
+				res
+					.status(200)
+					.send(
+						report.outcome === 'counted'
+							? 'report ' + report.kinds.join('+') + ' ' + report.domain
+							: 'report ' + report.outcome + (report.domain ? ' ' + report.domain : '')
 					);
 				return;
 			}
@@ -12480,12 +12569,11 @@ exports.jarvis = functions
 					String(req.get('x-worker-oidc') || '')
 				);
 				if (out.state !== 'running') await jarvisGithubFresh();
-				const budget = jarvisWorker.budgetMessage(out.crossed, out.monthUsd);
-				if (budget) {
+				for (const msg of [jarvisWorker.budgetMessage(out.crossed, out.monthUsd), jarvisWorker.gateMessage(out)].filter(Boolean)) {
 					const db = getFirestore();
 					await jarvisPush
-						.send(getMessaging(), db, await jarvisPush.targets(db, 'alerts'), budget)
-						.catch((error) => console.error('Jarvis budget push failed:', error));
+						.send(getMessaging(), db, await jarvisPush.targets(db, 'alerts'), msg)
+						.catch((error) => console.error('Jarvis worker push failed:', error));
 				}
 				res.json(Object.assign({ op: 'worker-report' }, out));
 			} catch (error) {
@@ -12878,6 +12966,9 @@ exports.jarvis = functions
 			else if (op === 'worker-run')
 				out = await jarvisWorker.dispatch(jarvisGithubCtx(now), Object.assign({}, body, { by: 'Carlos' }));
 			else if (op === 'worker') out = await jarvisWorker.view(getFirestore(), now);
+			else if (op === 'worker-decide') {
+				out = await jarvisWorker.decide(jarvisGithubCtx(now), body, 'Carlos');
+			}
 			else if (jarvisSources.SOURCES[op]) {
 				if (op === 'github-work' && body.fresh === true)
 					await getFirestore()

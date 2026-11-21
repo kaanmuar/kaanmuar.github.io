@@ -95,7 +95,7 @@
       '<h1 class="serif" style="font-size:36px">Real sites.<br><em class="hi">Real scores.</em></h1></div>' +
       '<div class="stats">' +
       '<div class="stat"><b>' + nf(d.reports) + "</b><span>sites</span></div>" +
-      '<div class="stat"><b>' + nf(d.pages) + "</b><span>pages read</span></div>" +
+      '<div class="stat"><b>' + nf(d.pages) + "</b><span>pages analyzed</span></div>" +
       '<div class="stat"><b>' + d.countries + "</b><span>countries</span></div>" +
       '<div class="stat"><b>' + d.sectors + "</b><span>sectors</span></div></div></div>",
     handoff: (d) => '<div class="body"><div>' + chip("Ready for your team") +
@@ -118,7 +118,7 @@
     open: (d) => '<div class="pad">' + chip("QA-lab URL Review") +
       '<h1 class="serif">What a URL Review <em class="hi">finds.</em></h1>' +
       '<p class="lead">We read ' + nf(d.reports) + " public sites the way a visitor and a crawler would, and scored each one. Here are five of them.</p>" +
-      '<div class="big-stats"><div><b>' + nf(d.pages) + "</b><span>pages read</span></div><div><b>" + d.countries + "</b><span>countries</span></div>" +
+      '<div class="big-stats"><div><b>' + nf(d.pages) + "</b><span>pages analyzed</span></div><div><b>" + d.countries + "</b><span>countries</span></div>" +
       "<div><b>" + d.sectors + "</b><span>sectors</span></div><div><b>6</b><span>languages</span></div></div>" +
       '<div class="foot"><span>Swipe →</span><span class="mono">1 / ' + d.total + "</span></div></div>",
     close: (d) => '<div class="pad">' + chip("Your turn") +

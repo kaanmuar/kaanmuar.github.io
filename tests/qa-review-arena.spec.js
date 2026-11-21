@@ -38,7 +38,7 @@ test.describe('Review arena live facts', () => {
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
-			ReviewProgress.line('Reading robots.txt.');
+			ReviewProgress.line('Checking robots.txt.');
 		});
 		await expect(page.locator('.ra--lab .rc')).toBeVisible();
 		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
@@ -61,7 +61,7 @@ test.describe('Review arena live facts', () => {
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
-			ReviewProgress.line('Reading robots.txt.');
+			ReviewProgress.line('Checking robots.txt.');
 		});
 		await expect(page.locator('.ra--lab .rc')).toBeVisible();
 		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
@@ -95,7 +95,7 @@ test.describe('Review arena live facts', () => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
 			ReviewProgress.line('Checking that the address is public https.');
 			ReviewProgress.line('Opening the first page.');
-			ReviewProgress.line('Reading robots.txt.');
+			ReviewProgress.line('Checking robots.txt.');
 		});
 		await expect(page.locator('.ra--console .rc')).toBeVisible();
 		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
@@ -153,7 +153,7 @@ test.describe('Review arena live facts', () => {
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
-			ReviewProgress.line('Reading robots.txt.');
+			ReviewProgress.line('Checking robots.txt.');
 		});
 		await page.locator('.rc [data-nav="processes"]').click();
 		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(1);
@@ -176,7 +176,7 @@ test.describe('Review arena live facts', () => {
 		// auto-refresh off freezes the view; Update catches up
 		await page.getByRole('switch', { name: 'Auto-refresh' }).click();
 		await expect(page.locator('.rc .rc-paused')).toBeVisible();
-		await page.evaluate(() => ReviewProgress.line('robots.txt was read.'));
+		await page.evaluate(() => ReviewProgress.line('robots.txt was checked.'));
 		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-wip/);
 		await page.getByRole('button', { name: 'Update' }).click();
 		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-done/);
@@ -219,7 +219,7 @@ test.describe('Review arena live facts', () => {
 				'Opening the first page.',
 				'Asking PageSpeed Insights for a mobile Lighthouse run in the background.',
 				'Searching for public write-ups about example.com in the background.',
-				'Reading robots.txt.',
+				'Checking robots.txt.',
 				'Opening the start page in a headless browser alongside the analysis.',
 				'First page answered 200 in 420 ms. Title: Example. 12000 bytes.',
 				'12 same-host links were listed. This review opens at most 8 HTML pages and 2 links deep.',
