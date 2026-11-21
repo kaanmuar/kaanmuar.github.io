@@ -40,6 +40,8 @@ android {
         targetSdk = 34
         versionCode = build
         versionName = "2.1.$build"
+        // Sentry DSN (#3836) from the environment at build time; never committed. Empty leaves Sentry off.
+        buildConfigField("String", "SENTRY_DSN", "\"${System.getenv("JARVIS_SENTRY_DSN") ?: ""}\"")
     }
 
     signingConfigs {
@@ -98,7 +100,7 @@ android {
         )
         abortOnError = true
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
 }
 
 dependencies {
@@ -121,4 +123,8 @@ dependencies {
     implementation(libs.horologist.datalayer)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
+    // getsentry/sentry-java (MIT) crash capture + touchlab/Kermit (Apache-2.0) logging facade (#3836).
+    implementation(libs.sentry.android)
+    implementation(libs.kermit)
+    testImplementation(libs.junit)
 }
