@@ -7,6 +7,7 @@ const fixOffers = require('./url-review-fix-offers');
 const reviewPromise = require('./url-review-promise');
 const threats = require('./url-review-threats');
 const jarvisCore = require('./jarvis-core');
+const resilience = require('./http-resilience');
 
 const HELD_WORDS = {
 	'not-complete': 'the review did not complete',
@@ -2261,12 +2262,22 @@ async function verifyOperator(idToken) {
 	const claims = tokenClaims(token);
 	const method = String((claims && claims.firebase && claims.firebase.sign_in_provider) || '');
 	if (!DESK_SIGN_IN.includes(method)) return null;
-	const response = await fetch(
+	// Retries 5xx/429 with backoff and pauses after repeated failures (#3838); permanent 4xx auth
+	// failures return at once and never count against the breaker. Answer shapes stay the same.
+	const response = await resilience.resilientFetch(
 		'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(apiKey),
 		{
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ idToken: token }),
+		},
+		{
+			retries: 2,
+			baseMs: 300,
+			maxMs: 2000,
+			maxRetryAfterMs: 3000,
+			timeoutMs: 10000,
+			breaker: resilience.breakers.identitytoolkit,
 		}
 	);
 	const body = await response.json().catch(() => ({}));

@@ -11,7 +11,8 @@
    post each feed image with its x caption at the post's calendar.csv x slot; Instagram posts the feed image with its
    instagram caption at the instagram slot, and the story image at the instagram-story slot (ROUTES). A slot more
    than MISSED_MS old is left alone, so connecting a network does not flood it with the backlog. A network whose
-   secrets are missing is skipped. Threads also uses its composer (scripts/threads-compose.js, #2701): a topic, the
+   secrets are missing is skipped (Threads names THREADS_TOKEN when that is why). Threads Graph calls retry 5xx/429
+   via scripts/threads-api.js (#3841). Threads also uses its composer (scripts/threads-compose.js, #2701): a topic, the
    clip from the batch's release when it speaks the caption's language, polls in our reply under a quiz, GIFs,
    quotes, spoilers, location tags and long-form text.
    Bluesky, Mastodon, Telegram and Instagram use theirs (scripts/open-social-compose.js): videos and reels, polls,
@@ -35,10 +36,10 @@
    refused a login or a post, after trying the rest. A post that went out on a plainer plan than its first (the card
    for a refused clip or poll) counts as posted, and the run's line and a GitHub Actions warning name it (#3006).
 
-   Bluesky XRPC stays plain fetch; PDS discovery uses extractPdsEndpoint from @atproto/lex-password-session (MIT,
-   Node >=22). Full @atproto/lex Client + lexicon codegen is deferred (#3841). Mastodon HTTP goes through masto
-   8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are unchanged. Do not auto-post from this module
-   without --live / workflow secrets.
+   Bluesky createRecord goes through scripts/bluesky-lex.js (@atproto/lex-client Client, MIT, Node >=22);
+   PDS discovery uses extractPdsEndpoint from @atproto/lex-password-session. Other Bluesky XRPC stays plain
+   fetch. Mastodon HTTP goes through masto 8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are
+   unchanged. Do not auto-post from this module without --live / workflow secrets.
 
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
@@ -54,10 +55,12 @@ const path = require('path');
 // run-test-review.sh installs these when missing (#3841 / #4056 pattern).
 const mastoApi = () => require('masto');
 const extractPdsEndpoint = (...args) => require('@atproto/lex-password-session').extractPdsEndpoint(...args);
+const blueskyLex = require('./bluesky-lex');
 const ledger = require('./social-ledger');
 const { createGate, withHubLink, hubUrl } = require('./hub-gate');
 const faceRoute = require('./face-route');
 const threadsCompose = require('./threads-compose');
+const threadsApi = require('./threads-api');
 const compose = require('./open-social-compose');
 const socialClip = require('./social-clip');
 const { FACES } = require('./brand-kit/faces');
@@ -65,7 +68,6 @@ const { FACES } = require('./brand-kit/faces');
 const ROOT = path.resolve(__dirname, '..');
 const SITE = process.env.SITE || 'https://carlosandmunoz.com';
 const GRAPH = 'https://graph.facebook.com/' + (process.env.FACEBOOK_GRAPH_VERSION || 'v23.0');
-const THREADS = 'https://graph.threads.net/v1.0';
 const BSKY_VIDEO = 'https://video.bsky.app';
 const CLIPS =
 	'https://github.com/' + (process.env.GITHUB_REPOSITORY || 'kaanmuar/kaanmuar.github.io') + '/releases/download/';
@@ -540,8 +542,11 @@ function bluesky(env = process.env) {
 					continue;
 				}
 				try {
-					const { uri } = await xrpc('com.atproto.repo.createRecord', {
-						body: { repo: session.did, collection: 'app.bsky.feed.post', record },
+					const { uri } = await blueskyLex.createFeedPost({
+						service,
+						did: session.did,
+						accessJwt: session.accessJwt,
+						record,
 					});
 					return sent(
 						{
@@ -711,7 +716,7 @@ function mastodon(env = process.env) {
 }
 
 function threads(env = process.env) {
-	const call = graph(THREADS, env.THREADS_TOKEN, 'Threads');
+	const call = threadsApi.createCall(env.THREADS_TOKEN);
 	// A token without threads_location_tagging finds no place, so the post goes without one.
 	const places = new Map();
 	const place = (name) => {
@@ -729,7 +734,8 @@ function threads(env = process.env) {
 		return places.get(name);
 	};
 	return {
-		ready: Boolean(env.THREADS_TOKEN),
+		ready: threadsApi.ready(env),
+		skipWhy: threadsApi.skipWhy(env),
 		async login() {
 			const me = await call('GET', 'me', { fields: 'id,username' });
 			return 'threads.net/@' + me.username;
@@ -1209,7 +1215,7 @@ async function main() {
 		if (BRAND.has(network)) {
 			const client = NETWORKS[network](faceRoute.faceEnv(faceRoute.DEFAULT));
 			if (live && !client.ready) {
-				console.log(network + ': no account connected, skipped');
+				console.log(network + ': ' + (client.skipWhy || 'no account connected, skipped'));
 				continue;
 			}
 			try {
@@ -1260,7 +1266,8 @@ async function main() {
 			clients.push({ face, client });
 		}
 		if (live && !clients.length) {
-			console.log(network + ': no account connected, skipped');
+			const probe = NETWORKS[network](faceRoute.faceEnv(faceRoute.DEFAULT));
+			console.log(network + ': ' + (probe.skipWhy || 'no account connected, skipped'));
 			continue;
 		}
 		const connected = new Set(clients.filter((c) => c.client.ready).map((c) => c.face));
