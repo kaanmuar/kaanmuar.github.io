@@ -373,6 +373,81 @@ const EXTERNAL = {
 			views: 39,
 		},
 		needs: [],
+		media: {
+			updatedAt: '2026-11-01T11:00:00Z',
+			total: { clips: 2, plays: 323, reach: 0, likes: 14, shares: 4, comments: 2 },
+			networks: [
+				{
+					network: 'youtube',
+					name: 'YouTube',
+					api: true,
+					posts: 2,
+					measured: 2,
+					state: '',
+					plays: 123,
+					reach: 0,
+					likes: 5,
+					shares: 0,
+					comments: 0,
+				},
+				{
+					network: 'tiktok',
+					name: 'TikTok',
+					api: true,
+					posts: 1,
+					measured: 1,
+					state: '',
+					plays: 200,
+					reach: 0,
+					likes: 9,
+					shares: 4,
+					comments: 2,
+				},
+				{
+					network: 'instagram',
+					name: 'Instagram',
+					api: false,
+					posts: 0,
+					measured: 0,
+					state: 'no posts yet, no stats yet',
+					plays: 0,
+					reach: 0,
+					likes: 0,
+					shares: 0,
+					comments: 0,
+				},
+			],
+			clips: [
+				{
+					key: 'auto-2026-10-21/01-u-uni-edu',
+					title: 'uni.edu: 71. The gap: alt text',
+					at: '2026-10-22T10:00:00Z',
+					total: { plays: 295, reach: 0, likes: 14, shares: 4, comments: 2 },
+					networks: [
+						{
+							network: 'youtube',
+							url: 'https://www.youtube.com/shorts/AAAAAAAA',
+							measured: true,
+							plays: 95,
+							reach: 0,
+							likes: 5,
+							shares: 0,
+							comments: 0,
+						},
+						{
+							network: 'tiktok',
+							url: 'https://tiktok.com/@q/video/1',
+							measured: true,
+							plays: 200,
+							reach: 0,
+							likes: 9,
+							shares: 4,
+							comments: 2,
+						},
+					],
+				},
+			],
+		},
 	},
 	safety: {
 		ok: true,
@@ -2138,6 +2213,8 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(business).toContainText('Transaction Search');
 		await expect(business).toContainText('rival.example');
 		await expect(business).toContainText('The release is close');
+		await expect(business.locator('[data-panel-id="business-media"]')).toContainText('no posts yet, no stats yet');
+		await expect(business.locator('[data-panel-id="business-clips"]')).toContainText('uni.edu: 71. The gap: alt text');
 
 		await tabs.filter({ hasText: 'Outreach' }).click();
 		const outreach = page.locator('[data-view="outreach"]');
