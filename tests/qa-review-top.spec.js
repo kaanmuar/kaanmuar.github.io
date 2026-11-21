@@ -1069,24 +1069,27 @@ test.describe('Report section index (#2770)', () => {
 		expect(shots).toEqual(shots.map(() => ({ set: true, ratio: true })));
 	});
 
+	async function sheetOpacity(page) {
+		return page.locator('#dash-overlay .dash-modal').evaluate((el) => {
+			const style = getComputedStyle(el);
+			const probe = document.createElement('i');
+			probe.style.color = style.backgroundColor;
+			document.body.appendChild(probe);
+			const alpha = getComputedStyle(probe)
+				.color.match(/[\d.]+/g)
+				.map(Number)[3];
+			probe.remove();
+			return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
+		});
+	}
+
 	test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await openSample(page);
 		await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
 		for (const dark of [false, true]) {
 			await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
-			const sheet = await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
-				const style = getComputedStyle(el);
-				const probe = document.createElement('i');
-				probe.style.color = style.backgroundColor;
-				document.body.appendChild(probe);
-				const alpha = getComputedStyle(probe)
-					.color.match(/[\d.]+/g)
-					.map(Number)[3];
-				probe.remove();
-				return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
-			});
-			expect(sheet).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+			expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
 		}
 		const close = await page.locator('#dash-close').boundingBox();
 		expect(close.y).toBeLessThan(30);
@@ -1095,6 +1098,23 @@ test.describe('Report section index (#2770)', () => {
 		expect(
 			await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)
 		).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
+	});
+
+	test('on desktop the open report sheet stays opaque under the golden look (#4202)', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await openSample(page);
+		await page.evaluate(() => document.documentElement.setAttribute('data-look', 'golden'));
+		for (const dark of [false, true]) {
+			await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+			expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+		}
+		await page.emulateMedia({ media: 'print' });
+		expect(
+			await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
+				const style = getComputedStyle(el);
+				return { bg: style.backgroundColor, filter: style.backdropFilter };
+			})
+		).toEqual({ bg: 'rgb(255, 255, 255)', filter: 'none' });
 	});
 
 	test('each language page labels the index and its groups in its language', async ({ page }) => {
