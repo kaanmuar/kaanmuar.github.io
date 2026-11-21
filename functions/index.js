@@ -1395,6 +1395,7 @@ exports.emailQuarterSiteReport = scheduled(withMail, 'emailQuarterSiteReport', a
 );
 
 const reviewMail = require('./url-review-mail');
+const webhookIdem = require('./webhook-idempotency');
 
 async function loadBound(name, field, startVal, endVal, options) {
 	const pageSize = (options && options.pageSize) || 400;
@@ -5885,7 +5886,9 @@ async function handlePayPalWebhook(req, res, mode) {
 		return;
 	}
 	const ids = urlReview.paypalEventIds(event);
-	try {
+	// PayPal delivers at least once. Each verified event id is applied once (#3837): a repeat answers 200 and does
+	// nothing, a second delivery while the first runs answers 409 so PayPal retries, a failed apply is retried.
+	const apply = async () => {
 		if (ids.type === 'CHECKOUT.ORDER.APPROVED' || ids.type === 'PAYMENT.CAPTURE.COMPLETED') {
 			let orderId = ids.orderId;
 			if (!orderId && ids.captureId)
@@ -5901,6 +5904,17 @@ async function handlePayPalWebhook(req, res, mode) {
 			ids.type.indexOf('CUSTOMER.DISPUTE.') === 0
 		) {
 			await reversePayment(ids, keys, testRun);
+		}
+	};
+	try {
+		const outcome = await webhookIdem.runOnce(
+			webhookIdem.firestoreStore(getFirestore()),
+			webhookIdem.eventKey('paypal', mode, event, req.headers),
+			apply
+		);
+		if (outcome.state === 'busy') {
+			res.status(409).json({ error: 'This event is being applied.' });
+			return;
 		}
 	} catch (error) {
 		console.error('PayPal webhook ' + ids.type + ' failed:', error);
