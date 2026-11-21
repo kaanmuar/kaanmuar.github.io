@@ -15,6 +15,7 @@
 //
 // Only put a change here once it is live. Words: no internal ticket numbers, no code names.
 // Each item must trace to a commit on main that shipped it. Do not add items from plans or drafts.
+// #4142 (in flight): lenient HTTP parser retry for bad CSP header line feeds — no visitor-facing deck line until live.
 
 const CHANGES = [
 	{
