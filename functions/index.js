@@ -10014,6 +10014,44 @@ exports.socialInbox = functions
 		}
 	});
 
+// Fediverse ActivityPub actor + WebFinger discovery (#3841). Off unless SOCIAL_INBOX_AP=1.
+// Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). Outbox reads Creates from Firestore.
+const socialActor = require('./social-actor');
+exports.socialActor = functions
+	.runWith({ timeoutSeconds: 15, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = await socialActor.handleActor(req, {
+				env: process.env,
+				db: socialActor.enabled() ? getFirestore() : null,
+			});
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('socialActor failed:', error);
+			res.status(500).json({ error: 'Actor failed.' });
+		}
+	});
+
+exports.webfinger = functions
+	.runWith({ timeoutSeconds: 15, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = socialActor.handleWebfinger(req, { env: process.env });
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('webfinger failed:', error);
+			res.status(500).json({ error: 'WebFinger failed.' });
+		}
+	});
+
 exports.cubeRunStart = functions
 	.runWith({ timeoutSeconds: 60, memory: '256MB' })
 	.firestore.document(cube.RUNS + '/{id}')
