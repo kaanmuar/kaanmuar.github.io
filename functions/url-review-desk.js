@@ -2232,7 +2232,11 @@ ${SIGN_IN}
 </body>
 </html>`;
 
-const DESK_FIREBASE_KEY = 'AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w';
+// Server Identity Toolkit lookups use FIREBASE_WEB_KEY (API-restricted server key, #3971). The browser key in
+// PAGE / FAILURES_PAGE stays for client Firebase Auth only; never put the unrestricted browser key here.
+function deskFirebaseKey() {
+	return String(process.env.FIREBASE_WEB_KEY || '').trim();
+}
 
 function operatorEmail() {
 	return (process.env.DESK_GOOGLE_EMAIL || 'kaanmuar@gmail.com').trim().toLowerCase();
@@ -2252,14 +2256,19 @@ function tokenClaims(token) {
 async function verifyOperator(idToken) {
 	const token = String(idToken || '').trim();
 	if (token.length < 20 || token.length > 4000) return null;
+	const apiKey = deskFirebaseKey();
+	if (!apiKey) return null;
 	const claims = tokenClaims(token);
 	const method = String((claims && claims.firebase && claims.firebase.sign_in_provider) || '');
 	if (!DESK_SIGN_IN.includes(method)) return null;
-	const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + DESK_FIREBASE_KEY, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ idToken: token }),
-	});
+	const response = await fetch(
+		'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(apiKey),
+		{
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ idToken: token }),
+		}
+	);
 	const body = await response.json().catch(() => ({}));
 	const user = body && Array.isArray(body.users) ? body.users[0] : null;
 	if (!user || user.emailVerified !== true || user.localId !== claims.sub) return null;

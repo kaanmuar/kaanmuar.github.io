@@ -249,8 +249,14 @@ test('deleting twice leaves the kept rows as they are', async () => {
 
 test('the desk opens for the operator email signed in by password or emailed link, and not by Google', async () => {
 	const realFetch = global.fetch;
+	const prevKey = process.env.FIREBASE_WEB_KEY;
+	process.env.FIREBASE_WEB_KEY = 'test-firebase-web-key';
 	let user = null;
-	global.fetch = async () => ({ json: async () => ({ users: [user] }) });
+	let lookupUrl = '';
+	global.fetch = async (url) => {
+		lookupUrl = String(url);
+		return { json: async () => ({ users: [user] }) };
+	};
 	const as = (providerId, extra) =>
 		Object.assign(
 			{ localId: 'op1', email: 'kaanmuar@gmail.com', emailVerified: true, providerUserInfo: [{ providerId }] },
@@ -265,6 +271,7 @@ test('the desk opens for the operator email signed in by password or emailed lin
 	try {
 		user = as('password');
 		assert.equal(await desk.verifyOperator(signedBy('password')), 'kaanmuar@gmail.com');
+		assert.match(lookupUrl, /[?&]key=test-firebase-web-key(?:&|$)/);
 		assert.equal(await desk.verifyOperator(signedBy('emailLink')), 'kaanmuar@gmail.com');
 		assert.equal(await desk.verifyOperator(signedBy('google.com')), null);
 		assert.equal(await desk.verifyOperator(signedBy('password', 'someone-else')), null);
@@ -278,8 +285,12 @@ test('the desk opens for the operator email signed in by password or emailed lin
 		assert.equal(await desk.verifyOperator(signedBy('password')), null);
 		assert.equal(await desk.verifyOperator('t'.repeat(40)), null);
 		assert.equal(await desk.verifyOperator('short'), null);
+		delete process.env.FIREBASE_WEB_KEY;
+		assert.equal(await desk.verifyOperator(signedBy('password')), null);
 	} finally {
 		global.fetch = realFetch;
+		if (prevKey == null) delete process.env.FIREBASE_WEB_KEY;
+		else process.env.FIREBASE_WEB_KEY = prevKey;
 	}
 });
 
