@@ -25,6 +25,8 @@ const DIR = path.join(__dirname, 'tool-scout');
 const SEEN = path.join(DIR, 'seen.json');
 const KNOWN = path.join(DIR, 'known.json');
 const DAY = 86400000;
+const SCOUT_REPO = 'kaanmuar/kaanmuar.github.io';
+const ISSUE_TITLE_LOOKBACK_DAYS = 14;
 
 const PERMISSIVE = new Set(['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'Zlib', 'CC0-1.0', 'PDDL-1.0', 'Unlicense', '0BSD']);
 const ATTRIBUTION = new Set(['CC-BY-4.0', 'CC-BY-3.0']);
@@ -229,7 +231,44 @@ function readmeFlags(slug) {
 	return flags;
 }
 
-function scout(text, seen, now) {
+/** Slug appears in a repo issue title (open or closed) updated on or after since -> boolean; null when search failed. */
+function slugInRecentIssueTitles(slug, since, cache, searchIssues) {
+	const key = slug.toLowerCase();
+	if (cache.has(key)) return cache.get(key);
+	const q = `repo:${SCOUT_REPO} ${slug} in:title updated:>=${since}`;
+	const res = searchIssues(['search/issues', '-f', `q=${q}`, '-f', 'per_page=10']);
+	let outcome;
+	if (res.error || res.notFound) outcome = { blocked: false, failed: true };
+	else {
+		const re = new RegExp(slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+		outcome = { blocked: (res.items || []).some((i) => re.test(i.title || '')), failed: false };
+	}
+	cache.set(key, outcome);
+	return outcome;
+}
+
+/** After ranking: drop arsenal rows added since the search pass and slugs already in a ticket title (#4075). */
+function filterRankedCandidates(found, arsenalText, now, searchIssues = gh) {
+	const arsenal = arsenalSlugs(arsenalText);
+	const since = new Date(now - ISSUE_TITLE_LOOKBACK_DAYS * DAY).toISOString().slice(0, 10);
+	const cache = new Map();
+	for (const { groups } of found) {
+		for (const g of Object.keys(groups)) {
+			groups[g] = groups[g].filter((c) => {
+				if (arsenal.has(c.slug.toLowerCase())) return false;
+				const hit = slugInRecentIssueTitles(c.slug, since, cache, searchIssues);
+				if (hit.failed) {
+					c.flags = (c.flags || []).concat('issue-title check failed; kept candidate');
+					return true;
+				}
+				return !hit.blocked;
+			});
+		}
+	}
+	return found;
+}
+
+function scout(text, seen, now, searchIssues = gh) {
 	const known = arsenalSlugs(text);
 	for (const slug of Object.keys(seen)) known.add(slug.toLowerCase());
 	const since = new Date(now - 30 * DAY).toISOString().slice(0, 10);
@@ -247,7 +286,7 @@ function scout(text, seen, now) {
 		for (const g of Object.keys(groups)) groups[g].forEach((c) => known.add(c.slug.toLowerCase()));
 		out.push({ corner, groups });
 	}
-	return out;
+	return filterRankedCandidates(out, text, now, searchIssues);
 }
 
 const cell = (s) => String(s).replace(/\|/g, '/');
@@ -368,4 +407,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { repoCard, isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, rank, report, CORNERS };
+module.exports = { repoCard, isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, slugInRecentIssueTitles, filterRankedCandidates, rank, report, CORNERS };
