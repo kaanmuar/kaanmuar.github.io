@@ -15,6 +15,7 @@ const insights = require('./url-review-insights');
 const { replaceBlocks } = require('./tag-blocks');
 const headOrder = require('./url-review-head-order');
 const linkText = require('./url-review-link-text');
+const focusOrder = require('./url-review-focus-order');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
 const linkedRisk = require('./url-review-linked-risk');
@@ -1650,11 +1651,15 @@ async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguag
 
 // alkompis.se folds a Content-Security-Policy-Report-Only line with LF and a tab, not CRLF.
 // Node's strict parser then throws "Parse Error: Missing expected CR after header value" (HPE_CR_EXPECTED).
-// Curl and Chrome read that page. One retry uses Node's lenient parser, which joins the folded line.
+// tekjemarket.com puts line feeds inside a Content-Security-Policy value (HPE_INVALID_HEADER_TOKEN).
+// Curl and Chrome read those pages. One retry uses Node's lenient parser, which joins the folded line.
 function foldedHeader(error) {
 	return (
 		!!error &&
-		(error.code === 'HPE_CR_EXPECTED' || error.message === 'Parse Error: Missing expected CR after header value')
+		(error.code === 'HPE_CR_EXPECTED' ||
+			error.message === 'Parse Error: Missing expected CR after header value' ||
+			error.code === 'HPE_INVALID_HEADER_TOKEN' ||
+			error.message === 'Parse Error: Invalid header value char')
 	);
 }
 
@@ -3018,6 +3023,7 @@ function inspect(html, headers, pageUrl) {
 		analytics: analyticsScan(html),
 		headOrder: headOrder.analyze(html),
 		linkText: linkText.analyze(html),
+		focusOrder: focusOrder.analyze(html),
 		minhash: pageGraph.minhash(text),
 		socialLinks,
 		mailtos,

@@ -195,6 +195,12 @@ const FIXES = [
 		label:
 			"A 5xx that headless Chrome gets after the plain read took too long is the site's own answer, kept on the desk without a bug",
 	},
+	{
+		cause: 'headers',
+		at: '2026-11-21T17:45:00Z',
+		ref: '#4142',
+		label: 'A response header whose value has a line feed is read, as Chrome reads it',
+	},
 ];
 const fixKey = (fix) => fix.cause + ' ' + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -222,7 +228,7 @@ const CAUSES = [
 	[
 		'headers',
 		"The site's response headers are past the review's limit",
-		/Header overflow|HPE_HEADER_OVERFLOW|response headers are past/i,
+		/Header overflow|HPE_HEADER_OVERFLOW|HPE_INVALID_HEADER_TOKEN|Invalid header value char|response headers are past/i,
 	],
 	['dns', 'The host name did not resolve', /did not resolve|ENOTFOUND|EAI_AGAIN/i],
 	['http-redirect', 'The site redirected to http://', /an http:\/\/ address/i],
