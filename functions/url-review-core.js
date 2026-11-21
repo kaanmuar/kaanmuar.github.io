@@ -8463,13 +8463,26 @@ function summarizeCruxHistory(data, scope) {
 async function cruxHistory(url, key) {
 	if (!key) return null;
 	const api = 'https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=' + encodeURIComponent(key);
+	// Retries 5xx with backoff (not 429: the quota), and pauses after repeated failures (#3838); a paused breaker
+	// answers like a failed call. 404 stays "no history" (null) per form.
 	const ask = async (target, scope) => {
-		const res = await fetch(api, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(Object.assign({ metrics: Object.values(CRUX_METRICS) }, target)),
-			signal: AbortSignal.timeout(10000),
-		});
+		const res = await resilience.resilientFetch(
+			api,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(Object.assign({ metrics: Object.values(CRUX_METRICS) }, target)),
+			},
+			{
+				retries: 2,
+				baseMs: 300,
+				maxMs: 2000,
+				maxRetryAfterMs: 3000,
+				timeoutMs: 10000,
+				noRetryStatuses: [429],
+				breaker: resilience.breakers.crux,
+			}
+		);
 		if (res.status === 404) return null;
 		if (!res.ok) throw new Error(res.status === 429 ? 'the quota is used up' : 'status ' + res.status);
 		return summarizeCruxHistory(await res.json(), scope);
@@ -8477,13 +8490,18 @@ async function cruxHistory(url, key) {
 	const page = new URL(url);
 	page.hash = '';
 	const out = { ok: true };
-	await Promise.all(
-		Object.keys(CRUX_FORMS).map(async (form) => {
-			out[form] =
-				(await ask({ url: page.toString(), formFactor: CRUX_FORMS[form] }, 'page')) ||
-				(await ask({ origin: page.origin, formFactor: CRUX_FORMS[form] }, 'origin'));
-		})
-	);
+	try {
+		await Promise.all(
+			Object.keys(CRUX_FORMS).map(async (form) => {
+				out[form] =
+					(await ask({ url: page.toString(), formFactor: CRUX_FORMS[form] }, 'page')) ||
+					(await ask({ origin: page.origin, formFactor: CRUX_FORMS[form] }, 'origin'));
+			})
+		);
+	} catch (error) {
+		if (error instanceof resilience.BreakerOpenError) return { ok: false, error: 'paused after repeated failures' };
+		throw error;
+	}
 	return out;
 }
 
