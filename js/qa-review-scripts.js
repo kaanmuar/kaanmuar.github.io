@@ -73,6 +73,9 @@
 	const MAX_TEXT_LOCATOR = 80;
 	// Roles that take their accessible name from their own text, so the visible text can stand in for a missing name.
 	const NAMED_BY_TEXT = ['link', 'button', 'heading', 'tab', 'menuitem', 'option'];
+	// Landmarks (and a heading with a level) are useful without an accessible name — count/attr checks use these a lot.
+	const LANDMARK_ROLES = ['main', 'navigation', 'banner', 'contentinfo', 'complementary', 'form', 'search', 'region'];
+	const HEADING_LEVEL = { h1: 1, h2: 2, h3: 3, h4: 4, h5: 5, h6: 6 };
 	const IMPLICIT_ROLES = {
 		a: (attrs) => (attrs.href ? 'link' : ''),
 		button: () => 'button',
@@ -100,7 +103,16 @@
 		return rule ? rule(attrs || {}) : '';
 	}
 
-	// target: { tag, attrs, role, name, testId, label, text, css, xpath, matches }. Every field is optional.
+	// A role candidate needs a name, or a landmark/heading-level that is useful without one (structural count/attr).
+	function roleCandidate(role, name, level) {
+		if (!role) return null;
+		if (name) return level ? { role, name, level } : { role, name };
+		if (role === 'heading' && level) return { role, level };
+		if (LANDMARK_ROLES.indexOf(role) !== -1) return { role };
+		return null;
+	}
+
+	// target: { tag, attrs, role, name, testId, label, text, css, xpath, level, matches }. Every field is optional.
 	// matches is how many elements each kind finds on the page, when known: 0 drops the kind, more than 1 demotes it
 	// below every kind that is unique, so a unique CSS selector beats an ambiguous role. Order inside each group is the
 	// fixed LOCATOR_KINDS order, so the result is the same for the same input.
@@ -108,9 +120,10 @@
 		const t = target || {};
 		const text = oneLine(t.text);
 		const role = oneLine(t.role) || implicitRole(t.tag, t.attrs);
+		const level = Number(t.level) || HEADING_LEVEL[String(t.tag || '').toLowerCase()] || 0;
 		const name = oneLine(t.name) || (NAMED_BY_TEXT.indexOf(role) !== -1 ? text : '');
 		const found = {
-			role: role && name ? { role, name } : null,
+			role: roleCandidate(role, name, level || undefined),
 			testId: oneLine(t.testId) ? { value: oneLine(t.testId) } : null,
 			label: oneLine(t.label) ? { value: oneLine(t.label) } : null,
 			text: text && text.length <= MAX_TEXT_LOCATOR ? { value: text } : null,
@@ -129,6 +142,7 @@
 				kind: candidate.kind,
 				role: candidate.role,
 				name: candidate.name,
+				level: candidate.level,
 				value: candidate.value,
 				ambiguous: candidate.ambiguous,
 				rank: index,
@@ -138,8 +152,15 @@
 	// One candidate as a Playwright locator expression on `page`.
 	function playwrightLocator(candidate) {
 		switch (candidate.kind) {
-			case 'role':
-				return 'page.getByRole(' + q(candidate.role) + ', { name: ' + q(candidate.name) + ', exact: true })';
+			case 'role': {
+				const opts = [];
+				if (candidate.name) {
+					opts.push('name: ' + q(candidate.name));
+					opts.push('exact: true');
+				}
+				if (candidate.level) opts.push('level: ' + Number(candidate.level));
+				return 'page.getByRole(' + q(candidate.role) + (opts.length ? ', { ' + opts.join(', ') + ' }' : '') + ')';
+			}
 			case 'testId':
 				return 'page.getByTestId(' + q(candidate.value) + ')';
 			case 'label':
@@ -165,15 +186,56 @@
 		};
 	}
 
+	// The element a count/attr check looks for: fields on the check, else a few CSS shapes we know (h1…h6, main, nav).
+	function checkTarget(check) {
+		const c = check || {};
+		const css = oneLine(c.selector);
+		const target = {
+			tag: oneLine(c.tag) || undefined,
+			attrs: c.attrs,
+			role: oneLine(c.role) || undefined,
+			name: c.name || c.ariaLabel,
+			testId: c.testId,
+			label: c.label,
+			text: c.text,
+			css: css || undefined,
+			xpath: c.xpath,
+			matches: c.matches,
+			level: Number(c.level) || undefined,
+		};
+		if (!target.role && !target.tag && css) {
+			const heading = /^(h[1-6])(?:\b|$|,)/i.exec(css);
+			if (heading) target.tag = heading[1].toLowerCase();
+			else if (/(?:^|,\s*)main(?:\s|,|$)/i.test(css) || /\[role=["']main["']\]/i.test(css)) target.role = 'main';
+			else if (/(?:^|,\s*)nav(?:\s|,|$)/i.test(css) || /\[role=["']navigation["']\]/i.test(css))
+				target.role = 'navigation';
+		}
+		return target;
+	}
+
+	// Best Playwright locator for a check, plus a comment naming the next ones to try.
+	function rankedLocator(check) {
+		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
+		if (!ranked.length) {
+			return { locator: 'page.locator(' + q(check.selector) + ')', fallbacks: '' };
+		}
+		const spare = ranked.slice(1).map(playwrightLocator);
+		return {
+			locator: playwrightLocator(ranked[0]),
+			fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '',
+		};
+	}
+
 	// The lines that find and click a journey link: the best locator, then a comment naming the next ones to try.
 	function journeyLocatorLines(check) {
-		const ranked = rankLocators(journeyTarget(check));
-		const lines = [
-			'const link = ' + playwrightLocator(ranked[0]) + '.first();',
-			'const label = ((await link.textContent()) || "").replace(/\\s+/g, " ").trim();',
-		];
-		const spare = ranked.slice(1).map(playwrightLocator);
-		return { lines, fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '' };
+		const found = rankedLocator(Object.assign({}, check, { kind: 'journey' }));
+		return {
+			lines: [
+				'const link = ' + found.locator + '.first();',
+				'const label = ((await link.textContent()) || "").replace(/\\s+/g, " ").trim();',
+			],
+			fallbacks: found.fallbacks,
+		};
 	}
 
 	function context(report) {
@@ -714,16 +776,24 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'const found = await page.locator(' + q(check.selector) + ').count();',
-					'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
-				);
+				{
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const found = await ' + found.locator + '.count();',
+						'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'await expect(page.locator(' + q(check.selector) + ')).toHaveAttribute(' + q(check.attr) + ', /\\S/);'
-				);
+				{
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'await expect(' + found.locator + ').toHaveAttribute(' + q(check.attr) + ', /\\S/);'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1918,11 +1988,22 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push('const found = ' + D.count(check.selector) + ';', A[check.op]('found', check.n));
+				if (D.ranked) {
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const found = await ' + found.locator + '.count();', A[check.op]('found', check.n));
+				} else body.push('const found = ' + D.count(check.selector) + ';', A[check.op]('found', check.n));
 				break;
 			case 'attr':
 				go(check.path);
-				body.push('const value = ' + D.attr(check.selector, check.attr) + ';', A.filled('value'));
+				if (D.ranked) {
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const value = ((await ' + found.locator + '.first().getAttribute(' + q(check.attr) + ')) || "").trim();',
+						A.filled('value')
+					);
+				} else body.push('const value = ' + D.attr(check.selector, check.attr) + ';', A.filled('value'));
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -4875,6 +4956,8 @@ namespace QaLab
 		README_COPY,
 		rankLocators,
 		playwrightLocator,
+		checkTarget,
+		rankedLocator,
 		LOCATOR_KINDS,
 	};
 	if (typeof module === 'object' && module.exports) module.exports = api;
