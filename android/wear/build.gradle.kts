@@ -45,7 +45,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf("-opt-in=com.google.android.horologist.annotations.ExperimentalHorologistApi")
+    }
 
     // Gate only on slackhq/compose-lints (#3836): the module's other Android Lint findings (e.g. wear's
     // TilePreviewImageFormat) predate this and stay out of the gate until they are cleaned up.
@@ -92,6 +95,8 @@ dependencies {
     implementation(libs.wear.remote.interactions)
     implementation(libs.concurrent.futures)
     implementation(libs.play.services.wearable)
+    // google/horologist datalayer (Apache-2.0, #3836): WearDataLayerRegistry + WearDataService for status sync.
+    implementation(libs.horologist.datalayer)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
 }
