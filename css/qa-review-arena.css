@@ -2,6 +2,7 @@
 .ra { position: relative; width: 100%; margin: 14px 0 6px; border: 1px solid rgba(94, 200, 212, .28); border-radius: 12px; overflow: hidden; background: #02070a; box-shadow: 0 10px 40px rgba(0, 0, 0, .45); container: ra / inline-size; }
 .ra[hidden] { display: none; }
 .ra-canvas { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; }
+.ra--lab .lab-stage .ra-canvas { pointer-events: none; }
 
 /* The console and the Lab scene each carry their own live log, so the plain log under the frame stays for screen readers. */
 #run-panel.ra-console-on,

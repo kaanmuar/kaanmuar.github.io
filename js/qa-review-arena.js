@@ -9,8 +9,8 @@
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
-	const VER = '?v=20261120d';
-	const CONSOLE_VER = '?v=20261120b';
+	const VER = '?v=20261120e';
+	const CONSOLE_VER = '?v=20261120e';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -446,6 +446,7 @@
 
 	function pushConsole() {
 		if (state.cons) state.cons.sync();
+		if (state.skin === 'lab') wake();
 	}
 
 	function dropConsole() {
@@ -472,8 +473,39 @@
 		}
 	}
 
+	function attachLabBoard(host) {
+		if (!host || state.canvas) return;
+		const canvas = document.createElement('canvas');
+		canvas.className = 'ra-canvas';
+		canvas.width = W;
+		canvas.height = H;
+		host.textContent = '';
+		host.appendChild(canvas);
+		state.canvas = canvas;
+		state.ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+		if (state.ctx) {
+			state.ctx.imageSmoothingEnabled = true;
+			state.ctx.imageSmoothingQuality = 'high';
+		}
+		buildLabUi(host);
+		loadAssets('lab').then(function (a) {
+			if (state.canvas !== canvas) return;
+			state.assets = a;
+			wake();
+		});
+		fit();
+		if (!state.ro && typeof ResizeObserver === 'function') {
+			state.ro = new ResizeObserver(function () {
+				fit();
+				wake();
+			});
+			state.ro.observe(host);
+		}
+	}
+
 	function buildConsole(wrap) {
 		const id = state.buildId;
+		const skin = state.skin;
 		dropConsole();
 		wrap.setAttribute('aria-hidden', 'true');
 		wrap.removeAttribute('role');
@@ -481,13 +513,25 @@
 		wrap.textContent = '';
 		state.canvas = null;
 		state.ctx = null;
+		state.assets = null;
 		state.ents = buildEntities();
+		state.bays = {};
 		const panel = document.getElementById('run-panel');
-		if (panel) panel.classList.add('ra-console-on');
+		if (panel) {
+			panel.classList.add('ra-console-on');
+			panel.classList.remove('ra-lab-on');
+		}
 		loadConsole().then(function (C) {
-			if (!C || id !== state.buildId || state.skin !== 'console' || state.run === 'idle') return;
-			state.cons = C.mount(wrap, { model: consoleModel, hud: readHud, stages: facts().STAGES, css: 'css/qa-review-console.css' + CONSOLE_VER });
+			if (!C || id !== state.buildId || state.skin !== skin || state.run === 'idle') return;
+			state.cons = C.mount(wrap, {
+				model: consoleModel,
+				hud: readHud,
+				stages: facts().STAGES,
+				skin: skin,
+				css: 'css/qa-review-console.css' + CONSOLE_VER,
+			});
 			state.cons.sync();
+			if (skin === 'lab' && state.cons.boardHost) attachLabBoard(state.cons.boardHost());
 		});
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
@@ -618,23 +662,26 @@
 		const root = document.createElement('div');
 		root.className = 'ra-lab-ui';
 		root.setAttribute('aria-label', 'Lab Tries controls');
-		const tools = document.createElement('div');
-		tools.className = 'ra-lab-tools';
-		const upd = document.createElement('button');
-		upd.type = 'button';
-		upd.title = 'Update';
-		upd.setAttribute('aria-label', 'Update');
-		upd.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>';
-		upd.addEventListener('click', function () { syncEntities(); wake(); });
-		const full = document.createElement('button');
-		full.type = 'button';
-		full.title = 'Full screen';
-		full.setAttribute('aria-label', 'Full screen');
-		full.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
-		full.addEventListener('click', toggleLabFull);
-		tools.appendChild(upd);
-		tools.appendChild(full);
-		root.appendChild(tools);
+		// Console chrome already has Update / full screen when the scene is embedded in .lab-stage.
+		if (!wrap.hasAttribute('data-lab-stage')) {
+			const tools = document.createElement('div');
+			tools.className = 'ra-lab-tools';
+			const upd = document.createElement('button');
+			upd.type = 'button';
+			upd.title = 'Update';
+			upd.setAttribute('aria-label', 'Update');
+			upd.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>';
+			upd.addEventListener('click', function () { syncEntities(); wake(); });
+			const full = document.createElement('button');
+			full.type = 'button';
+			full.title = 'Full screen';
+			full.setAttribute('aria-label', 'Full screen');
+			full.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+			full.addEventListener('click', toggleLabFull);
+			tools.appendChild(upd);
+			tools.appendChild(full);
+			root.appendChild(tools);
+		}
 		const tip = document.createElement('div');
 		tip.className = 'ra-lab-tip';
 		tip.hidden = true;
@@ -715,39 +762,10 @@
 		state.atlas = (window.ReviewArenaAtlas || {})[skin];
 		wrap.className = 'ra ra--' + skin;
 		wrap.setAttribute('data-skin', skin);
-		if (skin === 'console') {
-			buildConsole(wrap);
-			return;
-		}
-		dropConsole();
-		wrap.textContent = '';
-		const canvas = document.createElement('canvas');
-		canvas.className = 'ra-canvas';
-		canvas.width = W;
-		canvas.height = H;
-		wrap.appendChild(canvas);
-		state.canvas = canvas;
-		state.ctx = canvas.getContext('2d');
 		state.wrap = wrap;
-		state.assets = null;
-		state.ents = buildEntities();
-		state.bays = {};
-		const panel = document.getElementById('run-panel');
-		if (panel) panel.classList.add('ra-lab-on');
-		buildLabUi(wrap);
-		loadAssets(skin).then(function (a) {
-			if (state.canvas !== canvas) return;
-			state.assets = a;
-			wake();
-		});
-		fit();
-		if (!state.ro && typeof ResizeObserver === 'function') {
-			state.ro = new ResizeObserver(function () {
-				fit();
-				wake();
-			});
-			state.ro.observe(wrap);
-		}
+		// Both skins use the console chrome (nav, Update, filter, auto-refresh, full screen, views).
+		// Lab keeps its gaming scene as a canvas mounted into the Processes stage.
+		buildConsole(wrap);
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
 				state.visible = list.some(function (x) {
@@ -762,13 +780,17 @@
 	function fit() {
 		if (!state.canvas) return;
 		const css = state.canvas.getBoundingClientRect().width || W;
-		const dpr = Math.min(2, window.devicePixelRatio || 1);
-		const px = clamp(Math.round(css * dpr), 640, 1920);
+		const dpr = Math.min(3, window.devicePixelRatio || 1);
+		const px = clamp(Math.round(css * dpr), 960, 3840);
 		if (state.canvas.width !== px) {
 			state.canvas.width = px;
 			state.canvas.height = Math.round((px * H) / W);
 		}
 		state.scale = state.canvas.width / W;
+		if (state.ctx) {
+			state.ctx.imageSmoothingEnabled = true;
+			state.ctx.imageSmoothingQuality = 'high';
+		}
 		state.big = css < 760; // phones: larger log type, fewer rows
 	}
 
@@ -1725,13 +1747,11 @@
 
 	function boot() {
 		hookProgress();
-		if (state.skin === 'console') {
-			const warm = function () {
-				loadConsole();
-			};
-			if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
-			else setTimeout(warm, 1500);
-		}
+		const warm = function () {
+			loadConsole();
+		};
+		if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
+		else setTimeout(warm, 1500);
 		if (!window.ReviewProgress) {
 			document.addEventListener('DOMContentLoaded', hookProgress);
 			setTimeout(hookProgress, 0);
@@ -1769,7 +1789,7 @@
 				activeId: state.activeId,
 				stages: Object.assign({}, state.stages),
 				items: items,
-				ready: state.skin === 'console' ? !!state.cons : !!(state.assets && state.assets.clean && state.assets.items),
+				ready: state.skin === 'lab' ? !!(state.cons && state.canvas) : !!state.cons,
 			};
 		},
 		labCast: function () {

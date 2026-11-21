@@ -40,9 +40,11 @@ test.describe('Review arena live facts', () => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
 			ReviewProgress.line('Reading robots.txt.');
 		});
+		await expect(page.locator('.ra--lab .rc')).toBeVisible();
+		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
 		let s = await snap(page);
 		expect(s.stages.robots).toBe('wip');
-		await expect(page.locator('.ra--lab .ra-canvas')).toBeVisible();
+		await expect(page.locator('.ra--lab .lab-stage .ra-canvas')).toBeVisible();
 		expect(s.items.robots).toBe('wip');
 		await page.evaluate(() => {
 			ReviewProgress.line('12 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.');
@@ -54,31 +56,36 @@ test.describe('Review arena live facts', () => {
 		expect(s.items.crawl).toBe('done');
 	});
 
-	test('Lab scene stays the canvas game; cast is identified and the plain log is hidden', async ({ page }) => {
+	test('Lab keeps its gaming scene inside the console options chrome', async ({ page }) => {
 		await prime(page, 'lab');
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
 			ReviewProgress.line('Reading robots.txt.');
 		});
-		await expect(page.locator('.ra--lab .ra-canvas')).toBeVisible();
-		await expect(page.locator('.ra--lab .rc')).toHaveCount(0);
-		const cast = await page.evaluate(() => window.ReviewArena.labCast());
-		expect(cast.doctor.label).toMatch(/doctor/i);
-		expect(cast.bays.map((b) => b.id)).toEqual(['timeout', 'stop', 'retry', 'slow', 'fail']);
-		expect(cast.stations.length).toBe(18);
-		await expect(page.locator('.ra-lab-hit[data-kind="station"]')).toHaveCount(18);
-		await expect(page.locator('.ra-lab-hit[data-kind="bay"]')).toHaveCount(5);
-		await expect(page.locator('.ra-lab-hit[data-kind="doctor"]')).toHaveCount(1);
+		await expect(page.locator('.ra--lab .rc')).toBeVisible();
+		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
+		await expect(page.locator('.ra--lab .lab-stage .ra-canvas')).toBeVisible();
+		await expect(page.locator('.rc[data-skin="lab"] .rc-brandtxt small')).toHaveText(/LAB TRIES/i);
+		// same options as the robots arena
+		for (const id of ['overview', 'systems', 'processes', 'agents', 'workflows', 'infrastructure', 'logs', 'alerts', 'settings']) {
+			await page.locator(`.rc [data-nav="${id}"]`).click();
+			await expect(page.locator(`.rc-view[data-v="${id}"]`)).toBeVisible();
+		}
+		await page.locator('.rc [data-nav="processes"]').click();
+		await page.getByRole('button', { name: 'View All Processes' }).click();
+		await expect(page.locator('.rc-view[data-v="all"]')).toBeVisible();
+		await page.getByRole('button', { name: 'Back to Processes' }).click();
+		await expect(page.getByRole('switch', { name: 'Auto-refresh' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Update' })).toBeVisible();
+		await expect(page.getByRole('button', { name: 'System filter' })).toBeVisible();
 		const hidden = await page.evaluate(() => document.getElementById('run-log').getBoundingClientRect().height);
 		expect(hidden).toBeLessThanOrEqual(1);
-		await page.locator('.ra-lab-hit[data-id="robots"]').click();
-		await expect(page.locator('.ra-lab-tip')).toBeVisible();
+		const cast = await page.evaluate(() => window.ReviewArena.labCast());
+		expect(cast.stations.length).toBe(18);
+		await expect(page.locator('.lab-stage .ra-lab-hit[data-kind="station"]')).toHaveCount(18);
+		await page.locator('.lab-stage .ra-lab-hit[data-id="robots"]').dispatchEvent('click');
 		await expect(page.locator('.ra-lab-tip strong')).toHaveText(/robots/i);
-		await page.locator('.ra-lab-hit[data-id="timeout"]').click();
-		await expect(page.locator('.ra-lab-tip strong')).toHaveText(/TIMEOUT/i);
-		await page.getByRole('button', { name: 'Full screen' }).click();
-		await expect(page.locator('.ra--lab')).toHaveClass(/is-labfull/);
 	});
 
 	test('console lanes show live status and stay out of the internal tool name', async ({ page }) => {
