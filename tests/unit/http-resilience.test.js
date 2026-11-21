@@ -399,6 +399,8 @@ test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the i
 		node.breakers.identitytoolkit.success();
 		if (prevKey == null) delete process.env.FIREBASE_WEB_KEY;
 		else process.env.FIREBASE_WEB_KEY = prevKey;
+	}
+});
 
 test('url review: lookalike DoH uses resilientFetch and the doh breakers', async () => {
 	const lookalikes = require('../../functions/url-review-lookalikes.js');
