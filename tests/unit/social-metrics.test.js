@@ -213,12 +213,13 @@ test('a Page that refuses a post reports how many it answered and had insights, 
 
 test('the Telegram member count is read from getChatMemberCount, and a refusal says why without the token', async () => {
 	const asked = [];
-	const reply = (status, json) => async (url) => {
-		asked.push(url);
+	const reply = (status, json) => async (url, init) => {
+		asked.push({ url, body: init && init.body });
 		return { ok: status === 200, status, json: async () => json };
 	};
 	assert.equal(await metrics.telegramMembers('123:abc', '@qalab_live', reply(200, { ok: true, result: 42 })), 42);
-	assert.equal(asked[0], 'https://api.telegram.org/bot123:abc/getChatMemberCount?chat_id=%40qalab_live');
+	assert.equal(asked[0].url, 'https://api.telegram.org/bot123:abc/getChatMemberCount');
+	assert.equal(JSON.parse(asked[0].body).chat_id, '@qalab_live');
 	await assert.rejects(
 		metrics.telegramMembers(
 			'123:abc',
