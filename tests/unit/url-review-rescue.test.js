@@ -68,6 +68,17 @@ test('rescue: the rules name the blocker and the strategies for each failure cla
 	assert.equal(cert.siteSide, true);
 	assert.deepEqual(rescue.ladder(cert, null, [], NOW), []);
 
+	const handshake = failed('c2', {
+		cause: { id: 'tls' },
+		error: { message: 'The plain read failed during the TLS handshake.' },
+		probe: { plain: { error: 'SSL alert number 112', code: 'EPROTO' } },
+	});
+	const handshakeDiag = rescue.ruleDiagnosis(
+		rescue.evidenceOf(handshake, null, failures.probeLines(handshake.probe))
+	);
+	assert.equal(handshakeDiag.siteSide, true);
+	assert.deepEqual(rescue.ladder(handshakeDiag, null, [], NOW), []);
+
 	const h2 = rescue.ruleDiagnosis(
 		rescue.evidenceOf(
 			failed('d', {
