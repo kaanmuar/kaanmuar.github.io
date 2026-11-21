@@ -399,5 +399,68 @@ test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the i
 		node.breakers.identitytoolkit.success();
 		if (prevKey == null) delete process.env.FIREBASE_WEB_KEY;
 		else process.env.FIREBASE_WEB_KEY = prevKey;
+
+test('url review: lookalike DoH uses resilientFetch and the doh breakers', async () => {
+	const lookalikes = require('../../functions/url-review-lookalikes.js');
+	const saved = global.fetch;
+	const slept = global.setTimeout;
+	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
+	const dnsOk = (status = 0, answers = []) =>
+		new Response(JSON.stringify({ Status: status, Answer: answers }), {
+			status: 200,
+			headers: { 'content-type': 'application/dns-json' },
+		});
+	try {
+		let n = 0;
+		global.fetch = async (url) => {
+			assert.match(String(url), /cloudflare-dns\.com|dns\.google/);
+			n++;
+			if (n === 1) return res(503, { 'retry-after': '1' });
+			return dnsOk(0, [{ type: 1, data: '203.0.113.9' }]);
+		};
+		const out = await lookalikes.doh('example.com', 'A', 500);
+		assert.equal(out.status, 0);
+		assert.deepEqual(out.answers, ['203.0.113.9']);
+		assert.ok(n >= 2, 'DoH retries a 503 before succeeding');
+
+		n = 0;
+		global.fetch = async () => (n++, dnsOk(3));
+		assert.deepEqual(await lookalikes.doh('missing.example', 'A', 500), { status: 3, answers: [] });
+		assert.equal(n, 1, 'NXDOMAIN (HTTP 200 Status 3) is not retried as 5xx');
+
+		n = 0;
+		const hosts = [];
+		global.fetch = async (url) => {
+			hosts.push(String(url));
+			n++;
+			if (String(url).includes('cloudflare-dns')) return res(400);
+			return dnsOk(0, [{ type: 1, data: '203.0.113.10' }]);
+		};
+		const viaGoogle = await lookalikes.doh('example.com', 'A', 500);
+		assert.deepEqual(viaGoogle.answers, ['203.0.113.10']);
+		assert.equal(n, 2, '4xx fails over to the next resolver without retries');
+		assert.ok(hosts.some((u) => u.includes('dns.google')));
+
+		n = 0;
+		node.breakers['doh-cloudflare'].failure();
+		node.breakers['doh-cloudflare'].failure();
+		node.breakers['doh-cloudflare'].failure();
+		node.breakers['doh-cloudflare'].failure();
+		node.breakers['doh-cloudflare'].failure();
+		assert.equal(node.breakers['doh-cloudflare'].state, 'open');
+		global.fetch = async (url) => {
+			n++;
+			assert.match(String(url), /dns\.google/, 'open CF DoH breaker skips cloudflare-dns.com');
+			return dnsOk(0, [{ type: 1, data: '203.0.113.11' }]);
+		};
+		const paused = await lookalikes.doh('example.com', 'A', 500);
+		assert.deepEqual(paused.answers, ['203.0.113.11']);
+		assert.equal(n, 1, 'open breaker does not call Cloudflare DoH');
+	} finally {
+		global.fetch = saved;
+		global.setTimeout = slept;
+		node.breakers['doh-cloudflare'].success();
+		node.breakers['doh-google'].success();
+
 	}
 });
