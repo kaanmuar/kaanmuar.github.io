@@ -6,6 +6,8 @@ const rows = catalog.filter((row) => !wanted.size || wanted.has(row.id));
 describe('Full catalog', () => {
   before(() => {
     cy.task('catalogReset');
+    // Firestore Listen long-polls from earlier rows tie up Cypress's proxy and stall later loads (#932).
+    cy.intercept({ hostname: 'firestore.googleapis.com' }, { forceNetworkError: true });
   });
 
   afterEach(function () {
