@@ -20,6 +20,12 @@ test('bare strips protocol, www and path', () => {
 	assert.equal(scout.bare('AWARDS.example.co.uk/submit'), 'awards.example.co.uk');
 });
 
+test('clip unescapes one entity layer; &amp;lt; does not become <', () => {
+	assert.equal(scout.clip('Land &amp; Book', 40), 'Land & Book');
+	assert.equal(scout.clip('a &amp;lt; b', 40), 'a &lt; b');
+	assert.equal(scout.clip('say &quot;hi&quot;', 40), 'say "hi"');
+});
+
 test('pickLinks finds submit and contact on the same host', () => {
 	const html =
 		'<a href="/about">About</a><a href="https://other.com/submit">x</a><a href="/submit-your-tool">Submit</a><a href="/contact-us">Contact</a><a href="/font.ttf">font</a>';

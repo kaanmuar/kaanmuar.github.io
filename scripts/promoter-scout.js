@@ -95,13 +95,14 @@ function bare(host) {
 		.replace(/:\d+$/, '');
 }
 
+/** Decode one layer of common HTML entities. `&amp;` last so `&amp;lt;` stays `&lt;` (CodeQL double-unescape). */
 function clip(v, n) {
 	return String(v == null ? '' : v)
-		.replace(/&amp;/g, '&')
 		.replace(/&lt;/g, '<')
 		.replace(/&gt;/g, '>')
 		.replace(/&quot;/g, '"')
 		.replace(/&#39;|&apos;/g, "'")
+		.replace(/&amp;/g, '&')
 		.replace(/\s+/g, ' ')
 		.trim()
 		.slice(0, n);
@@ -647,6 +648,7 @@ if (require.main === module) {
 
 module.exports = {
 	bare,
+	clip,
 	seedRows,
 	pickLinks,
 	emailsIn,
