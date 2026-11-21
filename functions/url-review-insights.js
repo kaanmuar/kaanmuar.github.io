@@ -18,6 +18,7 @@ const geoAgent = require('./url-review-geo-agent');
 const carbonModel = require('./url-review-carbon');
 const headOrder = require('./url-review-head-order');
 const linkText = require('./url-review-link-text');
+const focusOrder = require('./url-review-focus-order');
 const axtree = require('./url-review-axtree');
 const waterfall = require('./url-review-har');
 const pageGraph = require('./url-review-page-graph');
@@ -4850,6 +4851,8 @@ function analyze(input) {
 	carbonModel.findings(carbon, add);
 	const headReport = headOrder.findings(face.headOrder, add);
 	linkText.findings(face.linkText, add);
+	// Static keyboard-order smells in the start page's HTML (#3831); no browser needed.
+	focusOrder.findings(face.focusOrder, add);
 	// Optional out-of-band CDP tree (scripts/axtree-audit.js); Cloud Functions never capture it.
 	const axtreeReport = axtree.findings(input.axtree || extras.axtree, add, { findings });
 	const waterfallReport = waterfall.findings(browsed && browsed.start && browsed.start.waterfall, add);

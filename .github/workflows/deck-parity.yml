@@ -16,17 +16,45 @@ on:
       - "presentation/**"
       - "scripts/check-deck-parity.js"
 
+concurrency:
+  group: deck-parity-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   parity:
+    # Body-only edits without "deck: skip" cannot change the diff; skip to avoid a second red run on
+    # the same commit (#4139). Re-run or add the line to the body to re-check after an edit.
+    if: >-
+      github.event.action != 'edited' ||
+      contains(github.event.pull_request.body, 'deck: skip:')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: URL Review and the living deck change together
         env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: node scripts/check-deck-parity.js "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null && git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+              break
+            fi
+            git fetch --no-tags origin "${BASE_SHA}" "${HEAD_SHA}" || true
+            sleep "$attempt"
+          done
+          if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "Missing git objects for ${BASE_SHA}..${HEAD_SHA} after fetch retries"
+            exit 2
+          fi
+          PR_BODY="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.pull_request.number }}" --jq '.body // ""')"
+          export PR_BODY
+          node scripts/check-deck-parity.js "${BASE_SHA}" "${HEAD_SHA}"
