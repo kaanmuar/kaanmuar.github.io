@@ -1,8 +1,8 @@
 name: Living deck drift
 
-# On main (and daily), fail when URL Review shipped after the newest day in changes.js
-# without updating the living deck (#4102). Opens or refreshes issue #4102's child thread
-# so the gap is never silent.
+# On main (and daily), fail when URL Review shipped after the last changes.js commit
+# without updating the living deck (#4102). Opens or refreshes a drift issue so the
+# gap is never silent.
 on:
   push:
     branches: [main]
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Deck matches URL Review commits since the last changes.js day
+      - name: Deck matches URL Review commits since the last changes.js commit
         id: check
         continue-on-error: true
         run: |
@@ -55,20 +55,23 @@ jobs:
           set -euo pipefail
           title='Living deck lagged behind URL Review on main (#4102)'
           short=${GITHUB_SHA:0:9}
-          # Reuse an open issue with the same title; otherwise file a new one linked to #4102.
           existing=$(gh issue list --state open --search "in:title Living deck lagged behind URL Review" --json number,title --jq '.[0].number // empty')
-          body="Detected by deck-drift on ${short}.
-
-## Drift
-\`\`\`
-${LOG}
-\`\`\`
-
-Parent: #4102. Update scripts/feature-deck/changes.js, run npm --prefix scripts/feature-deck run deck, commit presentation/."
+          {
+            echo "Detected by deck-drift on ${short}."
+            echo
+            echo "## Drift"
+            echo
+            echo '```'
+            echo "${LOG}"
+            echo '```'
+            echo
+            echo "Parent: #4102. Update scripts/feature-deck/changes.js,"
+            echo "run npm --prefix scripts/feature-deck run deck, commit presentation/."
+          } > /tmp/deck-drift-body.md
           if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body "$body"
+            gh issue comment "$existing" --body-file /tmp/deck-drift-body.md
             echo "Refreshed #${existing}"
           else
-            gh issue create --title "$title" --body "$body" --label "bug" --label "area:Ops"
+            gh issue create --title "$title" --body-file /tmp/deck-drift-body.md --label "bug" --label "area:Ops"
           fi
           exit 1
