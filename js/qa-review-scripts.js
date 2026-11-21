@@ -73,6 +73,9 @@
 	const MAX_TEXT_LOCATOR = 80;
 	// Roles that take their accessible name from their own text, so the visible text can stand in for a missing name.
 	const NAMED_BY_TEXT = ['link', 'button', 'heading', 'tab', 'menuitem', 'option'];
+	// Landmarks (and a heading with a level) are useful without an accessible name — count/attr checks use these a lot.
+	const LANDMARK_ROLES = ['main', 'navigation', 'banner', 'contentinfo', 'complementary', 'form', 'search', 'region'];
+	const HEADING_LEVEL = { h1: 1, h2: 2, h3: 3, h4: 4, h5: 5, h6: 6 };
 	const IMPLICIT_ROLES = {
 		a: (attrs) => (attrs.href ? 'link' : ''),
 		button: () => 'button',
@@ -100,7 +103,16 @@
 		return rule ? rule(attrs || {}) : '';
 	}
 
-	// target: { tag, attrs, role, name, testId, label, text, css, xpath, matches }. Every field is optional.
+	// A role candidate needs a name, or a landmark/heading-level that is useful without one (structural count/attr).
+	function roleCandidate(role, name, level) {
+		if (!role) return null;
+		if (name) return level ? { role, name, level } : { role, name };
+		if (role === 'heading' && level) return { role, level };
+		if (LANDMARK_ROLES.indexOf(role) !== -1) return { role };
+		return null;
+	}
+
+	// target: { tag, attrs, role, name, testId, label, text, css, xpath, level, matches }. Every field is optional.
 	// matches is how many elements each kind finds on the page, when known: 0 drops the kind, more than 1 demotes it
 	// below every kind that is unique, so a unique CSS selector beats an ambiguous role. Order inside each group is the
 	// fixed LOCATOR_KINDS order, so the result is the same for the same input.
@@ -108,9 +120,10 @@
 		const t = target || {};
 		const text = oneLine(t.text);
 		const role = oneLine(t.role) || implicitRole(t.tag, t.attrs);
+		const level = Number(t.level) || HEADING_LEVEL[String(t.tag || '').toLowerCase()] || 0;
 		const name = oneLine(t.name) || (NAMED_BY_TEXT.indexOf(role) !== -1 ? text : '');
 		const found = {
-			role: role && name ? { role, name } : null,
+			role: roleCandidate(role, name, level || undefined),
 			testId: oneLine(t.testId) ? { value: oneLine(t.testId) } : null,
 			label: oneLine(t.label) ? { value: oneLine(t.label) } : null,
 			text: text && text.length <= MAX_TEXT_LOCATOR ? { value: text } : null,
@@ -129,6 +142,7 @@
 				kind: candidate.kind,
 				role: candidate.role,
 				name: candidate.name,
+				level: candidate.level,
 				value: candidate.value,
 				ambiguous: candidate.ambiguous,
 				rank: index,
@@ -138,8 +152,15 @@
 	// One candidate as a Playwright locator expression on `page`.
 	function playwrightLocator(candidate) {
 		switch (candidate.kind) {
-			case 'role':
-				return 'page.getByRole(' + q(candidate.role) + ', { name: ' + q(candidate.name) + ', exact: true })';
+			case 'role': {
+				const opts = [];
+				if (candidate.name) {
+					opts.push('name: ' + q(candidate.name));
+					opts.push('exact: true');
+				}
+				if (candidate.level) opts.push('level: ' + Number(candidate.level));
+				return 'page.getByRole(' + q(candidate.role) + (opts.length ? ', { ' + opts.join(', ') + ' }' : '') + ')';
+			}
 			case 'testId':
 				return 'page.getByTestId(' + q(candidate.value) + ')';
 			case 'label':
@@ -165,15 +186,131 @@
 		};
 	}
 
+	// The element a count/attr check looks for: fields on the check, else a few CSS shapes we know (h1…h6, main, nav).
+	function checkTarget(check) {
+		const c = check || {};
+		const css = oneLine(c.selector);
+		const target = {
+			tag: oneLine(c.tag) || undefined,
+			attrs: c.attrs,
+			role: oneLine(c.role) || undefined,
+			name: c.name || c.ariaLabel,
+			testId: c.testId,
+			label: c.label,
+			text: c.text,
+			css: css || undefined,
+			xpath: c.xpath,
+			matches: c.matches,
+			level: Number(c.level) || undefined,
+		};
+		if (!target.role && !target.tag && css) {
+			const heading = /^(h[1-6])(?:\b|$|,)/i.exec(css);
+			if (heading) target.tag = heading[1].toLowerCase();
+			else if (/(?:^|,\s*)main(?:\s|,|$)/i.test(css) || /\[role=["']main["']\]/i.test(css)) target.role = 'main';
+			else if (/(?:^|,\s*)nav(?:\s|,|$)/i.test(css) || /\[role=["']navigation["']\]/i.test(css))
+				target.role = 'navigation';
+		}
+		return target;
+	}
+
+	// CSS attribute value in double quotes (for selectors passed to Cypress/Selenium/querySelector).
+	function cssQ(value) {
+		return '"' + String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+	}
+
+	// Landmark HTML tags that stand in for a role when the framework only speaks CSS.
+	const LANDMARK_TAG = {
+		main: 'main',
+		navigation: 'nav',
+		banner: 'header',
+		contentinfo: 'footer',
+		complementary: 'aside',
+		form: 'form',
+	};
+
+	// One ranked candidate as a CSS selector. Text/XPath cannot be expressed as CSS — return "".
+	function cssLocator(candidate) {
+		if (!candidate) return '';
+		switch (candidate.kind) {
+			case 'role': {
+				const role = candidate.role;
+				const name = candidate.name;
+				const level = Number(candidate.level) || 0;
+				if (role === 'heading' && level) {
+					const h = 'h' + level;
+					const aria = '[role="heading"][aria-level="' + level + '"]';
+					if (name) {
+						return h + '[aria-label=' + cssQ(name) + '], ' + aria + '[aria-label=' + cssQ(name) + ']';
+					}
+					return h + ', ' + aria;
+				}
+				const tag = LANDMARK_TAG[role];
+				if (name) {
+					const named = '[role=' + cssQ(role) + '][aria-label=' + cssQ(name) + ']';
+					return tag ? tag + '[aria-label=' + cssQ(name) + '], ' + named : named;
+				}
+				if (tag) return tag + ', [role=' + cssQ(role) + ']';
+				return '[role=' + cssQ(role) + ']';
+			}
+			case 'testId':
+				return '[data-testid=' + cssQ(candidate.value) + ']';
+			case 'label':
+				return '[aria-label=' + cssQ(candidate.value) + ']';
+			case 'text':
+			case 'xpath':
+				return '';
+			default:
+				return oneLine(candidate.value) || '';
+		}
+	}
+
+	// Best Playwright locator for a check, plus a comment naming the next ones to try.
+	function rankedLocator(check) {
+		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
+		if (!ranked.length) {
+			return { locator: 'page.locator(' + q(check.selector) + ')', fallbacks: '' };
+		}
+		const spare = ranked.slice(1).map(playwrightLocator);
+		return {
+			locator: playwrightLocator(ranked[0]),
+			fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '',
+		};
+	}
+
+	// Best CSS selector for frameworks without Playwright locators (Cypress, Selenium, …).
+	// mark is the line-comment prefix: "//" for JS, "#" for Python/Robot/Ruby.
+	function rankedCss(check, mark) {
+		const prefix = mark == null ? '//' : mark;
+		const ranked = rankLocators(check.kind === 'journey' ? journeyTarget(check) : checkTarget(check));
+		const seen = {};
+		const cssList = [];
+		ranked.forEach((candidate) => {
+			const css = cssLocator(candidate);
+			if (css && !seen[css]) {
+				seen[css] = true;
+				cssList.push(css);
+			}
+		});
+		if (!cssList.length) {
+			return { selector: check.selector || '', fallbacks: '' };
+		}
+		const spare = cssList.slice(1);
+		return {
+			selector: cssList[0],
+			fallbacks: spare.length ? prefix + ' Fallback locators, best first: ' + spare.join(', ') : '',
+		};
+	}
+
 	// The lines that find and click a journey link: the best locator, then a comment naming the next ones to try.
 	function journeyLocatorLines(check) {
-		const ranked = rankLocators(journeyTarget(check));
-		const lines = [
-			'const link = ' + playwrightLocator(ranked[0]) + '.first();',
-			'const label = ((await link.textContent()) || "").replace(/\\s+/g, " ").trim();',
-		];
-		const spare = ranked.slice(1).map(playwrightLocator);
-		return { lines, fallbacks: spare.length ? '// Fallback locators, best first: ' + spare.join(', ') : '' };
+		const found = rankedLocator(Object.assign({}, check, { kind: 'journey' }));
+		return {
+			lines: [
+				'const link = ' + found.locator + '.first();',
+				'const label = ((await link.textContent()) || "").replace(/\\s+/g, " ").trim();',
+			],
+			fallbacks: found.fallbacks,
+		};
 	}
 
 	function context(report) {
@@ -714,16 +851,24 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'const found = await page.locator(' + q(check.selector) + ').count();',
-					'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
-				);
+				{
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const found = await ' + found.locator + '.count();',
+						'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'await expect(page.locator(' + q(check.selector) + ')).toHaveAttribute(' + q(check.attr) + ', /\\S/);'
-				);
+				{
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'await expect(' + found.locator + ').toHaveAttribute(' + q(check.attr) + ', /\\S/);'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -918,21 +1063,31 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'cy.document().then((doc) => {',
-					'  expect(doc.querySelectorAll(' +
-						q(check.selector) +
-						').length).to.' +
-						OPS_CHAI[check.op] +
-						'(' +
-						check.n +
-						');',
-					'});'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'cy.document().then((doc) => {',
+						'  expect(doc.querySelectorAll(' +
+							q(found.selector) +
+							').length).to.' +
+							OPS_CHAI[check.op] +
+							'(' +
+							check.n +
+							');',
+						'});'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push('cy.get(' + q(check.selector) + ').should("have.attr", ' + q(check.attr) + ').and("match", /\\S/);');
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'cy.get(' + q(found.selector) + ').should("have.attr", ' + q(check.attr) + ').and("match", /\\S/);'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1166,20 +1321,28 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'found = len(driver.find_elements(By.CSS_SELECTOR, ' + q(check.selector) + '))',
-					'assert found ' + OPS_PY[check.op] + ' ' + check.n
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'found = len(driver.find_elements(By.CSS_SELECTOR, ' + q(found.selector) + '))',
+						'assert found ' + OPS_PY[check.op] + ' ' + check.n
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'assert (driver.find_element(By.CSS_SELECTOR, ' +
-						q(check.selector) +
-						').get_attribute(' +
-						q(check.attr) +
-						') or "").strip()'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'assert (driver.find_element(By.CSS_SELECTOR, ' +
+							q(found.selector) +
+							').get_attribute(' +
+							q(check.attr) +
+							') or "").strip()'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1390,18 +1553,26 @@
 				break;
 			case 'count':
 				open(check.path);
-				lines.push(
-					'    ${found}=    Get Element Count    css:' + check.selector,
-					'    Should Be True    ${found} ' + opRobot[check.op] + ' ' + check.n
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) lines.push('    ' + found.fallbacks);
+					lines.push(
+						'    ${found}=    Get Element Count    css:' + found.selector,
+						'    Should Be True    ${found} ' + opRobot[check.op] + ' ' + check.n
+					);
+				}
 				close();
 				break;
 			case 'attr':
 				open(check.path);
-				lines.push(
-					'    ${value}=    Get Element Attribute    css:' + check.selector + '    ' + check.attr,
-					'    Should Not Be Empty    ${value}'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) lines.push('    ' + found.fallbacks);
+					lines.push(
+						'    ${value}=    Get Element Attribute    css:' + found.selector + '    ' + check.attr,
+						'    Should Not Be Empty    ${value}'
+					);
+				}
 				close();
 				break;
 			case 'metaLength':
@@ -1617,19 +1788,27 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'const found = await browser.execute((selector) => document.querySelectorAll(selector).length, ' +
-						q(check.selector) +
-						');',
-					'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const found = await browser.execute((selector) => document.querySelectorAll(selector).length, ' +
+							q(found.selector) +
+							');',
+						'expect(found).' + OPS_JS[check.op] + '(' + check.n + ');'
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(
-					'const value = await $(' + q(check.selector) + ').getAttribute(' + q(check.attr) + ');',
-					'expect((value || "").trim()).not.toBe("");'
-				);
+				{
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const value = await $(' + q(found.selector) + ').getAttribute(' + q(check.attr) + ');',
+						'expect((value || "").trim()).not.toBe("");'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -1918,11 +2097,30 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push('const found = ' + D.count(check.selector) + ';', A[check.op]('found', check.n));
+				if (D.ranked) {
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const found = await ' + found.locator + '.count();', A[check.op]('found', check.n));
+				} else {
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const found = ' + D.count(found.selector) + ';', A[check.op]('found', check.n));
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push('const value = ' + D.attr(check.selector, check.attr) + ';', A.filled('value'));
+				if (D.ranked) {
+					const found = rankedLocator(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'const value = ((await ' + found.locator + '.first().getAttribute(' + q(check.attr) + ')) || "").trim();',
+						A.filled('value')
+					);
+				} else {
+					const found = rankedCss(check);
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push('const value = ' + D.attr(found.selector, check.attr) + ';', A.filled('value'));
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -2162,14 +2360,22 @@
 				break;
 			case 'count':
 				go(check.path);
-				body.push(
-					'int found = ' + D.count(check.selector) + ';',
-					ok('found ' + OPS_PY[check.op] + ' ' + check.n, '"found " + found')
-				);
+				{
+					const found = rankedCss(check, '//');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'int found = ' + D.count(found.selector) + ';',
+						ok('found ' + OPS_PY[check.op] + ' ' + check.n, '"found " + found')
+					);
+				}
 				break;
 			case 'attr':
 				go(check.path);
-				body.push(ok('!' + D.attr(check.selector, check.attr) + '.isEmpty()', q(check.selector + ' ' + check.attr)));
+				{
+					const found = rankedCss(check, '//');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(ok('!' + D.attr(found.selector, check.attr) + '.isEmpty()', q(found.selector + ' ' + check.attr)));
+				}
 				break;
 			case 'metaLength':
 				go(check.path);
@@ -2426,20 +2632,28 @@
 				break;
 			case 'count':
 				go(rb(check.path));
-				body.push(
-					'found = @browser.elements(css: ' + rb(check.selector) + ').count',
-					'expect(found).to ' + opRuby[check.op] + check.n + (check.op === 'eq' ? ')' : '')
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'found = @browser.elements(css: ' + rb(found.selector) + ').count',
+						'expect(found).to ' + opRuby[check.op] + check.n + (check.op === 'eq' ? ')' : '')
+					);
+				}
 				break;
 			case 'attr':
 				go(rb(check.path));
-				body.push(
-					'expect(@browser.element(css: ' +
-						rb(check.selector) +
-						').attribute_value(' +
-						rb(check.attr) +
-						').to_s.strip).not_to be_empty'
-				);
+				{
+					const found = rankedCss(check, '#');
+					if (found.fallbacks) body.push(found.fallbacks);
+					body.push(
+						'expect(@browser.element(css: ' +
+							rb(found.selector) +
+							').attribute_value(' +
+							rb(check.attr) +
+							').to_s.strip).not_to be_empty'
+					);
+				}
 				break;
 			case 'metaLength':
 				go(rb(check.path));
@@ -2650,11 +2864,17 @@
 				break;
 			case 'count':
 				open(check.path);
-				steps.push('Then the count of ' + gq(check.selector) + ' elements is ' + OPS_WORD[check.op] + ' ' + check.n);
+				{
+					const found = rankedCss(check, '#');
+					steps.push('Then the count of ' + gq(found.selector) + ' elements is ' + OPS_WORD[check.op] + ' ' + check.n);
+				}
 				break;
 			case 'attr':
 				open(check.path);
-				steps.push('Then the ' + gq(check.selector) + ' element has a ' + gq(check.attr) + ' attribute');
+				{
+					const found = rankedCss(check, '#');
+					steps.push('Then the ' + gq(found.selector) + ' element has a ' + gq(check.attr) + ' attribute');
+				}
 				break;
 			case 'metaLength':
 				open(check.path);
@@ -4875,6 +5095,10 @@ namespace QaLab
 		README_COPY,
 		rankLocators,
 		playwrightLocator,
+		cssLocator,
+		checkTarget,
+		rankedLocator,
+		rankedCss,
 		LOCATOR_KINDS,
 	};
 	if (typeof module === 'object' && module.exports) module.exports = api;

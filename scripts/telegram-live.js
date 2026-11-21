@@ -30,6 +30,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const ledgers = require('./social-ledger');
+const tgApi = require('../functions/telegram-api');
 
 const ROOT = path.resolve(__dirname, '..');
 const LEDGER = 'assets/social/telegram.json';
@@ -128,19 +129,17 @@ const COMMANDS = {
 };
 
 async function api(method, body) {
-	if (!token) throw new Error('Set TELEGRAM_BOT_TOKEN (BotFather > /mybots > API Token).');
-	const res = await fetch('https://api.telegram.org/bot' + token + '/' + method, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify(body || {}),
-	});
-	const json = await res.json().catch(() => ({ ok: false, description: 'status ' + res.status }));
-	if (!json.ok) {
-		const error = new Error(method + ': ' + json.description);
-		error.retryAfter = json.parameters && json.parameters.retry_after;
+	const call = tgApi.createApi(token);
+	try {
+		return await call(method, body || {});
+	} catch (error) {
+		if (error instanceof tgApi.TelegramApiError) {
+			const err = new Error(error.method + ': ' + error.description);
+			err.retryAfter = error.retryAfter;
+			throw err;
+		}
 		throw error;
 	}
-	return json.result;
 }
 
 // setMyName allows a few changes a day; a 429 there must not stop the rest of the setup.
