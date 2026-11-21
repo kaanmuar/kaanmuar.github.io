@@ -142,7 +142,7 @@ test.describe('Review arena live facts', () => {
 		// auto-refresh off freezes the view; Update catches up
 		await page.getByRole('switch', { name: 'Auto-refresh' }).click();
 		await expect(page.locator('.rc .rc-paused')).toBeVisible();
-		await page.evaluate(() => ReviewProgress.line('robots.txt was checked.'));
+		await page.evaluate(() => ReviewProgress.line('robots.txt was read.'));
 		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-wip/);
 		await page.getByRole('button', { name: 'Update' }).click();
 		await expect(page.locator('.rc .ln[data-id="robots"]').first()).toHaveClass(/s-done/);
