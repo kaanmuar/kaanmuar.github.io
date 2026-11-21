@@ -826,11 +826,11 @@
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.ai.4": {
-			"sha256": "6aca251a74c6122150c012ab2ce777c83e1ef9e093f22fe5d48d4aa228e021ae",
+			"sha256": "edafbd829845528c84ee3c4662c53311b512a828b6cb43e6fcfad2b9511ff3f2",
 			"signedOffBy": "Carlos A. Muñoz (owner)",
 			"signedOffOn": "2026-11-20",
-			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
-			"counselReviewedOn": "2026-11-19"
+			"note": "Remove internal Jarvis name from client-facing legal copy (#4044).",
+			"counselReviewedOn": null
 		},
 		"national.contact.heading": {
 			"sha256": "cfe3b4cd6067413302e0f0a751ba6bea5e0aee7576894400321ba358a71ca52f",
