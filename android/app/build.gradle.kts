@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -33,6 +35,21 @@ sentry {
     telemetry.set(false)
 }
 
+// Identity Toolkit-only Android Auth REST key (#3971, #4140). Not in git — local.properties or JARVIS_FIREBASE_AUTH_KEY.
+val firebaseAuthKey: String = run {
+    val fromEnv = System.getenv("JARVIS_FIREBASE_AUTH_KEY")?.trim().orEmpty()
+    if (fromEnv.isNotEmpty()) fromEnv
+    else {
+        val local = rootProject.file("local.properties")
+        if (!local.isFile) ""
+        else {
+            val props = Properties()
+            local.inputStream().use { props.load(it) }
+            props.getProperty("jarvis.firebase.auth.key")?.trim().orEmpty()
+        }
+    }
+}
+
 android {
     namespace = "com.carlosandmunoz.jarvis"
     compileSdk = 35
@@ -43,6 +60,7 @@ android {
         targetSdk = 35
         versionCode = build
         versionName = "2.1.$build"
+        buildConfigField("String", "FIREBASE_AUTH_KEY", "\"$firebaseAuthKey\"")
         // Sentry DSN (#3836) comes from the environment at build time and is never committed. Empty (the default,
         // and always in debug builds and unit tests) leaves Sentry off.
         buildConfigField("String", "SENTRY_DSN", "\"${System.getenv("JARVIS_SENTRY_DSN") ?: ""}\"")
