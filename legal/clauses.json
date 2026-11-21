@@ -861,7 +861,7 @@
 			"notice": "national",
 			"language": "en",
 			"jurisdiction": "CO",
-			"text": "Retention. Records are deleted automatically when their period ends. Review records: 12 months from the run, even after the account expires on its own; deleting the account on the account page removes them at once. The account: 12 months after the last sign-in, together with its Firebase Authentication user. Sign-in sessions: 30 days. Sign-in codes: 1 hour. Provider sign-in states: 10 minutes. The record that lets a running review be stopped, with its email and a hash of the device key: 1 day. Logs of failed or stopped reviews, and their re-runs and rescue attempts: 90 days, including the email and inputs kept for an inconclusive review. The apology code of an inconclusive review: 12 months. Fix requests that were not paid, with their status history: deleted 12 months after their last change. A paid fix request is kept with its payment record for the tax period below. A public scan on Cloudflare Radar is kept by Cloudflare under its own terms; this service cannot shorten it. Visit rows, the visits recorded on a signed-in account, follow-up notes, stop links, alerts, captures, mail, and the coupon sent with a follow-up note: 12 months; deleting the account on the account page removes its visits at once. A request to stop follow-up notes is kept until it is withdrawn, so the notes stay stopped. Owner notices, their links, and their send log: 12 months. A request to stop owner notices is kept until it is withdrawn, so the notices stay stopped. Payment records (report payments, credits, passes, and coupon redemptions): until January 1 of the sixth year after the payment, or later while the income-tax return the record supports is not final, as Colombian tax law requires (Estatuto Tributario, artículo 632, five years from January 1 of the following year, as Ley 962 de 2005, artículo 46 applies it). A merchant keeps its books and papers ten years (Ley 962 de 2005, artículo 28). A paid report itself goes after 12 months, like any review record; its payment record stays. The list of free-run addresses and the coupons the operator makes by hand are kept until the operator removes them, or the account is deleted on the account page.",
+			"text": "Retention. The periods below are how long each kind of record is kept. A weekly job is meant to delete rows when a period ends; it is still in a dry run that only counts what would be deleted, so data may stay past the period until the operator turns deletion on. Deleting the account on the account page still removes what that action says at once. Review records: 12 months from the run, even after the account expires on its own. The account: 12 months after the last sign-in, together with its Firebase Authentication user. Sign-in sessions: 30 days. Sign-in codes: 1 hour. Provider sign-in states: 10 minutes. The record that lets a running review be stopped, with its email and a hash of the device key: 1 day. Logs of failed or stopped reviews, and their re-runs and rescue attempts: 90 days, including the email and inputs kept for an inconclusive review. The apology code of an inconclusive review: 12 months. Fix requests that were not paid, with their status history: deleted 12 months after their last change. A paid fix request is kept with its payment record for the tax period below. A public scan on Cloudflare Radar is kept by Cloudflare under its own terms; this service cannot shorten it. Visit rows, the visits recorded on a signed-in account, follow-up notes, stop links, alerts, captures, mail, and the coupon sent with a follow-up note: 12 months; deleting the account on the account page removes its visits at once. A request to stop follow-up notes is kept until it is withdrawn, so the notes stay stopped. Owner notices, their links, and their send log: 12 months. A request to stop owner notices is kept until it is withdrawn, so the notices stay stopped. Payment records (report payments, credits, passes, and coupon redemptions): until January 1 of the sixth year after the payment, or later while the income-tax return the record supports is not final, as Colombian tax law requires (Estatuto Tributario, artículo 632, five years from January 1 of the following year, as Ley 962 de 2005, artículo 46 applies it). A merchant keeps its books and papers ten years (Ley 962 de 2005, artículo 28). A paid report itself goes after 12 months, like any review record; its payment record stays. The list of free-run addresses and the coupons the operator makes by hand are kept until the operator removes them, or the account is deleted on the account page.",
 			"cites": [
 				{
 					"name": "Estatuto Tributario (Decreto Ley 624 de 1989)",
@@ -875,8 +875,8 @@
 				}
 			],
 			"lastChecked": "2026-11-20",
-			"status": "counsel-approved",
-			"counselReviewedOn": "2026-11-19"
+			"status": "draft",
+			"counselReviewedOn": null
 		},
 		{
 			"id": "national.personal-data.13",
@@ -1738,11 +1738,11 @@
 			"notice": "national",
 			"language": "en",
 			"jurisdiction": "CO",
-			"text": "Rights and retention. A person or company in the ledger can ask qa@carlosandmunoz.com to know, correct, or delete its row. A query is answered within 10 business days and a claim within 15, and a claim not resolved goes to the Superintendencia de Industria y Comercio, as above. A row is deleted 12 months after the last contact with its person or company (the latest thread, message, offer, or update). A person who declined or was blocked keeps only the address, handle, or domain on the do-not-contact list, so nobody is written to after asking not to be. A row can also be deleted sooner on request.",
+			"text": "Rights and retention. A person or company in the ledger can ask qa@carlosandmunoz.com to know, correct, or delete its row. A query is answered within 10 business days and a claim within 15, and a claim not resolved goes to the Superintendencia de Industria y Comercio, as above. A row is kept for 12 months after the last contact with its person or company (the latest thread, message, offer, or update), then due for deletion by the weekly job under Personal data (still in a dry run). A person who declined or was blocked keeps only the address, handle, or domain on the do-not-contact list, so nobody is written to after asking not to be. A row can also be deleted sooner on request.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "counsel-approved",
-			"counselReviewedOn": "2026-11-19"
+			"status": "draft",
+			"counselReviewedOn": null
 		},
 		{
 			"id": "national.social.heading",
@@ -1882,11 +1882,11 @@
 			"notice": "national",
 			"language": "en",
 			"jurisdiction": "CO",
-			"text": "Messages and ratings. The Message and Rating forms on the CV store the name, email, topic, message text (up to 8,000 characters), an optional attachment link, and a rating with its comment, in Cloud Firestore. The operator reads them and may answer by email through SendGrid. A rating stays pending until the operator reviews it. Purpose: to answer and to keep a record of who wrote. A person can ask qa@carlosandmunoz.com to see, correct, or delete what they sent. A message or rating is deleted 24 months after it was sent or rated.",
+			"text": "Messages and ratings. The Message and Rating forms on the CV store the name, email, topic, message text (up to 8,000 characters), an optional attachment link, and a rating with its comment, in Cloud Firestore. The operator reads them and may answer by email through SendGrid. A rating stays pending until the operator reviews it. Purpose: to answer and to keep a record of who wrote. A person can ask qa@carlosandmunoz.com to see, correct, or delete what they sent. A message or rating is kept for 24 months after it was sent or rated, then due for deletion by the weekly job under Personal data (still in a dry run).",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "counsel-approved",
-			"counselReviewedOn": "2026-11-19"
+			"status": "draft",
+			"counselReviewedOn": null
 		},
 		{
 			"id": "national.contact.2",
@@ -1894,11 +1894,11 @@
 			"notice": "national",
 			"language": "en",
 			"jurisdiction": "CO",
-			"text": "Calls. book.html asks for a name, email, company, a site or report, and a note, reads the free times in the operator's Google Calendar, and creates a Google Calendar event with a Google Meet link; Google sends the invite. The booking record keeps those fields, the language, and the time, for the call and its follow-up, in Cloud Firestore; it is deleted 24 months after the call, or sooner on request. At most two upcoming calls are kept for one address.",
+			"text": "Calls. book.html asks for a name, email, company, a site or report, and a note, reads the free times in the operator's Google Calendar, and creates a Google Calendar event with a Google Meet link; Google sends the invite. The booking record keeps those fields, the language, and the time, for the call and its follow-up, in Cloud Firestore; it is kept for 24 months after the call, then due for deletion by the weekly job under Personal data (still in a dry run), or sooner on request. At most two upcoming calls are kept for one address.",
 			"cites": [],
 			"lastChecked": "2026-11-19",
-			"status": "counsel-approved",
-			"counselReviewedOn": "2026-11-19"
+			"status": "draft",
+			"counselReviewedOn": null
 		},
 		{
 			"id": "national.confidentiality.heading",

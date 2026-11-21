@@ -343,11 +343,11 @@
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.personal-data.12": {
-			"sha256": "0711ba17d82090df7f584e2b2f22f68975a86fda4130a770827c55fc22b31341",
+			"sha256": "86982fb7a86921bb58bdb1bdb0b0b382a47db6cb070f25f0f82e980f46aa8842",
 			"signedOffBy": "Carlos Muñoz",
 			"signedOffOn": "2026-11-20",
-			"note": "#4026: remove stale 'not deleted automatically yet' now that paid fix requests follow the payment tax period",
-			"counselReviewedOn": "2026-11-19"
+			"note": "Fixes #4015: legal page says retention sweep is still a dry run",
+			"counselReviewedOn": null
 		},
 		"national.personal-data.13": {
 			"sha256": "fc6a14b2386099585d82e9765fbbfecc44385bc6f8cec8c1da8bda00d54fbab8",
@@ -756,11 +756,11 @@
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.outreach.8": {
-			"sha256": "50cbc46b5960042ec76df527ef64ffbddea04461f8d2e84ed2871c65865ac850",
-			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"sha256": "e757f1fa3288de11b14e0c92aa2e155db84983b45a5818ec054743eac8238572",
+			"signedOffBy": "Carlos Muñoz",
 			"signedOffOn": "2026-11-20",
-			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
-			"counselReviewedOn": "2026-11-19"
+			"note": "Fixes #4015: legal page says retention sweep is still a dry run",
+			"counselReviewedOn": null
 		},
 		"national.social.heading": {
 			"sha256": "c1a8c0e7d5ab3d122b6ddcf90857a0ed990302d38352ab7085ea1e132ef5dba3",
@@ -840,18 +840,18 @@
 			"counselReviewedOn": "2026-11-19"
 		},
 		"national.contact.1": {
-			"sha256": "c4e4496306d67bf5c531868966c7cef6880afcd9d591d57faed7835952446263",
-			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"sha256": "b3035f539be5b17728c5a31cfcb4d08dda622595bfff0a7a0206491f634f4a32",
+			"signedOffBy": "Carlos Muñoz",
 			"signedOffOn": "2026-11-20",
-			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
-			"counselReviewedOn": "2026-11-19"
+			"note": "Fixes #4015: legal page says retention sweep is still a dry run",
+			"counselReviewedOn": null
 		},
 		"national.contact.2": {
-			"sha256": "1f2f327e6f28ef85c1832e8dd440bd901791f4d80c554e9d6a890a94d0eb22c5",
-			"signedOffBy": "Carlos A. Muñoz (owner)",
+			"sha256": "786b444bbb434169880b7739955e67af32235f0c7593429cb88bc7580a97ea3b",
+			"signedOffBy": "Carlos Muñoz",
 			"signedOffOn": "2026-11-20",
-			"note": "Owner approved the current text on 2026-11-20; he reported on 2026-11-19 that counsel's read was done.",
-			"counselReviewedOn": "2026-11-19"
+			"note": "Fixes #4015: legal page says retention sweep is still a dry run",
+			"counselReviewedOn": null
 		},
 		"national.confidentiality.heading": {
 			"sha256": "178dd5dc672de6d65889d48e762bce09bc3c467723b1579b406e0bb47379a879",
