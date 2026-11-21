@@ -1593,14 +1593,135 @@
     "checked": "2026-11-20T22:37:22.172Z"
    }
   ],
+  "auto-2026-11-21/01-u-kfintech-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1529681499098389",
+    "at": "2026-11-26T23:14:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:57:23.221Z"
+   }
+  ],
+  "auto-2026-11-21/02-u-juxia-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1797380211375110",
+    "at": "2026-12-14T17:35:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:57:32.298Z"
+   }
+  ],
+  "auto-2026-11-21/03-u-bairesdev-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1646671820333392",
+    "at": "2026-12-15T17:54:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:57:40.722Z"
+   }
+  ],
+  "auto-2026-11-21/08-u-bancointernacional-com-ec": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "967717276150207",
+    "at": "2026-12-15T19:19:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:57:49.403Z"
+   }
+  ],
+  "auto-2026-11-21/09-u-bancoppel-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1837778747470116",
+    "at": "2026-12-16T19:34:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:57:58.197Z"
+   }
+  ],
+  "auto-2026-11-21/14-u-bankofguam-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "29102592392734321",
+    "at": "2026-12-16T20:58:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:06.420Z"
+   }
+  ],
+  "auto-2026-11-21/15-u-banquedesepreuves-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "40287352377545712",
+    "at": "2026-12-17T20:34:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:14.699Z"
+   }
+  ],
+  "auto-2026-11-21/20-u-bauwens-de": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1859692271803853",
+    "at": "2026-12-17T21:57:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:23.798Z"
+   }
+  ],
+  "auto-2026-11-21/21-u-be10x-com": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1925308942227394",
+    "at": "2026-12-18T22:00:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:34.119Z"
+   }
+  ],
+  "auto-2026-11-21/26-u-bci-cl": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1911849696863679",
+    "at": "2026-12-18T23:25:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:43.424Z"
+   }
+  ],
+  "auto-2026-11-21/27-u-bcra-gob-ar": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1527735259410805",
+    "at": "2026-12-19T23:23:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:58:52.169Z"
+   }
+  ],
+  "auto-2026-11-21/32-u-bebakids-me": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1125422457041530",
+    "at": "2026-12-19T17:46:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-21T13:59:02.272Z"
+   }
+  ],
   "battle-vs-2026-11/01-vs-seo-scorecard": [
    {
     "channel": "facebook",
     "profile": "Facebook Page",
     "id": "2523654534795978",
     "at": "2026-11-20T22:57:22.407Z",
-    "result": "queued",
-    "checked": "2026-11-20T22:37:31.426Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/2523654534795978",
+    "checked": "2026-11-21T13:57:11.713Z"
    }
   ],
   "battle-vs-2026-11/02-us-vs-them-seo": [
@@ -1609,8 +1730,9 @@
     "profile": "Facebook Page",
     "id": "1083981804755140",
     "at": "2026-11-20T23:27:31.613Z",
-    "result": "queued",
-    "checked": "2026-11-20T22:37:42.219Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1083981804755140",
+    "checked": "2026-11-21T13:57:11.713Z"
    }
   ],
   "compare-2026-11/01-quiz-berlin-vienna": [
@@ -2356,8 +2478,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122094195927532027",
     "at": "2026-11-20T23:05:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-20T22:37:42.222Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/photo.php?fbid=122094195927532027&set=a.122093419455532027&type=3",
+    "checked": "2026-11-21T13:57:11.713Z"
    }
   ],
   "runs-100/22-apache": [
