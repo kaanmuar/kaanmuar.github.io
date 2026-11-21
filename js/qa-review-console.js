@@ -9,7 +9,9 @@
 	const LANG = String(document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
 	const T = {
 		en: {
-			brand: 'REVIEW MONITOR', region: 'Live review monitor',
+			brand: 'REVIEW MONITOR', brandLab: 'LAB TRIES', region: 'Live review monitor', regionLab: 'Browser pass / Lab tries',
+			labTitle: 'BROWSER PASS / LAB TRIES', labLive: 'QA REVIEW LOG · LIVE', labProgress: 'PROGRESS',
+			lanesTitleLab: 'LAB TRIES', lanesSubLab: 'One browser pass across every check',
 			overview: 'Overview', systems: 'Systems', processes: 'Processes', agents: 'Agents', workflows: 'Workflows',
 			infrastructure: 'Infrastructure', logs: 'Logs', alerts: 'Alerts', settings: 'Settings', all: 'All Processes',
 			sub_overview: 'The review at a glance.',
@@ -63,7 +65,9 @@
 			saved: 'Saved on this device only.'
 		},
 		es: {
-			brand: 'MONITOR DE REVISIÓN', region: 'Monitor de la revisión en vivo',
+			brand: 'MONITOR DE REVISIÓN', brandLab: 'PRUEBAS DE LAB', region: 'Monitor de la revisión en vivo', regionLab: 'Pase del navegador / Pruebas de lab',
+			labTitle: 'PASE DEL NAVEGADOR / PRUEBAS DE LAB', labLive: 'REGISTRO DE REVISIÓN · EN VIVO', labProgress: 'PROGRESO',
+			lanesTitleLab: 'PRUEBAS DE LAB', lanesSubLab: 'Un pase del navegador por cada comprobación',
 			overview: 'Resumen', systems: 'Sistemas', processes: 'Procesos', agents: 'Agentes', workflows: 'Flujos',
 			infrastructure: 'Infraestructura', logs: 'Registro', alerts: 'Alertas', settings: 'Ajustes', all: 'Todos los procesos',
 			sub_overview: 'La revisión de un vistazo.', sub_systems: 'Cada sistema que revisa esta revisión, agrupado por lo que protege.',
@@ -116,7 +120,8 @@
 	// Names that are the same in every language (tool and character names) and short labels for the stations.
 	const STATION = {
 		fields: 'Fields', https: 'HTTPS', dns: 'DNS/TLS', robots: 'robots.txt', crawl: 'Crawl', browser: 'Browser', axe: 'Axe', webrisk: 'WebRisk',
-		lookalike: 'Lookalikes', wordpress: 'WordPress', mail: 'SPF/DMARC', lighthouse: 'Lighthouse', cases: 'Cases', score: 'Score', sign: 'Sign', save: 'Save/Mail'
+		lookalike: 'Lookalikes', wordpress: 'WordPress', mail: 'SPF/DMARC', lighthouse: 'Lighthouse', cases: 'Cases', score: 'Score', sign: 'Sign', save: 'Save/Mail',
+		security: 'Security', a11y: 'A11y', malware: 'Malware', blocklist: 'Blocklist', open: 'Open', pages: 'Pages', 'psi-ask': 'PSI ask'
 	};
 	const STATION_ES = { fields: 'Campos', crawl: 'Rastreo', browser: 'Navegador', lookalike: 'Parecidos', cases: 'Casos', score: 'Puntaje', sign: 'Firma', save: 'Guardar/Correo' };
 	const stationName = (id, fallback) => (LANG === 'es' && STATION_ES[id]) || STATION[id] || fallback || id;
@@ -138,6 +143,7 @@
 	const BACKGROUND = { https: 1, dns: 1, robots: 1, webrisk: 1, lookalike: 1, wordpress: 1, mail: 1, lighthouse: 1 };
 	const LANES = ['laneReview', 'laneBackground', 'laneWatchdog'];
 
+	const DOCTOR = { id: 'doctor', color: '#5dff9a', acc: 'visor' };
 	const AGENTS = [
 		{ id: 'scout', color: '#56d4e0', acc: 'antenna', stages: ['fields', 'https', 'open', 'robots', 'crawl', 'pages'] },
 		{ id: 'sentry', color: '#7d8cff', acc: 'visor', stages: ['dns', 'security', 'malware', 'blocklist', 'webrisk', 'lookalike', 'wordpress', 'mail'] },
@@ -407,6 +413,8 @@
 	let live = null;
 
 	function create(wrap, api) {
+		const SKIN = api.skin === 'lab' ? 'lab' : 'console';
+		const isLab = SKIN === 'lab';
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 		const stages = api.stages;
 		const stageIds = stages.map((s) => s.id);
@@ -477,9 +485,9 @@
 		// ------------------------------------------------ shell
 		wrap.removeAttribute('aria-hidden');
 		wrap.setAttribute('role', 'region');
-		wrap.setAttribute('aria-label', L.region);
+		wrap.setAttribute('aria-label', isLab ? L.regionLab : L.region);
 		wrap.textContent = '';
-		const root = h('div', { class: 'rc', 'data-view': R.view });
+		const root = h('div', { class: 'rc', 'data-view': R.view, 'data-skin': SKIN });
 		E.root = root;
 
 		// sidebar
@@ -503,7 +511,7 @@
 		const side = h('aside', { class: 'rc-side' }, [
 			h('div', { class: 'rc-brand' }, [
 				h('img', { class: 'rc-mark', src: 'assets/qa-review-mark.svg', alt: '', width: '34', height: '34', decoding: 'async' }),
-				h('div', { class: 'rc-brandtxt' }, [h('b', { text: 'QA-lab' }), h('small', { text: L.brand })])
+				h('div', { class: 'rc-brandtxt' }, [h('b', { text: 'QA-lab' }), h('small', { text: isLab ? L.brandLab : L.brand })])
 			]),
 			nav,
 			h('div', { class: 'rc-syscard' }, [
@@ -621,8 +629,157 @@
 			return n;
 		}
 
+
+		// ---- LAB TRIES board (tick boxes + item row + doctor + bays)
+		function buildLabProcesses() {
+			const board = api.model().ents.filter((e) => e.lane === 0).map((e) => e.def);
+			E.nodes = [[]];
+			E.labTicks = [];
+			E.labItems = [];
+			const ticks = h('div', { class: 'lab-ticks', style: '--n:' + board.length });
+			const items = h('div', { class: 'lab-items', style: '--n:' + board.length });
+			board.forEach((def, i) => {
+				const tick = h('div', { class: 'lab-tick s-idle', 'data-id': def.id }, [
+					h('span', { class: 'lab-tick-mark' }),
+					h('span', { class: 'lab-tick-lbl', text: stationName(def.id) })
+				]);
+				tick._st = 'idle';
+				E.labTicks[i] = tick;
+				ticks.appendChild(tick);
+				const item = h('div', { class: 'lab-item s-idle', 'data-id': def.id }, [
+					h('i', { class: 'lab-conn' }),
+					h('span', { class: 'lab-item-ring' }, [sprite(def.id, 'lab-sp')]),
+					h('span', { class: 'lab-item-mark' }),
+					h('span', { class: 'lab-item-lbl', text: stationName(def.id) })
+				]);
+				item._st = 'idle';
+				E.nodes[0][i] = item;
+				E.labItems[i] = item;
+				items.appendChild(item);
+			});
+			E.doctor = h('div', { class: 'lab-doctor' });
+			E.doctorFace = face(DOCTOR, 'md');
+			E.doctorBubble = h('p', { class: 'lab-bubble' });
+			E.doctor.appendChild(E.doctorBubble);
+			E.doctor.appendChild(E.doctorFace);
+			E.labBeam = h('i', { class: 'lab-beam' });
+			E.labPct = h('b', { class: 'lab-pct', text: '0%' });
+			E.labClock = h('span', { class: 'lab-clock rc-mono', text: '0:00' });
+			E.labFill = h('i', { class: 'lab-bar-fill' });
+			E.labPhase = h('span', { class: 'lab-phase', text: L.run_idle });
+			const floor = h('div', { class: 'lab-floor' }, [items, E.labBeam, E.doctor]);
+			const boardEl = h('div', { class: 'lab-board' }, [ticks, floor]);
+			E.pods = {};
+			const pods = h('div', { class: 'pods pods-lab' });
+			HAZARDS.forEach((hz) => {
+				const f = face(hz, 'sm');
+				const count = h('b', { class: 'pod-n', text: '0' });
+				const pod = h('div', { class: 'pod', 'data-id': hz.id }, [f, h('span', { class: 'pod-lbl', text: L[hz.key] }), sprite(hz.id, 'pod-sp'), count]);
+				E.pods[hz.id] = { pod, f, count };
+				pods.appendChild(pod);
+			});
+			const scroll = h('div', { class: 'lanes-scroll lab-scroll' }, [boardEl, pods]);
+			E.lanesScroll = scroll;
+			scroll.addEventListener('scroll', () => (R.userScrolled = nowSec()), { passive: true });
+			const head = h('div', { class: 'lab-head' }, [
+				h('div', { class: 'lab-title' }, [
+					h('span', { class: 'lab-check', 'aria-hidden': 'true', text: '✓' }),
+					h('div', {}, [h('b', { text: L.labTitle }), h('small', { text: L.labLive })])
+				]),
+				h('div', { class: 'lab-progress' }, [
+					h('span', { class: 'lab-progress-k', text: L.labProgress }),
+					h('div', { class: 'lab-bar' }, [E.labFill]),
+					E.labPct,
+					E.labClock,
+					E.labPhase
+				])
+			]);
+			const lanesPanel = h('section', { class: 'panel panel-lanes panel-lab' }, [
+				h('div', { class: 'panel-head' }, [h('div', {}, [h('h4', { text: L.lanesTitleLab }), h('p', { text: L.lanesSubLab })])]),
+				head,
+				scroll
+			]);
+			E.procTable = makeTable({ all: false });
+			E.viewAll = h('button', { class: 'rc-btn rc-ghost', type: 'button' }, [h('span', { text: L.viewAll }), icon('arrow')]);
+			E.viewAll.addEventListener('click', () => go('all'));
+			const procPanel = h('section', { class: 'panel panel-proc' }, [
+				h('div', { class: 'panel-head' }, [h('div', {}, [h('h4', { text: L.procTitle }), h('p', { text: L.procSub })]), E.viewAll]),
+				E.procTable.el
+			]);
+			const el = h('div', { class: 'v-processes' }, [lanesPanel, procPanel]);
+			view('processes', el, updateLabProcesses);
+		}
+
+		function updateLabProcesses(m) {
+			const visible = R.view === 'processes';
+			let lastIdx = -1;
+			let doneCount = 0;
+			m.ents.forEach((e) => {
+				if (e.lane !== 0) return;
+				const item = E.labItems[e.i];
+				const tick = E.labTicks[e.i];
+				if (!item) return;
+				const inGroup = session.filter === 'all' || groupsOfEnt(e.def).indexOf(session.filter) >= 0;
+				item.classList.toggle('is-dim', !inGroup);
+				tick.classList.toggle('is-dim', !inGroup);
+				const est = nodeStatus(e, m);
+				if (est !== item._st) {
+					const prev = item._st;
+					item._st = est;
+					tick._st = est;
+					item.className = item.className.replace(/\bs-\w+/, 's-' + est);
+					tick.className = tick.className.replace(/\bs-\w+/, 's-' + est);
+					if (visible && effectsOn()) reaction(item, est, prev);
+				}
+				if (est !== 'idle') lastIdx = Math.max(lastIdx, e.i);
+				if (est === 'done') doneCount++;
+			});
+			const total = E.labItems.length || 1;
+			const hud = (api.hud && api.hud()) || {};
+			const pct = Math.max(0, Math.min(100, Number(hud.pct) || Math.round((doneCount / total) * 100)));
+			E.labFill.style.setProperty('--p', String(pct));
+			setText(E.labPct, pct + '%');
+			setText(E.labClock, hud.clock || mmss(m.now || 0));
+			setText(E.labPhase, hud.phase || L['run_' + (m.run || 'idle')] || m.run || '');
+			const active = m.activeId;
+			let idx = -1;
+			m.ents.forEach((e) => {
+				if (e.lane === 0 && (e.def.id === active || (e.def.aka || []).indexOf(active) >= 0)) idx = e.i;
+			});
+			if (idx < 0) idx = Math.max(0, lastIdx);
+			E.doctor.style.setProperty('--i', String(idx));
+			E.doctor.style.setProperty('--n', String(total));
+			E.labBeam.style.setProperty('--i', String(idx));
+			E.labBeam.style.setProperty('--n', String(total));
+			E.doctor.classList.toggle('is-off', !prefs.faces || m.run === 'idle');
+			setMood(E.doctorFace, moodOf([active || (m.ents[idx] && m.ents[idx].def.id) || 'dns'], m));
+			const lastRow = m.log[m.log.length - 1];
+			setText(E.doctorBubble, lastRow ? lastRow.text : '');
+			E.doctorBubble.hidden = !lastRow || m.run === 'ready';
+			if (visible && nowSec() - (R.userScrolled || 0) > 4 && E.lanesScroll.scrollWidth > E.lanesScroll.clientWidth + 4) {
+				const node = E.labItems[idx];
+				if (node) {
+					const target = node.offsetLeft + node.offsetWidth / 2 - E.lanesScroll.clientWidth / 2;
+					E.lanesScroll.scrollTo({ left: Math.max(0, target), behavior: effectsOn() ? 'smooth' : 'auto' });
+				}
+			}
+			HAZARDS.forEach((hz) => {
+				const p = E.pods[hz.id];
+				const on = m.anomaly === hz.id || (hz.id === 'fail' && m.run === 'failed');
+				p.pod.classList.toggle('is-on', on);
+				setMood(p.f, on ? hz.mood : 'idle');
+				setText(p.count, String(R.counts.hz[hz.id] || 0));
+			});
+			E.procTable.update(m);
+		}
+
+		// ---- PROCESSES
 		// ---- PROCESSES
 		function buildProcesses() {
+			if (isLab) {
+				buildLabProcesses();
+				return;
+			}
 			const board = api.model().ents.filter((e) => e.lane === 0).map((e) => e.def);
 			const lanesEl = h('div', { class: 'lanes' });
 			E.lanes = [];

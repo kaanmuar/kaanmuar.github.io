@@ -33,17 +33,27 @@ async function prime(page, skin) {
 const snap = (page) => page.evaluate(() => window.ReviewArena.snapshot());
 
 test.describe('Review arena live facts', () => {
-	test('WIP while a stage runs; tick only after it passes', async ({ page }) => {
+	test('Lab Tries board shows live status and stays sharp (no canvas)', async ({ page }) => {
 		await prime(page, 'lab');
 		await page.goto('/qa-review.html');
 		await page.evaluate(() => {
 			ReviewProgress.start({ host: 'example.com', pages: 5 });
 			ReviewProgress.line('Reading robots.txt.');
 		});
+		await expect(page.locator('.ra--lab .rc')).toBeVisible();
+		await page.waitForFunction(() => window.ReviewArena.snapshot().ready);
 		let s = await snap(page);
+		expect(s.skin).toBe('lab');
 		expect(s.stages.robots).toBe('wip');
-		await expect(page.locator('.ra--lab .ra-canvas')).toBeVisible();
 		expect(s.items.robots).toBe('wip');
+		await expect(page.locator('.lab-item[data-id="robots"]').first()).toHaveClass(/s-wip/);
+		await expect(page.locator('.lab-tick[data-id="robots"]').first()).toHaveClass(/s-wip/);
+		await expect(page.locator('.ra .ra-canvas')).toHaveCount(0);
+		const hidden = await page.evaluate(() => document.getElementById('run-log').getBoundingClientRect().height);
+		expect(hidden).toBeLessThanOrEqual(1);
+		const text = await page.evaluate(() => document.querySelector('.ra .rc-host').shadowRoot.textContent);
+		expect(text).toMatch(/LAB TRIES|BROWSER PASS/i);
+		expect(text.toLowerCase()).not.toContain('jarvis');
 		await page.evaluate(() => {
 			ReviewProgress.line('12 same-host links were listed. This review opens at most 5 HTML pages and 2 links deep.');
 		});
@@ -52,6 +62,33 @@ test.describe('Review arena live facts', () => {
 		expect(s.stages.crawl).toBe('done');
 		expect(s.items.robots).toBe('done');
 		expect(s.items.crawl).toBe('done');
+		await expect(page.locator('.lab-item[data-id="robots"]').first()).toHaveClass(/s-done/);
+	});
+
+	test('Lab console views, View All, filter and Update work', async ({ page }) => {
+		await prime(page, 'lab');
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => {
+			ReviewProgress.start({ host: 'example.com', pages: 5 });
+			ReviewProgress.line('Reading robots.txt.');
+		});
+		await expect(page.locator('.ra--lab .rc')).toBeVisible();
+		await page.locator('.rc [data-nav="overview"]').click();
+		await expect(page.locator('.rc-view[data-v="overview"]')).toBeVisible();
+		await page.locator('.rc [data-nav="processes"]').click();
+		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(1);
+		await page.getByRole('button', { name: 'View All Processes' }).click();
+		await expect(page.locator('.rc-view[data-v="all"]')).toBeVisible();
+		await page.getByRole('button', { name: 'Back to Processes' }).click();
+		await page.getByRole('button', { name: 'System filter' }).click();
+		await page.getByRole('option', { name: 'Crawl' }).click();
+		await expect(page.locator('.rc .v-processes .pt-row:not([hidden])')).toHaveCount(1);
+		await page.getByRole('switch', { name: 'Auto-refresh' }).click();
+		await expect(page.locator('.rc .rc-paused')).toBeVisible();
+		await page.evaluate(() => ReviewProgress.line('robots.txt was read.'));
+		await expect(page.locator('.lab-item[data-id="robots"]').first()).toHaveClass(/s-wip/);
+		await page.getByRole('button', { name: 'Update' }).click();
+		await expect(page.locator('.lab-item[data-id="robots"]').first()).toHaveClass(/s-done/);
 	});
 
 	test('console lanes show live status and stay out of the internal tool name', async ({ page }) => {

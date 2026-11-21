@@ -1,16 +1,14 @@
-/* Live review arena. Two skins, both driven only by the real review log lines:
-   - lab: a small 2D game engine over reference art. Every item was cut out of the reference once
-     (scripts/review-arena-build.py) and is an entity with its own state machine
-     (idle / wip / done / fail / risk / skip) and motion set (js/qa-review-arena-motion.js).
-   - console: the review monitor (js/qa-review-console.js), drawn natively in HTML and SVG so text and
-     characters stay sharp at any size. This file only feeds it state; it loads on demand. */
+/* Live review arena. Two skins, both driven only by the real review log lines and both drawn by
+   js/qa-review-console.js (HTML/SVG, sharp at any size). Lab keeps the Lab Tries board (tick boxes,
+   item row, doctor, bays); console keeps the concurrent-work arcade. This file feeds state and loads
+   the console on demand. */
 (function () {
 	'use strict';
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
 	const VER = '?v=20261118a';
-	const CONSOLE_VER = '?v=20261120b';
+	const CONSOLE_VER = '?v=20261120c';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -177,7 +175,7 @@
 		if (id === state.anomaly) return;
 		state.anomaly = id;
 		state.anomalyAt = now();
-		if (id && state.ents.length && state.skin !== 'console') {
+		if (id && state.ents.length && state.ctx) {
 			const from = stationOf(state.activeId);
 			if (from >= 0) launchToken(entCenter(state.ents[from]), anomalyTarget(id), BAYC(id));
 		}
@@ -296,7 +294,7 @@
 			setAnomaly('');
 			setPose('cheer');
 			state.celebrate = now();
-			if (state.skin !== 'console') {
+			if (state.ctx) {
 				state.ents.forEach(function (e, i) {
 					schedule(0.06 * i, function () {
 						burst(entCenter(e), '#5dff9a', 10);
@@ -443,6 +441,7 @@
 
 	function buildConsole(wrap) {
 		const id = state.buildId;
+		const skin = state.skin;
 		dropConsole();
 		wrap.setAttribute('aria-hidden', 'true');
 		wrap.removeAttribute('role');
@@ -454,8 +453,14 @@
 		const panel = document.getElementById('run-panel');
 		if (panel) panel.classList.add('ra-console-on');
 		loadConsole().then(function (C) {
-			if (!C || id !== state.buildId || state.skin !== 'console' || state.run === 'idle') return;
-			state.cons = C.mount(wrap, { model: consoleModel, hud: readHud, stages: facts().STAGES, css: 'css/qa-review-console.css' + CONSOLE_VER });
+			if (!C || id !== state.buildId || state.skin !== skin || state.run === 'idle') return;
+			state.cons = C.mount(wrap, {
+				model: consoleModel,
+				hud: readHud,
+				stages: facts().STAGES,
+				skin: skin,
+				css: 'css/qa-review-console.css' + CONSOLE_VER,
+			});
 			state.cons.sync();
 		});
 		if (!state.io && typeof IntersectionObserver === 'function') {
@@ -474,42 +479,14 @@
 		state.atlas = (window.ReviewArenaAtlas || {})[skin];
 		wrap.className = 'ra ra--' + skin;
 		wrap.setAttribute('data-skin', skin);
-		if (skin === 'console') {
-			buildConsole(wrap);
-			return;
-		}
-		dropConsole();
-		wrap.textContent = '';
-		const canvas = document.createElement('canvas');
-		canvas.className = 'ra-canvas';
-		canvas.width = W;
-		canvas.height = H;
-		wrap.appendChild(canvas);
-		state.canvas = canvas;
-		state.ctx = canvas.getContext('2d');
+		// Both skins are native HTML/SVG consoles now. Lab keeps its Lab Tries board; console keeps the arcade.
+		buildConsole(wrap);
 		state.wrap = wrap;
-		state.assets = null;
-		state.ents = buildEntities();
-		state.bays = {};
-		loadAssets(skin).then(function (a) {
-			if (state.canvas !== canvas) return;
-			state.assets = a;
-			wake();
-		});
-		fit();
-		if (!state.ro && typeof ResizeObserver === 'function') {
-			state.ro = new ResizeObserver(function () {
-				fit();
-				wake();
-			});
-			state.ro.observe(wrap);
-		}
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
 				state.visible = list.some(function (x) {
 					return x.isIntersecting;
 				});
-				if (state.visible) wake();
 			});
 			state.io.observe(wrap);
 		}
@@ -529,25 +506,10 @@
 	}
 
 	function buildEntities() {
-		const A = state.atlas;
 		const map = boardMap();
 		if (state.skin === 'lab') {
-			if (!A) return [];
-			return A.stations.map(function (s, i) {
-				return {
-					i: i,
-					def: map[i],
-					rect: s.item,
-					box: s.box,
-					conn: s.conn,
-					sprite: s.sprite,
-					cx: s.cx,
-					status: 'idle',
-					since: -9,
-					phase: hash(i) * 6,
-					fx: 0,
-					lane: 0,
-				};
+			return map.map(function (def, i) {
+				return { i: i, lane: 0, def: def, status: 'idle', since: -9 };
 			});
 		}
 		const out = [];
@@ -592,7 +554,7 @@
 			const prev = e.status;
 			e.status = st;
 			e.since = t;
-			if (state.skin === 'console') return; // the console reads the statuses and animates them itself
+			if (state.cons || !state.ctx) return; // the console reads the statuses and animates them itself
 			const c = entCenter(e);
 			if (st === 'done') {
 				burst(c, '#5dff9a', 9);
@@ -1481,13 +1443,11 @@
 
 	function boot() {
 		hookProgress();
-		if (state.skin === 'console') {
-			const warm = function () {
-				loadConsole();
-			};
-			if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
-			else setTimeout(warm, 1500);
-		}
+		const warm = function () {
+			loadConsole();
+		};
+		if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
+		else setTimeout(warm, 1500);
 		if (!window.ReviewProgress) {
 			document.addEventListener('DOMContentLoaded', hookProgress);
 			setTimeout(hookProgress, 0);
@@ -1525,7 +1485,7 @@
 				activeId: state.activeId,
 				stages: Object.assign({}, state.stages),
 				items: items,
-				ready: state.skin === 'console' ? !!state.cons : !!(state.assets && state.assets.clean && state.assets.items),
+				ready: !!state.cons,
 			};
 		},
 		pickSkin: pickSkin,
