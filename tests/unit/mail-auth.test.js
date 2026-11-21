@@ -37,7 +37,7 @@ test('ARC-Authentication-Results adds arc=pass without duplicating spf', () => {
 	const r = classify({ headers: FIX.arcChain });
 	assert.equal(r.spf.result, 'pass');
 	assert.equal(r.arc.result, 'pass');
-	assert.ok(r.passed.includes('accounts.google.com'));
+	assert.deepEqual(r.passed, ['accounts.google.com']);
 	assert.match(label(r), /arc=pass/);
 });
 
