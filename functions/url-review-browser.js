@@ -2633,7 +2633,7 @@ async function browse(job, log, onStart) {
 			say(
 				"The page's load event had not fired after " +
 					NAV_MS / 1000 +
-					' s, though its document had arrived. Reading the page as it stands.'
+					' s, though its document had arrived. Checking the page as it stands.'
 			);
 		say(
 			pathOf(first.finalUrl) +
@@ -2649,7 +2649,7 @@ async function browse(job, log, onStart) {
 		);
 		const reread = (read) =>
 			steady(page, read, () =>
-				say('The page moved on to ' + pathOf(page.url()) + ' after it loaded. Reading it again once it settles.')
+				say('The page moved on to ' + pathOf(page.url()) + ' after it loaded. Checking it again once it settles.')
 			);
 		const view = await reread(() => rendered(page));
 		let dom = null;
@@ -2667,7 +2667,7 @@ async function browse(job, log, onStart) {
 		}
 		lap('read');
 		say(
-			'Read the rendered page: ' +
+			'Checked the rendered page: ' +
 				words(view.text) +
 				' words, compared with ' +
 				words(htmlText(first.raw)) +
@@ -3072,7 +3072,7 @@ async function browse(job, log, onStart) {
 										? launcher.name
 											? 'named "' + launcher.name + '"'
 											: 'unnamed'
-										: 'inside a frame this review cannot read') +
+										: 'inside a frame this review cannot check') +
 									(result.chat.launcher.covers.length
 										? ' and covers ' + result.chat.launcher.covers.map((row) => '"' + row.label + '"').join(', ')
 										: ' and covers no button') +

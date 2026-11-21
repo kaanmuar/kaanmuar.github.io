@@ -318,7 +318,7 @@ test('a realistic day stays whole: 30 chats, 200 workflow runs, 150 job runs and
 			proc.jobRow(job, 'running', { startedAt: new Date(t).toISOString() }),
 			proc.jobRow(job, 'done', {
 				startedAt: new Date(t).toISOString(),
-				step: 'www.electrofrioni.com (ni) complete, 20 pages read, 3 failures filed, 1 mail sent to the owner',
+				step: 'www.electrofrioni.com (ni) complete, 20 pages analyzed, 3 failures filed, 1 mail sent to the owner',
 			}),
 			2 * MIN
 		);
@@ -604,7 +604,7 @@ test('the snapshot carries the processes doc as its own section, and Ask sees it
 	const db = fakeDb();
 	await proc.report(
 		deps(db),
-		proc.deskRow('d1', 'running', { url: 'https://www.example.com/x', step: 'Reading the site' })
+		proc.deskRow('d1', 'running', { url: 'https://www.example.com/x', step: 'Analyzing the site' })
 	);
 	const value = (await proc.read(db)).value;
 	const ask = jarvis.askSnapshot({ processes: value }, 1);

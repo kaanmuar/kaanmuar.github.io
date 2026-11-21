@@ -2703,7 +2703,7 @@ test('share-to-review: the done push names the score and the failing checks, and
 	};
 	const m = review.doneMessage(report, 'https://carlosandmunoz.com/qa-review.html?report=abc');
 	assert.equal(m.title, 'Review done: shop.example.com scored 71 (C)');
-	assert.match(m.body, /^12 pages read: 2 failing, 1 at risk, 30 passing/);
+	assert.match(m.body, /^12 pages analyzed: 2 failing, 1 at risk, 30 passing/);
 	assert.deepEqual(m.lines, ['No HTTPS redirect', 'Slow LCP']);
 	assert.equal(m.url, 'https://carlosandmunoz.com/qa-review.html?report=abc');
 	assert.equal(review.failedMessage('https://x.example.com/', 'Timed out').title, 'Review failed: x.example.com');
@@ -2824,7 +2824,7 @@ test('only customer reviews push, with who, plan and the score', () => {
 	const msg = notify.reviewMessage('report', { id: 'x', report, name: 'Ana', free: true });
 	assert.equal(msg.kind, 'reviews');
 	assert.equal(msg.title, 'New review: shop.com scored 81 (B)');
-	assert.equal(msg.body, 'Ana · free. 12 pages read: 2 failing, 3 at risk, 30 passing.');
+	assert.equal(msg.body, 'Ana · free. 12 pages analyzed: 2 failing, 3 at risk, 30 passing.');
 	assert.deepEqual(msg.lines, ['No HTTPS redirect']);
 	assert.match(notify.reviewMessage('stopped', { report, passId: 'p' }).title, /^Review stopped early/);
 	for (const row of [

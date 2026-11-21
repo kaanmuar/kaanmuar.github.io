@@ -954,7 +954,7 @@
 			if (window.ReviewProgress) ReviewProgress.finish(stopped ? 'stopped' : 'ready');
 			setStatus(
 				stopped
-					? 'Preview stopped. Scores below use what was read before the stop.'
+					? 'Preview stopped. Scores below use what was analyzed before the stop.'
 					: 'Preview ready: scores and the top finding stay readable. Unlock for a full site audit.',
 				false
 			);

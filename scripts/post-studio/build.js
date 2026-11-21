@@ -501,7 +501,7 @@ function community(lang) {
 			'---',
 			'title: ' + L.length + ' kinds of test cases a public page already tells you about',
 			'published: false',
-			'description: A checklist for the first read of a page you have never tested, with one example case per kind.',
+			'description: A checklist for the first analysis of a page you have never tested, with one example case per kind.',
 			'tags: testing, qa, webdev, a11y',
 			'---',
 			'',
@@ -521,13 +521,13 @@ function community(lang) {
 			'',
 			'## What this list is not',
 			'',
-			'It is not a certification and not a penetration test. Reading a public page does not sign in, submit forms, or generate load, so anything behind a login or under real traffic still needs its own plan.',
+			'It is not a certification and not a penetration test. Analyzing a public page does not sign in, submit forms, or generate load, so anything behind a login or under real traffic still needs its own plan.',
 			'',
 			'---',
 			'',
 			'*Disclosure: I built [QA-lab URL Review](' +
 				url('devto') +
-				'), which reads a public https page and proposes these cases for you, named for the framework your team uses. It does not run them. The first review is included (20 pages, 2 links deep); keeping, downloading, or sharing the report starts at 19 USD.*',
+				'), which analyzes a public https page and proposes these cases for you, named for the framework your team uses. It does not run them. The first review is included (20 pages, 2 links deep); keeping, downloading, or sharing the report starts at 19 USD.*',
 			'',
 		].join('\n')
 	);
@@ -541,7 +541,7 @@ function community(lang) {
 			'',
 			'**Title:** What do you check first when you are handed a public page you have never tested?',
 			'',
-			'I have been writing down the first-read checklist I use on an unfamiliar site, and it ended up as ' +
+			'I have been writing down the first-analysis checklist I use on an unfamiliar site, and it ended up as ' +
 				L.length +
 				' kinds of cases: functional, content, links, forms, accessibility, security headers, privacy, SEO, GEO (whether AI answer engines can read the site), performance, load, mobile, internationalization, resilience, compatibility, media, analytics, commerce, visual, platform, and API.',
 			'',
@@ -557,7 +557,7 @@ function community(lang) {
 			'',
 			'# r/softwaretesting',
 			'',
-			'**Title:** A ' + L.length + '-kind checklist for the first read of a public web page (feedback welcome)',
+			'**Title:** A ' + L.length + '-kind checklist for the first analysis of a public web page (feedback welcome)',
 			'',
 			'Sharing the checklist I start from before writing automation for a site I do not know yet:',
 			'',
@@ -577,9 +577,9 @@ function community(lang) {
 			'',
 			'**Category:** Discussions, tags: tools, automation',
 			'',
-			'**Title:** Feedback wanted: proposing test cases from a public read of a page',
+			'**Title:** Feedback wanted: proposing test cases from a public analysis of a page',
 			'',
-			'Hi all, I am Carlos, a senior QA and program consultant in Colombia. I built QA-lab URL Review: you paste a public https address, it reads the response and the same-host links (20 pages, 2 links deep on the included review), and it proposes test cases across ' +
+			'Hi all, I am Carlos, a senior QA and program consultant in Colombia. I built QA-lab URL Review: you paste a public https address, it checks the response and the same-host links (20 pages, 2 links deep on the included review), and it proposes test cases across ' +
 				L.length +
 				' kinds, with starting scripts for 20 frameworks, from Playwright, Cypress, and Selenium to Cucumber, Appium, and k6.',
 			'',
@@ -589,7 +589,7 @@ function community(lang) {
 			'',
 			'1. Are the ' + L.length + ' kinds the right split, or would you merge or add any?',
 			'2. Is a proposed case list useful on its own, or only once it is exported to Jira with Xray, TestRail, Zephyr, or Azure DevOps?',
-			'3. Where does a first-read list like this fit in your process: before a release, on an inherited site, or somewhere else?',
+			'3. Where does a first-analysis list like this fit in your process: before a release, on an inherited site, or somewhere else?',
 			'',
 			'Link, if you want to try it on a site you are allowed to review: ' + url('ministry-of-testing'),
 			'',

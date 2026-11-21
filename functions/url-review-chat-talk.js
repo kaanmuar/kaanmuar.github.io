@@ -499,7 +499,7 @@ function judge(talked, ctx) {
 		const unknownPrices = stated.prices.filter((key) => !known.has('price', key));
 		const unknownTerms = stated.terms.filter((key) => !known.has('term', key));
 		const named = unknownPrices.map((key) => 'a price of ' + key).concat(unknownTerms.map(termText));
-		const read = known.pages === 1 ? 'the page read' : 'the ' + known.pages + ' pages read';
+		const read = known.pages === 1 ? 'the page analyzed' : 'the ' + known.pages + ' pages analyzed';
 		add(
 			'talk-invent',
 			'Names only prices and terms the site publishes',
@@ -508,7 +508,7 @@ function judge(talked, ctx) {
 				? 'The replies name ' +
 						named.slice(0, 4).join(', ') +
 						', which ' +
-						(known.pages === 1 ? 'the page read does not state' : 'none of ' + read + ' state') +
+						(known.pages === 1 ? 'the page analyzed does not state' : 'none of ' + read + ' state') +
 						'. Check that the site publishes them; a chat that invents a price or a deadline can bind the business to it.'
 				: stated.prices.length || stated.terms.length
 					? 'Every price and term in the replies also appears on ' + read + '.'

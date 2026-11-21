@@ -2189,7 +2189,7 @@ function analyze(input) {
 					path,
 					status: page.status || 0,
 					indexable: false,
-					reason: page.challenge ? page.challenge + ' bot check' : page.error || 'Not read',
+					reason: page.challenge ? page.challenge + ' bot check' : page.error || 'Not analyzed',
 				},
 				reasonMsg ? { reasonMsg } : {}
 			);

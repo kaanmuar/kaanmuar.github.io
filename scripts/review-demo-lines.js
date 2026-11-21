@@ -129,7 +129,7 @@ const LINES = {
 		it: 'Hai scelto una lettura più ampia, e vuoi vedere il pagamento prima che si muova denaro. Questa pagina mostra l’importo, poi si apre la cassa di prova di PayPal. La sandbox usa credenziali di prova. Non è un addebito vero.',
 	},
 	stop: {
-		en: 'The read is going further than you need, and you do not want to lose what is already saved. Stop ends it there. The pages read before the stop stay in the report.',
+		en: 'The analysis is going further than you need, and you do not want to lose what is already saved. Stop ends it there. The pages analyzed before the stop stay in the report.',
 		es: 'La lectura va más lejos de lo que necesitas, y no quieres perder lo que ya se guardó. Detener la corta ahí. Las páginas leídas antes de parar permanecen en el informe.',
 		pt: 'A leitura vai além do que você precisa, e você não quer perder o que já foi salvo. Parar encerra ali. As páginas lidas antes da parada permanecem no relatório.',
 		de: 'Die Lesung geht weiter, als Sie brauchen, und Sie wollen nicht verlieren, was schon gespeichert ist. Stopp beendet sie dort. Die Seiten vor dem Stopp bleiben im Bericht.',
