@@ -3,9 +3,31 @@
 .ra[hidden] { display: none; }
 .ra-canvas { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; }
 
-/* The console carries its own live log, so the plain log under it stays for screen readers and the Logs view takes its place. */
-#run-panel.ra-console-on { min-height: 0; }
-#run-panel.ra-console-on .log {
+/* The console and the Lab scene each carry their own live log, so the plain log under the frame stays for screen readers. */
+#run-panel.ra-console-on,
+#run-panel.ra-lab-on { min-height: 0; }
+#run-panel.ra-console-on .log,
+#run-panel.ra-lab-on .log {
     position: absolute; width: 1px; height: 1px; min-height: 0; max-height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 html.rc-noscroll { overflow: hidden; }
+
+/* Lab keeps its baked gaming scene. This chrome sits on top without redrawing the art. */
+.ra-lab-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.ra-lab-ui .ra-lab-hit { position: absolute; pointer-events: auto; cursor: pointer; border: 0; padding: 0; background: transparent; border-radius: 8px; }
+.ra-lab-ui .ra-lab-hit:focus-visible { outline: 2px solid #5ec8d4; outline-offset: 2px; }
+.ra-lab-ui .ra-lab-hit.is-on { box-shadow: inset 0 0 0 2px rgba(94, 200, 212, .7), 0 0 18px rgba(94, 200, 212, .35); }
+.ra-lab-ui .ra-lab-hit[data-kind="bay"].is-on { box-shadow: inset 0 0 0 2px rgba(255, 154, 74, .8), 0 0 18px rgba(255, 90, 74, .35); }
+.ra-lab-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; pointer-events: auto; z-index: 3; }
+.ra-lab-tools button { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(94, 200, 212, .4); background: rgba(5, 13, 17, .82); color: #cfe8ec; cursor: pointer; display: grid; place-items: center; }
+.ra-lab-tools button:hover { border-color: #5ec8d4; background: rgba(14, 40, 48, .95); }
+.ra-lab-tools svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ra-lab-tip { position: absolute; left: 12px; bottom: 12px; z-index: 4; max-width: min(420px, 70%); padding: 10px 12px; border-radius: 11px; border: 1px solid rgba(94, 200, 212, .4); background: rgba(5, 13, 17, .92); color: #e8f3f4; pointer-events: auto; box-shadow: 0 12px 28px rgba(0, 0, 0, .45); }
+.ra-lab-tip[hidden] { display: none !important; }
+.ra-lab-tip b { display: block; font: 700 12px/1.2 Inter, system-ui, sans-serif; letter-spacing: .08em; color: #5ec8d4; }
+.ra-lab-tip strong { display: block; margin-top: 4px; font: 600 15px/1.25 Inter, system-ui, sans-serif; color: #fff; }
+.ra-lab-tip p { margin: 6px 0 0; font: 400 12.5px/1.4 Inter, system-ui, sans-serif; color: #b7c9ce; }
+.ra-lab-tip .ra-lab-st { display: inline-flex; margin-top: 8px; padding: 3px 8px; border-radius: 999px; font: 700 10px/1 Inter, sans-serif; letter-spacing: .1em; border: 1px solid rgba(94, 200, 212, .35); }
+.ra.is-labfull, .ra:fullscreen { border-radius: 0; }
+.ra.is-labfull { position: fixed; inset: 0; z-index: 2147483000; width: 100vw; height: 100dvh; margin: 0; }
+.ra.is-labfull .ra-canvas { width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain; }

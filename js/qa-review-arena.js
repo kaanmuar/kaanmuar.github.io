@@ -1,14 +1,16 @@
-/* Live review arena. Two skins, both driven only by the real review log lines and both drawn by
-   js/qa-review-console.js (HTML/SVG, sharp at any size). Lab keeps the Lab Tries board (tick boxes,
-   item row, doctor, bays); console keeps the concurrent-work arcade. This file feeds state and loads
-   the console on demand. */
+/* Live review arena. Two skins, both driven only by the real review log lines:
+   - lab: a small 2D game engine over reference art. Every item was cut out of the reference once
+     (scripts/review-arena-build.py) and is an entity with its own state machine
+     (idle / wip / done / fail / risk / skip) and motion set (js/qa-review-arena-motion.js).
+   - console: the review monitor (js/qa-review-console.js), drawn natively in HTML and SVG so text and
+     characters stay sharp at any size. This file only feeds it state; it loads on demand. */
 (function () {
 	'use strict';
 
 	const SKIN_KEY = 'qa-review-arena-skin';
 	const BASE = 'assets/review-arena/v3/';
-	const VER = '?v=20261118a';
-	const CONSOLE_VER = '?v=20261120c';
+	const VER = '?v=20261120d';
+	const CONSOLE_VER = '?v=20261120b';
 	const W = 1280;
 	const H = 720;
 	const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -55,6 +57,20 @@
 	];
 	const BACKGROUND = { https: 1, dns: 1, robots: 1, webrisk: 1, lookalike: 1, wordpress: 1, mail: 1, lighthouse: 1 };
 	const HAZARD_OF = { timeout: 'timeout', stop: 'stop', fail: 'fail', slow: 'slow' };
+	// Lab gaming scene cast (atlas-aligned). The art stays; these names drive hit-targets, tips and live reactions.
+	const LAB_STATION = {
+		dns: 'DNS/TLS', robots: 'robots.txt', crawl: 'Crawl', browser: 'Browser', axe: 'Axe', security: 'Security', a11y: 'A11y',
+		malware: 'Malware', webrisk: 'WebRisk', blocklist: 'Blocklist', lookalike: 'Lookalike', wordpress: 'WordPress',
+		mail: 'SPF/DMARC', lighthouse: 'Lighthouse', cases: 'Cases', score: 'Score', sign: 'Sign', save: 'Save/Mail'
+	};
+	const LAB_BAYS = [
+		{ id: 'timeout', label: 'TIMEOUT', blurb: 'A check waited too long and timed out.' },
+		{ id: 'stop', label: 'STOP', blurb: 'The run was stopped before every check finished.' },
+		{ id: 'retry', label: 'RETRY', blurb: 'A check is being tried again.' },
+		{ id: 'slow', label: 'SLOW WAIT', blurb: 'The site is answering slowly; the lab is waiting.' },
+		{ id: 'fail', label: 'FAIL', blurb: 'A check failed and needs a look.' }
+	];
+	const LAB_DOCTOR = { id: 'doctor', label: 'Lab doctor', blurb: 'Runs the browser pass and watches every station.' };
 	const COLOR = { idle: '#3a4a55', wip: '#5ec8d4', done: '#5dff9a', fail: '#ff5a4a', skip: '#8aa0aa', risk: '#f0c85a' };
 	const PRIORITY = ['wip', 'fail', 'risk'];
 
@@ -175,7 +191,7 @@
 		if (id === state.anomaly) return;
 		state.anomaly = id;
 		state.anomalyAt = now();
-		if (id && state.ents.length && state.ctx) {
+		if (id && state.ents.length && state.skin !== 'console') {
 			const from = stationOf(state.activeId);
 			if (from >= 0) launchToken(entCenter(state.ents[from]), anomalyTarget(id), BAYC(id));
 		}
@@ -294,7 +310,7 @@
 			setAnomaly('');
 			setPose('cheer');
 			state.celebrate = now();
-			if (state.ctx) {
+			if (state.skin !== 'console') {
 				state.ents.forEach(function (e, i) {
 					schedule(0.06 * i, function () {
 						burst(entCenter(e), '#5dff9a', 10);
@@ -435,13 +451,29 @@
 	function dropConsole() {
 		if (state.cons) state.cons.destroy();
 		state.cons = null;
+		dropLabUi();
 		const panel = document.getElementById('run-panel');
-		if (panel) panel.classList.remove('ra-console-on');
+		if (panel) {
+			panel.classList.remove('ra-console-on');
+			panel.classList.remove('ra-lab-on');
+		}
+	}
+
+	function dropLabUi() {
+		if (state.labUi) {
+			if (state.labUi.onFull) document.removeEventListener('fullscreenchange', state.labUi.onFull);
+			if (state.labUi.onKey) document.removeEventListener('keydown', state.labUi.onKey);
+			if (state.labUi.root && state.labUi.root.parentNode) state.labUi.root.remove();
+		}
+		state.labUi = null;
+		if (state.wrap) {
+			state.wrap.classList.remove('is-labfull');
+			document.documentElement.classList.remove('rc-noscroll');
+		}
 	}
 
 	function buildConsole(wrap) {
 		const id = state.buildId;
-		const skin = state.skin;
 		dropConsole();
 		wrap.setAttribute('aria-hidden', 'true');
 		wrap.removeAttribute('role');
@@ -453,14 +485,8 @@
 		const panel = document.getElementById('run-panel');
 		if (panel) panel.classList.add('ra-console-on');
 		loadConsole().then(function (C) {
-			if (!C || id !== state.buildId || state.skin !== skin || state.run === 'idle') return;
-			state.cons = C.mount(wrap, {
-				model: consoleModel,
-				hud: readHud,
-				stages: facts().STAGES,
-				skin: skin,
-				css: 'css/qa-review-console.css' + CONSOLE_VER,
-			});
+			if (!C || id !== state.buildId || state.skin !== 'console' || state.run === 'idle') return;
+			state.cons = C.mount(wrap, { model: consoleModel, hud: readHud, stages: facts().STAGES, css: 'css/qa-review-console.css' + CONSOLE_VER });
 			state.cons.sync();
 		});
 		if (!state.io && typeof IntersectionObserver === 'function') {
@@ -473,20 +499,261 @@
 		}
 	}
 
+
+	function pctOf(rect, wrap) {
+		// atlas rect [x0,y0,x1,y1] → % box inside the 1280x720 scene
+		return {
+			left: (rect[0] / W) * 100,
+			top: (rect[1] / H) * 100,
+			width: ((rect[2] - rect[0]) / W) * 100,
+			height: ((rect[3] - rect[1]) / H) * 100,
+		};
+	}
+
+	function labStatusLabel(st) {
+		return st === 'wip' ? 'RUNNING' : st === 'done' ? 'DONE' : st === 'fail' ? 'ERROR' : st === 'risk' ? 'RISK' : st === 'skip' ? 'SKIPPED' : 'QUEUED';
+	}
+
+	function showLabTip(info) {
+		const ui = state.labUi;
+		if (!ui || !ui.tip) return;
+		ui.tip.hidden = false;
+		ui.tip.innerHTML = '';
+		const kind = document.createElement('b');
+		kind.textContent = info.kind;
+		const title = document.createElement('strong');
+		title.textContent = info.title;
+		const body = document.createElement('p');
+		body.textContent = info.body || '';
+		ui.tip.appendChild(kind);
+		ui.tip.appendChild(title);
+		ui.tip.appendChild(body);
+		if (info.status) {
+			const st = document.createElement('span');
+			st.className = 'ra-lab-st';
+			st.textContent = info.status;
+			st.style.color = COLOR[info.raw] || '#9fe8ee';
+			ui.tip.appendChild(st);
+		}
+		ui.active = info.id;
+		Array.prototype.forEach.call(ui.root.querySelectorAll('.ra-lab-hit'), function (el) {
+			el.classList.toggle('is-on', el.getAttribute('data-id') === info.id);
+		});
+	}
+
+	function hideLabTip() {
+		const ui = state.labUi;
+		if (!ui || !ui.tip) return;
+		ui.tip.hidden = true;
+		ui.active = '';
+		Array.prototype.forEach.call(ui.root.querySelectorAll('.ra-lab-hit'), function (el) {
+			el.classList.remove('is-on');
+		});
+	}
+
+	function inspectLabStation(i) {
+		const e = state.ents[i];
+		if (!e || !e.def) return;
+		const id = e.def.id;
+		const last = state.log.slice().reverse().find(function (r) { return r.stage === id || (e.def.aka || []).indexOf(r.stage) >= 0; });
+		showLabTip({
+			id: id,
+			kind: 'STATION',
+			title: LAB_STATION[id] || id,
+			body: (last && last.text) || 'Waiting for this check to start.',
+			status: labStatusLabel(e.status),
+			raw: e.status === 'wip' ? 'wip' : e.status,
+		});
+	}
+
+	function inspectLabBay(id) {
+		const bay = LAB_BAYS.find(function (b) { return b.id === id; }) || { label: id, blurb: '' };
+		const on = state.anomaly === id || (id === 'fail' && state.run === 'failed') || (id === 'stop' && (state.run === 'stopped' || state.run === 'stopping'));
+		showLabTip({
+			id: id,
+			kind: 'HAZARD',
+			title: bay.label,
+			body: bay.blurb + (on ? ' Active on this run.' : ' Idle right now.'),
+			status: on ? 'ACTIVE' : 'IDLE',
+			raw: on ? 'fail' : 'idle',
+		});
+	}
+
+	function inspectLabDoctor() {
+		showLabTip({
+			id: 'doctor',
+			kind: 'CHARACTER',
+			title: LAB_DOCTOR.label,
+			body: LAB_DOCTOR.blurb + (state.activeId ? ' Watching ' + (LAB_STATION[state.activeId] || state.activeId) + '.' : ''),
+			status: (state.pose || 'work').toUpperCase(),
+			raw: state.run === 'failed' ? 'fail' : state.run === 'ready' ? 'done' : 'wip',
+		});
+	}
+
+	function toggleLabFull() {
+		const wrap = state.wrap;
+		if (!wrap) return;
+		const on = wrap.classList.contains('is-labfull') || document.fullscreenElement === wrap;
+		if (on) {
+			if (document.fullscreenElement === wrap && document.exitFullscreen) document.exitFullscreen();
+			wrap.classList.remove('is-labfull');
+			document.documentElement.classList.remove('rc-noscroll');
+		} else if (wrap.requestFullscreen) {
+			wrap.requestFullscreen().catch(function () {
+				wrap.classList.add('is-labfull');
+				document.documentElement.classList.add('rc-noscroll');
+			});
+		} else {
+			wrap.classList.add('is-labfull');
+			document.documentElement.classList.add('rc-noscroll');
+		}
+		fit();
+		wake();
+	}
+
+	function buildLabUi(wrap) {
+		dropLabUi();
+		const A = state.atlas;
+		if (!A) return;
+		const root = document.createElement('div');
+		root.className = 'ra-lab-ui';
+		root.setAttribute('aria-label', 'Lab Tries controls');
+		const tools = document.createElement('div');
+		tools.className = 'ra-lab-tools';
+		const upd = document.createElement('button');
+		upd.type = 'button';
+		upd.title = 'Update';
+		upd.setAttribute('aria-label', 'Update');
+		upd.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>';
+		upd.addEventListener('click', function () { syncEntities(); wake(); });
+		const full = document.createElement('button');
+		full.type = 'button';
+		full.title = 'Full screen';
+		full.setAttribute('aria-label', 'Full screen');
+		full.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+		full.addEventListener('click', toggleLabFull);
+		tools.appendChild(upd);
+		tools.appendChild(full);
+		root.appendChild(tools);
+		const tip = document.createElement('div');
+		tip.className = 'ra-lab-tip';
+		tip.hidden = true;
+		tip.setAttribute('role', 'status');
+		root.appendChild(tip);
+		(A.stations || []).forEach(function (st, i) {
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'station');
+			hit.setAttribute('data-id', (LAB[i] && LAB[i].id) || String(i));
+			hit.setAttribute('aria-label', LAB_STATION[(LAB[i] && LAB[i].id)] || 'Station');
+			const box = pctOf(st.item || st.box, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', function () { inspectLabStation(i); });
+			root.appendChild(hit);
+		});
+		if (A.doctor) {
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'doctor');
+			hit.setAttribute('data-id', 'doctor');
+			hit.setAttribute('aria-label', LAB_DOCTOR.label);
+			const box = pctOf(A.doctor, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', inspectLabDoctor);
+			root.appendChild(hit);
+		}
+		LAB_BAYS.forEach(function (bay) {
+			const rect = A.bays && A.bays[bay.id];
+			if (!rect) return;
+			const hit = document.createElement('button');
+			hit.type = 'button';
+			hit.className = 'ra-lab-hit';
+			hit.setAttribute('data-kind', 'bay');
+			hit.setAttribute('data-id', bay.id);
+			hit.setAttribute('aria-label', bay.label);
+			const box = pctOf(rect, wrap);
+			hit.style.left = box.left + '%';
+			hit.style.top = box.top + '%';
+			hit.style.width = box.width + '%';
+			hit.style.height = box.height + '%';
+			hit.addEventListener('click', function () { inspectLabBay(bay.id); });
+			root.appendChild(hit);
+		});
+		wrap.appendChild(root);
+		state.labUi = { root: root, tip: tip, active: '' };
+		const onFull = function () {
+			if (document.fullscreenElement !== wrap) {
+				wrap.classList.remove('is-labfull');
+				document.documentElement.classList.remove('rc-noscroll');
+			}
+			fit();
+			wake();
+		};
+		document.addEventListener('fullscreenchange', onFull);
+		const onKey = function (e) {
+			if (e.key === 'Escape') {
+				if (wrap.classList.contains('is-labfull')) toggleLabFull();
+				else hideLabTip();
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		state.labUi.onFull = onFull;
+		state.labUi.onKey = onKey;
+	}
+
 	function build(wrap) {
 		const skin = state.skin;
 		state.buildId++;
 		state.atlas = (window.ReviewArenaAtlas || {})[skin];
 		wrap.className = 'ra ra--' + skin;
 		wrap.setAttribute('data-skin', skin);
-		// Both skins are native HTML/SVG consoles now. Lab keeps its Lab Tries board; console keeps the arcade.
-		buildConsole(wrap);
+		if (skin === 'console') {
+			buildConsole(wrap);
+			return;
+		}
+		dropConsole();
+		wrap.textContent = '';
+		const canvas = document.createElement('canvas');
+		canvas.className = 'ra-canvas';
+		canvas.width = W;
+		canvas.height = H;
+		wrap.appendChild(canvas);
+		state.canvas = canvas;
+		state.ctx = canvas.getContext('2d');
 		state.wrap = wrap;
+		state.assets = null;
+		state.ents = buildEntities();
+		state.bays = {};
+		const panel = document.getElementById('run-panel');
+		if (panel) panel.classList.add('ra-lab-on');
+		buildLabUi(wrap);
+		loadAssets(skin).then(function (a) {
+			if (state.canvas !== canvas) return;
+			state.assets = a;
+			wake();
+		});
+		fit();
+		if (!state.ro && typeof ResizeObserver === 'function') {
+			state.ro = new ResizeObserver(function () {
+				fit();
+				wake();
+			});
+			state.ro.observe(wrap);
+		}
 		if (!state.io && typeof IntersectionObserver === 'function') {
 			state.io = new IntersectionObserver(function (list) {
 				state.visible = list.some(function (x) {
 					return x.isIntersecting;
 				});
+				if (state.visible) wake();
 			});
 			state.io.observe(wrap);
 		}
@@ -506,10 +773,25 @@
 	}
 
 	function buildEntities() {
+		const A = state.atlas;
 		const map = boardMap();
 		if (state.skin === 'lab') {
-			return map.map(function (def, i) {
-				return { i: i, lane: 0, def: def, status: 'idle', since: -9 };
+			if (!A) return [];
+			return A.stations.map(function (s, i) {
+				return {
+					i: i,
+					def: map[i],
+					rect: s.item,
+					box: s.box,
+					conn: s.conn,
+					sprite: s.sprite,
+					cx: s.cx,
+					status: 'idle',
+					since: -9,
+					phase: hash(i) * 6,
+					fx: 0,
+					lane: 0,
+				};
 			});
 		}
 		const out = [];
@@ -554,7 +836,7 @@
 			const prev = e.status;
 			e.status = st;
 			e.since = t;
-			if (state.cons || !state.ctx) return; // the console reads the statuses and animates them itself
+			if (state.skin === 'console') return; // the console reads the statuses and animates them itself
 			const c = entCenter(e);
 			if (st === 'done') {
 				burst(c, '#5dff9a', 9);
@@ -1443,11 +1725,13 @@
 
 	function boot() {
 		hookProgress();
-		const warm = function () {
-			loadConsole();
-		};
-		if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
-		else setTimeout(warm, 1500);
+		if (state.skin === 'console') {
+			const warm = function () {
+				loadConsole();
+			};
+			if (typeof requestIdleCallback === 'function') requestIdleCallback(warm, { timeout: 4000 });
+			else setTimeout(warm, 1500);
+		}
 		if (!window.ReviewProgress) {
 			document.addEventListener('DOMContentLoaded', hookProgress);
 			setTimeout(hookProgress, 0);
@@ -1485,8 +1769,11 @@
 				activeId: state.activeId,
 				stages: Object.assign({}, state.stages),
 				items: items,
-				ready: !!state.cons,
+				ready: state.skin === 'console' ? !!state.cons : !!(state.assets && state.assets.clean && state.assets.items),
 			};
+		},
+		labCast: function () {
+			return { doctor: LAB_DOCTOR, bays: LAB_BAYS.slice(), stations: LAB.map(function (d) { return { id: d.id, label: LAB_STATION[d.id] || d.id, kind: d.kind }; }) };
 		},
 		pickSkin: pickSkin,
 		forceSkin: function (skin) {
