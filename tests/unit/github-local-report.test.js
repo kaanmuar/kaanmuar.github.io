@@ -222,6 +222,32 @@ test('maybePruneWorkLog skips under size+age caps; dry-runs when over bytes or k
 	assert.equal(r.WORK_LOG_PRUNE_NEAR, 0.8);
 });
 
+test('formatWorkLogPrune summarizes skip and prune results for launchd logs', () => {
+	assert.equal(r.formatWorkLogPrune(null), '');
+	assert.match(r.formatWorkLogPrune({ skipped: 'under threshold', bytes: 10, threshold: 100, maxBytes: 125 }), /under threshold/);
+	assert.equal(r.formatWorkLogPrune({ skipped: 'no log' }), 'work-log prune skipped (no log)');
+	assert.match(
+		r.formatWorkLogPrune({
+			removedAge: 2,
+			removedSize: 1,
+			bytesBefore: 100,
+			bytesAfter: 50,
+			dryRun: false,
+		}),
+		/pruned: -3 rows \(100→50 B\)/
+	);
+	assert.match(
+		r.formatWorkLogPrune({
+			removedAge: 1,
+			removedSize: 0,
+			bytesBefore: 9,
+			bytesAfter: 8,
+			dryRun: true,
+		}),
+		/would prune/
+	);
+});
+
 test('safeToRemove only allows a clean, unlocked worktree under .worktrees', () => {
 	const wt = { path: ROOT + '/.worktrees/feat-1-x', branch: 'feat/1-x', dirty: false, alive: false, chat: '' };
 	assert.equal(r.safeToRemove({ target: wt.path }, wt, ROOT).ok, true);

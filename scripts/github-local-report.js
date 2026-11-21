@@ -404,6 +404,38 @@ function maybePruneWorkLog(opts = {}) {
 	});
 }
 
+/** One-line summary for launchd / Jarvis logs. */
+function formatWorkLogPrune(result) {
+	if (!result) return '';
+	if (result.skipped) {
+		if (result.skipped === 'under threshold') {
+			return (
+				'work-log prune skipped (under threshold: ' +
+				result.bytes +
+				'/' +
+				result.threshold +
+				' of max ' +
+				result.maxBytes +
+				')'
+			);
+		}
+		return 'work-log prune skipped (' + result.skipped + ')';
+	}
+	const removed = (result.removedAge || 0) + (result.removedSize || 0);
+	const verb = result.dryRun ? 'would prune' : 'pruned';
+	return (
+		'work-log ' +
+		verb +
+		': -' +
+		removed +
+		' rows (' +
+		result.bytesBefore +
+		'→' +
+		result.bytesAfter +
+		' B)'
+	);
+}
+
 function collect(root, now) {
 	const errors = [];
 	const safe = (name, fn, fallback) => {
@@ -423,7 +455,7 @@ function collect(root, now) {
 	const wts = safe('worktrees', () => worktrees(root, now), []);
 	const workLogSweep = safe('workLogSweep', () => sweepWorkLog(root), null);
 	const workLogPrune = safe('workLogPrune', () => maybePruneWorkLog(), null);
-	const usage = safe('usage', () => usageRows(fs.readFileSync(path.join(USAGE_DIR, 'work-log.csv'), 'utf8'), now), []);
+	const usage = safe('usage', () => usageRows(fs.readFileSync(WORK_LOG_CSV, 'utf8'), now), []);
 	const cost = safe(
 		'cost',
 		() => {
@@ -563,6 +595,7 @@ async function report(dry) {
 		.concat(reported ? [] : done);
 	fs.mkdirSync(path.dirname(RESULTS), { recursive: true });
 	fs.writeFileSync(RESULTS, JSON.stringify(left, null, 2));
+	const pruneLine = formatWorkLogPrune(payload.workLogPrune);
 	log(
 		'Uploaded ' +
 			payload.worktrees.length +
@@ -572,6 +605,7 @@ async function report(dry) {
 			payload.cost.tickets.length +
 			' ticket costs; queue ' +
 			(data.queue || []).length +
+			(pruneLine ? '; ' + pruneLine : '') +
 			(payload.errors.length ? '; ' + payload.errors.join('; ') : '')
 	);
 }
@@ -647,6 +681,7 @@ module.exports = {
 	rateFrom,
 	safeToRemove,
 	maybePruneWorkLog,
+	formatWorkLogPrune,
 	WORK_LOG_PRUNE_NEAR,
 	STALE_S,
 };
