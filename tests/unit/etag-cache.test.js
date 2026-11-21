@@ -98,7 +98,10 @@ test('jarvis-github client sends If-None-Match on a repeat GET and serves the 30
 
 // --- scripts/git-lock.sh (mkdir fallback: GIT_LOCK_NO_FLOCK=1 forces it on machines that have flock) ---
 const LOCK = path.join(__dirname, '../../scripts/git-lock.sh');
-const run = (lock, args, env) => spawnSync('bash', [LOCK, lock, ...args], { encoding: 'utf8', env: Object.assign({}, process.env, { GIT_LOCK_NO_FLOCK: '1' }, env) });
+const lockEnv = (extra) => Object.assign({ PATH: process.env.PATH, GIT_LOCK_NO_FLOCK: '1' }, extra);
+const run = (lock, args, env) => spawnSync('bash', [LOCK, lock, ...args], { encoding: 'utf8', env: lockEnv(env) });
+const LOCK_JOB =
+	"const fs=require('fs'),{spawnSync}=require('child_process');const [name,log]=process.argv.slice(1);fs.appendFileSync(log,'start-'+name+'\\n');spawnSync('sleep',['0.5']);fs.appendFileSync(log,'end-'+name+'\\n');";
 
 test('git-lock runs the command, passes its exit status and releases the lock', () => {
 	const lock = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gl-')), 'l');
@@ -141,7 +144,7 @@ test('git-lock serializes two concurrent holders', async () => {
 	const lock = path.join(dir, 'l');
 	const log = path.join(dir, 'log');
 	const job = (name) => new Promise((resolve) => {
-		const p = spawn('bash', [LOCK, lock, 'bash', '-c', `echo start-${name} >> "${log}"; sleep 0.5; echo end-${name} >> "${log}"`], { env: Object.assign({}, process.env, { GIT_LOCK_NO_FLOCK: '1' }) });
+		const p = spawn('bash', [LOCK, lock, process.execPath, '-e', LOCK_JOB, name, log], { env: lockEnv() });
 		p.on('close', resolve);
 	});
 	await Promise.all([job('a'), job('b')]);
