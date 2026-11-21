@@ -1,0 +1,14 @@
+---
+description: Living URL Review deck stays current with every user-facing ship — read before changing URL Review or the deck
+globs: functions/url-review*.js,qa-review*.html,js/qa-review*.js,css/qa-review*.css,llms.txt,llms/**,scripts/feature-deck/**,presentation/**,scripts/check-deck-parity.js
+alwaysApply: false
+---
+# Living feature deck stays current (#3931, #4102)
+
+The plain-language deck at `/presentation/` is a living document. It is only trusted because CI fails when URL Review ships and the deck does not.
+
+- When a PR changes what a visitor sees or pays for in URL Review (`functions/url-review*.js`, `qa-review*.html`, `js/qa-review*.js`, `css/qa-review*.css`, `llms.txt`), update `scripts/feature-deck/changes.js` in the **same** PR: one plain-language item under today's date (or a new day entry). Words: no ticket numbers, no code names. Face from `assets/faces/badge`. Only after it is live on the branch you are shipping.
+- Then rebuild and commit the published HTML: `npm --prefix scripts/feature-deck run deck` (needs Chrome). Commit `presentation/` (HTML, faces, css/js). Do not commit `presentation/*.pptx` (gitignored; rebuild on request).
+- When the change must not appear in the deck (internal-only, rename, test fixture), put `deck: skip: <why>` in the PR body. CI (`scripts/check-deck-parity.js`, workflow `deck-parity.yml`) fails without that line or a `changes.js` update.
+- Daily and on push to main, `deck-drift.yml` fails and opens an issue if URL Review commits landed after the newest `changes.js` day without updating the deck. Do not close those by skipping the update — add the missing items.
+- Edit and commit only under `.worktrees/` for the ticket branch. Never switch the main checkout.

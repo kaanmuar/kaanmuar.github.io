@@ -18,6 +18,13 @@
 
 const CHANGES = [
 	{
+		date: '2026-11-21',
+		eg: 'The deck stays current by itself: a PR that changes URL Review must update this list, or say why not.',
+		items: [
+			{ face: 'tools', t: 'Deck stays current automatically', d: 'Every URL Review change must update this list in the same PR, or say deck: skip. A daily check opens an issue when main moves and the deck does not.' },
+		],
+	},
+	{
 		date: '2026-11-20',
 		items: [
 			{ face: 'bulk', t: 'Bulk list checks addresses', d: 'The list box guesses the right page for each address and checks for address typos, the same way the one-URL box does.' },

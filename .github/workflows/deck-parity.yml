@@ -1,0 +1,32 @@
+name: Living deck parity
+
+# A PR that changes user-facing URL Review must update the living deck (#3931), or say
+# "deck: skip: <why>" in its body (#4102). Same shape as Jarvis app parity.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - "functions/url-review*.js"
+      - "qa-review*.html"
+      - "js/qa-review*.js"
+      - "css/qa-review*.css"
+      - "llms.txt"
+      - "llms/**"
+      - "scripts/feature-deck/**"
+      - "presentation/**"
+      - "scripts/check-deck-parity.js"
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: URL Review and the living deck change together
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/check-deck-parity.js "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
