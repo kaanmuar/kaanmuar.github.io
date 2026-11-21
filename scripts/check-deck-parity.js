@@ -12,7 +12,7 @@
 // Usage:
 //   node scripts/check-deck-parity.js [<base-ref> [<head-ref>]]   # PR check; defaults origin/main HEAD
 //   node scripts/check-deck-parity.js --drift [ref]               # since CHANGES date; default HEAD
-// Env: PR_BODY for the opt-out line.
+// Env: PR_BODY for the opt-out line (CI should fetch the live PR body; commit messages are also scanned).
 'use strict';
 
 const fs = require('fs');
@@ -131,6 +131,19 @@ function refs(args) {
 	return { base: base || 'origin/main', head: head || 'HEAD' };
 }
 
+function commitMessages(base, head) {
+	try {
+		return git(['log', `${base}..${head}`, '--format=%B']);
+	} catch {
+		return '';
+	}
+}
+
+// "deck: skip" in any commit on the branch counts, so a push can pass without a body-only edit (#4139).
+function optOutText(body, base, head) {
+	return [body || '', base && head ? commitMessages(base, head) : ''].filter(Boolean).join('\n');
+}
+
 if (require.main === module) {
 	const argv = process.argv.slice(2);
 	if (argv[0] === '--drift') {
@@ -170,12 +183,12 @@ if (require.main === module) {
 		);
 		process.exit(2);
 	}
-	const out = checkPr(files, process.env.PR_BODY);
+	const out = checkPr(files, optOutText(process.env.PR_BODY, base, head));
 	if (out.ok) {
 		console.log(
 			out.review.length
 				? out.optOut
-					? "URL Review changed with 'deck: skip' in the PR body."
+					? "URL Review changed with 'deck: skip' in the PR or commit messages."
 					: 'URL Review and the living deck (changes.js / presentation/) changed together.'
 				: 'No user-facing URL Review change.'
 		);
@@ -184,9 +197,21 @@ if (require.main === module) {
 	console.error(
 		`This PR changes URL Review (${out.review.join(', ')}) but not ${CHANGES_FILE} or presentation/.\n` +
 			`Update changes.js with a plain-language item, run npm --prefix scripts/feature-deck run deck, commit presentation/,\n` +
-			`or add "deck: skip: <why>" to the PR body when the change must not appear in the deck (#4102).`
+			`or add "deck: skip: <why>" to the PR body or a commit message when the change must not appear in the deck (#4102).`
 	);
 	process.exit(1);
 }
 
-module.exports = { checkPr, drift, isReview, isDeck, OPT_OUT, REVIEW, DECK, refs, newestChangesDate };
+module.exports = {
+	checkPr,
+	drift,
+	isReview,
+	isDeck,
+	OPT_OUT,
+	REVIEW,
+	DECK,
+	refs,
+	newestChangesDate,
+	optOutText,
+	commitMessages,
+};

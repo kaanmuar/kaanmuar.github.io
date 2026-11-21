@@ -3782,6 +3782,7 @@ test("failure causes are classed from the review's own messages", () => {
 			'unknown',
 		],
 		['Parse Error: Missing expected CR after header value', 'unknown'],
+		['Parse Error: Invalid header value char HPE_INVALID_HEADER_TOKEN', 'headers'],
 		["Cannot read properties of undefined (reading 'x')", 'unknown'],
 	];
 	cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -4094,6 +4095,55 @@ test('a page whose header line is folded with a line feed is read, as Chrome rea
 		assert.equal(read.status, 200);
 		assert.equal(read.body, body);
 		assert.match(String(read.headers['content-security-policy-report-only'] || ''), /alkompis\.se/);
+	} finally {
+		await new Promise((resolve) => server.close(resolve));
+	}
+});
+
+test('a page whose Content-Security-Policy value has line feeds is read, as Chrome reads it (#4142)', async () => {
+	// tekjemarket.com sends Content-Security-Policy with LF inside the value, not a folded continuation line.
+	const net = require('node:net');
+	const body = '<html>tekjemarket</html>';
+	const server = net.createServer((socket) => {
+		socket.once('data', () =>
+			socket.end(
+				'HTTP/1.1 200 OK\r\n' +
+					'content-type: text/html\r\n' +
+					'Content-Security-Policy: \n' +
+					"\t\tdefault-src 'self';\n" +
+					"\t\tscript-src 'self' 'unsafe-inline';\r\n" +
+					'content-length: ' +
+					Buffer.byteLength(body) +
+					'\r\n' +
+					'connection: close\r\n\r\n' +
+					body
+			)
+		);
+	});
+	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+	const target = new URL('http://127.0.0.1:' + server.address().port + '/');
+	try {
+		const read = await core.requestDirect(target, '127.0.0.1');
+		assert.equal(read.status, 200);
+		assert.equal(read.body, body);
+		assert.match(String(read.headers['content-security-policy'] || ''), /default-src/);
+		assert.equal(failures.causeOf('Parse Error: Invalid header value char HPE_INVALID_HEADER_TOKEN').id, 'headers');
+		const headerFail = {
+			kind: 'failed',
+			at: '2026-11-20T10:00:00Z',
+			diagnosedAt: '2026-11-20T11:00:00Z',
+			cause: { id: 'headers' },
+			diagnosis: { cause: 'headers', cleared: false, rerun: false },
+			error: { message: 'Parse Error: Invalid header value char' },
+		};
+		failures.FIXES.push({
+			cause: 'headers',
+			at: '2026-11-21T17:45:00Z',
+			ref: '#4142',
+			label: 'A response header whose value has a line feed is read, as Chrome reads it',
+		});
+		const trigger = failures.rerunTrigger(headerFail);
+		assert.deepEqual([trigger.id, trigger.ref], ['fix', '#4142']);
 	} finally {
 		await new Promise((resolve) => server.close(resolve));
 	}
@@ -5139,10 +5189,25 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 		cause: { id: 'bot-protection' },
 		lines: [],
 	};
+	const placeholder = filed('2026-11-09T10:00:00Z', 'not-html', 'The URL did not return an HTML page.', {
+		dns,
+		plain: {
+			hops: [],
+			status: 200,
+			html: false,
+			contentType: 'text/plain',
+			body: 'Site is under construction, please visit later',
+		},
+		browser: { ok: true, docStatus: 200, words: 6 },
+	});
+	const plainPdf = filed('2026-11-09T11:00:00Z', 'not-html', 'The URL did not return an HTML page.', {
+		dns,
+		plain: { hops: [], status: 200, html: false, contentType: 'application/pdf' },
+	});
 
 	assert.ok(failures.siteSide(slowOrigin, 'status'));
 	const bugs = failures.bugPlan(
-		[wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin],
+		[wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin, placeholder, plainPdf],
 		[wallRerun],
 		[]
 	);
@@ -5163,6 +5228,15 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 	assert.match(
 		byKey.status.body,
 		/\*\*Triage:\*\* every run here is the site's own state \(1 run answering every client with a 5xx\), so the daily fix comments without starting an agent\./
+	);
+	assert.deepEqual(marker(byKey['not-html'].body), { runs: 2, ours: 0, site: { 'not-html': 2 } });
+	assert.match(
+		byKey['not-html'].body,
+		/\*\*Triage:\*\* every run here is the site's own state \(2 runs serving no HTML page\), so the daily fix comments without starting an agent\./
+	);
+	assert.match(
+		byKey['not-html'].body,
+		/on not-html\.example\.com: .* Site's own state: serving no HTML page\./
 	);
 });
 

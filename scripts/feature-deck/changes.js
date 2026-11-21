@@ -15,12 +15,14 @@
 //
 // Only put a change here once it is live. Words: no internal ticket numbers, no code names.
 // Each item must trace to a commit on main that shipped it. Do not add items from plans or drafts.
+// #4142 (in flight): lenient HTTP parser retry for bad CSP header line feeds — no visitor-facing deck line until live.
 
 const CHANGES = [
 	{
 		date: '2026-11-21',
 		eg: 'The deck stays current by itself: a PR that changes URL Review must update this list, or say why not.',
 		items: [
+			{ face: 'a11y', t: 'Keyboard-order checks on the start page', d: 'The accessibility section now reads the start page’s HTML for keyboard traps and odd tab order: positive tabindex, controls cut out of Tab, click-only elements, modals with nothing to focus or close, inert misuse, hidden-but-focusable controls and unnamed links or buttons. It says what the HTML shows and asks a person to confirm.' },
 			{ face: 'targeted', t: 'Incident-response playbooks', d: 'Paid “Was it targeted?” reports show step-by-step playbooks on the page and in the PDF—identify, contain, fix, recover and learn—in English, Spanish and French (German, Italian and Portuguese show English for now), adapted from CERT Société Générale with credit.' },
 			{ face: 'export', t: 'Trust grade on the report card', d: 'The picture card that goes with a public report on social networks now shows the trust grade letter and points when the report has them.' },
 			{ face: 'tools', t: 'Deck stays current automatically', d: 'Every URL Review change must update this list in the same PR, or say deck: skip. A daily check opens an issue when main moves and the deck does not.' },

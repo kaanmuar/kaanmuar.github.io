@@ -11,6 +11,9 @@
 	"devDependencies": {
 		"playwright-core": "^1.65.1"
 	},
+	"overrides": {
+		"image-size": "^2.0.3"
+	},
 	"scripts": {
 		"build": "node prep-media.js && node build-html.js && node render-pptx-assets.js && node build-pptx.js",
 		"quick": "node build-html.js && node build-pptx.js",

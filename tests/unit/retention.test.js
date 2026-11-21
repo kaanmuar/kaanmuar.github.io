@@ -82,6 +82,12 @@ test("payment rows and coupon redemptions go on January 1 of the sixth year afte
 	assert.equal(R.decide(redeem, { at: "2026-10-01T00:00:00Z" }, NOW), "keep");
 });
 
+test("webhook claim records go 3 months after the last touch (#3837)", () => {
+	const p = policy("webhook_events");
+	assert.equal(R.decide(p, { firstSeenAt: ago(4), finishedAt: ago(4) }, NOW), "delete");
+	assert.equal(R.decide(p, { firstSeenAt: ago(4), lastSeenAt: ago(1) }, NOW), "keep");
+});
+
 test("a row without a readable date is kept, not deleted", () => {
 	assert.equal(R.decide(policy("ratings"), {}, NOW), "undated");
 	assert.equal(R.decide(policy("messages"), { createdAt: "not a date" }, NOW), "undated");

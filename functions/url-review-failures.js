@@ -195,6 +195,12 @@ const FIXES = [
 		label:
 			"A 5xx that headless Chrome gets after the plain read took too long is the site's own answer, kept on the desk without a bug",
 	},
+	{
+		cause: 'headers',
+		at: '2026-11-21T17:45:00Z',
+		ref: '#4142',
+		label: 'A response header whose value has a line feed is read, as Chrome reads it',
+	},
 ];
 const fixKey = (fix) => fix.cause + ' ' + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -222,7 +228,7 @@ const CAUSES = [
 	[
 		'headers',
 		"The site's response headers are past the review's limit",
-		/Header overflow|HPE_HEADER_OVERFLOW|response headers are past/i,
+		/Header overflow|HPE_HEADER_OVERFLOW|HPE_INVALID_HEADER_TOKEN|Invalid header value char|response headers are past/i,
 	],
 	['dns', 'The host name did not resolve', /did not resolve|ENOTFOUND|EAI_AGAIN/i],
 	['http-redirect', 'The site redirected to http://', /an http:\/\/ address/i],
@@ -758,6 +764,7 @@ const SITE_REASONS = {
 	'bot-wall': 'behind a bot wall that refuses headless Chrome too',
 	cert: 'with a certificate that is expired, self-signed or for another name',
 	'5xx': 'answering every client with a 5xx',
+	'not-html': 'serving no HTML page',
 };
 const SITE_CERT =
 	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed/i;
@@ -779,6 +786,7 @@ function siteReason(lead) {
 		if (plain.error && browser && browser.ok && browser.docStatus >= 500) return '5xx';
 		if (SITE_ERROR.test(lead.message || '')) return '5xx';
 	}
+	if (lead.cause === 'not-html' && plain.status >= 200 && plain.status < 300 && !plain.html) return 'not-html';
 	return '';
 }
 
