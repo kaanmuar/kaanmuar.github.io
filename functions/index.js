@@ -6419,12 +6419,18 @@ async function reviewAccount(req, res, pathName) {
 				Date.now()
 			);
 			if (!result.ok) {
-				res.status(result.status).json({ error: result.error, notice: dmarcConsent.NOTICE, proofKind });
+				res.status(result.status).json({
+					error: result.error,
+					notice: dmarcConsent.NOTICE,
+					mailbox: dmarcConsent.RUA_MAILBOX,
+					proofKind,
+				});
 				return;
 			}
 			res.status(200).json({
 				ok: true,
 				notice: dmarcConsent.NOTICE,
+				mailbox: dmarcConsent.RUA_MAILBOX,
 				consent: result.consent,
 				proofKind: result.proofKind,
 				deleted: result.deleted || 0,
@@ -6435,6 +6441,7 @@ async function reviewAccount(req, res, pathName) {
 		res.status(200).json({
 			ok: true,
 			notice: dmarcConsent.NOTICE,
+			mailbox: dmarcConsent.RUA_MAILBOX,
 			host: host || '',
 			proofKind,
 			consent: dmarcStore.publicConsent(row),

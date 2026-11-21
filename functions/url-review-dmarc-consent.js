@@ -14,13 +14,18 @@ const COLLECTION = 'url_review_dmarc_consent';
 const CONSENT_MS = 365 * 24 * 60 * 60 * 1000;
 // Bump when the notice text changes in substance; every earlier yes then stops counting.
 const NOTICE_VERSION = '2026-11-20';
+// ImprovMX alias on carlosandmunoz.com (mailbox/DNS deploy is a later #3777 step; the UI only shows this address).
+const RUA_MAILBOX = 'dmarc@carlosandmunoz.com';
 
 // The privacy notice shown beside the opt-in. English is the source; ES, PT, DE, FR and IT show it in English until native review (#3952).
 const NOTICE = {
 	version: NOTICE_VERSION,
 	title: 'Read my DMARC and TLS-RPT reports',
+	mailbox: RUA_MAILBOX,
 	lines: [
-		'If you turn this on, you point the rua address of your DMARC record and of your TLS-RPT record at a mailbox QA Lab controls. QA Lab reads the reports that arrive there for this domain only.',
+		'If you turn this on, you point the rua address of your DMARC record and of your TLS-RPT record at ' +
+			RUA_MAILBOX +
+			'. QA Lab reads the reports that arrive there for this domain only.',
 		'Each report is cut down on arrival to counts: messages per sending server (IP address) per day, how many passed or failed DMARC, what the receiver did with the failures, and which kind of failure it was.',
 		'QA Lab does not keep message-level data: no subject, no sender or recipient address, no message ID, no report text. The raw report is discarded after it is counted.',
 		'The counts are used for one thing: telling you in the review whether legitimate senders would fail and whether p=reject is safe to reach. They are not shared and not used for anything else.',
@@ -80,4 +85,14 @@ function ownerReportView(row, proofKind, dmarcList, tlsList, now) {
 	return dmarc || tls ? { dmarc, tls } : null;
 }
 
-module.exports = { COLLECTION, CONSENT_MS, NOTICE_VERSION, NOTICE, consentRecord, docId, consentOn, ownerReportView };
+module.exports = {
+	COLLECTION,
+	CONSENT_MS,
+	NOTICE_VERSION,
+	NOTICE,
+	RUA_MAILBOX,
+	consentRecord,
+	docId,
+	consentOn,
+	ownerReportView,
+};
