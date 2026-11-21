@@ -737,6 +737,10 @@ function build(run, series) {
 		pages,
 		overall: score.overall,
 		grade: score.grade,
+		// Customer trust grade (#3958): letter + points from insights.trust for the share card and engagement docs.
+		trustGrade: ins.trust && ins.trust.grade ? String(ins.trust.grade).slice(0, 2) : '',
+		trustScore:
+			ins.trust && Number.isFinite(Number(ins.trust.score)) ? Math.round(Number(ins.trust.score)) : null,
 		areas: Object.fromEntries(AREAS.map((a) => [a, score.areas[a].score])),
 		headline: (run.title || []).map((line) => ({ t: fill(line, score).replace(/\*/g, ''), em: /^\*.*\*$/.test(line) })),
 		focus,

@@ -2,8 +2,10 @@
 /*
  * The mini report card (#2466, design #2473): a 1200x675 PNG per Live Report that rides on a report reply (#2465)
  * on Bluesky, Mastodon and X. It shows the site's name and host, its score from SHOW_SCORE up and otherwise the
- * weakest area (never a number under it), and the reply's short link, in the reply's language, in the post-studio
- * look (scripts/post-studio/frame.html). Alt text goes with it in the same language.
+ * weakest area (never a number under it), the customer trust grade letter and points when the engagement report
+ * carries them (#3958), and the reply's short link, in the reply's language, in the post-studio look
+ * (scripts/post-studio/frame.html). Alt text goes with it in the same language. Non-English card copy is
+ * machine-assisted; native review is tracked in #3952. No IR playbook text (and no IRM CC-BY line) on this card.
  *
  * satori lays it out as SVG and @resvg/resvg-js paints the PNG, with the brand fonts in assets/fonts (SIL OFL). Both
  * load on the first render, so the modules that require this one run where they are not installed.
@@ -19,17 +21,23 @@ const PAD = 64;
 const SHORT = 'https://qalabreview.com/';
 const ASSETS = path.join(__dirname, 'assets');
 
+// Non-English strings are machine-assisted; native review is tracked in #3952.
 const COPY = {
 	en: {
 		tag: 'Free website review',
 		score: 'Overall score',
 		look: 'Worth a look',
+		trust: 'Trust grade',
+		points: 'points',
 		open: 'Open report',
 		alt: (f) =>
 			'QA-lab URL Review card: ' +
 			(f.shown
 				? f.name + ' (' + f.host + ') scores ' + f.score + '/100 in our free Live Report.'
 				: 'our free Live Report on ' + f.name + ' (' + f.host + ') has findings worth a look in ' + f.area + '.') +
+			(f.trustGrade
+				? ' Customer trust grade ' + f.trustGrade + (f.trustScore != null ? ' (' + f.trustScore + ' points)' : '') + '.'
+				: '') +
 			' Report link: ' +
 			f.display +
 			'.',
@@ -38,6 +46,8 @@ const COPY = {
 		tag: 'Revisión web gratuita',
 		score: 'Puntuación general',
 		look: 'Vale la pena revisar',
+		trust: 'Nota de confianza',
+		points: 'puntos',
 		open: 'Ver informe',
 		alt: (f) =>
 			'Tarjeta de QA-lab URL Review: ' +
@@ -50,6 +60,12 @@ const COPY = {
 					') tiene hallazgos que vale la pena revisar en ' +
 					low(f.area) +
 					'.') +
+			(f.trustGrade
+				? ' Nota de confianza del cliente ' +
+					f.trustGrade +
+					(f.trustScore != null ? ' (' + f.trustScore + ' puntos)' : '') +
+					'.'
+				: '') +
 			' Enlace al informe: ' +
 			f.display +
 			'.',
@@ -58,6 +74,8 @@ const COPY = {
 		tag: 'Revisão de site gratuita',
 		score: 'Pontuação geral',
 		look: 'Vale a pena ver',
+		trust: 'Nota de confiança',
+		points: 'pontos',
 		open: 'Ver relatório',
 		alt: (f) =>
 			'Cartão do QA-lab URL Review: ' +
@@ -70,6 +88,12 @@ const COPY = {
 					') tem achados que valem a pena ver em ' +
 					low(f.area) +
 					'.') +
+			(f.trustGrade
+				? ' Nota de confiança do cliente ' +
+					f.trustGrade +
+					(f.trustScore != null ? ' (' + f.trustScore + ' pontos)' : '') +
+					'.'
+				: '') +
 			' Link do relatório: ' +
 			f.display +
 			'.',
@@ -78,6 +102,8 @@ const COPY = {
 		tag: 'Kostenlose Website-Prüfung',
 		score: 'Gesamtwert',
 		look: 'Einen Blick wert',
+		trust: 'Vertrauensnote',
+		points: 'Punkte',
 		open: 'Bericht öffnen',
 		alt: (f) =>
 			'Karte von QA-lab URL Review: ' +
@@ -90,6 +116,12 @@ const COPY = {
 					') hat Befunde zu ' +
 					f.area +
 					', die einen Blick wert sind.') +
+			(f.trustGrade
+				? ' Vertrauensnote für Kunden ' +
+					f.trustGrade +
+					(f.trustScore != null ? ' (' + f.trustScore + ' Punkte)' : '') +
+					'.'
+				: '') +
 			' Link zum Bericht: ' +
 			f.display +
 			'.',
@@ -98,6 +130,8 @@ const COPY = {
 		tag: 'Audit de site gratuit',
 		score: 'Score global',
 		look: 'À examiner',
+		trust: 'Note de confiance',
+		points: 'points',
 		open: 'Voir le rapport',
 		alt: (f) =>
 			'Carte QA-lab URL Review : ' +
@@ -110,6 +144,12 @@ const COPY = {
 					') relève des points à examiner côté ' +
 					low(f.area) +
 					'.') +
+			(f.trustGrade
+				? ' Note de confiance client ' +
+					f.trustGrade +
+					(f.trustScore != null ? ' (' + f.trustScore + ' points)' : '') +
+					'.'
+				: '') +
 			' Lien du rapport : ' +
 			f.display +
 			'.',
@@ -118,6 +158,8 @@ const COPY = {
 		tag: 'Revisione gratuita del sito',
 		score: 'Punteggio complessivo',
 		look: 'Da guardare',
+		trust: 'Voto di fiducia',
+		points: 'punti',
 		open: 'Apri il report',
 		alt: (f) =>
 			'Scheda di QA-lab URL Review: ' +
@@ -130,6 +172,12 @@ const COPY = {
 					') ha risultati da guardare su ' +
 					low(f.area) +
 					'.') +
+			(f.trustGrade
+				? ' Voto di fiducia per i clienti ' +
+					f.trustGrade +
+					(f.trustScore != null ? ' (' + f.trustScore + ' punti)' : '') +
+					'.'
+				: '') +
 			' Link al report: ' +
 			f.display +
 			'.',
@@ -160,6 +208,8 @@ function facts(doc) {
 	const display = String(rep.link || '').startsWith(SHORT)
 		? rep.link.slice('https://'.length)
 		: 'qalabreview.com/' + lang + '/r/' + (R.CODES[doc.network] || 'x') + '/' + host;
+	const trustGrade = /^[A-F][+-]?$/.test(String(rep.trustGrade || '').trim()) ? String(rep.trustGrade).trim() : '';
+	const trustScore = trustGrade && Number.isFinite(Number(rep.trustScore)) ? Math.round(Number(rep.trustScore)) : null;
 	return {
 		lang,
 		host,
@@ -172,6 +222,8 @@ function facts(doc) {
 		score: shown ? Math.round(Number(rep.score)) : null,
 		area: rep.weakest ? (a.areas || {})[rep.weakest] || rep.weakest : '',
 		about: rep.weakest ? (a.about || {})[rep.weakest] || '' : '',
+		trustGrade,
+		trustScore,
 	};
 }
 
@@ -225,6 +277,40 @@ function tree(f) {
 	const nameSize = f.name.length <= 16 ? 96 : f.name.length <= 28 ? 76 : 60;
 	// Fira Code is 0.6em a character; about 720px sit between the lock and the longest button.
 	const linkSize = Math.max(17, Math.min(30, Math.floor(720 / (f.display.length * 0.6))));
+	const trustRow = f.trustGrade
+		? [
+				h(
+					'div',
+					{
+						display: 'flex',
+						alignItems: 'baseline',
+						marginTop: f.shown || f.area ? 18 : 8,
+						paddingTop: f.shown || f.area ? 16 : 0,
+						borderTop: f.shown || f.area ? '1.5px solid ' + C.line : 'none',
+					},
+					h('div', caps(18, C.muted), t.trust),
+					h(
+						'div',
+						{
+							fontFamily: 'Instrument Serif',
+							fontSize: f.shown || f.area ? 52 : 120,
+							lineHeight: 0.95,
+							letterSpacing: '-0.02em',
+							color: /^A/.test(f.trustGrade) ? C.ok : C.gold,
+							marginLeft: 14,
+						},
+						f.trustGrade
+					),
+					f.trustScore != null
+						? h(
+								'div',
+								{ fontFamily: 'Fira Code', fontSize: 20, color: C.muted, marginLeft: 12 },
+								f.trustScore + ' ' + t.points
+							)
+						: null
+				),
+			].filter(Boolean)
+		: [];
 	const panel = f.shown
 		? [
 				h('div', caps(20, C.muted), t.score),
@@ -235,7 +321,7 @@ function tree(f) {
 						'div',
 						{
 							fontFamily: 'Instrument Serif',
-							fontSize: 168,
+							fontSize: f.trustGrade ? 120 : 168,
 							lineHeight: 0.9,
 							letterSpacing: '-0.03em',
 							backgroundImage: 'linear-gradient(180deg, #ffffff, ' + C.hi + ')',
@@ -246,6 +332,7 @@ function tree(f) {
 					),
 					h('div', { fontFamily: 'Fira Code', fontSize: 30, color: C.gold, marginLeft: 10, marginBottom: 18 }, '/100')
 				),
+				...trustRow,
 			]
 		: [
 				h('div', caps(20, C.gold), t.look),
@@ -253,7 +340,7 @@ function tree(f) {
 					'div',
 					{
 						fontFamily: 'Instrument Serif',
-						fontSize: f.area.length <= 11 ? 70 : 52,
+						fontSize: f.area.length <= 11 ? (f.trustGrade ? 56 : 70) : f.trustGrade ? 44 : 52,
 						lineHeight: 1,
 						marginTop: 14,
 						color: C.text,
@@ -261,6 +348,7 @@ function tree(f) {
 					f.area || '—'
 				),
 				f.about ? h('div', { fontSize: 21, lineHeight: 1.35, color: C.muted, marginTop: 14 }, f.about) : null,
+				...trustRow,
 			].filter(Boolean);
 
 	return h(
