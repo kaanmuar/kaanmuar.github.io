@@ -6,9 +6,11 @@
 //   - withHeartbeat(env, name, fn)  run fn(); ping success after it returns, failure if it throws (then rethrow fn's error).
 //   - checkEndpoints(list, opts)    results [{ url, ok, status, expected, ms, error? }] for a separate uptime check.
 // Pings use a short timeout and never throw into the caller. The URLs are secrets: they are never logged or put in an error.
-// Operator bindings (set as Worker secrets, values are not stored in the repo):
+// Operator bindings (set as Worker secrets, values are not stored in the repo; names in workers/.env.example):
 //   HEARTBEAT_OUTREACH_URL       success ping URL of the outreach-cron check (healthchecks ping URL)
 //   HEARTBEAT_OUTREACH_FAIL_URL  optional; failure ping URL. Default: HEARTBEAT_OUTREACH_URL + "/fail"
+//   HEARTBEAT_UPTIME_URL         success ping URL of the uptime-check Worker
+//   HEARTBEAT_UPTIME_FAIL_URL    optional; failure ping URL. Default: HEARTBEAT_UPTIME_URL + "/fail"
 // Unset bindings turn the heartbeat off. The check's period and grace belong in the alerting service, not here.
 
 const DEFAULT_TIMEOUT_MS = 3000;
