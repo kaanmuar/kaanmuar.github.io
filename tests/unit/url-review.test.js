@@ -3771,6 +3771,7 @@ test("failure causes are classed from the review's own messages", () => {
 			'unknown',
 		],
 		['Parse Error: Missing expected CR after header value', 'unknown'],
+		['Parse Error: Invalid header value char HPE_INVALID_HEADER_TOKEN', 'headers'],
 		["Cannot read properties of undefined (reading 'x')", 'unknown'],
 	];
 	cases.forEach(([message, id]) => assert.equal(failures.causeOf(message).id, id, message));
@@ -4083,6 +4084,55 @@ test('a page whose header line is folded with a line feed is read, as Chrome rea
 		assert.equal(read.status, 200);
 		assert.equal(read.body, body);
 		assert.match(String(read.headers['content-security-policy-report-only'] || ''), /alkompis\.se/);
+	} finally {
+		await new Promise((resolve) => server.close(resolve));
+	}
+});
+
+test('a page whose Content-Security-Policy value has line feeds is read, as Chrome reads it (#4142)', async () => {
+	// tekjemarket.com sends Content-Security-Policy with LF inside the value, not a folded continuation line.
+	const net = require('node:net');
+	const body = '<html>tekjemarket</html>';
+	const server = net.createServer((socket) => {
+		socket.once('data', () =>
+			socket.end(
+				'HTTP/1.1 200 OK\r\n' +
+					'content-type: text/html\r\n' +
+					'Content-Security-Policy: \n' +
+					"\t\tdefault-src 'self';\n" +
+					"\t\tscript-src 'self' 'unsafe-inline';\r\n" +
+					'content-length: ' +
+					Buffer.byteLength(body) +
+					'\r\n' +
+					'connection: close\r\n\r\n' +
+					body
+			)
+		);
+	});
+	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+	const target = new URL('http://127.0.0.1:' + server.address().port + '/');
+	try {
+		const read = await core.requestDirect(target, '127.0.0.1');
+		assert.equal(read.status, 200);
+		assert.equal(read.body, body);
+		assert.match(String(read.headers['content-security-policy'] || ''), /default-src/);
+		assert.equal(failures.causeOf('Parse Error: Invalid header value char HPE_INVALID_HEADER_TOKEN').id, 'headers');
+		const headerFail = {
+			kind: 'failed',
+			at: '2026-11-20T10:00:00Z',
+			diagnosedAt: '2026-11-20T11:00:00Z',
+			cause: { id: 'headers' },
+			diagnosis: { cause: 'headers', cleared: false, rerun: false },
+			error: { message: 'Parse Error: Invalid header value char' },
+		};
+		failures.FIXES.push({
+			cause: 'headers',
+			at: '2026-11-21T17:45:00Z',
+			ref: '#4142',
+			label: 'A response header whose value has a line feed is read, as Chrome reads it',
+		});
+		const trigger = failures.rerunTrigger(headerFail);
+		assert.deepEqual([trigger.id, trigger.ref], ['fix', '#4142']);
 	} finally {
 		await new Promise((resolve) => server.close(resolve));
 	}

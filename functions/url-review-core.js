@@ -1650,11 +1650,15 @@ async function requestOnce(target, pinned, isStopped, keepPartial, acceptLanguag
 
 // alkompis.se folds a Content-Security-Policy-Report-Only line with LF and a tab, not CRLF.
 // Node's strict parser then throws "Parse Error: Missing expected CR after header value" (HPE_CR_EXPECTED).
-// Curl and Chrome read that page. One retry uses Node's lenient parser, which joins the folded line.
+// tekjemarket.com puts line feeds inside a Content-Security-Policy value (HPE_INVALID_HEADER_TOKEN).
+// Curl and Chrome read those pages. One retry uses Node's lenient parser, which joins the folded line.
 function foldedHeader(error) {
 	return (
 		!!error &&
-		(error.code === 'HPE_CR_EXPECTED' || error.message === 'Parse Error: Missing expected CR after header value')
+		(error.code === 'HPE_CR_EXPECTED' ||
+			error.message === 'Parse Error: Missing expected CR after header value' ||
+			error.code === 'HPE_INVALID_HEADER_TOKEN' ||
+			error.message === 'Parse Error: Invalid header value char')
 	);
 }
 
