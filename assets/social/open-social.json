@@ -1966,6 +1966,17 @@
     "checked": "2026-11-07T23:38:49.636Z"
    }
   ],
+  "evergreen-2026-11/06-sri": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n2sakulmar27",
+    "at": "2026-11-21T04:16:39.450Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2sakulmar27",
+    "checked": "2026-11-21T04:16:59.091Z"
+   }
+  ],
   "evergreen-2026-11/07-pre-release": [
    {
     "channel": "bluesky",
@@ -2317,6 +2328,24 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2rpzbvpcl25",
     "checked": "2026-11-21T00:06:58.191Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18025321781761628",
+    "at": "2026-11-21T04:18:26.257Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4035043644129518449",
+    "checked": "2026-11-21T04:18:38.823Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18030124751697566",
+    "at": "2026-11-21T04:17:02.048Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/Df_WpFkifsN/",
+    "checked": "2026-11-21T04:18:25.833Z"
    },
    {
     "channel": "threads",

@@ -584,6 +584,17 @@
     "checked": "2026-11-07T23:41:02.257Z"
    }
   ],
+  "evergreen-2026-11/06-sri": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "127",
+    "at": "2026-11-21T04:18:39.415Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/127",
+    "checked": "2026-11-21T04:18:44.769Z"
+   }
+  ],
   "evergreen-2026-11/07-pre-release": [
    {
     "channel": "telegram",
