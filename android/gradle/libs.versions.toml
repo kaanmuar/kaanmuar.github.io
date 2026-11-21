@@ -30,6 +30,8 @@ composeLints = "1.4.2"
 sentry = "8.65.0"
 # 2.2.0 needs compileSdk 36 (AGP 8.7.3 caps at 35); raise with AGP.
 kermit = "2.1.0"
+# google/horologist datalayer (Apache-2.0, LICENSE + Maven POM verified); 0.7.15 = latest non-alpha (#3836).
+horologist = "0.7.15"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -68,6 +70,7 @@ detekt-test = { module = "io.gitlab.arturbosch.detekt:detekt-test", version.ref 
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLints" }
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+horologist-datalayer = { module = "com.google.android.horologist:horologist-datalayer", version.ref = "horologist" }
 androidx-window = { module = "androidx.window:window", version.ref = "window" }
 
 [plugins]

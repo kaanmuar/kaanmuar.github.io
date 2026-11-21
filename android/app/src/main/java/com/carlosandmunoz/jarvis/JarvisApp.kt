@@ -7,6 +7,7 @@ import com.carlosandmunoz.jarvis.data.Vault
 import com.carlosandmunoz.jarvis.home.Home
 import com.carlosandmunoz.jarvis.home.Ongoing
 import com.carlosandmunoz.jarvis.home.Shortcuts
+import com.carlosandmunoz.jarvis.home.WatchPayloadSerializer
 import com.carlosandmunoz.jarvis.push.Push
 import com.carlosandmunoz.jarvis.telemetry.Telemetry
 import com.carlosandmunoz.jarvis.background.Keep
@@ -14,6 +15,7 @@ import com.carlosandmunoz.jarvis.update.Updater
 import com.carlosandmunoz.jarvis.voice.HandsFree
 import com.carlosandmunoz.jarvis.voice.Listener
 import com.carlosandmunoz.jarvis.voice.Speaker
+import com.google.android.horologist.data.WearDataLayerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +32,12 @@ class JarvisApp : Application() {
 
     /** Work the owner starts runs here, not in a screen's scope, so leaving Jarvis does not cancel it (#2531). */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    /** Horologist Data Layer (#3836): phone→watch status pushes share this registry. */
+    val dataLayer: WearDataLayerRegistry by lazy {
+        WearDataLayerRegistry.fromContext(this, scope).also {
+            it.registerSerializer(WatchPayloadSerializer)
+        }
+    }
     val speaker by lazy { Speaker(this) }
     val handsFree by lazy { HandsFree(this) }
 

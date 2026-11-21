@@ -10,12 +10,13 @@ import com.carlosandmunoz.jarvis.data.num
 import com.carlosandmunoz.jarvis.data.obj
 import com.carlosandmunoz.jarvis.data.objs
 import com.carlosandmunoz.jarvis.data.str
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.PutDataRequest
+import com.google.android.horologist.data.WearDataLayerRegistry
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.JsonObject
+import java.io.ByteArrayOutputStream
 
-/** Wear OS watch (#1419): after each refresh the phone hands a small summary to the paired watch over the Data Layer, so the watch never signs in. */
+/** Wear OS watch (#1419 / #3836): after each refresh the phone hands a small summary to the paired watch over Horologist's Data Layer, so the watch never signs in. */
 object Watch {
     const val PATH = "/jarvis/status"
 
@@ -35,31 +36,36 @@ object Watch {
             money.at("revenue").num("count")?.toInt() ?: 0, top, at, Processes.running(snap.obj("processes")), Processes.needsYou(snap.obj("processes")))
     }
 
+    fun registry(app: JarvisApp): WearDataLayerRegistry = app.dataLayer
+
     /** No-op without a connected watch, so phones without one never pay for the extra one-day snapshot. */
     suspend fun sync(context: Context, today: suspend () -> JsonObject?) {
         val app = context.applicationContext as JarvisApp
-        val nodes = runCatching { Wearable.getNodeClient(app).connectedNodes.await() }.getOrNull().orEmpty()
+        val registry = registry(app)
+        val nodes = runCatching { registry.nodeClient.connectedNodes.await() }.getOrNull().orEmpty()
         if (nodes.isEmpty()) return
-        val req = PutDataMapRequest.create(PATH)
         val saved = Home.snapshot(app)
-        if (saved == null) req.dataMap.putBoolean("empty", true)
-        else {
+        val payload = if (saved == null) {
+            WatchPayload(empty = true, sent = System.currentTimeMillis())
+        } else {
             val (snap, at) = saved
             val s = summary(snap, today(), at)
-            req.dataMap.apply {
-                putDouble("readiness", s.readiness ?: -1.0)
-                putInt("alerts", s.alerts)
-                putInt("warns", s.warns)
-                putString("headline", s.headline)
-                putString("revenue", s.revenue)
-                putInt("sales", s.sales)
-                putString("top", s.top ?: "")
-                putInt("running", s.running)
-                putInt("needsYou", s.needsYou)
-                putLong("at", s.at)
-            }
+            WatchPayload(
+                readiness = s.readiness,
+                alerts = s.alerts,
+                warns = s.warns,
+                headline = s.headline,
+                revenue = s.revenue,
+                sales = s.sales,
+                top = s.top.orEmpty(),
+                at = s.at,
+                running = s.running,
+                needsYou = s.needsYou,
+                sent = System.currentTimeMillis(),
+            )
         }
-        req.dataMap.putLong("sent", System.currentTimeMillis())
-        runCatching { Wearable.getDataClient(app).putDataItem(req.asPutDataRequest().setUrgent()).await() }
+        val bytes = ByteArrayOutputStream().also { WatchPayloadSerializer.writeTo(payload, it) }.toByteArray()
+        val req = PutDataRequest.create(PATH).setUrgent().apply { data = bytes }
+        runCatching { registry.dataClient.putDataItem(req).await() }
     }
 }
