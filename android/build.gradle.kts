@@ -37,6 +37,14 @@ allprojects {
                 useVersion("33.7.2-jre")
             } else if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java") {
                 useVersion("3.25.5")
+            } else if (requested.group == "com.google.protobuf" &&
+                (requested.name == "protobuf-javalite" || requested.name == "protobuf-kotlin-lite")
+            ) {
+                // Horologist datalayer (#3836) pulls 4.26.1; OSV GHSA-735f-pc8j-v9w8 fixed in 4.27.5.
+                useVersion("4.27.5")
+            } else if (requested.group == "org.json" && requested.name == "json") {
+                // Unit-test classpath via Horologist; OSV GHSA-ghc9-756g-vrcv fixed in 20260719.
+                useVersion("20260719")
             } else if (requested.group == "commons-io" && requested.name == "commons-io") {
                 useVersion("2.14.0")
             }
