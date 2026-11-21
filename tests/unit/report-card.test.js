@@ -30,6 +30,8 @@ const report = (network, score, extra) =>
 				score,
 				shown: score >= 80,
 				weakest: 'Security',
+				trustGrade: '',
+				trustScore: null,
 				format: network === 'youtube' ? 'link' : 'card',
 				link: 'https://qalabreview.com/es/r/bsky/who.int/a1b2c3',
 			},
@@ -71,6 +73,29 @@ test("the card shows the score only from 80 up, otherwise the weakest area, in t
 		'en',
 		'a language we do not write falls back to English'
 	);
+});
+
+test('the card shows the customer trust grade letter and points when the report carries them (#3958)', () => {
+	const withTrust = report('bluesky', 92, {
+		report: Object.assign(report('bluesky', 92).report, { trustGrade: 'B', trustScore: 72 }),
+	});
+	const high = Card.facts(withTrust);
+	assert.equal(high.trustGrade, 'B');
+	assert.equal(high.trustScore, 72);
+	assert.match(Card.alt(high), /Nota de confianza del cliente B \(72 puntos\)/);
+	const tree = JSON.stringify(Card.tree(high));
+	assert.match(tree, /"B"/);
+	assert.match(tree, /72 puntos/);
+	assert.ok(!/IRM|CC BY|playbook/i.test(tree + Card.alt(high)), 'no IRM playbook or attribution on the card');
+
+	const lowTrust = Card.facts(
+		report('bluesky', 61, {
+			report: Object.assign(report('bluesky', 61).report, { trustGrade: 'A+', trustScore: 103 }),
+		})
+	);
+	assert.equal(lowTrust.trustGrade, 'A+');
+	assert.match(Card.alt(lowTrust), /A\+ \(103 puntos\)/);
+	assert.equal(Card.facts(report('bluesky', 92)).trustGrade, '', 'no trust grade when the report omits it');
 });
 
 test('a TinyURL link stays in the text; the card names the report on qalabreview.com', () => {

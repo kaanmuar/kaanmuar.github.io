@@ -25,8 +25,9 @@
  * Every word group of the search must be in the post (looseOf), and Gemini must say the post fits (fits) with worth
  * of LOOSE_WORTH or more; a niche invite offers the site as one of its kind we reviewed, never as the post's subject.
  *
- * Each stored post carries campaign "report-reply" and report { host, id, name, score, shown, weakest, match, problem,
- * niche, query, format, link }; match is domain, name, problem, niche or rerun.
+ * Each stored post carries campaign "report-reply" and report { host, id, name, score, shown, weakest, trustGrade,
+ * trustScore, match, problem, niche, query, format, link }; match is domain, name, problem, niche or rerun.
+ * trustGrade/trustScore are the customer trust letter and points (#3958) when the Live Report index has them.
  *
  * Re-runs (#2469): when a site's Live Report score moves RERUN_MIN or more from the one a posted reply went out with,
  * or crosses SHOW_SCORE, a follow-up with the new card goes under each reply we posted on a card network in the last
@@ -417,8 +418,9 @@ function nicheOf(sector, host) {
 }
 
 /**
- * The Live Reports index as sites to look for: { id, host, name, score, grade, sector, country, weakest, weak, lang,
- * niche, short, read }. weak holds the areas under WEAK in COMPLAINT_ORDER; lang is English for worldwide sites.
+ * The Live Reports index as sites to look for: { id, host, name, score, grade, trustGrade, trustScore, sector,
+ * country, weakest, weak, lang, niche, short, read }. weak holds the areas under WEAK in COMPLAINT_ORDER; lang is
+ * English for worldwide sites. trustGrade/trustScore come from the customer trust grade (#3958) when present.
  */
 function targets(index) {
 	const seen = new Set();
@@ -430,12 +432,18 @@ function targets(index) {
 				.sort((a, b) => a[1] - b[1]);
 			const host = bare(r.host);
 			const country = clip(r.country, 4).toUpperCase();
+			const trustGrade = /^[A-F][+-]?$/.test(String(r.trustGrade || '').trim())
+				? String(r.trustGrade).trim()
+				: '';
+			const trustScore = trustGrade && Number.isFinite(Number(r.trustScore)) ? Math.round(Number(r.trustScore)) : null;
 			return {
 				id: clip(r.id, 80),
 				host,
 				name: clip(r.name, 80),
 				score: Math.round(Number(r.overall)),
 				grade: clip(r.grade, 3),
+				trustGrade,
+				trustScore,
 				sector: clip(r.sector, 40),
 				country,
 				weakest: areas.length ? areas[0][0] : '',
@@ -740,6 +748,8 @@ function doc(post, ai, target, match, decision, link, now) {
 			score: target.score,
 			shown: shown(target),
 			weakest: target.weakest,
+			trustGrade: target.trustGrade || '',
+			trustScore: target.trustScore,
 			match,
 			problem: LOOSE.includes(match) ? post.problem || '' : '',
 			niche: match === 'niche' ? target.niche : '',
@@ -917,6 +927,8 @@ function rerunDoc(orig, target, was, draft, lang, link, now) {
 			score: target.score,
 			shown: shown(target),
 			weakest: target.weakest,
+			trustGrade: target.trustGrade || '',
+			trustScore: target.trustScore,
 			match: 'rerun',
 			was,
 			rerunOf: orig.key,
