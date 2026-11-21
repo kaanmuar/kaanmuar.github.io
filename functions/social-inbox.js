@@ -294,7 +294,8 @@ function publicKeyPem(env = process.env) {
 function keyIdFor(env = process.env) {
 	const actor = ourActor(env);
 	if (!actor) return '';
-	return actor.replace(/#.*$/, '') + '#main-key';
+	const hash = actor.indexOf('#');
+	return (hash >= 0 ? actor.slice(0, hash) : actor) + '#main-key';
 }
 
 function buildAccept(followEvent, env = process.env, now = new Date()) {
@@ -303,7 +304,7 @@ function buildAccept(followEvent, env = process.env, now = new Date()) {
 	const when = now instanceof Date ? now : new Date(now);
 	return {
 		'@context': 'https://www.w3.org/ns/activitystreams',
-		id: actor.replace(/\/?$/, '/') + 'accepts/' + docIdFor(followEvent.id),
+		id: (actor.endsWith('/') ? actor : actor + '/') + 'accepts/' + docIdFor(followEvent.id),
 		type: 'Accept',
 		actor,
 		object: followEvent.activity || {
@@ -543,7 +544,7 @@ async function handleRequest(req, opts = {}) {
 			body: {
 				'@context': 'https://www.w3.org/ns/activitystreams',
 				type: 'OrderedCollection',
-				id: ourActor(env) ? ourActor(env).replace(/\/?$/, '/') + 'inbox' : '',
+				id: ourActor(env) ? ((a) => (a.endsWith('/') ? a : a + '/'))(ourActor(env)) + 'inbox' : '',
 				totalItems: 0,
 				orderedItems: [],
 			},
