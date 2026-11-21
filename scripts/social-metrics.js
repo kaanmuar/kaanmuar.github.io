@@ -25,6 +25,7 @@ const path = require('path');
 const queues = require('./social-ledger');
 const faceRoute = require('./face-route');
 const { FACES } = require('./brand-kit/faces');
+const tgApi = require('../functions/telegram-api');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT = 'assets/social/metrics.json';
@@ -267,15 +268,13 @@ async function mastodonNumbers(entries, request) {
 	return found;
 }
 
-const TELEGRAM_API = 'https://api.telegram.org/bot';
 const HISTORY_DAYS = 400;
 
 async function telegramMembers(token, chat, request) {
-	const res = await request(TELEGRAM_API + token + '/getChatMemberCount?chat_id=' + encodeURIComponent(chat));
-	const json = await res.json().catch(() => ({}));
-	if (!res.ok || !json.ok)
-		throw new Error('Telegram ' + res.status + ': ' + String(json.description || 'no answer').slice(0, 200));
-	const members = Math.round(Number(json.result));
+	const result = await tgApi.createApi(token, { fetchImpl: request, retries: 3 })('getChatMemberCount', {
+		chat_id: chat,
+	});
+	const members = Math.round(Number(result));
 	if (!Number.isFinite(members) || members < 0) throw new Error('Telegram answered no member count');
 	return members;
 }
