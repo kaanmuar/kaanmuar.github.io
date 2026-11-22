@@ -1621,6 +1621,12 @@ const EN = {
 		'{n} link(s) or button(s) in the HTML have no text, label or alt text ({examples}). Tab lands on them and a screen reader has nothing to say (WCAG 2.4.4, 4.1.2).',
 	'a11y-focus-noname.fix':
 		'Give each one visible text, an image with alt text, or an aria-label that says what it does.',
+	'a11y-focus-trap.title':
+		'A modal dialog in the HTML does not trap keyboard focus',
+	'a11y-focus-trap.evidence':
+		'{n} of {total} aria-modal dialog(s) still leave {outside} tab stop(s) on the page behind them ({examples}). Tab can leave the dialog unless a script adds inert or aria-hidden at open time (WCAG 2.1.2, 2.4.3).',
+	'a11y-focus-trap.fix':
+		'When the dialog opens, mark the rest of the page inert (or aria-hidden) so Tab stays inside, and restore it when the dialog closes.',
 	'a11y-zoom.title': 'The viewport stops people from zooming',
 	'a11y-zoom.evidence': 'The viewport tag sets user-scalable=no or maximum-scale=1.',
 	'a11y-zoom.fix': 'Remove user-scalable=no and maximum-scale from the viewport tag.',

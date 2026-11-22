@@ -244,7 +244,7 @@ test("every finding renders in English and carries its key, fix and no raw marku
 test("every key the module can say has English copy and a version in the five other languages", () => {
   const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "../../js/qa-review-findings-copy.js"), "utf8");
   const ids = Object.keys(EN).filter((id) => id.startsWith("a11y-focus"));
-  assert.equal(ids.length, 29);
+  assert.equal(ids.length, 32);
   const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   ids.forEach((id) => {
     assert.equal(source.split(`"${id}":`).length - 1, 5, id + " should be in es, pt, de, fr and it");
