@@ -41,6 +41,10 @@
    fetch. Mastodon HTTP goes through masto 8.0.1 (MIT, Node >=22); compose plans and refusal fallbacks are
    unchanged. Do not auto-post from this module without --live / workflow secrets.
 
+   Optional ActivityPub outbox (#3841): when SOCIAL_INBOX_AP_OUTBOX=1 and SOCIAL_INBOX_AP_ACTOR
+   plus GOOGLE_APPLICATION_CREDENTIALS are set, each successful public Mastodon post also appends a
+   Create(Note) into Firestore fediverse_outbox (functions/social-outbox.js). Off by default.
+
    Bluesky: an app password (Settings > Privacy and security > App passwords); BLUESKY_SERVICE when the account is
    not on bsky.social. Mastodon: the instance address and an application token with write:statuses, write:media and
    read:accounts, read:statuses (Preferences > Development > New application). Threads: a long-lived user token with
@@ -1037,6 +1041,46 @@ function redditPosts(now, ahead, root = ROOT) {
 		.filter((p) => p.title);
 }
 
+
+/* ActivityPub outbox Create (#3841): after a public Mastodon post, append a Note Create to
+   Firestore fediverse_outbox when SOCIAL_INBOX_AP_OUTBOX=1. Best-effort — never fails the queue.
+   Inject opts.db in tests; otherwise opens Firestore only when GOOGLE_APPLICATION_CREDENTIALS is set. */
+async function publishApOutbox(payload, env = process.env, opts = {}) {
+	let Outbox;
+	try {
+		Outbox = require('../functions/social-outbox');
+	} catch (error) {
+		return { stored: false, reason: 'missing-module' };
+	}
+	if (!Outbox.enabled(env)) return { stored: false, reason: 'disabled' };
+	let db = opts.db || null;
+	if (!db) {
+		try {
+			db = openOutboxFirestore(env);
+		} catch (error) {
+			console.log('ap-outbox skipped: firestore ' + String((error && error.message) || error).slice(0, 200));
+			return { stored: false, reason: 'no-db' };
+		}
+	}
+	if (!db) return { stored: false, reason: 'no-db' };
+	try {
+		return await Outbox.appendCreate(db, payload, env);
+	} catch (error) {
+		console.log('ap-outbox failed: ' + String((error && error.message) || error).slice(0, 200));
+		return { stored: false, reason: 'error' };
+	}
+}
+
+function openOutboxFirestore(env = process.env) {
+	if (!String(env.GOOGLE_APPLICATION_CREDENTIALS || '').trim()) return null;
+	const Module = require('module');
+	const fnRequire = Module.createRequire(path.join(__dirname, '../functions/index.js'));
+	const { initializeApp, getApps } = fnRequire('firebase-admin/app');
+	const { getFirestore } = fnRequire('firebase-admin/firestore');
+	if (!getApps().length) initializeApp();
+	return getFirestore();
+}
+
 async function run(network, client, list, book, { live, now, gate, face = faceRoute.DEFAULT }) {
 	const faceFor = typeof face === 'function' ? face : () => face;
 	const key = (ROUTES[network] || ROUTES.bluesky).caption || 'x';
@@ -1114,10 +1158,11 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
 			const f = faceFor(post);
 			const more = extras(network, post, f, book);
 			const captionLang = faceRoute.captionLang(post.cap, key, f);
+			const text = caption(post, network, f);
 			const r = await client.post(
 				Object.assign(
 					{
-						text: caption(post, network, f),
+						text,
 						image: post.image,
 						url: post.url,
 						alt: post.cap.alt || post.cap.title || '',
@@ -1142,6 +1187,21 @@ async function run(network, client, list, book, { live, now, gate, face = faceRo
 				);
 			}
 			record(post, { id: r.id, url: r.url, at, result: 'sent' });
+			// Public Mastodon posts → fediverse_outbox Create (gate SOCIAL_INBOX_AP_OUTBOX=1).
+			if (network === 'mastodon') {
+				await publishApOutbox(
+					{
+						content: text,
+						url: r.url || post.url || '',
+						statusId: r.id,
+						batch: post.batch,
+						slug: post.slug,
+						objectType: 'Note',
+						published: at,
+					},
+					process.env
+				);
+			}
 		} catch (error) {
 			counts.failed += 1;
 			console.log('failed', network, name, '-', error.message);
@@ -1325,4 +1385,5 @@ module.exports = {
 	telegram,
 	graph,
 	publish,
+	publishApOutbox,
 };
