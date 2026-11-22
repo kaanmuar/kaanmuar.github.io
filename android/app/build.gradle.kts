@@ -49,6 +49,12 @@ val firebaseAuthKey: String = run {
         }
     }
 }
+// Release APKs with an empty key cannot sign in (#4206); debug/unit tests may omit it.
+if (firebaseAuthKey.isEmpty() && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+    throw GradleException(
+        "JARVIS_FIREBASE_AUTH_KEY (or jarvis.firebase.auth.key in local.properties) is required for a release build (#4140 / #4206)."
+    )
+}
 
 android {
     namespace = "com.carlosandmunoz.jarvis"

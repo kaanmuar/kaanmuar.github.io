@@ -83,7 +83,9 @@ const RESCUABLE = [
 	'redirect-loop',
 ];
 const SITE_CERT =
-	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|altnames|SELF_SIGNED_CERT|self[- ]signed/i;
+	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed|net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID/i;
+const SITE_TLS_HANDSHAKE =
+	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:[^\n]{0,120}unrecognized name/i;
 
 const clip = (value, max) =>
 	String(value == null ? '' : value)
@@ -196,7 +198,9 @@ function evidenceOf(failure, rerun, probeLines) {
 // The rule-based diagnosis, also the fallback when Gemini is off, over its cap or answers out of schema.
 function ruleDiagnosis(evidence) {
 	const ev = evidence || {};
-	const text = [ev.message, ev.now, ev.rerun].concat(ev.lines || [], ev.rerunLines || []).join(' ');
+	const text = [ev.message, ev.now, ev.rerun]
+		.concat(ev.lines || [], ev.rerunLines || [], ev.probe || [])
+		.join(' ');
 	const vendor = ev.vendor || 'none';
 	const out = (blocker, strategies, confidence, extra) =>
 		Object.assign(
@@ -212,7 +216,9 @@ function ruleDiagnosis(evidence) {
 			extra || {}
 		);
 	if (ev.cause === 'tls')
-		return SITE_CERT.test(text) ? out('tls-broken', [], 0.9, { siteSide: true }) : out('tls-broken', ['mac'], 0.5);
+		return SITE_CERT.test(text) || SITE_TLS_HANDSHAKE.test(text)
+			? out('tls-broken', [], 0.9, { siteSide: true })
+			: out('tls-broken', ['mac'], 0.5);
 	if (/ERR_HTTP2_PROTOCOL_ERROR/.test(text)) return out('http2', ['chrome-headers', 'mac'], 0.7);
 	if (ev.status === 429 || /status 429\b/.test(text)) return out('rate-limit', ['mac'], 0.6);
 	if (ev.cause === 'down' || ev.tcpOpen === false)
@@ -408,7 +414,16 @@ function ladder(diagnosis, hint, attempts, now, promised) {
 function rescuable(row) {
 	const cause = (row.cause && row.cause.id) || '';
 	if (!RESCUABLE.includes(cause)) return false;
-	if (cause === 'tls' && SITE_CERT.test(String((row.error && row.error.message) || ''))) return false;
+	if (cause === 'tls') {
+		const plain = row.probe && row.probe.plain;
+		const tlsText =
+			String((row.error && row.error.message) || '') +
+			' ' +
+			String((plain && plain.error) || '') +
+			' ' +
+			String((plain && plain.code) || '');
+		if (SITE_CERT.test(tlsText) || SITE_TLS_HANDSHAKE.test(tlsText)) return false;
+	}
 	return !(cause === 'status' && row.diagnosis && row.diagnosis.site);
 }
 

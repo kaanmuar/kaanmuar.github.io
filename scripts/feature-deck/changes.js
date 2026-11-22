@@ -26,6 +26,7 @@ const CHANGES = [
 			{ face: 'targeted', t: 'Incident-response playbooks', d: 'Paid “Was it targeted?” reports show step-by-step playbooks on the page and in the PDF—identify, contain, fix, recover and learn—in English, Spanish and French (German, Italian and Portuguese show English for now), adapted from CERT Société Générale with credit.' },
 			{ face: 'export', t: 'Trust grade on the report card', d: 'The picture card that goes with a public report on social networks now shows the trust grade letter and points when the report has them.' },
 			{ face: 'tools', t: 'Deck stays current automatically', d: 'Every URL Review change must update this list in the same PR, or say deck: skip. A daily check opens an issue when main moves and the deck does not.' },
+			{ face: 'legal', t: 'Retention cleanup spelled out', d: 'The legal and privacy pages now say how long each kind of record is kept, and that the weekly delete job is still in a dry run—it only counts what would be removed until automatic deletion is turned on.' },
 		],
 	},
 	{

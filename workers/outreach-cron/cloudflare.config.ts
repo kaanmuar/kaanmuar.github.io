@@ -9,6 +9,8 @@ import { MODES } from "./src/index.js";
 // cf deploy prints secret_text bindings; the wrapper redacts PEM so APP_KEY never hits the terminal (#3336).
 // Reads the qa-lab-agents app from ~/.config/qa-lab (as scripts/gh-app-token.js does) and uploads its key as PKCS#8,
 // the only private key format WebCrypto imports. The secret goes in the upload metadata as in workers/preflight.
+// Heartbeat secrets (#4032 / #3838): set HEARTBEAT_OUTREACH_URL (optional HEARTBEAT_OUTREACH_FAIL_URL) on the Worker
+// after deploy — not uploaded here. Unset = dead-man ping off. See workers/.env.example and workers/shared/heartbeat.js.
 const dir = join(homedir(), ".config", "qa-lab");
 const app = existsSync(join(dir, "app.json")) ? JSON.parse(readFileSync(join(dir, "app.json"), "utf8")) : {};
 const key = existsSync(join(dir, "app.pem"))
