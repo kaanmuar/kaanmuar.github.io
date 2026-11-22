@@ -49,6 +49,8 @@ const BY_FUNCTION = {
 	fileReviewFailureBugs: list(GITHUB),
 	// legalWatch (#4004): the app token that files the issue under #4004 when a cited law page changed.
 	legalWatch: list(GITHUB),
+	// checkoutReconcile (#3837): PayPal capture compare against recent payment rows.
+	checkoutReconcile: list(PAY),
 	// threatFeeds (#3935): Cloudflare Radar attack traffic for the internal Jarvis cyber map (personal use only).
 	threatFeeds: list(['CLOUDFLARE_API_TOKEN']),
 	sweep: list(SCAN),

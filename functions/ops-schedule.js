@@ -230,6 +230,12 @@ const JOBS = [
 		what: "Legal watch (#4004): fetch each official page legal/clauses.json cites (up to 60, polite and slow), compare its text hash with last week's in legal_watch, and file ONE issue under #4004 listing what changed and the clauses that cite it. The first run only records baselines; a page that did not load is retried next week. It never edits the clauses, the sign-off or the legal page",
 	},
 	{
+		job: 'checkoutReconcile',
+		cron: '15 9 * * *',
+		gap: 26,
+		what: 'Checkout reconcile (#3837): compare recent PayPal payment rows in url_reviews with PayPal captures; counts of matched / missing / amount / status diffs in checkout_reconcile_runs (no payer or event body). No-op when PayPal secrets are missing',
+	},
+	{
 		job: 'opsWatchdog',
 		cron: '10 8 * * *',
 		gap: 26,

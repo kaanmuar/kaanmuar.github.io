@@ -314,6 +314,94 @@ test('url review: threat lists keep their answer shapes through retries and the 
 	}
 });
 
+test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the identitytoolkit breaker', async () => {
+	const desk = require('../../functions/url-review-desk.js');
+	const auth = require('../../functions/url-review-auth.js');
+	const saved = global.fetch;
+	const slept = global.setTimeout;
+	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
+	const prevKey = process.env.FIREBASE_WEB_KEY;
+	process.env.FIREBASE_WEB_KEY = 'test-firebase-web-key';
+	const user = {
+		localId: 'op1',
+		email: 'kaanmuar@gmail.com',
+		emailVerified: true,
+		providerUserInfo: [{ providerId: 'password', rawId: 'op1' }],
+	};
+	const signedBy = (method, sub = 'op1') =>
+		[
+			'h',
+			Buffer.from(JSON.stringify({ sub, firebase: { sign_in_provider: method } })).toString('base64url'),
+			's'.repeat(30),
+		].join('.');
+	const okBody = () => new Response(JSON.stringify({ users: [user] }), { status: 200 });
+	try {
+		let n = 0;
+		global.fetch = async (url) => {
+			assert.match(String(url), /identitytoolkit\.googleapis\.com\/v1\/accounts:lookup/);
+			n++;
+			if (n === 1) return res(503, { 'retry-after': '1' });
+			return okBody();
+		};
+		assert.equal(await desk.verifyOperator(signedBy('password')), 'kaanmuar@gmail.com');
+		assert.ok(n >= 2, 'desk lookup retries a 503 before succeeding');
+
+		n = 0;
+		global.fetch = async () => (
+			n++,
+			new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 })
+		);
+		assert.equal(await desk.verifyOperator(signedBy('password')), null);
+		assert.equal(n, 1, 'permanent 4xx auth failure is not retried as 5xx');
+
+		n = 0;
+		global.fetch = async () => {
+			n++;
+			if (n === 1) return res(502);
+			return okBody();
+		};
+		const decoded = await auth.lookupIdToken('test-firebase-web-key')(signedBy('password'));
+		assert.equal(decoded.uid, 'op1');
+		assert.equal(decoded.email, 'kaanmuar@gmail.com');
+		assert.ok(n >= 2, 'local auth lookup retries a 502 before succeeding');
+
+		n = 0;
+		global.fetch = async () => (
+			n++,
+			new Response(JSON.stringify({ error: { message: 'INVALID_ID_TOKEN' } }), { status: 400 })
+		);
+		await assert.rejects(auth.lookupIdToken('test-firebase-web-key')(signedBy('password')), /not accepted/);
+		assert.equal(n, 1, 'local auth does not retry permanent 4xx');
+
+		n = 0;
+		node.breakers.identitytoolkit.failure();
+		node.breakers.identitytoolkit.failure();
+		node.breakers.identitytoolkit.failure();
+		node.breakers.identitytoolkit.failure();
+		node.breakers.identitytoolkit.failure();
+		assert.equal(node.breakers.identitytoolkit.state, 'open');
+		global.fetch = async () => (n++, okBody());
+		await assert.rejects(
+			() => desk.verifyOperator(signedBy('password')),
+			node.BreakerOpenError,
+			'open breaker skips Identity Toolkit for desk'
+		);
+		assert.equal(n, 0, 'open breaker does not call Identity Toolkit');
+		await assert.rejects(
+			() => auth.lookupIdToken('test-firebase-web-key')(signedBy('password')),
+			node.BreakerOpenError,
+			'open breaker skips Identity Toolkit for local auth'
+		);
+		assert.equal(n, 0);
+	} finally {
+		global.fetch = saved;
+		global.setTimeout = slept;
+		node.breakers.identitytoolkit.success();
+		if (prevKey == null) delete process.env.FIREBASE_WEB_KEY;
+		else process.env.FIREBASE_WEB_KEY = prevKey;
+	}
+});
+
 test('url review: lookalike DoH uses resilientFetch and the doh breakers', async () => {
 	const lookalikes = require('../../functions/url-review-lookalikes.js');
 	const saved = global.fetch;
@@ -375,5 +463,6 @@ test('url review: lookalike DoH uses resilientFetch and the doh breakers', async
 		global.setTimeout = slept;
 		node.breakers['doh-cloudflare'].success();
 		node.breakers['doh-google'].success();
+
 	}
 });

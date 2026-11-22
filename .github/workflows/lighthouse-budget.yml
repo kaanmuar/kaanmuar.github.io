@@ -1,0 +1,106 @@
+# Lighthouse CI budgets (#3832, arsenal treosh/lighthouse-ci-action).
+# Manual by default; pull_request only when lighthouse/ or this workflow changes — does not burn CI on every PR.
+# Does not deploy Pages (pages.yml is separate). Optional private LHCI server via LHCI_SERVER_* secrets.
+# Agency copy notes: lighthouse/README.md
+
+name: Lighthouse budget
+run-name: Lighthouse budget (${{ inputs.target || 'live' }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'live = public URLs (cheap); local = build _site then audit'
+        type: choice
+        options: [live, local]
+        default: live
+      urls:
+        description: 'live only: newline-separated URLs (empty = carlosandmunoz.com home + lab + review)'
+        required: false
+        default: ''
+      runs:
+        description: 'Lighthouse runs per URL (1–3)'
+        required: false
+        default: '1'
+  pull_request:
+    paths:
+      - 'lighthouse/**'
+      - '.github/workflows/lighthouse-budget.yml'
+
+concurrency:
+  group: lighthouse-budget-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'live' }}
+      URLS_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.urls || '' }}
+      # LH_RUNS (not RUNS): actionlint/shellcheck SC2153 treats RUNS as a misspelling of runs.
+      LH_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.runs || '1' }}
+      LHCI_SERVER_URL: ${{ secrets.LHCI_SERVER_URL }}
+      LHCI_SERVER_TOKEN: ${{ secrets.LHCI_SERVER_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Build Pages artifact locally (no deploy)
+        if: env.TARGET == 'local'
+        run: node scripts/build-pages.js
+
+      - name: Choose URLs and config
+        id: prep
+        run: |
+          set -euo pipefail
+          runs="$LH_RUNS"
+          case "$runs" in
+            1|2|3) ;;
+            *) echo "::error::runs must be 1, 2, or 3"; exit 1 ;;
+          esac
+          echo "runs=$runs" >> "$GITHUB_OUTPUT"
+
+          if [ "$TARGET" = local ]; then
+            echo "config=./lighthouse/lighthouserc.local.json" >> "$GITHUB_OUTPUT"
+            echo "urls=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "config=./lighthouse/lighthouserc.json" >> "$GITHUB_OUTPUT"
+          if [ -n "${URLS_INPUT// }" ]; then
+            {
+              echo 'urls<<EOF'
+              printf '%s\n' "$URLS_INPUT"
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo 'urls<<EOF'
+              echo 'https://carlosandmunoz.com/'
+              echo 'https://carlosandmunoz.com/qa-lab.html'
+              echo 'https://carlosandmunoz.com/qa-review.html'
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Audit with Lighthouse CI budgets
+        id: lhci
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          configPath: ${{ steps.prep.outputs.config }}
+          budgetPath: ./lighthouse/budget.json
+          urls: ${{ steps.prep.outputs.urls }}
+          runs: ${{ steps.prep.outputs.runs }}
+          uploadArtifacts: true
+          artifactName: lighthouse-results
+          # Empty secrets = no server upload (no paid LHCI required).
+          serverBaseUrl: ${{ env.LHCI_SERVER_URL }}
+          serverToken: ${{ env.LHCI_SERVER_TOKEN }}

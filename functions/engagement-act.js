@@ -50,7 +50,7 @@ const YT = 'https://www.googleapis.com/youtube/v3/';
 const YT_SCOPE = 'https://www.googleapis.com/auth/youtube.force-ssl';
 const MASTODON_SCOPES = 'read write:favourites write:statuses write:follows write:accounts';
 const APP_PASSWORD = /^[a-z0-9]{4}(-[a-z0-9]{4}){3}$/i;
-const TG = 'https://api.telegram.org/bot';
+const tgApi = require('./telegram-api');
 const TG_TOKEN = /^\d{5,}:[A-Za-z0-9_-]{30,}$/;
 const TG_CHANNEL = '@qalab_live';
 
@@ -676,7 +676,17 @@ function telegramComment(m, cred, botId) {
 
 async function telegramClient(saved, f) {
 	const cred = Object.assign({}, saved);
-	const tg = async (method, params) => (await call(f, TG + cred.token + '/' + method, { json: params || {} })).result;
+	const tg = async (method, params) => {
+		try {
+			return await tgApi.createApi(cred.token, { fetchImpl: f, timeoutMs: TIMEOUT, retries: 3 })(method, params || {});
+		} catch (error) {
+			if (error instanceof tgApi.TelegramApiError) {
+				const code = error.errorCode || error.status;
+				throw new ActError(error.message, code === 401 || code === 403 || code === 429);
+			}
+			throw error;
+		}
+	};
 	const me = await tg('getMe');
 	let last = 0;
 	// A group linked after the token was saved is found here and kept, with the error that it was missing cleared.
@@ -830,8 +840,17 @@ async function saveTelegram(deps, body) {
 	if (!TG_TOKEN.test(token))
 		throw new Error('Paste the bot token from BotFather (/mybots > the bot > API Token), like 123456789:AAE….');
 	const channel = clip(body.channel || (deps.env || {}).TELEGRAM_CHANNEL || TG_CHANNEL, 64);
-	const tg = async (method, params) =>
-		(await call(deps.fetch, TG + token + '/' + method, { json: params || {} })).result;
+	const tg = async (method, params) => {
+		try {
+			return await tgApi.createApi(token, { fetchImpl: deps.fetch, timeoutMs: TIMEOUT, retries: 3 })(
+				method,
+				params || {}
+			);
+		} catch (error) {
+			if (error instanceof tgApi.TelegramApiError) throw new Error(error.message);
+			throw error;
+		}
+	};
 	const me = await tg('getMe').catch((error) => {
 		throw new Error('Telegram refused the token: ' + error.message);
 	});
@@ -908,11 +927,11 @@ async function connectTelegramCi(deps, body) {
 	const token = String((body || {}).token || '').trim();
 	if (!TG_TOKEN.test(token)) throw new Error('That is not a bot token.');
 	const me =
-		(
-			await call(deps.fetch, TG + token + '/getMe', { json: {} }).catch(() => {
+		(await tgApi
+			.createApi(token, { fetchImpl: deps.fetch, timeoutMs: TIMEOUT, retries: 3 })('getMe', {})
+			.catch(() => {
 				throw new Error('Telegram refused the token.');
-			})
-		).result || {};
+			})) || {};
 	if (String(me.username || '').toLowerCase() !== want) throw new Error('That token is not @' + want + "'s.");
 	return saveTelegram(deps, { token });
 }
