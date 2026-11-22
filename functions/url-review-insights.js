@@ -20,6 +20,7 @@ const headOrder = require('./url-review-head-order');
 const linkText = require('./url-review-link-text');
 const focusOrder = require('./url-review-focus-order');
 const axtree = require('./url-review-axtree');
+const actMap = require('./url-review-act-map');
 const waterfall = require('./url-review-har');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
@@ -1280,12 +1281,15 @@ function browserChecks(b, add, ctx) {
 					impact: say('ax.impact.' + rule.impact),
 				}),
 				AXE_FIX.has(rule.id) ? say('ax-fix.' + rule.id) : say('ax.guide', { url: rule.helpUrl }),
-				{
-					pages: rule.pages,
-					count: rule.nodes,
-					effort: rule.nodes > 20 ? 'hours' : 'minutes',
-					cases: AXE_CASES[rule.id] || [],
-				}
+				Object.assign(
+					{
+						pages: rule.pages,
+						count: rule.nodes,
+						effort: rule.nodes > 20 ? 'hours' : 'minutes',
+						cases: AXE_CASES[rule.id] || [],
+					},
+					actMap.enrich(rule.id)
+				)
 			);
 		});
 		const checked = axe.pages.length;
@@ -2162,6 +2166,8 @@ function analyze(input) {
 			count: extra.count == null ? (extra.pages || []).length : extra.count,
 			cases: extra.cases || [],
 		};
+		if (extra.standards) finding.standards = extra.standards;
+		if (extra.standardTags) finding.standardTags = extra.standardTags;
 		if (Object.keys(msg).length) finding.msg = msg;
 		findings.push(finding);
 	};
