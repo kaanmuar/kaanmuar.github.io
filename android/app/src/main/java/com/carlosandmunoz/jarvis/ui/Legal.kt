@@ -51,7 +51,7 @@ fun LegalScreen(s: UiState, vm: JarvisViewModel) {
     ExtSectionPanel("legal-watch", "Source watch", data.obj("watch"), "Legal watch has not run yet.") { block ->
         KpiPairs(listOf(
             KpiData("Checked", fmt(block.num("checked"))),
-            KpiData("Changed", fmt(block.num("changed")), alert = (block.num("changed") ?: 0.0) > 0),
+            KpiData("Changed", fmt(block.num("changes") ?: block.num("changed")), alert = (block.num("changes") ?: block.num("changed") ?: 0.0) > 0),
             KpiData("Last run", ago(block.str("at")) ?: "—"),
         ))
         ExtRowList(block.objs("rows"), "Weekly watch reads cited law pages (functions/legal-watch.js).")

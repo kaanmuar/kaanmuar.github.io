@@ -7,13 +7,17 @@ const FALLBACK_GUIDES = [
 	{ title: 'Tool arsenal', url: 'https://github.com/kaanmuar/kaanmuar.github.io/blob/main/.cursor/rules/tool-arsenal.mdc', area: 'tools' },
 ];
 
+const rowsOf = (block) => (block && Array.isArray(block.rows) ? block.rows : Array.isArray(block) ? block : []);
+
 /** Extra panels appended to learnView() when the `learn` snapshot loads. */
 export function extraPanels(ctx) {
 	const { panel, esc, when, table, e } = ctx;
 	const src = e.learn;
 	if (!src || src.ok === false) return '';
-	const guides = (src.guides && src.guides.length ? src.guides : FALLBACK_GUIDES).slice(0, 24);
-	const locks = src.locks || [];
+	const guides = (rowsOf(src.guides).length ? rowsOf(src.guides) : FALLBACK_GUIDES).slice(0, 24);
+	const locks = rowsOf(src.locks);
+	const videos = rowsOf(src.videos);
+	const links = rowsOf(src.links);
 	const guidesBody = table(
 		[
 			['Guide', (g) => `<a href="${esc(g.url || g.href)}" target="_blank" rel="noopener">${esc(g.title || g.label)}</a>`],
@@ -28,11 +32,13 @@ export function extraPanels(ctx) {
 				.map((l) => `<li><strong>${esc(l.topic || l.id || '')}</strong> ${esc(l.note || l.text || '')}</li>`)
 				.join('')}</ul>`
 		: '<p class="jv-empty">No locks row in learn snapshot.</p>';
-	const videos = src.videos || [];
 	const videosBody = videos.length
 		? table(
 				[
-					['Ticket', (v) => (v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">#${esc(v.ticket)}</a>` : esc(v.ticket))],
+					[
+						'Ticket',
+						(v) => (v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">#${esc(v.ticket)}</a>` : esc(v.ticket)),
+					],
 					['Title', (v) => esc(v.title || '')],
 					['Status', (v) => esc(v.status || '—')],
 				],
@@ -40,17 +46,16 @@ export function extraPanels(ctx) {
 				'No video tickets.'
 			)
 		: '';
+	const linksBody = links.length
+		? `<ul class="jv-facts">${links
+				.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`)
+				.join('')}</ul>`
+		: '<p class="jv-empty">No guide links.</p>';
 	return (
 		panel('learn-guides', `Playbook guides · ${guides.length}`, guidesBody, { wide: true, data: guides }) +
 		(locks.length ? panel('learn-locks', `Growth locks · ${locks.length}`, locksBody, { wide: true, data: locks }) : '') +
 		(videosBody ? panel('learn-videos', 'Explainer videos', videosBody, { data: videos }) : '') +
-		panel(
-			'learn-links',
-			'Guide links',
-			`<ul class="jv-facts">${(src.links || [])
-				.map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a></li>`)
-				.join('')}</ul>`
-		) +
+		panel('learn-links', 'Guide links', linksBody) +
 		panel(
 			'learn-actions',
 			'Guide actions',

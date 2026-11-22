@@ -9,6 +9,7 @@ const SCOUT_LABEL = {
 	trending: 'Trending',
 };
 const CADENCE = { tool: 7, engagement: 2, 'field-sweep': 3, trending: 3 };
+const rowsOf = (block) => (block && Array.isArray(block.rows) ? block.rows : Array.isArray(block) ? block : []);
 
 export function view(ctx) {
 	const { panel, esc, fmt, when, waiting, briefPanel, goalsPanel, kpis, table, bars, needList, e, S, COLORS } = ctx;
@@ -57,15 +58,16 @@ export function view(ctx) {
 		{ label: 'Updated', value: learn && learn.at ? when(learn.at) : scoutsSnap && scoutsSnap.at ? when(scoutsSnap.at) : '—' },
 	]);
 
+	const healthRows = rowsOf(scoutsSnap && scoutsSnap.health);
 	const healthBody =
-		scoutsSnap && scoutsSnap.ok && scoutsSnap.health
+		scoutsSnap && scoutsSnap.ok && healthRows.length
 			? table(
 					[
-						['Scout', (r) => esc(SCOUT_LABEL[r.scout] || r.scout)],
+						['Scout', (r) => esc(SCOUT_LABEL[r.scout] || r.scout || r.label)],
 						['Last run', (r) => esc(when(r.at))],
 						['Status', (r) => `<span class="jv-chip ${r.ok === false ? 'c-slow' : 'c-fast'}">${esc(r.ok === false ? 'stale' : 'ok')}</span>`],
 					],
-					scoutsSnap.health,
+					healthRows,
 					'No scout health rows.'
 				)
 			: health && health.jobs
@@ -145,7 +147,7 @@ export function view(ctx) {
 		head +
 		needList(learn || scoutsSnap) +
 		`<div class="jv-grid">${briefPanel('scouts')}${goalsPanel('scouts')}
-        ${panel('scouts-health', 'Scout health', healthBody, { wide: true, data: scoutsSnap && scoutsSnap.health ? scoutsSnap.health : [] })}
+        ${panel('scouts-health', 'Scout health', healthBody, { wide: true, data: healthRows })}
         ${panel('scouts-engagement', 'Engagement scout', engagementBody, { wide: true })}
         ${panel(
 			'scouts-tools',

@@ -74,13 +74,16 @@ async function trendingStub(db, needs) {
 			latest: (data && data.at) || '',
 			at: (data && data.at) || '',
 			link,
-			rows: drafts.slice(0, 20).map((d, i) => ({
-				id: d.id || String(i),
-				label: d.title || d.hook || d.id || 'draft ' + (i + 1),
-				note: d.network || d.tag || '',
-				status: d.status || 'pending',
-				url: d.url || '',
-			})),
+			rows: drafts
+				.filter((d) => d && typeof d === 'object')
+				.slice(0, 20)
+				.map((d, i) => ({
+					id: d.id || String(i),
+					label: d.title || d.hook || d.id || 'draft ' + (i + 1),
+					note: d.network || d.tag || '',
+					status: d.status || 'pending',
+					url: d.url || '',
+				})),
 		};
 	} catch (error) {
 		needs.push('trending: ' + clean(error));
@@ -120,17 +123,20 @@ async function source(ctx) {
 
 	const trending = await trendingStub(ctx.db, needs);
 	const runs = await recentMetaRuns(ctx.db, 8);
-	const toolRows =
-		tools && tools.candidates
-			? tools.candidates.slice(0, 20).map((c) => ({
+	const candidateList = tools && Array.isArray(tools.candidates) ? tools.candidates : [];
+	const toolRows = candidateList.length
+		? candidateList
+				.filter((c) => c && typeof c === 'object')
+				.slice(0, 20)
+				.map((c) => ({
 					label: c.name || c.repo || c.id,
 					note: c.why || c.note || '',
 					url: c.url || '',
 					status: c.status || 'new',
 				}))
-			: tools && tools.run
-				? [{ label: 'Latest tool-scout run', note: tools.run.pr || tools.run.at || '', url: tools.run.url || '' }]
-				: [];
+		: tools && tools.run
+			? [{ label: 'Latest tool-scout run', note: tools.run.pr || tools.run.at || '', url: tools.run.url || '' }]
+			: [];
 
 	const healthRows = [
 		{
