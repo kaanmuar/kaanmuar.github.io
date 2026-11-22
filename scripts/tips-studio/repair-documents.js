@@ -25,7 +25,8 @@ function batches() {
 function slugs(carouselDir) {
 	const by = new Map();
 	for (const name of fs.readdirSync(carouselDir)) {
-		const m = name.match(/^(.+)-(\d{2})\.jpe?g$/i);
+		// Take the last -NN before the extension so host-10-01.jpg stays slug host-10.
+		const m = name.match(/^(.+)-(\d{2})\.(jpe?g)$/i);
 		if (!m) continue;
 		const list = by.get(m[1]) || [];
 		list.push({ n: Number(m[2]), file: path.join(carouselDir, name) });
@@ -46,26 +47,33 @@ async function main() {
 	const browser = await chromium.launch({ channel: 'chrome' });
 	let ok = 0;
 	let skip = 0;
+	let fail = 0;
 	try {
 		for (const dir of dirs) {
 			const carousel = path.join(dir, 'carousel');
 			const document = path.join(dir, 'document');
 			fs.mkdirSync(document, { recursive: true });
 			for (const { slug, slides } of slugs(carousel)) {
-				if (slides.length < 2) {
+				if (!slides.length) {
 					skip += 1;
 					continue;
 				}
 				const out = path.join(document, slug + '.pdf');
-				await pdfFrom(browser, slides, out);
-				ok += 1;
-				console.log(path.relative(ROOT, out), slides.length + 'p', fs.statSync(out).size + 'b');
+				try {
+					await pdfFrom(browser, slides, out);
+					ok += 1;
+					console.log(path.relative(ROOT, out), slides.length + 'p', fs.statSync(out).size + 'b');
+				} catch (err) {
+					fail += 1;
+					console.error('FAIL', path.relative(ROOT, out) + ':', err.message || err);
+				}
 			}
 		}
 	} finally {
 		await browser.close();
 	}
-	console.log('repaired', ok, 'skipped', skip);
+	console.log('repaired', ok, 'skipped', skip, 'failed', fail);
+	if (fail) process.exit(1);
 }
 
 main().catch((err) => {
