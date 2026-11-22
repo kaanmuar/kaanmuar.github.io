@@ -436,7 +436,7 @@ object Home {
 
     fun stop(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(WORK)
 
-    /** Opens the app on a tab ("products:outreach" also picks the chip), optionally running an action once open. */
+    /** Opens the app on a tab ("products:outreach", "products:marketing", "products:legal", … also pick the chip), optionally running an action once open. */
     fun open(context: Context, tab: String, action: String? = null): Intent =
         Intent(context, MainActivity::class.java)
             .setAction(Intent.ACTION_VIEW)

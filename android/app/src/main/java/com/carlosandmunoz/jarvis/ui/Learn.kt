@@ -70,6 +70,7 @@ fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) 
                 Muted("No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).")
             }
             LearnCharts(board)
+            LearnGuidesAppend(s, vm)
             Muted("Learning is for you and the scouts only — never public posts or tool-scout PR bodies. Cadence: tool 7d · engagement 2d · field & trending 3d.")
             return@Column
         }
@@ -101,7 +102,32 @@ fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) 
         LearnScoutPanel("field-sweep", byId["field-sweep"])
         LearnScoutPanel("trending", byId["trending"])
 
+        LearnGuidesAppend(s, vm)
         Muted("Learning is for you and the scouts only — never public posts or tool-scout PR bodies. Cadence: tool 7d · engagement 2d · field & trending 3d. Charts (#4240) read the same private Firestore state.")
+    }
+}
+
+private val LEARN_GUIDE_LINKS = listOf("Review guide" to "https://carlosandmunoz.com/qa-review-guide.html")
+
+/** When external.learn is loaded (#4242), append hub guides without replacing scout-learn (#4237). */
+@Composable
+private fun LearnGuidesAppend(s: UiState, vm: JarvisViewModel) {
+    val learn = s.snapshot.obj("external").obj("learn")?.takeIf { it.isOk() } ?: return
+    ExtSectionPanel("learn-guides", "Guides", learn.obj("guides"), "No guides in the learn source yet.") { block ->
+        ExtKpiBlock(block)
+        ExtRowList(block.objs("rows"), "Site and hub guides from the learn snapshot.")
+    }
+    learn.obj("locks")?.takeIf { it.isOk() || it.objs("rows").isNotEmpty() }?.let { locks ->
+        ExtSectionPanel("learn-locks", "Growth locks", locks, "No locks listed.") { block -> ExtRowList(block.objs("rows"), "") }
+    }
+    ExtSectionPanel("learn-videos", "Explainer videos", learn.obj("videos"), "No explainer video ticket yet.") { block ->
+        ExtRowList(block.objs("rows").ifEmpty { learn.objs("videos") }, "Track #3714 for explainer videos.")
+    }
+    ExtLinksPanel("learn-links", learn.obj("links"), LEARN_GUIDE_LINKS)
+    learn.obj("actions")?.objs("rows")?.takeIf { it.isNotEmpty() }?.let {
+        ExtActionsPanel("learn", "learn-actions", learn.obj("actions"), s.running) { key, op, body, note ->
+            vm.act(key, op, body, note)
+        }
     }
 }
 

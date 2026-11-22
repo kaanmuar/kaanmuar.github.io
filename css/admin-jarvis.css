@@ -360,8 +360,20 @@
 .jv-ai { margin-top: 0.7rem; padding: 0.7rem 0.8rem; border: 1px solid rgba(169, 139, 255, 0.45); border-radius: 12px; background: rgba(169, 139, 255, 0.08); }
 .jv-ai .jv-eyebrow { color: var(--violet); }
 .jv-ai-text { margin-top: 0.3rem; line-height: 1.5; font-size: 0.92rem; }
-.jv-ask, .jv-inline { display: flex; gap: 0.4rem; margin-top: 0.7rem; }
-.jv-ask input, .jv-inline input { flex: 1; min-width: 0; }
+.jv-ask, .jv-inline { display: flex; gap: 0.4rem; margin-top: 0.7rem; align-items: flex-start; }
+.jv-ask input, .jv-inline input, .jv-ask textarea { flex: 1; min-width: 0; }
+.jv-ai-consult textarea {
+	width: 100%;
+	box-sizing: border-box;
+	background: rgba(4, 18, 28, 0.85);
+	color: var(--text);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 0.55rem 0.65rem;
+	font: 0.88rem system-ui, sans-serif;
+	resize: vertical;
+	min-height: 6.5rem;
+}
 
 .jv-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; max-height: 420px; overflow: auto; }
 .jv-feed li { display: grid; grid-template-columns: 96px 1fr; gap: 0.5rem; font-size: 0.8rem; padding: 0.25rem 0; border-bottom: 1px dashed rgba(56, 225, 255, 0.12); }

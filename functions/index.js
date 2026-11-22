@@ -10609,6 +10609,10 @@ const JARVIS_SNAPSHOT_OPS = [
 	'scout-learn',
 	'geo',
 	'calendar',
+	'legal',
+	'learn',
+	'ai',
+	'scouts',
 ];
 
 // Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore

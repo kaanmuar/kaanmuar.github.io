@@ -15,6 +15,10 @@ import * as GeoGa4 from './admin-jarvis-geo-ga4.js?v=3282';
 import * as GeoActions from './admin-jarvis-geo-actions.js?v=3115';
 import * as GeoClicks from './admin-jarvis-geo-clicks.js?v=3281';
 import * as GeoCost from './admin-jarvis-geo-cost.js?v=3283';
+import * as JarvisAi from './admin-jarvis-ai.js?v=4242';
+import * as Legal from './admin-jarvis-legal.js?v=4242';
+import * as Learn from './admin-jarvis-learn.js?v=4242';
+import * as Scouts from './admin-jarvis-scouts.js?v=4242';
 
 const ENDPOINT = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/jarvis';
 const DESK = 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/desk';
@@ -47,6 +51,10 @@ const SNAPSHOT_OPS = [
 	'targets',
 	'addresses',
 	'marketing',
+	'legal',
+	'learn',
+	'ai',
+	'scouts',
 	'marketing-sync',
 	'calls',
 	'engagement',
@@ -75,7 +83,10 @@ const COLORS = {
 };
 let G_CHART = window.JarvisCore.chartPrefs(null);
 const GA_GROUP = { cv: 'CV site', review: 'QA-lab URL Review' };
-const FAMILY = { marketing: ['marketing', 'outreach', 'hub', 'business'] };
+const FAMILY = {
+	marketing: ['marketing', 'outreach', 'hub', 'business', 'learn', 'ai', 'scouts'],
+	systems: ['systems', 'legal', 'github'],
+};
 const inTab = (b, product) => product === 'overview' || (FAMILY[product] || [product]).includes(b.product);
 const LINKS = [
 	['Open the review desk', DESK],
@@ -7849,10 +7860,33 @@ export function mountJarvis({
 		return head + `<h4>Accounts</h4>${groups}${add}<h4>Recent comments and owner replies</h4>${comments}`;
 	}
 
+	function tabCtx() {
+		return {
+			panel,
+			esc,
+			fmt,
+			when,
+			waiting,
+			briefPanel,
+			goalsPanel,
+			kpis,
+			table,
+			bars,
+			pie,
+			stats,
+			needList,
+			e: S.external,
+			S,
+			COLORS,
+			C,
+		};
+	}
+
 	function learnView() {
+		const guidesExtra = Learn.extraPanels(tabCtx());
 		const g = S.external['scout-learn'];
 		if (!g || g.ok === false)
-			return `<div class="jv-grid">${panel('learn-wait', 'Learn', waiting('scout-learn', 'Reading scout learning…'), { wide: true, note: 'Private to you and the scouts (#4237). Firestore is the source of truth.' })}</div>`;
+			return `<div class="jv-grid">${briefPanel('learn')}${panel('learn-wait', 'Learn', waiting('scout-learn', 'Reading scout learning…'), { wide: true, note: 'Private to you and the scouts (#4237). Firestore is the source of truth.' })}${guidesExtra}</div>`;
 		const scouts = g.scouts || [];
 		const open = g.openQuestions || [];
 		const asked = g.asked || [];
@@ -8065,15 +8099,17 @@ export function mountJarvis({
 		if (!scouts.length && !open.length)
 			return (
 				statsKpis +
-				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}${chartPanels}</div>`
+				`<div class="jv-grid">${briefPanel('learn')}${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}${chartPanels}${guidesExtra}</div>`
 			);
 		return (
 			statsKpis +
 			`<div class="jv-grid">
+            ${briefPanel('learn')}
             ${panel('learn-decide', `Decide${open.length ? ' · ' + open.length : ''}`, decideBody, { wide: true, data: open, note: 'Private (#4237). Pick an option; the scout stores your answer as a lesson. "Ask later" leaves the question open.' })}
             ${panel('learn-asked', 'Recent decisions', askedBody, { wide: true, data: asked })}
             ${chartPanels}
             ${scoutPanels}
+            ${guidesExtra}
         </div><p class="jv-note">Learning is for you and the scouts only — never public hub posts or tool-scout draft PR bodies. Cadence: tool 7d · engagement 2d · field-sweep & trending 3d. Charts (#4240) read the same private Firestore state.</p>`
 		);
 	}
@@ -9442,6 +9478,10 @@ export function mountJarvis({
 	}
 	document.addEventListener('visibilitychange', holoRun);
 
+	function aiView() {
+		return JarvisAi.view(tabCtx());
+	}
+
 	function views() {
 		const s = S.summaries;
 		const e = S.external;
@@ -9665,10 +9705,13 @@ export function mountJarvis({
 		out.business = businessView() + take();
 		out.outreach = outreachView() + take();
 		out.marketing = marketingView() + take();
+		out.legal = Legal.view(tabCtx()) + take();
+		out.learn = learnView() + take();
+		out.ai = aiView() + take();
+		out.scouts = Scouts.view(tabCtx()) + take();
 		out.geo = geoView() + take();
 		out.github = githubView() + take();
 		out.engagement = engagementView() + take();
-		out.learn = learnView() + take();
 		out.console = '';
 
 		const ga = e.ga4;
@@ -9983,7 +10026,24 @@ export function mountJarvis({
 											const n = (L && (L.waiting || (L.openQuestions || []).length)) || 0;
 											return n ? n + ' ask' + (n === 1 ? '' : 's') : '';
 										})()
-									: '';
+									: p.key === 'scouts'
+										? (() => {
+												const L = S.external['scout-learn'];
+												const n = (L && (L.waiting || (L.openQuestions || []).length)) || 0;
+												return n ? n + ' ask' : '';
+											})()
+										: p.key === 'legal'
+											? (() => {
+													const L = S.external.legal;
+													const n = L && L.ok && L.issues ? L.issues.open || 0 : 0;
+													return n ? n + ' issue' + (n === 1 ? '' : 's') : '';
+												})()
+											: p.key === 'ai'
+												? (() => {
+														const g = S.external.platform && S.external.platform.gemini;
+														return g && g.fail ? g.fail + ' fail' : '';
+													})()
+												: '';
 		});
 		const ready = C.readiness(S.external);
 		$('#jv-ready').textContent = ready === null ? '—' : ready + '%';
@@ -11363,6 +11423,7 @@ export function mountJarvis({
 	});
 	S.geoWeek = null;
 	GeoTime.bind(root, S, () => GeoTime.patch($('[data-view="geo"]'), geoView()), render);
+	JarvisAi.bind(root);
 	root.addEventListener('focusin', (event) => {
 		if (event.target.matches && event.target.matches('.jv-geo-c')) geoCard(event.target);
 	});

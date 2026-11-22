@@ -18,6 +18,10 @@
    checks     the newer review checks' hits, their quotas, the Wordfence feed and each outside source's health (jarvis-review-ops.js)
    geo        the Map tab's numbers per country, rolled up from the other sources' cached answers (jarvis-geo.js)
    calendar   each target market's public holidays and special dates for the next 60 days, and holiday pauses (jarvis-calendar.js)
+   legal      counsel clauses, signoff, cited URLs and the legal watch (#4004, jarvis-legal.js)
+   learn      hub guides and growth locks for operators (#4242, jarvis-learn.js)
+   ai         Gemini platform metrics, proposals and playbooks (#4242, jarvis-ai.js)
+   scouts     meta engagement scout, tool scout and trending drafts (#4242, jarvis-scouts.js)
 
    index.js passes ctx = {fetch, env, db, now, days, settings, paypal, tls, listUsers, github, peer} and caches each
    source in jarvis_cache through TTL; peer(op) is another source's cached answer. */
@@ -57,6 +61,10 @@ const TTL = {
 	targets: HOUR,
 	geo: 15 * MINUTE,
 	calendar: 6 * HOUR,
+	legal: 10 * MINUTE,
+	learn: 10 * MINUTE,
+	ai: 10 * MINUTE,
+	scouts: 10 * MINUTE,
 };
 const { SEARCH_QUERIES } = require('./jarvis-core');
 const jarvisOutreach = require('./jarvis-outreach');
@@ -75,6 +83,10 @@ const jarvisGithub = require('./jarvis-github');
 const jarvisTargets = require('./jarvis-targets');
 const jarvisGeo = require('./jarvis-geo');
 const jarvisCalendar = require('./jarvis-calendar');
+const jarvisLegal = require('./jarvis-legal');
+const jarvisLearn = require('./jarvis-learn');
+const jarvisAi = require('./jarvis-ai');
+const jarvisScouts = require('./jarvis-scouts');
 const scoutLearn = require('./scout-learn');
 const booking = require('./booking');
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
@@ -1308,6 +1320,10 @@ const SOURCES = {
 	targets: jarvisTargets.source,
 	geo: jarvisGeo.geo,
 	calendar: jarvisCalendar.source,
+	legal: jarvisLegal.source,
+	learn: jarvisLearn.source,
+	ai: jarvisAi.source,
+	scouts: jarvisScouts.source,
 };
 
 async function run(name, ctx) {
