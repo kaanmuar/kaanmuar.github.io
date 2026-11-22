@@ -743,6 +743,7 @@
 .jv-plate-strip { overflow-x: auto; overscroll-behavior-x: contain; max-width: 100%; }
 .jv-plate-inner { width: 100%; }
 .jv-panel[data-plate="2"] .jv-plate-inner { width: 200%; }
+.jv-panel[data-plate="3"] .jv-plate-inner { width: 300%; }
 .jv-chart-y { position: relative; }
 .jv-chart-y .jv-axis-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); white-space: nowrap; }
 .jv-chart-yticks { position: relative; min-width: 1.6rem; }

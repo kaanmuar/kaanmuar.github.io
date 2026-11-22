@@ -2817,7 +2817,7 @@ test.describe('admin statistics (Jarvis)', () => {
 		expect(errors).toEqual([]);
 	});
 
-	test('Map plate: the button makes the map 3×2, twice as wide in a strip that pans, and saves the size (#3984)', async ({
+	test('Map plate: starts at 3×3 on a wide screen; the button cycles 3×1 / 3×2 / 3×3 and saves (#3984 / #4207)', async ({
 		page,
 	}) => {
 		test.setTimeout(90000);
@@ -2828,20 +2828,21 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(panel.locator('.jv-geo-map path').first()).toBeVisible();
 		const strip = panel.locator('.jv-plate-strip');
 		const ratio = () => strip.evaluate((el) => el.scrollWidth / el.clientWidth);
+		await expect(panel).toHaveAttribute('data-plate', '3');
+		await expect.poll(ratio).toBeGreaterThan(2.8);
+		await panel.locator('[data-plate-stretch="geo-map"]').click();
 		await expect(panel).toHaveAttribute('data-plate', '1');
 		expect(await ratio()).toBeLessThan(1.05);
-		await panel.locator('[data-plate-stretch="geo-map"]').click();
-		await expect(panel).toHaveAttribute('data-plate', '2');
-		await expect.poll(ratio).toBeGreaterThan(1.9);
 		await expect
 			.poll(() =>
 				calls
 					.filter((c) => c.op === 'settings-save')
 					.map((c) => c.body.layout && c.body.layout.geo && c.body.layout.geo.stretch)
 			)
-			.toEqual([{ 'geo-map': 2 }]);
+			.toEqual([{ 'geo-map': 1 }]);
 		await panel.locator('[data-plate-stretch="geo-map"]').click();
-		await expect(panel).toHaveAttribute('data-plate', '1');
+		await expect(panel).toHaveAttribute('data-plate', '2');
+		await expect.poll(ratio).toBeGreaterThan(1.9);
 		expect(errors).toEqual([]);
 	});
 
