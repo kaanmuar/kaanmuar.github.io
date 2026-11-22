@@ -1849,10 +1849,12 @@ export function mountJarvis({
 		return true;
 	}
 	function panelStretch(id) {
-		return Number(((layoutOf(S.product) || {}).stretch || {})[id]) || 1;
+		const phone = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
+		const stretch = (layoutOf(S.product) || {}).stretch || {};
+		return C.chartLevel(stretch[id], phone);
 	}
 
-	/** The panel's plate level, 1 (3×1) or 2 (3×2): the saved stretch, else 2 on a phone (#3984). */
+	/** The panel's plate level, 1..3 (3×1 / 3×2 / 3×3): the saved stretch, else 2 on a phone and 3 wider (#3984 / #4207). */
 	function plateLevel(id) {
 		const phone = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
 		const stretch = (layoutOf(S.product) || {}).stretch || {};
@@ -1863,7 +1865,7 @@ export function mountJarvis({
 	function applyPlates(scope) {
 		(scope || root).querySelectorAll('.jv-plate-strip').forEach((strip) => {
 			const section = strip.closest('[data-panel-id]');
-			if (!section || section.dataset.plate !== '2') return;
+			if (!section || Number(section.dataset.plate) < 2) return;
 			const id = section.dataset.panelId;
 			strip.scrollLeft = platePan.has(id) ? platePan.get(id) : (strip.scrollWidth - strip.clientWidth) / 2;
 		});
@@ -1873,7 +1875,7 @@ export function mountJarvis({
 		return cycleStretch(id, panelStretch(id), 3, (n) => `Chart stretch ${n} for this panel.`);
 	}
 	function cyclePlate(id) {
-		return cycleStretch(id, plateLevel(id), 2, (n) => `Panel size 3×${n} for this panel.`);
+		return cycleStretch(id, plateLevel(id), 3, (n) => `Panel size 3×${n} for this panel.`);
 	}
 	async function cycleStretch(id, current, max, say) {
 		const tab = S.product;
@@ -1919,10 +1921,11 @@ export function mountJarvis({
 		const chartTool = hasChart
 			? `<button type="button" class="jv-btn small" data-chart-stretch="${esc(id)}" title="Chart height (${stretch} of 3)">↕${stretch}</button>`
 			: '';
-		// The 3×1 / 3×2 plate (#3984): a map or dense SVG in a pan strip, twice as wide at 3×2; its button sits with the others.
+		// The 3×1 / 3×2 / 3×3 plate (#3984 / #4207): a map or dense SVG in a pan strip; its button sits with the others.
 		const plate = o.plate ? plateLevel(id) : 0;
+		const plateNext = plate === 3 ? 1 : plate + 1;
 		const plateTool = plate
-			? `<button type="button" class="jv-btn small" data-plate-stretch="${esc(id)}" title="Panel size 3 by ${plate} (tap for 3×${plate === 2 ? 1 : 2})">3×${plate}</button>`
+			? `<button type="button" class="jv-btn small" data-plate-stretch="${esc(id)}" title="Panel size 3 by ${plate} (tap for 3×${plateNext})">3×${plate}</button>`
 			: '';
 		const tools =
 			exportTools || chartTool || plateTool

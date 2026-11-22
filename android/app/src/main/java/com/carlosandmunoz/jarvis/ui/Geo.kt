@@ -316,9 +316,9 @@ private fun DateKind(kind: String?) {
 }
 
 /**
- * The map on its 3×1 / 3×2 plate (#3978): the panel's stretch (1 or 2) is how many times as wide the map is drawn in a pan strip, so on a
- * phone the countries and their names are big enough to read. The tap's x is given as a fraction of the visible strip, so the card
- * still opens on the far side from the finger.
+ * The map on its 3×1 / 3×2 / 3×3 plate (#3978, #4207): the panel's stretch (1..3) is how many times as wide the map is drawn in a pan
+ * strip, so on a phone or unfolded Fold the countries and their names are big enough to read. The tap's x is given as a fraction of
+ * the visible strip, so the card still opens on the far side from the finger.
  */
 @Composable
 internal fun WorldMap(world: Geo.World, rows: List<JsonObject>, key: String, selected: String?, fills: Map<String, Color>? = null, pins: Set<String> = emptySet(), onTap: (String?, Offset) -> Unit) {

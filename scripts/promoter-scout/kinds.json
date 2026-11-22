@@ -1,0 +1,59 @@
+{
+	"langs": ["en", "es", "pt", "de", "fr", "it", "nl", "pl", "ja", "ko", "zh", "ar"],
+	"kinds": [
+		{
+			"id": "gallery",
+			"en": "website design inspiration galleries that feature real sites",
+			"ask": "public galleries or curated collections that showcase websites for inspiration"
+		},
+		{
+			"id": "awards",
+			"en": "web design or digital awards that accept site nominations",
+			"ask": "awards, contests or juried rankings for websites, digital products or agencies"
+		},
+		{
+			"id": "directory",
+			"en": "SaaS, tool or startup directories where products can be listed",
+			"ask": "directories that list SaaS tools, websites, startups or indie products for discovery"
+		},
+		{
+			"id": "launch",
+			"en": "product launch boards and daily/weekly launch platforms",
+			"ask": "launch boards or platforms where founders submit a product for a launch day or week"
+		},
+		{
+			"id": "newsletter",
+			"en": "newsletters that feature new tools, sites or startups",
+			"ask": "newsletters or digests that regularly feature new tools, websites or startups"
+		},
+		{
+			"id": "roundup",
+			"en": "blogs and media that publish best-of / tools-of-the-week roundups",
+			"ask": "blogs, magazines or media sites known for tool roundups, site showcases or startup coverage"
+		},
+		{
+			"id": "community",
+			"en": "public communities for makers, founders or agencies that allow sharing products",
+			"ask": "forums, communities or networks where founders and makers share products (not private Slack)"
+		},
+		{
+			"id": "review",
+			"en": "software review and alternatives sites",
+			"ask": "review or alternatives sites where vendors list a product and buyers compare tools"
+		}
+	],
+	"langHints": {
+		"en": "English-speaking (US, UK, AU, IE, CA, global)",
+		"es": "Spanish-speaking (Spain and Latin America)",
+		"pt": "Portuguese-speaking (Brazil and Portugal)",
+		"de": "German-speaking (Germany, Austria, Switzerland)",
+		"fr": "French-speaking (France, Belgium, Switzerland, Canada)",
+		"it": "Italian-speaking (Italy and Swiss Italian)",
+		"nl": "Dutch-speaking (Netherlands and Belgium)",
+		"pl": "Polish-speaking (Poland)",
+		"ja": "Japanese-speaking (Japan)",
+		"ko": "Korean-speaking (Korea)",
+		"zh": "Chinese-speaking (mainland China, Taiwan, Hong Kong, Singapore)",
+		"ar": "Arabic-speaking (MENA)"
+	}
+}
