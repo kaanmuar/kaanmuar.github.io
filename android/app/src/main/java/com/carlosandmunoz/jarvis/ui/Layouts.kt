@@ -90,13 +90,17 @@ object Layouts {
         map.orEmpty().mapNotNull { (id, n) -> if (ID.matches(id) && n in 1..3) id to n else null }.toMap()
 
     /**
-     * The 3×1 / 3×2 plate (#3978): a map or dense infographic spans the whole grid row (3 columns) and is drawn once (3×1)
-     * or twice (3×2) as wide in a pan strip, so its small print can be read. It rides the panel's `stretch` (1 or 2).
-     * A phone's single column starts at 3×2; two or more columns are already wide and start at 3×1.
+     * The 3×1 / 3×2 / 3×3 plate (#3978, #4207): a map or dense infographic spans the whole grid row (3 columns) and is drawn
+     * once (3×1), twice (3×2) or three times (3×3) as wide in a pan strip, so its small print can be read. It rides the
+     * panel's `stretch` (1..3). A phone's single column starts at 3×2; an unfolded / multi-column screen starts maps and
+     * big charts at 3×3 (#4207). Short info panels stay at the default single-column size (minor).
      */
-    const val PLATE_MAX = 2
-    fun plateDefault(columns: Int) = if (columns >= 2) 1 else 2
+    const val PLATE_MAX = 3
+    fun plateDefault(columns: Int) = if (columns >= 2) 3 else 2
     fun plateScale(stretch: Int) = stretch.coerceIn(1, PLATE_MAX)
+
+    /** Chart height stretch (#3569): 3 on an unfolded / multi-column screen so big charts match the plate floor (#4207). */
+    fun chartDefault(columns: Int) = if (columns >= 2) 3 else 1
 
     /** The next stretch after [current] when cycling 1..[max]. */
     fun nextStretch(current: Int, max: Int) = (current.coerceIn(1, max) % max) + 1

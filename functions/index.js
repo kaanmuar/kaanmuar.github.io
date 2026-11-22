@@ -10093,6 +10093,8 @@ exports.socialInbox = functions
 
 // Fediverse ActivityPub actor + WebFinger discovery (#3841). Off unless SOCIAL_INBOX_AP=1.
 // Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). Outbox reads Creates from Firestore.
+// Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). No private keys here.
+// Firebase Hosting rewrites /.well-known/webfinger → webfinger and /users/** → socialActor (see firebase.json).
 const socialActor = require('./social-actor');
 exports.socialActor = functions
 	.runWith({ timeoutSeconds: 15, memory: '256MB', maxInstances: 5 })

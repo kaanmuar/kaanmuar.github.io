@@ -397,7 +397,7 @@ private fun GeoFlowDiagram(flow: JsonObject?, cc: String?, name: String?, channe
 @Composable
 private fun FlowChart(shown: List<GeoFlow.Link>) {
     val density = LocalDensity.current
-    // 3×1 / 3×2 plate (#3978): twice as wide in a pan strip, and taller, so the labels and bands have room on a phone.
+    // 3×1 / 3×2 / 3×3 plate (#3978, #4207): up to 3× as wide in a pan strip, and taller, so the labels and bands have room.
     val scale = Layouts.plateScale(LocalPanelStretch.current)
     Enlarged(scale) { drawn ->
         val w = with(density) { drawn.toPx() }

@@ -140,13 +140,17 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     val tab = LocalLayoutTab.current
     val saved = LocalLayout.current
     val saveSize = LocalSavePanelSize.current
-    // Stretch (#3569) sets chart height; on a plate (#3978) it is the 3×1 / 3×2 scale, 2 on a phone until the user picks 3×1.
+    // Stretch (#3569) sets chart height; on a plate (#3978 / #4207) it is the 3×1 / 3×2 / 3×3 scale — 3×2 on a phone, 3×3 unfolded.
     val columns = LocalColumns.current
-    val stretch = LocalLayout.current?.stretch?.get(id)?.let { if (plate) Layouts.plateScale(it) else it }
-        ?: if (plate) Layouts.plateDefault(columns) else 1
-    val cycleAll = LocalCycleStretch.current
     val chartSeen = remember { mutableStateOf(false) }
     val markChart = remember { { chartSeen.value = true } }
+    val stretch = LocalLayout.current?.stretch?.get(id)?.let { if (plate) Layouts.plateScale(it) else it.coerceIn(1, 3) }
+        ?: when {
+            plate -> Layouts.plateDefault(columns)
+            charts || chartSeen.value -> Layouts.chartDefault(columns)
+            else -> 1
+        }
+    val cycleAll = LocalCycleStretch.current
     val cycle = onChartStretch ?: cycleAll?.let { c -> { c(id, stretch, if (plate) Layouts.PLATE_MAX else 3) } }
     if (tab != null) Arrange.seen(tab, id, title)
     val stored = saved?.size?.get(id) ?: Layouts.Size()
@@ -393,8 +397,9 @@ internal fun ChartSeen() {
 }
 
 /**
- * The 3×1 / 3×2 plate's pan strip (#3978): [content] gets the width to draw at, [scale] times the panel's. At 1 it is the plain panel
- * width; at 2 it is twice as wide in a strip that pans sideways, starting centred, so a map's or grid's small print grows with it.
+ * The 3×1 / 3×2 / 3×3 plate's pan strip (#3978, #4207): [content] gets the width to draw at, [scale] times the panel's. At 1 it is
+ * the plain panel width; at 2 or 3 it is that many times as wide in a strip that pans sideways, starting centred, so a map's or
+ * grid's small print grows with it.
  */
 @Composable
 fun Enlarged(scale: Int, scroll: androidx.compose.foundation.ScrollState = androidx.compose.foundation.rememberScrollState(), content: @Composable (androidx.compose.ui.unit.Dp) -> Unit) {
