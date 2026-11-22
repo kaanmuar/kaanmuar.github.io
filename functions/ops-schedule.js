@@ -214,7 +214,7 @@ const JOBS = [
 		job: 'emailQuarterReviewReport',
 		cron: '*/15 * * * *',
 		gap: 1,
-		what: 'Quarter-hour review report, only when something happened',
+		what: 'Quarter-hour review report, only when a real person ran a review (#4234)',
 	},
 	{ job: 'exportFirestoreWeekly', cron: '0 8 * * 0', gap: 7 * 24 + 2, what: 'Firestore backup' },
 	{
