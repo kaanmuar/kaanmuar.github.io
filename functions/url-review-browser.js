@@ -1051,6 +1051,22 @@ function tagCut(job, error) {
 	return job && job.html && found ? found[0] : '';
 }
 
+// Start-page recovery (job.html): a full nav budget with no document is treated like a tag cut and retried as plain Chrome (#4143).
+// open() already keeps a document whose load event stalled, so this only covers silence / hang-up walls (e.g. arti-elec.com).
+// tagCut itself still ignores Navigation timeout so a merely slow load is not waited on twice (#1180).
+function tagRetry(job, error) {
+	const cut = tagCut(job, error);
+	if (cut) return cut;
+	if (
+		job &&
+		job.html &&
+		error &&
+		(error.name === 'TimeoutError' || /Navigation timeout/i.test(String(error.message || '')))
+	)
+		return 'Navigation timeout';
+	return '';
+}
+
 // A JS bot check answers 403 and then reloads into the site, so the last main-frame document says whether the page got through.
 async function open(page, url) {
 	let last = null;
@@ -2617,7 +2633,7 @@ async function browse(job, log, onStart) {
 		try {
 			await visit();
 		} catch (error) {
-			cut = tagCut(job, error);
+			cut = tagRetry(job, error);
 			if (!cut) throw error;
 		}
 		if (job.html && (cut || first.docStatus >= 400)) {
@@ -3283,6 +3299,7 @@ module.exports = {
 	open,
 	steady,
 	tagCut,
+	tagRetry,
 	talk,
 	printPdf,
 	submitBrave,

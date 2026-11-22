@@ -58,6 +58,19 @@ test("reduce finds each kind of problem and skips ignored nodes", () => {
   assert.equal(report.roles.link, 3);
 });
 
+test("saved CDP fixture matches the inline sample and exports EARL/SARIF", () => {
+  const saved = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../fixtures/axtree-sample.json"), "utf8")
+  );
+  const report = axtree.reduce(saved, { url: "https://example.com/" });
+  assert.deepEqual(report.counts, axtree.reduce(fixture(), { url: "https://example.com/" }).counts);
+  const earl = axtree.earl(report, { date: "2026-11-22T00:00:00.000Z" });
+  const sarif = axtree.sarif(report);
+  assert.ok(earl["@graph"].length > 0);
+  assert.equal(sarif.version, "2.1.0");
+  assert.equal(sarif.runs[0].results.length, report.issues.length);
+});
+
 test("a clean page with one main, one h1 and a title reports nothing", () => {
   const nodes = [
     node(1, "RootWebArea", "Home", { childIds: ["2", "3", "4"] }),

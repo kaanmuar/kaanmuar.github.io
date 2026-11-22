@@ -11,6 +11,8 @@
  *   node scripts/axtree-audit.js <url> --json out.json       also writes the reduce() report (attach as extras.axtree)
  *   node scripts/axtree-audit.js --file tree.json [--url u]  reduces a saved getFullAXTree response, no browser
  *
+ * Sample tree (no browser): tests/fixtures/axtree-sample.json — same CDP shape as Accessibility.getFullAXTree.
+ *
  * URL Review findings: attach the reduce() report or the raw CDP `{ nodes }` response on the review as
  * `extras.axtree` (or pass `axtree` into insights.analyze). Cloud Functions only call findings()/reduce(); capture
  * stays here. Production auto-attach (same CDP helper): set QA_AXTREE_CDP=1 or URL_REVIEW_AXTREE_CDP=1 on the
