@@ -1520,6 +1520,35 @@ test.describe('start page reads', () => {
 		assert.ok(!untagged.report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
 	});
 
+	test('a certificate mismatch in headless Chrome is not reported as HTTP status 200 (#4025)', async () => {
+		const failures = require('../../functions/url-review-failures');
+		const certErr = 'net::ERR_CERT_COMMON_NAME_INVALID at ' + BANK;
+		await assert.rejects(
+			review({ [BANK]: WAF }, async () => ({ ok: false, error: certErr })),
+			/^Error: Headless Chrome could not verify the site's certificate \(net::ERR_CERT_COMMON_NAME_INVALID at https:\/\/bank\.example\.com\/\)\.$/
+		);
+		const tls = failures.causeOf(
+			"Headless Chrome could not verify the site's certificate (net::ERR_CERT_COMMON_NAME_INVALID)."
+		);
+		assert.equal(tls.id, 'tls');
+		const chromeweb = await review({ [BANK]: WAF }, async () => ({
+			ok: true,
+			ms: 900,
+			timing: { load: 800 },
+			start: {
+				status: 200,
+				docStatus: 200,
+				finalUrl: 'chrome-error://chromewebdata/',
+				headers: {},
+				html: '<html><body>Your connection is not private</body></html>',
+				htmlCut: false,
+			},
+		})).catch((error) => error);
+		assert.match(chromeweb.message, /could not verify the site's certificate/);
+		assert.doesNotMatch(chromeweb.message, /returned status 200, in the plain request and in headless Chrome/);
+		assert.equal(failures.causeOf(chromeweb.message).id, 'tls');
+	});
+
 	test('a host that accepts no connection is tried in headless Chrome, then named as down (#411)', async () => {
 		const failures = require('../../functions/url-review-failures');
 		const jobs = [];
