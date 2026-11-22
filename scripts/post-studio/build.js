@@ -12,6 +12,7 @@ const { chromium } = require('playwright');
 const sharp = require('sharp');
 const studio = require('./posts');
 const narration = require('../review-demo-lines');
+const { pdfFrom } = require('../studio-pdf');
 
 const ROOT = path.resolve(__dirname, '../..');
 const DEMOS = path.join(ROOT, 'media/url-review-demos');
@@ -280,21 +281,6 @@ async function shoot(page, s, file, opts2) {
 			.toFile(file);
 	else fs.writeFileSync(file, png);
 	return box;
-}
-
-async function pdfFrom(browser, images, file) {
-	const html =
-		'<!doctype html><html><head><style>@page{size:1080px 1350px;margin:0}html,body{margin:0}img{display:block;width:1080px;height:1350px;page-break-after:always}</style></head><body>' +
-		images.map((img) => '<img src="' + path.basename(img) + '">').join('') +
-		'</body></html>';
-	const tmp = path.join(path.dirname(file), '.pdf-' + path.basename(file, '.pdf') + '.html');
-	fs.writeFileSync(tmp, html);
-	const page = await browser.newPage();
-	await page.goto('file://' + tmp);
-	await page.waitForFunction(() => Array.from(document.images).every((i) => i.complete));
-	await page.pdf({ path: file, width: '1080px', height: '1350px', printBackground: true });
-	await page.close();
-	fs.unlinkSync(tmp);
 }
 
 function carouselItems(post, lang) {
