@@ -3957,12 +3957,15 @@ test("the live feed and the social heat map come from the range's rows, newest f
 	);
 });
 
-test('the 3×1 / 3×2 plate: 2 on a phone and 1 wider unless saved, the map and dense SVGs get a pan strip (#3984)', () => {
+test('the 3×1 / 3×2 / 3×3 plate: 2 on a phone and 3 wider unless saved; charts match on wide (#3984 / #4207)', () => {
 	assert.equal(core.plateLevel(undefined, true), 2);
-	assert.equal(core.plateLevel(undefined, false), 1);
+	assert.equal(core.plateLevel(undefined, false), 3);
 	assert.equal(core.plateLevel(1, true), 1);
 	assert.equal(core.plateLevel(2, false), 2);
-	assert.equal(core.plateLevel(3, false), 2, 'a chart height of 3 reads as the 3×2 plate');
+	assert.equal(core.plateLevel(3, false), 3, 'saved 3 is the 3×3 plate');
+	assert.equal(core.chartLevel(undefined, true), 1);
+	assert.equal(core.chartLevel(undefined, false), 3);
+	assert.equal(core.chartLevel(2, true), 2);
 	const wrapped = core.plateWrap(
 		'<p>Legend</p><svg class="jv-geo-map" viewBox="0 0 1 1"><g/></svg><svg class="jv-spark"></svg>'
 	);

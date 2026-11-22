@@ -1,3 +1,6 @@
 # Copy to android/local.properties (gitignored). Required for Jarvis sign-in over the REST API (#3971, #4140).
-# GCP: API key restricted to Identity Toolkit + Secure Token only (not the Browser key).
+# GCP: API key restricted to Identity Toolkit API + Token Service API only.
+# Do not use the Firebase Android SDK key from google-services.json (OkHttp gets "Permission denied on the service.")
+# Do not use the Browser key (HTTP referrer restrictions).
+# CI: repo secret JARVIS_FIREBASE_AUTH_KEY (#4169 / #4206).
 jarvis.firebase.auth.key=
