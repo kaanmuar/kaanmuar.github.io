@@ -7946,25 +7946,135 @@ export function mountJarvis({
 					'No decisions yet.'
 				)
 			: '<p class="jv-empty">Decisions you make here become lessons for that scout.</p>';
+		const board = g.board || {};
+		const tot = board.totals || {};
+		const studyLines = (board.study || []).map((line) => `<li>${esc(line)}</li>`).join('');
+		const studyBody = studyLines
+			? `<ul class="jv-learn-study">${studyLines}</ul>`
+			: '<p class="jv-empty">Study notes appear after scouts have run and learned.</p>';
+		const statsKpis = kpis([
+			{
+				label: 'Open asks',
+				value: tot.open != null ? tot.open : g.waiting || open.length,
+				alert: (tot.open || g.waiting || open.length) > 0,
+			},
+			{ label: 'Scouts', value: tot.scouts != null ? tot.scouts : scouts.length },
+			{ label: 'Learn runs', value: tot.runs || 0 },
+			{ label: 'Lessons', value: tot.lessons || 0 },
+			{ label: 'Knowledge', value: tot.knowledge || 0 },
+			{ label: 'Decisions', value: tot.answered || 0 },
+			{ label: 'Exceptions', value: tot.exceptions || 0 },
+			{ label: 'Updated', value: when(g.at) || '—' },
+		]);
+		const chartPanels =
+			panel('learn-study', 'Study board', studyBody, {
+				wide: true,
+				data: board.study || [],
+				note: 'Private analysis (#4240). Built from Firestore learn state — not public posts.',
+			}) +
+			panel(
+				'learn-runs',
+				'Runs by scout',
+				bars(board.runsByScout || [], {
+					title: 'Learn runs stored per scout',
+					yLabel: 'runs',
+					unit: 'runs',
+					legend: 'Runs',
+					empty: 'No learn runs yet.',
+					color: COLORS.cyan,
+				}),
+				{ wide: true, data: board.runsByScout || [], charts: true }
+			) +
+			panel(
+				'learn-lessons',
+				'Lessons by scout',
+				bars(board.lessonsByScout || [], {
+					title: 'Lessons on file',
+					yLabel: 'lessons',
+					unit: 'lessons',
+					legend: 'Lessons',
+					empty: 'No lessons yet.',
+					color: COLORS.amber,
+				}),
+				{ wide: true, data: board.lessonsByScout || [], charts: true }
+			) +
+			panel(
+				'learn-open',
+				'Open asks by scout',
+				bars(board.openByScout || [], {
+					title: 'Questions waiting',
+					yLabel: 'asks',
+					unit: 'asks',
+					legend: 'Open',
+					empty: 'No open asks.',
+					color: COLORS.pink,
+				}),
+				{ wide: true, data: board.openByScout || [], charts: true }
+			) +
+			panel(
+				'learn-odds-chart',
+				'Odds board',
+				bars(board.odds || [], {
+					title: 'Top odds (percent)',
+					yLabel: 'p × 100',
+					unit: '%',
+					legend: 'Odds',
+					empty: 'No odds yet — they appear after a scout run with findings.',
+					color: COLORS.violet,
+				}),
+				{ wide: true, data: board.odds || [], charts: true }
+			) +
+			panel(
+				'learn-decisions',
+				'Decisions',
+				pie(board.decisions || [], { unit: 'decisions', empty: 'No decisions yet. Pick options on Decide.' }),
+				{ wide: true, data: board.decisions || [], charts: true }
+			) +
+			((board.daily || []).length
+				? panel(
+						'learn-trend',
+						'Learn runs · last days',
+						bars(
+							(board.daily || []).map((d) => ({ label: String(d.day || '').slice(5), value: d.runs || 0 })),
+							{
+								title: 'Scout learn envelopes per day',
+								yLabel: 'runs',
+								unit: 'runs',
+								legend: 'Runs',
+								color: COLORS.green,
+							}
+						) +
+							((board.daily || []).some((d) => d.questions)
+								? bars(
+										(board.daily || []).map((d) => ({
+											label: String(d.day || '').slice(5),
+											value: d.questions || 0,
+										})),
+										{
+											title: 'Questions opened per day',
+											yLabel: 'asks',
+											unit: 'asks',
+											legend: 'Asks',
+											color: COLORS.amber,
+										}
+									)
+								: ''),
+						{ wide: true, data: board.daily || [], charts: true }
+					)
+				: '');
 		if (!scouts.length && !open.length)
 			return (
-				kpis([
-					{ label: 'Open asks', value: 0 },
-					{ label: 'Scouts', value: 0 },
-				]) +
-				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}</div>`
+				statsKpis +
+				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}${chartPanels}</div>`
 			);
 		return (
-			kpis([
-				{ label: 'Open asks', value: g.waiting || open.length, alert: (g.waiting || open.length) > 0 },
-				{ label: 'Scouts with knowledge', value: scouts.length },
-				{ label: 'Updated', value: when(g.at) || '—' },
-			]) +
+			statsKpis +
 			`<div class="jv-grid">
             ${panel('learn-decide', `Decide${open.length ? ' · ' + open.length : ''}`, decideBody, { wide: true, data: open, note: 'Private (#4237). Pick an option; the scout stores your answer as a lesson. "Ask later" leaves the question open.' })}
             ${panel('learn-asked', 'Recent decisions', askedBody, { wide: true, data: asked })}
+            ${chartPanels}
             ${scoutPanels}
-        </div><p class="jv-note">Learning is for you and the scouts only — never public hub posts or tool-scout draft PR bodies. Cadence: tool 7d · engagement 2d · field-sweep & trending 3d.</p>`
+        </div><p class="jv-note">Learning is for you and the scouts only — never public hub posts or tool-scout draft PR bodies. Cadence: tool 7d · engagement 2d · field-sweep & trending 3d. Charts (#4240) read the same private Firestore state.</p>`
 		);
 	}
 
