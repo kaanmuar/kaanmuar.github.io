@@ -29,7 +29,8 @@ composeLints = "1.4.2"
 # getsentry/sentry-java (MIT) and touchlab/Kermit (Apache-2.0), both LICENSE-checked via the GitHub API (#3836).
 sentry = "8.65.0"
 # getsentry/sentry-android-gradle-plugin (MIT): mapping upload companion to sentry-android 8.65.0 (#3836).
-# Separate version line from the SDK; 6.27.0 is current stable (auto-install stays off so the SDK pin above wins).
+# Plugin id io.sentry.android.gradle → Maven module io.sentry:sentry-android-gradle-plugin (see settings.gradle.kts).
+# Separate version line from the SDK; 6.27.0 is current Maven Central release (auto-install off so SDK pin wins).
 sentryGradle = "6.27.0"
 # 2.2.0 needs compileSdk 36 (AGP 8.7.3 caps at 35); raise with AGP.
 kermit = "2.1.0"

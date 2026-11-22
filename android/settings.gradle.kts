@@ -1,11 +1,12 @@
 pluginManagement {
     repositories {
-        google()
+        // Maven Central first: io.sentry:sentry-android-gradle-plugin (and its
+        // plugin marker) are published there; portal HTML index is incomplete.
         mavenCentral()
+        google()
         gradlePluginPortal()
     }
-    // Resolve the Sentry plugin from Maven Central (artifact exists there); the
-    // plugin-marker lookup on the Gradle Plugin Portal has failed in CI (#4192).
+    // Map plugin id → Maven module so CI does not depend on portal marker lookup (#4192).
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "io.sentry.android.gradle") {
