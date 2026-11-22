@@ -825,13 +825,19 @@
 		return Object.keys(out).length ? out : undefined;
 	}
 	/** Discrete chart stretch 1–3 (#3569). Passed through so continuous size saves do not wipe it after PR #3600 merges. */
-	/** The 3×1 / 3×2 plate (#3984, twin of Layouts.plateDefault and plateScale in the Android app): 1 or 2 from the saved stretch;
-	 * unsaved, 2 on a one-column phone and 1 wider. A chart's 3 reads as 2 here. */
+	/** The 3×1 / 3×2 / 3×3 plate (#3984 / #4207, twin of Layouts.plateDefault and plateScale in the Android app): 1..3 from the
+	 * saved stretch; unsaved, 2 on a one-column phone and 3 wider (maps and big charts floor on unfold). */
 	function plateLevel(stored, phone) {
 		const n = Number(stored);
-		if (n === 1 || n === 2) return n;
-		if (n === 3) return 2;
-		return phone ? 2 : 1;
+		if (n === 1 || n === 2 || n === 3) return n;
+		return phone ? 2 : 3;
+	}
+
+	/** Chart height stretch (#3569 / #4207): unsaved, 3 on a wide screen so big charts match the plate floor. */
+	function chartLevel(stored, phone) {
+		const n = Number(stored);
+		if (n === 1 || n === 2 || n === 3) return n;
+		return phone ? 1 : 3;
 	}
 
 	/** The plate's pan strip around each map or dense SVG in a panel body (#3984): the SVG keeps its own markup. */
@@ -4238,6 +4244,7 @@
 		cleanSize,
 		cleanStretch,
 		plateLevel,
+		chartLevel,
 		plateWrap,
 		clampSize,
 		sizeSpan,
