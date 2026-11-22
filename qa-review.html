@@ -1341,10 +1341,16 @@
         .report-top .btn[hidden] { display: none; }
         .report-top .btn::before { content: ""; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--arrow-up) center / contain no-repeat; mask: var(--arrow-up) center / contain no-repeat; }
         .dash-overlay { --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 19V5M5.5 11.5 12 5l6.5 6.5' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-        /* Open report sheet stays opaque under every site look (#4202, #2796). Screen only: print keeps #fff below. */
+        /* Open report sheet stays opaque under every site look (#4201, #2796). Screen only: print keeps #fff below. */
         @media screen {
             html[data-look] .dash-overlay.open .dash-modal {
                 background: var(--bg);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+            html[data-look] .dash-overlay.open .dash-modal .card,
+            html[data-look] .dash-overlay.open .dash-modal .kpi {
+                background: var(--card);
                 -webkit-backdrop-filter: none;
                 backdrop-filter: none;
             }
@@ -1555,13 +1561,13 @@
             .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #share-note, #pay, #run-pay, .wire, .stage { display: none !important; }
             .dash-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
             .dash-modal,
-            html[data-look] .dash-modal {
+            html[data-look] .dash-overlay .dash-modal {
                 box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f;
                 -webkit-backdrop-filter: none; backdrop-filter: none;
             }
             .card, .kpi, .tick, .report-cover,
-            html[data-look] .dash-modal .card,
-            html[data-look] .dash-modal .kpi {
+            html[data-look] .dash-overlay .dash-modal .card,
+            html[data-look] .dash-overlay .dash-modal .kpi {
                 box-shadow: none; break-inside: avoid; background: #fff;
                 -webkit-backdrop-filter: none; backdrop-filter: none;
             }
@@ -2338,5 +2344,6 @@
 <script src="js/url-suggest.js?v=20261120-3988" defer></script>
 <script src="js/qa-review-live.js?v=20261110d" defer></script>
 <script src="js/landmark-preview-ui.js?v=20261121-3832" defer></script>
+<script src="js/qa-live-tab-walk.js?v=20261122-3831" defer></script>
 </body>
 </html>

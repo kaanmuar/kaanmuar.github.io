@@ -2,10 +2,32 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.sentry.gradle)
 }
 
 val build = (System.getenv("JARVIS_VERSION_CODE") ?: "1").toInt()
 val keystore = System.getenv("JARVIS_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+
+// Same mapping-upload gate as :app (#3836). No DSN/token in git; no-op without SENTRY_AUTH_TOKEN + org + project.
+val sentryAuthToken = System.getenv("SENTRY_AUTH_TOKEN")
+    ?: (findProperty("sentry.auth.token") as String?)
+val sentryOrg = System.getenv("SENTRY_ORG")
+    ?: (findProperty("sentry.org") as String?)
+val sentryProject = System.getenv("SENTRY_PROJECT")
+    ?: (findProperty("sentry.project") as String?)
+val sentryUpload = listOf(sentryAuthToken, sentryOrg, sentryProject).all { !it.isNullOrBlank() }
+
+sentry {
+    org.set(sentryOrg)
+    projectName.set(sentryProject)
+    authToken.set(sentryAuthToken)
+    autoUploadProguardMapping.set(sentryUpload)
+    uploadNativeSymbols.set(false)
+    includeSourceContext.set(false)
+    ignoredBuildTypes.set(setOf("debug"))
+    autoInstallation { enabled.set(false) }
+    telemetry.set(false)
+}
 
 // Same applicationId and signing key as the phone app: the Data Layer only pairs apps that match on both.
 android {

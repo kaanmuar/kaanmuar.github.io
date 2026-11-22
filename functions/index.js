@@ -10069,7 +10069,30 @@ exports.jarvisGithubHook = functions
 		res.json({ ok: true, kept: !!row, changed: !!(out && out.changed) });
 	});
 
+// Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
+// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; auto-Accepts Follow when PRIVATE_KEY_PEM is set.
+const socialInbox = require('./social-inbox');
+exports.socialInbox = functions
+	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = await socialInbox.handleRequest(req, {
+				db: socialInbox.enabled() ? getFirestore() : null,
+				fetchImpl: fetch,
+			});
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('socialInbox failed:', error);
+			res.status(500).json({ error: 'Inbox failed.' });
+		}
+	});
+
 // Fediverse ActivityPub actor + WebFinger discovery (#3841). Off unless SOCIAL_INBOX_AP=1.
+// Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). Outbox reads Creates from Firestore.
 // Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). No private keys here.
 // Firebase Hosting rewrites /.well-known/webfinger → webfinger and /users/** → socialActor (see firebase.json).
 const socialActor = require('./social-actor');
@@ -10078,7 +10101,10 @@ exports.socialActor = functions
 	.https.onRequest(async (req, res) => {
 		res.set('X-Robots-Tag', 'noindex');
 		try {
-			const result = socialActor.handleActor(req, { env: process.env });
+			const result = await socialActor.handleActor(req, {
+				env: process.env,
+				db: socialActor.enabled() ? getFirestore() : null,
+			});
 			if (result.headers) {
 				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
 			}
@@ -10102,28 +10128,6 @@ exports.webfinger = functions
 		} catch (error) {
 			console.error('webfinger failed:', error);
 			res.status(500).json({ error: 'WebFinger failed.' });
-		}
-	});
-
-// Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
-// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; auto-Accepts Follow when PRIVATE_KEY_PEM is set.
-const socialInbox = require('./social-inbox');
-exports.socialInbox = functions
-	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })
-	.https.onRequest(async (req, res) => {
-		res.set('X-Robots-Tag', 'noindex');
-		try {
-			const result = await socialInbox.handleRequest(req, {
-				db: socialInbox.enabled() ? getFirestore() : null,
-				fetchImpl: fetch,
-			});
-			if (result.headers) {
-				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
-			}
-			res.status(result.status).json(result.body);
-		} catch (error) {
-			console.error('socialInbox failed:', error);
-			res.status(500).json({ error: 'Inbox failed.' });
 		}
 	});
 

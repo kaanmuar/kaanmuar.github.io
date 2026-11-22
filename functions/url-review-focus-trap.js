@@ -5,7 +5,7 @@
    and the HTML Standard's tabindex sorting rules. The equal-access family is the idea
    only (go deeper than axe on keyboard order and traps); no upstream code is copied.
    Stops are plain objects so the same helpers work on static HTML parses and on lists
-   a browser walk (qa-lab) can hand in later — no DOM APIs here. */
+   a browser walk can hand in — see js/qa-live-tab-walk.js for live Tab/focusin attach. No DOM APIs here. */
 
 function tabIndexOf(value) {
 	if (value == null || value === '') return null;
