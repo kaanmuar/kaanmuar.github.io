@@ -3920,8 +3920,10 @@ test.describe('admin statistics (Jarvis)', () => {
 		await ci.locator('.jv-hit').last().click();
 		await expect(ci.locator('.jv-tip')).toHaveText('2026-11-03: Runs 2,480 runs · Failed 223 runs');
 		await expect(ci.locator('.jv-grid-dot').first()).toBeAttached();
+		// Wide screens default charts to ↕3 (#4207); one tap cycles 3 → 1.
+		await expect(ci).toHaveAttribute('data-chart-stretch', '3');
 		await ci.locator('[data-chart-stretch="github-ci-trend"]').click();
-		await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('2');
+		await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('1');
 		await expect(gh.locator('[data-panel-id="github-trend"] .jv-spark-axis').first()).toContainText('11-02');
 		await expect(gh.locator('[data-panel-id="github-board"] .jv-bars-head')).toContainText('cards');
 		await expect(gh.locator('[data-panel-id="github-board"] .jv-legend')).toContainText('Cards on the board');
