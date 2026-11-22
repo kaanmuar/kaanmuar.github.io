@@ -763,11 +763,15 @@ function siteSide(doc, cause) {
 const SITE_REASONS = {
 	'bot-wall': 'behind a bot wall that refuses headless Chrome too',
 	cert: 'with a certificate that is expired, self-signed or for another name',
+	'tls-handshake': 'with a server that ends the TLS handshake for every name asked (no certificate offered)',
 	'5xx': 'answering every client with a 5xx',
 	'not-html': 'serving no HTML page',
 };
 const SITE_CERT =
-	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed/i;
+	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed|net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID/i;
+const SITE_TLS_HANDSHAKE =
+	/SSL alert number (?:112|80)\b|tlsv1 alert (?:unrecognized name|internal error)\b|alert (?:unrecognized name|internal error)\b|0A000458|0A000446|SSL routines:[^\n]{0,120}unrecognized name/i;
+const ALT_HOST_RESCUED = /alt-host[^\n]{0,80}HTML page|status [23]\d\d/i;
 
 function siteReason(lead) {
 	const probe = lead.probe || {};
@@ -779,8 +783,14 @@ function siteReason(lead) {
 			(browser && browser.ok && (!!browser.challenge || guarded(browser.docStatus))))
 	)
 		return 'bot-wall';
-	if (lead.cause === 'tls' && SITE_CERT.test(lead.message + ' ' + (plain.error || '') + ' ' + (plain.code || '')))
-		return 'cert';
+	if (lead.cause === 'tls') {
+		const tlsText = lead.message + ' ' + (plain.error || '') + ' ' + (plain.code || '');
+		if (SITE_CERT.test(tlsText)) return 'cert';
+		if (SITE_TLS_HANDSHAKE.test(tlsText)) {
+			if ((lead.rescue || []).some((line) => ALT_HOST_RESCUED.test(line))) return '';
+			return 'tls-handshake';
+		}
+	}
 	if (lead.cause === 'status') {
 		if (plain.status >= 500 && !(browser && browser.ok && browser.docStatus < 400)) return '5xx';
 		if (plain.error && browser && browser.ok && browser.docStatus >= 500) return '5xx';
