@@ -208,6 +208,13 @@ const FIXES = [
 		label:
 			'A start-page recovery whose tagged Chrome gets no document for the nav budget is tried again as plain Chrome',
 	},
+	{
+		cause: 'timeout',
+		at: '2026-11-22T07:15:00Z',
+		ref: '#2880',
+		label:
+			'A host that opens TCP but sends no answer, and whose headless Chrome navigation times out too, is the site\'s own state',
+	},
 ];
 const fixKey = (fix) => fix.cause + ' ' + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);
@@ -269,6 +276,20 @@ const READABLE = {
 // Chrome reached the host, and the host cut the connection or never answered it (not Chrome's own navigation timeout).
 const HOST_BROKE =
 	/net::ERR_(?:CONNECTION_(?:RESET|CLOSED|REFUSED|TIMED_OUT)|HTTP2_PROTOCOL_ERROR|EMPTY_RESPONSE|TIMED_OUT|ADDRESS_UNREACHABLE)\b/;
+// Chrome waited the full navigation budget on a host that already took the connection and sent no bytes (#2880).
+const CHROME_NAV_TIMEOUT = /^(?:TimeoutError: )?Navigation timeout/i;
+
+function silentHost(probe) {
+	const run = probe || {};
+	const plain = run.plain || {};
+	const browser = run.browser;
+	const tcp = run.tcp;
+	if (!tcp || tcp.open !== true || !plain.error || !browser || browser.ok) return false;
+	if (causeOf(plain.error + ' ' + (plain.code || '')).id !== 'timeout') return false;
+	const err = String(browser.error || '');
+	if (HOST_BROKE.test(err) || !CHROME_NAV_TIMEOUT.test(err)) return false;
+	return true;
+}
 // The review's own error when the plain read and headless Chrome both got a 4xx that is not a bot wall (401, 403 and 429 are).
 const SITE_REFUSAL =
 	/^The URL returned status (?!40[13]\b|429\b)4\d\d, in the plain (?:request|read) and in headless Chrome\./;
@@ -487,6 +508,17 @@ function unreadState(run, plain) {
 				'The host accepts a connection, but it answers neither the plain read (' +
 				plain.error +
 				') nor headless Chrome (' +
+				browser.error +
+				')',
+		};
+	if (silentHost({ plain, tcp, browser }))
+		return {
+			id: 'no-answer',
+			site: true,
+			label:
+				'The host accepts a connection on port 443, but it sends no answer in the plain read (' +
+				plain.error +
+				') or in headless Chrome (' +
 				browser.error +
 				')',
 		};
@@ -773,6 +805,7 @@ const SITE_REASONS = {
 	'tls-handshake': 'with a server that ends the TLS handshake for every name asked (no certificate offered)',
 	'5xx': 'answering every client with a 5xx',
 	'not-html': 'serving no HTML page',
+	'silent-host': 'that accepts a connection but sends no answer',
 };
 const SITE_CERT =
 	/CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match|altnames|SELF_SIGNED_CERT|self[- ]signed|net::ERR_CERT|ERR_CERT_|CERT_COMMON_NAME_INVALID/i;
@@ -784,6 +817,7 @@ function siteReason(lead) {
 	const probe = lead.probe || {};
 	const plain = probe.plain || {};
 	const browser = probe.browser;
+	if (silentHost(probe)) return 'silent-host';
 	if (
 		lead.cause === 'bot-protection' &&
 		(/\bin headless Chrome\b/.test(lead.message) ||
