@@ -13,7 +13,8 @@
  *
  * URL Review findings: attach the reduce() report or the raw CDP `{ nodes }` response on the review as
  * `extras.axtree` (or pass `axtree` into insights.analyze). Cloud Functions only call findings()/reduce(); capture
- * stays here.
+ * stays here. Production auto-attach (same CDP helper): set QA_AXTREE_CDP=1 or URL_REVIEW_AXTREE_CDP=1 on the
+ * managed review browser runner — see functions/url-review-axtree-cdp.js.
  */
 const fs = require('fs');
 const axtree = require('../functions/url-review-axtree');
@@ -34,14 +35,15 @@ function args(argv) {
 
 async function capture(url) {
 	if (!/^https?:\/\//i.test(url)) throw new Error('Give an http(s) address.');
+	const axtreeCdp = require('../functions/url-review-axtree-cdp');
 	require('./playwright-sandbox');
 	const { chromium } = require('playwright');
 	const browser = await chromium.launch();
 	try {
 		const page = await browser.newPage();
 		await page.goto(url, { waitUntil: 'load', timeout: 45000 });
-		const session = await page.context().newCDPSession(page);
-		return await session.send('Accessibility.getFullAXTree');
+		const got = await axtreeCdp.attach(page, { force: true, reduce: false, keepTree: true });
+		return got.tree;
 	} finally {
 		await browser.close();
 	}
