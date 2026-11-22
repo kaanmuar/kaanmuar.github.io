@@ -12,6 +12,7 @@
    The scan is by hand with indexOf and a bounded element stack, so a hostile page cannot make it slow. */
 
 const { say, some } = require('./url-review-findings-en');
+const focusTrap = require('./url-review-focus-trap');
 
 const SCAN_LIMIT = 400000;
 const MAX_ELEMENTS = 20000;
@@ -474,6 +475,8 @@ function analyze(html) {
 		mouseOnly: { count: 0, samples: [] },
 		autofocus: { count: 0, samples: [] },
 		modal: { count: 0, trapped: 0, noClose: 0, samples: [] },
+		// Incomplete traps: aria-modal dialogs whose Tab order still reaches the page behind them.
+		trap: { count: 0, leaky: 0, outside: 0, samples: [] },
 		inert: { count: 0, wide: 0, dialog: 0, autofocus: 0, samples: [] },
 		hidden: { count: 0, samples: [], root: false },
 		noname: { count: 0, samples: [] },
@@ -486,16 +489,13 @@ function analyze(html) {
 	// Tab order: tabindex above 0 first, ascending (ties in page order), then the rest in page order.
 	const positives = stops.filter((el) => tabindexOf(el) > 0);
 	if (positives.length) {
-		const order = positives
-			.map((el, i) => ({ el, i }))
-			.sort((a, b) => tabindexOf(a.el) - tabindexOf(b.el) || a.i - b.i)
-			.map((row) => row.el)
-			.concat(stops.filter((el) => !(tabindexOf(el) > 0)));
+		const ranked = stops.map((el, docIndex) => ({ el, tabIndex: tabindexOf(el), docIndex }));
+		const order = focusTrap.orderTabStops(ranked).map((row) => row.el);
 		report.positive.count = positives.length;
 		report.positive.values = Array.from(new Set(positives.map(tabindexOf)))
 			.sort((a, b) => a - b)
 			.slice(0, 8);
-		report.positive.moved = order.reduce((sum, el, i) => sum + (el === stops[i] ? 0 : 1), 0);
+		report.positive.moved = focusTrap.countMoved(stops, order);
 	}
 
 	// A control taken out of the tab order with tabindex="-1" and nothing else offered.
@@ -568,6 +568,19 @@ function analyze(html) {
 		keep(report.modal.samples, el);
 		if (!inside.length) report.modal.trapped++;
 		else if (!inside.some(isCloseControl)) report.modal.noClose++;
+		// Deep trap check: Tab can still reach the page behind the dialog (incomplete trap).
+		const outside = stops.filter((stop) => !isWithin(stop, el));
+		const verdict = focusTrap.inspectFocusTrap({
+			inside,
+			outside,
+			hasDismiss: inside.some(isCloseControl),
+		});
+		if (verdict.leaky && outside.length >= 2) {
+			report.trap.count++;
+			report.trap.leaky++;
+			if (outside.length > report.trap.outside) report.trap.outside = outside.length;
+			keep(report.trap.samples, el);
+		}
 	});
 
 	// inert switched on in the markup in a way that cuts off the page or the dialog meant to be used.
@@ -686,6 +699,15 @@ function findings(report, add) {
 				d.noClose
 			);
 	}
+	const t = report.trap;
+	if (t.leaky)
+		item(
+			'a11y-focus-trap',
+			t.leaky >= 2 || t.outside >= 8 ? 'medium' : 'low',
+			null,
+			{ n: t.leaky, total: d.count, outside: t.outside, examples: some(t.samples, 3) },
+			t.leaky
+		);
 	const i = report.inert;
 	if (i.count) {
 		const evidence = i.wide

@@ -21,7 +21,11 @@ function memDb() {
 							return { exists: docs.has(id), data: () => docs.get(id) };
 						},
 						async set(row) {
-							docs.set(id, row);
+							docs.set(id, Object.assign({}, docs.get(id) || {}, row));
+						},
+						async update(row) {
+							if (!docs.has(id)) throw new Error('missing ' + id);
+							docs.set(id, Object.assign({}, docs.get(id), row));
 						},
 					};
 				},
@@ -247,4 +251,165 @@ test('HTTP Signature rsa-sha256 verifies Digest and Signature', async () => {
 	assert.equal(accepted.status, 202);
 	assert.equal(accepted.body.type, 'Like');
 	assert.equal(accepted.body.stored, true);
+});
+
+test('buildAccept wraps the Follow for our actor', () => {
+	const follow = Inbox.normalizeActivity({
+		id: PEER + '/follows/accept-build',
+		type: 'Follow',
+		actor: PEER,
+		object: OUR,
+	}).event;
+	const accept = Inbox.buildAccept(follow, { SOCIAL_INBOX_AP_ACTOR: OUR }, new Date('2026-11-21T18:00:00Z'));
+	assert.equal(accept.type, 'Accept');
+	assert.equal(accept.actor, OUR);
+	assert.equal(accept.object.id, follow.id);
+	assert.deepEqual(accept.to, [PEER]);
+	assert.ok(String(accept.id).startsWith(OUR));
+});
+
+test('Follow without private key stores acceptIntent ops gap', async () => {
+	const db = memDb();
+	const activity = {
+		'@context': 'https://www.w3.org/ns/activitystreams',
+		id: PEER + '/follows/intent-1',
+		type: 'Follow',
+		actor: PEER,
+		object: OUR,
+	};
+	const out = await Inbox.handleRequest(
+		{
+			method: 'POST',
+			get: () => 'application/activity+json',
+			rawBody: Buffer.from(JSON.stringify(activity)),
+		},
+		{
+			env: {
+				SOCIAL_INBOX_AP: '1',
+				SOCIAL_INBOX_AP_ACTOR: OUR,
+				SOCIAL_INBOX_AP_SKIP_SIG: '1',
+				SOCIAL_INBOX_AP_PUBLIC_KEY_PEM: '-----BEGIN PUBLIC KEY-----\nMIIB\n-----END PUBLIC KEY-----',
+			},
+			db,
+			now: new Date('2026-11-21T18:00:00Z'),
+		}
+	);
+	assert.equal(out.status, 202);
+	assert.equal(out.body.stored, true);
+	assert.equal(out.body.accept.status, 'pending');
+	assert.equal(out.body.accept.reason, 'missing-private-key');
+	assert.equal(out.body.accept.delivered, false);
+	const row = [...db._docs.values()][0];
+	assert.equal(row.acceptIntent.status, 'pending');
+	assert.equal(row.acceptIntent.reason, 'missing-private-key');
+});
+
+test('Follow with private key signs and delivers Accept', async () => {
+	const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+	const privPem = privateKey.export({ type: 'pkcs8', format: 'pem' });
+	const pubPem = publicKey.export({ type: 'spki', format: 'pem' });
+	const db = memDb();
+	const activity = {
+		'@context': 'https://www.w3.org/ns/activitystreams',
+		id: PEER + '/follows/deliver-1',
+		type: 'Follow',
+		actor: PEER,
+		object: OUR,
+	};
+	const delivered = [];
+	const fetchImpl = async (url, init = {}) => {
+		if (String(url) === PEER) {
+			return {
+				ok: true,
+				status: 200,
+				async json() {
+					return { id: PEER, inbox: PEER + '/inbox', publicKey: { publicKeyPem: 'unused' } };
+				},
+			};
+		}
+		if (String(url) === PEER + '/inbox') {
+			delivered.push({ url, init });
+			return { ok: true, status: 202, async text() { return ''; } };
+		}
+		throw new Error('unexpected fetch ' + url);
+	};
+	const out = await Inbox.handleRequest(
+		{
+			method: 'POST',
+			get: () => 'application/activity+json',
+			rawBody: Buffer.from(JSON.stringify(activity)),
+		},
+		{
+			env: {
+				SOCIAL_INBOX_AP: '1',
+				SOCIAL_INBOX_AP_ACTOR: OUR,
+				SOCIAL_INBOX_AP_SKIP_SIG: '1',
+				SOCIAL_INBOX_AP_PRIVATE_KEY_PEM: privPem,
+				SOCIAL_INBOX_AP_PUBLIC_KEY_PEM: pubPem,
+			},
+			db,
+			fetchImpl,
+			now: new Date('2026-11-21T18:30:00Z'),
+		}
+	);
+	assert.equal(out.status, 202);
+	assert.equal(out.body.accept.status, 'delivered');
+	assert.equal(out.body.accept.delivered, true);
+	assert.equal(delivered.length, 1);
+	const post = delivered[0];
+	assert.equal(post.init.method, 'POST');
+	assert.ok(post.init.headers.Signature);
+	assert.ok(post.init.headers.Digest);
+	assert.match(post.init.headers.Signature, /algorithm="rsa-sha256"/);
+	assert.match(post.init.headers.Signature, /keyId="https:\/\/social\.example\/users\/qa#main-key"/);
+	const acceptBody = JSON.parse(Buffer.isBuffer(post.init.body) ? post.init.body.toString('utf8') : post.init.body);
+	assert.equal(acceptBody.type, 'Accept');
+	assert.equal(acceptBody.object.id, activity.id);
+
+	// Verify the signature we produced would verify with our public key.
+	const sig = Inbox.parseSignatureHeader(post.init.headers.Signature);
+	const stringToSign = [
+		'(request-target): post /users/alice/inbox',
+		'host: mastodon.example',
+		'date: ' + post.init.headers.Date,
+		'digest: ' + post.init.headers.Digest,
+	].join('\n');
+	const ok = crypto.verify(
+		'sha256',
+		Buffer.from(stringToSign),
+		pubPem,
+		Buffer.from(sig.signature, 'base64')
+	);
+	assert.equal(ok, true);
+	const row = [...db._docs.values()][0];
+	assert.equal(row.acceptIntent.status, 'delivered');
+});
+
+test('signOutboundRequest produces rsa-sha256 Signature header', () => {
+	const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+	const privPem = privateKey.export({ type: 'pkcs8', format: 'pem' });
+	const pubPem = publicKey.export({ type: 'spki', format: 'pem' });
+	const body = Buffer.from('{"type":"Accept"}');
+	const signed = Inbox.signOutboundRequest({
+		method: 'POST',
+		path: '/users/alice/inbox',
+		host: 'peer.example',
+		date: 'Sat, 21 Nov 2026 18:00:00 GMT',
+		body,
+		keyId: OUR + '#main-key',
+		pem: privPem,
+	});
+	assert.equal(signed.digest, Inbox.bodyDigest(body));
+	const sig = Inbox.parseSignatureHeader(signed.signatureHeader);
+	assert.equal(sig.algorithm, 'rsa-sha256');
+	const stringToSign = [
+		'(request-target): post /users/alice/inbox',
+		'host: peer.example',
+		'date: Sat, 21 Nov 2026 18:00:00 GMT',
+		'digest: ' + signed.digest,
+	].join('\n');
+	assert.equal(
+		crypto.verify('sha256', Buffer.from(stringToSign), pubPem, Buffer.from(sig.signature, 'base64')),
+		true
+	);
 });
