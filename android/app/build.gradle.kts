@@ -32,6 +32,10 @@ sentry {
     ignoredBuildTypes.set(setOf("debug"))
     // Keep the catalog pin (sentry-android 8.65.0); do not let the plugin inject its bundled SDK.
     autoInstallation { enabled.set(false) }
+    // Bytecode instrumentation (Database/AppStart/FileIO/Logcat) + R8 renames crash release
+    // launches with NoSuchFieldError on SQLiteStatement.mDelegate (#4232 / 2.1.727). Mapping
+    // upload only — leave SDK init to Telemetry.kt.
+    tracingInstrumentation { enabled.set(false) }
     telemetry.set(false)
 }
 

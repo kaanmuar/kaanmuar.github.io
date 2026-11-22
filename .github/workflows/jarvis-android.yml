@@ -46,6 +46,21 @@ jobs:
       - name: Unit tests and debug build
         run: ./gradlew --console=plain testDebugUnitTest assembleDebug
 
+      # PRs use the debug keystore; catches #4232 (Sentry DatabaseInstrumentation + R8) before merge.
+      - name: Release build without Sentry bytecode instrumentation
+        if: github.event_name == 'pull_request'
+        env:
+          JARVIS_FIREBASE_AUTH_KEY: ${{ secrets.JARVIS_FIREBASE_AUTH_KEY }}
+        run: |
+          if [ -z "${JARVIS_FIREBASE_AUTH_KEY:-}" ]; then
+            echo "::error::Set repo secret JARVIS_FIREBASE_AUTH_KEY so PR release builds can gate #4232."
+            exit 1
+          fi
+          ./gradlew --console=plain assembleRelease
+          node ../scripts/check-jarvis-apk-no-sentry-instrumentation.js \
+            app/build/outputs/apk/release/app-release.apk \
+            wear/build/outputs/apk/release/wear-release.apk
+
       - name: What's new
         if: github.event_name != 'pull_request'
         working-directory: .
@@ -76,6 +91,9 @@ jobs:
             c="com.carlosandmunoz.jarvis.home.${w}Widget"
             grep -qx "$c -> $c:" app/build/outputs/mapping/release/mapping.txt || { echo "::error::R8 renamed or merged $c; each widget would draw another's content"; exit 1; }
           done
+          node ../scripts/check-jarvis-apk-no-sentry-instrumentation.js \
+            app/build/outputs/apk/release/app-release.apk \
+            wear/build/outputs/apk/release/wear-release.apk
           # The release name must match the versionName the app shows ("2.0.$build" gives 2.0.<run number>).
           # shellcheck disable=SC2016 # $build is the literal text in build.gradle.kts
           major=$(sed -n 's/.*versionName = "\([0-9.]*\)\.\$build".*/\1/p' app/build.gradle.kts)
