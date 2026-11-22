@@ -7857,7 +7857,12 @@ export function mountJarvis({
 		const open = g.openQuestions || [];
 		const asked = g.asked || [];
 		const cadence = g.cadence || {};
-		const SCOUT_LABEL = { tool: 'Tool scout', engagement: 'Engagement', 'field-sweep': 'Field sweep', trending: 'Trending' };
+		const SCOUT_LABEL = {
+			tool: 'Tool scout',
+			engagement: 'Engagement',
+			'field-sweep': 'Field sweep',
+			trending: 'Trending',
+		};
 		const qCard = (q) => {
 			const opts = (q.options || [])
 				.map(
@@ -7867,27 +7872,64 @@ export function mountJarvis({
 				.join('');
 			return `<li class="jv-learn-q"><strong>${esc(SCOUT_LABEL[q.scout] || q.scout || '')}</strong><p>${esc(q.text)}</p><p class="jv-note">${esc(q.why || '')}${q.at ? ' · ' + esc(when(q.at)) : ''}</p><div class="jv-prop-acts">${opts}</div></li>`;
 		};
-		const scoutPanels = scouts
-			.map((s) => {
-				const days = Math.round((cadence[s.scout] || 0) / 86400000);
-				const odds = (s.odds || [])
-					.map((o) => `<li><span class="jv-chip">${Math.round((o.p || 0) * 100)}%</span> ${esc(o.claim || o.id || '')}</li>`)
-					.join('');
-				const lessons = (s.lessons || []).map((l) => `<li>${esc(typeof l === 'string' ? l : l.text || '')}</li>`).join('');
-				const ex = (s.exceptions || []).map((e) => `<li>${esc(e.reason || e.id || '')}</li>`).join('');
-				const know = (s.knowledge || []).map((k) => `<li>${esc(k.text || k.key || '')}</li>`).join('');
-				return panel(
-					'learn-' + s.scout,
-					(SCOUT_LABEL[s.scout] || s.scout) + (s.runs ? ' · ' + fmt(s.runs) + ' runs' : ''),
-					`<p class="jv-note">Private · ask every ${fmt(days)} day${days === 1 ? '' : 's'} · updated ${esc(when(s.at) || '—')}</p>
+		const scoutBody = (s) => {
+			const days = Math.round((cadence[s.scout] || 0) / 86400000);
+			const odds = (s.odds || [])
+				.map(
+					(o) => `<li><span class="jv-chip">${Math.round((o.p || 0) * 100)}%</span> ${esc(o.claim || o.id || '')}</li>`
+				)
+				.join('');
+			const lessons = (s.lessons || [])
+				.map((l) => `<li>${esc(typeof l === 'string' ? l : l.text || '')}</li>`)
+				.join('');
+			const ex = (s.exceptions || []).map((e) => `<li>${esc(e.reason || e.id || '')}</li>`).join('');
+			const know = (s.knowledge || []).map((k) => `<li>${esc(k.text || k.key || '')}</li>`).join('');
+			return `<p class="jv-note">Private · ask every ${fmt(days)} day${days === 1 ? '' : 's'} · updated ${esc(when(s.at) || '—')}</p>
 					${lessons ? `<h4>Lessons</h4><ul>${lessons}</ul>` : ''}
 					${odds ? `<h4>Odds</h4><ul>${odds}</ul>` : ''}
 					${ex ? `<h4>Exceptions</h4><ul>${ex}</ul>` : ''}
 					${know ? `<h4>Knowledge</h4><ul>${know}</ul>` : ''}
-					${!lessons && !odds ? '<p class="jv-empty">No lessons yet for this scout.</p>' : ''}`,
-					{ wide: true, data: [s] }
-				);
-			})
+					${!lessons && !odds ? '<p class="jv-empty">No lessons yet for this scout.</p>' : ''}`;
+		};
+		const byScout = Object.fromEntries(scouts.map((s) => [s.scout, s]));
+		// Literal panel ids (parity with Android Learn.kt); extractor needs string literals.
+		const scoutPanels = [
+			byScout.tool &&
+				panel(
+					'learn-tool',
+					(SCOUT_LABEL.tool || 'tool') + (byScout.tool.runs ? ' · ' + fmt(byScout.tool.runs) + ' runs' : ''),
+					scoutBody(byScout.tool),
+					{
+						wide: true,
+						data: [byScout.tool],
+					}
+				),
+			byScout.engagement &&
+				panel(
+					'learn-engagement',
+					(SCOUT_LABEL.engagement || 'engagement') +
+						(byScout.engagement.runs ? ' · ' + fmt(byScout.engagement.runs) + ' runs' : ''),
+					scoutBody(byScout.engagement),
+					{ wide: true, data: [byScout.engagement] }
+				),
+			byScout['field-sweep'] &&
+				panel(
+					'learn-field-sweep',
+					(SCOUT_LABEL['field-sweep'] || 'field-sweep') +
+						(byScout['field-sweep'].runs ? ' · ' + fmt(byScout['field-sweep'].runs) + ' runs' : ''),
+					scoutBody(byScout['field-sweep']),
+					{ wide: true, data: [byScout['field-sweep']] }
+				),
+			byScout.trending &&
+				panel(
+					'learn-trending',
+					(SCOUT_LABEL.trending || 'trending') +
+						(byScout.trending.runs ? ' · ' + fmt(byScout.trending.runs) + ' runs' : ''),
+					scoutBody(byScout.trending),
+					{ wide: true, data: [byScout.trending] }
+				),
+		]
+			.filter(Boolean)
 			.join('');
 		const decideBody = open.length
 			? `<ul class="jv-learn-qs">${open.map(qCard).join('')}</ul>`
@@ -7906,7 +7948,10 @@ export function mountJarvis({
 			: '<p class="jv-empty">Decisions you make here become lessons for that scout.</p>';
 		if (!scouts.length && !open.length)
 			return (
-				kpis([{ label: 'Open asks', value: 0 }, { label: 'Scouts', value: 0 }]) +
+				kpis([
+					{ label: 'Open asks', value: 0 },
+					{ label: 'Scouts', value: 0 },
+				]) +
 				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}</div>`
 			);
 		return (
@@ -7927,7 +7972,10 @@ export function mountJarvis({
 		if (!id || !option) return;
 		S.pending['learn:' + id] = true;
 		render();
-		const out = await call('scout-learn-decide', { id, option }).catch((error) => ({ ok: false, error: error.message }));
+		const out = await call('scout-learn-decide', { id, option }).catch((error) => ({
+			ok: false,
+			error: error.message,
+		}));
 		S.pending['learn:' + id] = false;
 		if (out && out.ok === false) {
 			toast('Not saved: ' + (out.error || 'failed'), 6000);
@@ -8017,7 +8065,9 @@ export function mountJarvis({
 									.join(' · ')
 									.slice(0, 280)
 							)
-						: (metaLearn.lessons && metaLearn.lessons[0] ? ' · ' + esc(String(metaLearn.lessons[0]).slice(0, 160)) : '')
+						: metaLearn.lessons && metaLearn.lessons[0]
+							? ' · ' + esc(String(metaLearn.lessons[0]).slice(0, 160))
+							: ''
 				}</p>`
 			: '';
 		const metaBody = scoutMeta
