@@ -36,6 +36,9 @@ const APP = path.join(os.homedir(), 'Library/Application Support/QALab/github-lo
 const STALE_S = 1800;
 const DAY = 86400000;
 const KEEP_DAYS = 90;
+/** Only prune work-log.csv when it reaches this fraction of the prune max (#3836). */
+const WORK_LOG_PRUNE_NEAR = 0.8;
+const WORK_LOG_CSV = path.join(USAGE_DIR, 'work-log.csv');
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 const run = (cmd, args, opts) =>
@@ -347,6 +350,92 @@ function sweepWorkLog(root) {
 	return run('bash', [script, 'log', 'sweep'], { timeout: 15000 }).trim();
 }
 
+/**
+ * Bounded prune of work-log.csv when it nears the byte cap or exceeds keep-days (#3836).
+ * Skips when usage-prune.js is absent, or when under the near-cap threshold (default 80% of 5 MiB)
+ * and no row is older than keepDays (default 365).
+ * opts: { logPath, maxBytes, keepDays, nearRatio, dryRun, now, pruneModule }.
+ * Set pruneModule to null to simulate a missing module; omit to require('./usage-prune').
+ */
+function maybePruneWorkLog(opts = {}) {
+	let prune;
+	try {
+		prune = Object.prototype.hasOwnProperty.call(opts, 'pruneModule') ? opts.pruneModule : require('./usage-prune');
+	} catch (error) {
+		return { skipped: 'usage-prune absent' };
+	}
+	if (!prune) return { skipped: 'usage-prune absent' };
+	const logPath = opts.logPath || WORK_LOG_CSV;
+	const maxBytes = opts.maxBytes != null ? opts.maxBytes : prune.DEFAULT_CSV_MAX_BYTES;
+	const keepDays = opts.keepDays != null ? opts.keepDays : prune.DEFAULT_KEEP_DAYS;
+	const nearRatio = opts.nearRatio != null ? opts.nearRatio : WORK_LOG_PRUNE_NEAR;
+	const now = opts.now != null ? opts.now : Date.now();
+	const threshold = Math.floor(maxBytes * nearRatio);
+	let bytes = 0;
+	try {
+		bytes = fs.statSync(logPath).size;
+	} catch (error) {
+		return { skipped: 'no log', file: logPath };
+	}
+	const nearBytes = bytes >= threshold;
+	let overAge = false;
+	if (!nearBytes && keepDays != null) {
+		const text = fs.readFileSync(logPath, 'utf8');
+		const recs = prune.splitRecords(text.replace(/\r\n/g, '\n'));
+		const cutoff = now - keepDays * DAY;
+		for (let i = 1; i < recs.length; i += 1) {
+			const m = /^"((?:[^"]|"")*)"|^([^,]*)/.exec(recs[i]);
+			const raw = m ? (m[1] != null ? m[1].replace(/""/g, '"') : m[2]) : '';
+			const t = Date.parse(raw);
+			if (!Number.isNaN(t) && t < cutoff) {
+				overAge = true;
+				break;
+			}
+		}
+	}
+	if (!nearBytes && !overAge) {
+		return { skipped: 'under threshold', bytes, threshold, maxBytes };
+	}
+	return prune.pruneCsv(logPath, {
+		keepDays,
+		maxBytes,
+		dryRun: !!opts.dryRun,
+		now,
+	});
+}
+
+/** One-line summary for launchd / Jarvis logs. */
+function formatWorkLogPrune(result) {
+	if (!result) return '';
+	if (result.skipped) {
+		if (result.skipped === 'under threshold') {
+			return (
+				'work-log prune skipped (under threshold: ' +
+				result.bytes +
+				'/' +
+				result.threshold +
+				' of max ' +
+				result.maxBytes +
+				')'
+			);
+		}
+		return 'work-log prune skipped (' + result.skipped + ')';
+	}
+	const removed = (result.removedAge || 0) + (result.removedSize || 0);
+	const verb = result.dryRun ? 'would prune' : 'pruned';
+	return (
+		'work-log ' +
+		verb +
+		': -' +
+		removed +
+		' rows (' +
+		result.bytesBefore +
+		'→' +
+		result.bytesAfter +
+		' B)'
+	);
+}
+
 function collect(root, now) {
 	const errors = [];
 	const safe = (name, fn, fallback) => {
@@ -365,7 +454,8 @@ function collect(root, now) {
 	};
 	const wts = safe('worktrees', () => worktrees(root, now), []);
 	const workLogSweep = safe('workLogSweep', () => sweepWorkLog(root), null);
-	const usage = safe('usage', () => usageRows(fs.readFileSync(path.join(USAGE_DIR, 'work-log.csv'), 'utf8'), now), []);
+	const workLogPrune = safe('workLogPrune', () => maybePruneWorkLog(), null);
+	const usage = safe('usage', () => usageRows(fs.readFileSync(WORK_LOG_CSV, 'utf8'), now), []);
 	const cost = safe(
 		'cost',
 		() => {
@@ -389,6 +479,7 @@ function collect(root, now) {
 		cost,
 		rate,
 		workLogSweep,
+		workLogPrune,
 		results: readJson(RESULTS, []),
 		host: os.hostname(),
 		at: now.toISOString(),
@@ -504,6 +595,7 @@ async function report(dry) {
 		.concat(reported ? [] : done);
 	fs.mkdirSync(path.dirname(RESULTS), { recursive: true });
 	fs.writeFileSync(RESULTS, JSON.stringify(left, null, 2));
+	const pruneLine = formatWorkLogPrune(payload.workLogPrune);
 	log(
 		'Uploaded ' +
 			payload.worktrees.length +
@@ -513,6 +605,7 @@ async function report(dry) {
 			payload.cost.tickets.length +
 			' ticket costs; queue ' +
 			(data.queue || []).length +
+			(pruneLine ? '; ' + pruneLine : '') +
 			(payload.errors.length ? '; ' + payload.errors.join('; ') : '')
 	);
 }
@@ -587,5 +680,8 @@ module.exports = {
 	ticketCosts,
 	rateFrom,
 	safeToRemove,
+	maybePruneWorkLog,
+	formatWorkLogPrune,
+	WORK_LOG_PRUNE_NEAR,
 	STALE_S,
 };

@@ -3859,6 +3859,65 @@ exports.legalWatch = require('firebase-functions/v2/scheduler').onSchedule(
 		})
 );
 
+
+const checkoutReconcile = require('./checkout-reconcile');
+
+// Checkout reconcile (#3837): daily compare of recent PayPal payment rows vs provider captures.
+async function runCheckoutReconcile() {
+	const keys = paypalKeys('live');
+	let ready = false;
+	try {
+		urlReview.paypalCredentials(keys);
+		ready = true;
+	} catch (error) {
+		ready = false;
+	}
+	const provider = ready
+		? {
+				ready: true,
+				async getCapture(captureId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/payments/captures/' + captureId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+				async getOrder(orderId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/checkout/orders/' + orderId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+			}
+		: { ready: false };
+	return checkoutReconcile.run({
+		store: checkoutReconcile.firestoreStore(getFirestore()),
+		provider,
+		log: (text) => console.log(text),
+	});
+}
+
+exports.checkoutReconcile = require('firebase-functions/v2/scheduler').onSchedule(
+	{
+		schedule: ops.cron('checkoutReconcile'),
+		timeZone: ops.TIME_ZONE,
+		timeoutSeconds: 300,
+		memory: '512MiB',
+		maxInstances: 1,
+		retryConfig: { retryCount: 0 },
+		secrets: SECRETS.checkoutReconcile,
+	},
+	() => track('checkoutReconcile', () => runCheckoutReconcile())
+);
+
+
 exports.outreachSweep = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('outreachSweep'),
@@ -9990,6 +10049,41 @@ exports.jarvisGithubHook = functions
 				: null;
 		const out = row ? await jarvisProcess(row) : null;
 		res.json({ ok: true, kept: !!row, changed: !!(out && out.changed) });
+	});
+
+// Fediverse ActivityPub actor + WebFinger discovery (#3841). Off unless SOCIAL_INBOX_AP=1.
+// Aligns actor IRI with SOCIAL_INBOX_AP_ACTOR (same env as social-inbox receive). No private keys here.
+const socialActor = require('./social-actor');
+exports.socialActor = functions
+	.runWith({ timeoutSeconds: 15, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = socialActor.handleActor(req, { env: process.env });
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('socialActor failed:', error);
+			res.status(500).json({ error: 'Actor failed.' });
+		}
+	});
+
+exports.webfinger = functions
+	.runWith({ timeoutSeconds: 15, memory: '256MB', maxInstances: 5 })
+	.https.onRequest(async (req, res) => {
+		res.set('X-Robots-Tag', 'noindex');
+		try {
+			const result = socialActor.handleWebfinger(req, { env: process.env });
+			if (result.headers) {
+				Object.entries(result.headers).forEach(([k, v]) => res.set(k, v));
+			}
+			res.status(result.status).json(result.body);
+		} catch (error) {
+			console.error('webfinger failed:', error);
+			res.status(500).json({ error: 'WebFinger failed.' });
+		}
 	});
 
 // Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).

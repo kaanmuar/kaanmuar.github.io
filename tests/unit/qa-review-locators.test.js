@@ -144,3 +144,128 @@ test('the ranked Playwright journey is valid TypeScript that parses', () => {
 	const source = stripTypeScriptTypes('async function run(page, expect) {\n' + code + '\n}', { mode: 'strip' });
 	assert.doesNotThrow(() => new vm.Script(source));
 });
+
+
+test('a landmark or heading level ranks without a name; a named control still needs one', () => {
+	assert.deepEqual(kinds({ tag: 'h1', css: 'h1' }), ['role', 'css']);
+	assert.equal(scripts.rankLocators({ tag: 'h1', css: 'h1' })[0].level, 1);
+	assert.deepEqual(kinds({ role: 'main', css: 'main, [role="main"]' }), ['role', 'css']);
+	assert.deepEqual(kinds({ tag: 'nav', css: 'nav' }), ['role', 'css']);
+	assert.deepEqual(kinds({ tag: 'input', attrs: { type: 'email' }, css: '#mail' }), ['css']);
+});
+
+test('checkTarget maps structural CSS used by count/attr checks', () => {
+	const h1 = scripts.checkTarget({ selector: 'h1' });
+	assert.equal(h1.tag, 'h1');
+	assert.equal(h1.css, 'h1');
+	assert.equal(scripts.checkTarget({ selector: 'main, [role="main"]' }).role, 'main');
+	assert.equal(scripts.checkTarget({ selector: 'html', attr: 'lang' }).css, 'html');
+	assert.equal(scripts.checkTarget({ selector: 'h2', role: 'heading', level: 2, testId: 't' }).testId, 't');
+});
+
+test('playwrightLocator omits name for landmarks and adds heading level', () => {
+	assert.equal(
+		scripts.playwrightLocator({ kind: 'role', role: 'main' }),
+		'page.getByRole("main")'
+	);
+	assert.equal(
+		scripts.playwrightLocator({ kind: 'role', role: 'heading', level: 1 }),
+		'page.getByRole("heading", { level: 1 })'
+	);
+	assert.equal(
+		scripts.playwrightLocator({ kind: 'role', role: 'heading', name: 'Title', level: 2 }),
+		'page.getByRole("heading", { name: "Title", exact: true, level: 2 })'
+	);
+});
+
+function emitCheck(check, framework) {
+	const report = { host: 'example.com', finalUrl: 'https://example.com/' };
+	const item = {
+		id: 'FN-03',
+		title: 'One h1',
+		why: 'Pages need one h1.',
+		fw: [framework],
+		check,
+	};
+	return scripts.snippets(report, item, [framework])[0].code;
+}
+
+test('Playwright count/attr prefer role locators; plain CSS stays when nothing ranks higher', () => {
+	const h1 = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Playwright');
+	assert.match(h1, /const found = await page\.getByRole\("heading", \{ level: 1 \}\)\.count\(\);/);
+	assert.match(h1, /Fallback locators, best first: page\.locator\("h1"\)/);
+	const main = emitCheck(
+		{ kind: 'count', path: '/', selector: 'main, [role="main"]', op: 'gte', n: 1 },
+		'Playwright'
+	);
+	assert.match(main, /page\.getByRole\("main"\)\.count\(\)/);
+	const lang = emitCheck({ kind: 'attr', path: '/', selector: 'html', attr: 'lang' }, 'Playwright');
+	assert.match(lang, /await expect\(page\.locator\("html"\)\)\.toHaveAttribute\("lang"/);
+	const testId = emitCheck(
+		{ kind: 'count', path: '/', selector: '.cards', op: 'gte', n: 1, testId: 'card-list' },
+		'Playwright'
+	);
+	assert.match(testId, /page\.getByTestId\("card-list"\)\.count\(\)/);
+});
+
+test('Jest and Vitest count checks use the same ranked locator', () => {
+	['Jest', 'Vitest', 'Mocha'].forEach((framework) => {
+		const code = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, framework);
+		assert.match(code, /page\.getByRole\("heading", \{ level: 1 \}\)\.count\(\)/, framework);
+	});
+});
+
+test('cssLocator maps role/testId/label; text and xpath stay empty', () => {
+	assert.equal(
+		scripts.cssLocator({ kind: 'role', role: 'heading', level: 1 }),
+		'h1, [role="heading"][aria-level="1"]'
+	);
+	assert.equal(scripts.cssLocator({ kind: 'role', role: 'main' }), 'main, [role="main"]');
+	assert.equal(scripts.cssLocator({ kind: 'testId', value: 'card-list' }), '[data-testid="card-list"]');
+	assert.equal(scripts.cssLocator({ kind: 'label', value: 'Email' }), '[aria-label="Email"]');
+	assert.equal(scripts.cssLocator({ kind: 'text', value: 'Hello' }), '');
+	assert.equal(scripts.cssLocator({ kind: 'xpath', value: '//h1' }), '');
+	assert.equal(scripts.cssLocator({ kind: 'css', value: '.cards' }), '.cards');
+});
+
+test('Cypress and Selenium count/attr prefer role/testId/label CSS when available', () => {
+	const cyH1 = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Cypress');
+	assert.match(cyH1, /querySelectorAll\("h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"\)/);
+	assert.match(cyH1, /Fallback locators, best first: h1/);
+	const cyMain = emitCheck(
+		{ kind: 'count', path: '/', selector: 'main, [role="main"]', op: 'gte', n: 1 },
+		'Cypress'
+	);
+	assert.match(cyMain, /querySelectorAll\("main, \[role=\\"main\\"\]"\)/);
+	const cyTestId = emitCheck(
+		{ kind: 'count', path: '/', selector: '.cards', op: 'gte', n: 1, testId: 'card-list' },
+		'Cypress'
+	);
+	assert.match(cyTestId, /querySelectorAll\("\[data-testid=\\"card-list\\"\]"\)/);
+	const cyLabel = emitCheck(
+		{ kind: 'attr', path: '/', selector: '#mail', attr: 'type', label: 'Email' },
+		'Cypress'
+	);
+	assert.match(cyLabel, /cy\.get\("\[aria-label=\\"Email\\"\]"\)/);
+
+	const seH1 = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'Selenium');
+	assert.match(seH1, /By\.CSS_SELECTOR, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
+	assert.match(seH1, /# Fallback locators, best first: h1/);
+	const seTestId = emitCheck(
+		{ kind: 'count', path: '/', selector: '.cards', op: 'gte', n: 1, testId: 'card-list' },
+		'Selenium'
+	);
+	assert.match(seTestId, /By\.CSS_SELECTOR, "\[data-testid=\\"card-list\\"\]"/);
+	const seLabel = emitCheck(
+		{ kind: 'attr', path: '/', selector: '#mail', attr: 'type', label: 'Email' },
+		'Selenium'
+	);
+	assert.match(seLabel, /By\.CSS_SELECTOR, "\[aria-label=\\"Email\\"\]"/);
+});
+
+test('WebdriverIO and CodeceptJS count checks use the same ranked CSS', () => {
+	const wdio = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'WebdriverIO');
+	assert.match(wdio, /querySelectorAll\(selector\)\.length, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
+	const codecept = emitCheck({ kind: 'count', path: '/', selector: 'h1', op: 'eq', n: 1 }, 'CodeceptJS');
+	assert.match(codecept, /querySelectorAll\(selector\)\.length, "h1, \[role=\\"heading\\"\]\[aria-level=\\"1\\"\]"/);
+});

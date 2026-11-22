@@ -10,7 +10,8 @@
  * Actor IRI: SOCIAL_INBOX_AP_ACTOR (must match the public URL peers will fetch).
  * Optional SOCIAL_INBOX_AP_INBOX overrides the inbox IRI (else actor + "/inbox", matching inbox GET id).
  * Optional SOCIAL_INBOX_AP_ACCT (acct:user@host) or SOCIAL_INBOX_AP_USER + host from actor URL for WebFinger.
- * Optional SOCIAL_INBOX_AP_PUBLIC_KEY_PEM — omit publicKey when unset.
+ * Optional SOCIAL_INBOX_AP_PUBLIC_KEY_PEM — omit publicKey when unset. Follow Accept / HTTP sig verify still
+ * needs an ops-managed key pair later; do not invent or commit private keys here.
  *
  * Outbox: GET …/outbox returns recent Create activities from Firestore `fediverse_outbox` (dedicated;
  * cleaner than reusing inbound `fediverse_inbox`). Cap OUTBOX_PAGE_SIZE; public-safe fields only.
