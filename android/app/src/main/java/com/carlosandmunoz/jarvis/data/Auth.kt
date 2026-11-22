@@ -37,6 +37,7 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
     val signedIn: Boolean get() = vault.get("refresh") != null
 
     suspend fun signIn(email: String, password: String): Step {
+        if (KEY.isBlank()) throw AuthError(MISSING_KEY)
         val out = post("$IDT/v1/accounts:signInWithPassword?key=$KEY", buildJsonObject {
             put("email", email); put("password", password); put("returnSecureToken", true)
         }.toString().toRequestBody(JSON_TYPE))
@@ -107,11 +108,17 @@ class Auth(private val http: OkHttpClient, private val vault: Vault) {
         code.startsWith("INVALID_TOTP") || code.contains("VERIFICATION_CODE") -> "That code is wrong or expired."
         code.startsWith("TOO_MANY_ATTEMPTS") -> "Too many tries. Wait a few minutes."
         code.startsWith("TOKEN_EXPIRED") || code.startsWith("USER_DISABLED") || code.startsWith("INVALID_REFRESH_TOKEN") -> "Sign in again."
+        // Empty or Android-SDK key in BuildConfig (#4206): Identity Toolkit answers like this.
+        code.contains("Permission denied on the service", ignoreCase = true) ||
+            code.contains("PERMISSION_DENIED") ||
+            code.contains("unregistered callers", ignoreCase = true) -> MISSING_KEY
         else -> code
     }
 
     companion object {
         private val KEY = BuildConfig.FIREBASE_AUTH_KEY
+        private const val MISSING_KEY =
+            "This build has no Firebase Auth key. Install the latest Jarvis release (or set jarvis.firebase.auth.key for a local build)."
         private const val IDT = "https://identitytoolkit.googleapis.com"
         private const val STS = "https://securetoken.googleapis.com"
         val JSON_TYPE = "application/json".toMediaType()
