@@ -5,9 +5,183 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Sat, 21 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 22 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>aelf.org: 67. The gap: tap targets.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/04-u-aelf-org.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/04-u-aelf-org</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But all touch targets must be 24px large, or leave sufficient space.
+
+Carry this forward: Make every link and button at least 24 by 24 px, with space between them.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-aelf-org
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #OpenSource #QA #MobileUX #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/04-u-aelf-org.jpg" length="228453" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/04-u-aelf-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>airgreenland.gl: 46. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/54-u-airgreenland-gl.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/54-u-airgreenland-gl</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 201 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-airgreenland-gl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/54-u-airgreenland-gl.jpg" length="239121" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/54-u-airgreenland-gl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>aiyellow.com: 45. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/60-u-aiyellow-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/60-u-aiyellow-com</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 327 form controls have no label.
+
+What to change: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-aiyellow-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/60-u-aiyellow-com.jpg" length="233440" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/60-u-aiyellow-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>albin-service.ch: 74. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/03-u-albin-service-ch.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/03-u-albin-service-ch</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+What to change: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-albin-service-ch
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/03-u-albin-service-ch.jpg" length="237310" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/03-u-albin-service-ch.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>arteyclima.es: 59. The gap: the https redirect.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/02-u-arteyclima-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/02-u-arteyclima-es</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.
+
+The lesson for every team: Redirect every http request to https with one permanent 301, then add HSTS.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-arteyclima-es
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #Vulnerability #QA #HTTPS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/02-u-arteyclima-es.jpg" length="237003" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/02-u-arteyclima-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>kfintech.com: 53. The gap: alt text.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/01-u-kfintech-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/01-u-kfintech-com</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 394 images have no alt attribute.
+
+Apply this: Describe what each image shows in its alt attribute, and use alt=&quot;&quot; on purely decorative ones.
+
+One automated analysis of public pages on 20 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A snapshot to start from, not a verdict.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-kfintech-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebAssembly #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/01-u-kfintech-com.jpg" length="222665" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/01-u-kfintech-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>React's docs pages have no description.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/24-react.html</link>
+      <guid isPermaLink="false">runs-100/24-react</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>An llms.txt for AI tools, two-year HSTS, and Core Web Vitals that pass for real visitors. But 19 of the 20 pages analyzed, Learn and Reference included, have no meta description, so search writes its own.
+
+The lesson for every team: Write a one-line description per page: what it teaches and for whom. Docs pages are where it pays most.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=react
+
+#SEO #MetaDescription #Docs #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg" length="253686" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Cloudflare's CSP skips 5 of 20 pages.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/27-cloudflare.html</link>
+      <guid isPermaLink="false">runs-100/27-cloudflare</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Organization JSON-LD, security.txt, a Permissions-Policy, and robots.txt that welcomes AI crawlers by name. But the home page's content security policy is missing on 5 of the 20 pages analyzed, like /galileo/.
+
+The lesson for every team: Set security headers once at the edge or server, not per page template. Attackers look for the weakest page.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=cloudflare
+
+#WebSecurity #CSP #HTTPHeaders #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/27-cloudflare.jpg" length="249191" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/27-cloudflare.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>web.dev's home page has an empty headline.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/28-webdev.html</link>
+      <guid isPermaLink="false">runs-100/28-webdev</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Preloaded HSTS, a nonce-based content security policy, and Organization and WebSite JSON-LD. But the home page also carries an Article block whose headline is an empty string, with no author or date.
+
+The lesson for every team: Validate structured data in CI. An item with empty required fields is noise that search may ignore.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=webdev
+
+#StructuredData #SEO #WebDev #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/28-webdev.jpg" length="256351" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/28-webdev.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>enae.es: 71. The gap: form labels.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-04/17-u-enae-es.html</link>
@@ -721,160 +895,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg" length="234186" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Scored 52 of 100. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/01-u-advanceconstrucciones-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/01-u-advanceconstrucciones-com</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 12 form controls have no label.
-
-What to change: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
-Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-advanceconstrucciones-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Automation #QA #Forms #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" length="234306" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Scored 81 of 100. The gap: text contrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/18-u-agenciadeviajestravelone-cl.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/18-u-agenciadeviajestravelone-cl</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
-
-Takeaway: Keep body text at a 4.5:1 contrast ratio or more against its background.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-agenciadeviajestravelone-cl
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab
-
-https://www.youtube.com/shorts/Qh00N6AzXKY</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" length="239243" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>agilex.com.co: 64. The gap: AI crawler access.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/24-u-agilex-com-co.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/24-u-agilex-com-co</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and the start page reads well without JavaScript. But 1 AI answer or search crawler is blocked.
-
-Takeaway: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
-Full report: https://carlosandmunoz.com/qa-review.html?live=u-agilex-com-co
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#GEO #DevOps #Automation #QA #AISearch #QAlab
-
-https://www.youtube.com/shorts/P2FFK6IcwFA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" length="240118" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Us vs them: SEO audits in four beats.</title>
-      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo.html</link>
-      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Comparison</category>
-      <category>Battle</category>
-      <description>A short X / Threads thread: what SEO audits win at, what URL Review covers instead, an honest split, and the comparison table.
-
-Lesson: Post the hook, then the four beats as replies — not a LI/IG carousel.
-
-Coverage compared from each vendor's own pages, checked 2026-11-10. Names are trademarks of their owners.
-Table: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
-
-#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab
-
-https://www.youtube.com/shorts/avYfQI9q_Zk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>21 Alternative Search Engines You Can Use Instead of Google via @sejournal, @lorenbaker</title>
-      <link>https://carlosandmunoz.com/social/pick/21-alternative-search-engines-you-can-use-instead-of-google-.html</link>
-      <guid isPermaLink="false">pick/21-alternative-search-engines-you-can-use-instead-of-google-</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Compare 21 Google alternatives for everyday search, private search, AI answers, specialist research, and regional results. The post 21 Alternative Search Engines You Can Use Instead of Google appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Loren Baker, 2026-11-19.
-
-https://www.searchenginejournal.com/21-alternative-search-engines-you-can-use-instead-of-google/596605/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/01/search-engine-383.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Android: Google verschärft Qualitätsanforderungen für Foldable-Apps ab April</title>
-      <link>https://carlosandmunoz.com/social/pick/android-google-verscharft-qualitatsanforderungen-fur-foldabl.html</link>
-      <guid isPermaLink="false">pick/android-google-verscharft-qualitatsanforderungen-fur-foldabl</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Procurement</category>
-      <description>Google verschärft die Regeln für Entwickler: Ab April 2027 müssen im Play Store angebotene Apps grundlegende Anforderungen für Foldables erfüllen.
-
-Via heise Developer, 2026-11-19.
-
-https://www.heise.de/news/Android-Google-verschaerft-Qualitaetsanforderungen-fuer-Foldable-Apps-ab-April-11531191.html</description>
-      <media:content url="https://heise.cloudimg.io/v7/_www-heise-de_/imgs/18/5/2/0/4/6/7/0/samsung-galaxy-z8-foldables-5e5468a47421c741.png?height=300&amp;org_if_sml=1&amp;q=75" medium="image"/>
-    </item>
-    <item>
-      <title>avivgerz-hue/unslop: Make your vibe-coded app look less like AI slop. 72-rule UI design linter, WCAG + APCA contrast engine, 10 studio design presets, CLI &amp; MCP server for React, Next.js &amp; Tailwind.</title>
-      <link>https://carlosandmunoz.com/social/pick/avivgerz-hue-unslop-make-your-vibe-coded-app-look-less-like-.html</link>
-      <guid isPermaLink="false">pick/avivgerz-hue-unslop-make-your-vibe-coded-app-look-less-like-</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Make your vibe-coded app look less like AI slop. 72-rule UI design linter, WCAG + APCA contrast engine, 10 studio design presets, CLI &amp; MCP server for React, Next.js &amp; Tailwind.
-
-Via GitHub, by avivgerz-hue, 2026-11-07.
-
-https://github.com/avivgerz-hue/unslop</description>
-      <media:content url="https://opengraph.githubassets.com/1/avivgerz-hue/unslop" medium="image"/>
-    </item>
-    <item>
-      <title>Google’s Next Update Won’t Touch The Index, And Nobody Will Announce It via @sejournal, @DuaneForrester</title>
-      <link>https://carlosandmunoz.com/social/pick/google-s-next-update-won-t-touch-the-index-and-nobody-will-a.html</link>
-      <guid isPermaLink="false">pick/google-s-next-update-won-t-touch-the-index-and-nobody-will-a</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Stop matching traffic drops to update dates. Sample what AI assistants say about your company on a schedule and track which facts drift. The post Google’s Next Update Won’t Touch The Index, And Nobody Will Announce It appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Duane Forrester, 2026-11-19.
-
-https://www.searchenginejournal.com/googles-next-update-wont-touch-the-index-and-nobody-will-announce-it/597481/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/duane-forrester-decodes-google-update-543.png" medium="image"/>
-    </item>
-    <item>
-      <title>Pixels vs the Accessibility Tree: I Measured What a Web Page Costs an AI Agent (67 Lines of Python)</title>
-      <link>https://carlosandmunoz.com/social/pick/pixels-vs-the-accessibility-tree-i-measured-what-a-web-page-.html</link>
-      <guid isPermaLink="false">pick/pixels-vs-the-accessibility-tree-i-measured-what-a-web-page-</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Vercel Labs open-sourced agent-desktop this month: a native CLI that lets AI agents control macOS,...
-
-Via DEV, by Neeraj Sharma, 2026-11-17.
-
-https://dev.to/neeraj_sharma_757fbb49aa7/pixels-vs-the-accessibility-tree-i-measured-what-a-web-page-costs-an-ai-agent-67-lines-of-python-2hn8</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fpi3rye2jrps4vwakuezv.png" medium="image"/>
     </item>
   </channel>
 </rss>
