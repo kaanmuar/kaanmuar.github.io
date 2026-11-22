@@ -2386,6 +2386,16 @@
    ],
    "at": "2026-11-15"
   },
+  "bullcredtech.com": {
+   "country": "BR",
+   "scope": "country",
+   "confidence": 0.85,
+   "by": "signals",
+   "evidence": [
+    "CNPJ printed"
+   ],
+   "at": "2026-11-22"
+  },
   "burbanolex.com": {
    "country": "EC",
    "scope": "country",
@@ -3645,6 +3655,19 @@
     "Google Maps link in SV"
    ],
    "at": "2026-11-09"
+  },
+  "codigodelsur.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry UY",
+    "schema.org addressCountry UY (legal/contact page)",
+    "phone +598-2337-8873",
+    "phone +598-2337-8873 (legal/contact page)"
+   ],
+   "at": "2026-11-22"
   },
   "cognizant.com": {
    "country": "",
@@ -5800,6 +5823,19 @@
    ],
    "at": "2026-11-13"
   },
+  "electricista.enven.org": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +584241785958",
+    "phone +584241785958 (legal/contact page)"
+   ],
+   "at": "2026-11-22"
+  },
   "electricista24.pro": {
    "country": "ES",
    "scope": "country",
@@ -6077,6 +6113,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "elgrandgourmet.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "schema.org addressCountry VE (legal/contact page)",
+    "phone +58 424-2447343",
+    "phone +58 424-2447343 (legal/contact page)"
+   ],
+   "at": "2026-11-22"
   },
   "eliagourmetco.com": {
    "country": "CO",
@@ -6546,6 +6595,19 @@
    ],
    "at": "2026-11-09"
   },
+  "esplendorcervantes.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +598) 2900 1900",
+    "phone +598) 2900 1900 (legal/contact page)",
+    "address names UY",
+    "address names UY (legal/contact page)"
+   ],
+   "at": "2026-11-22"
+  },
   "esppra.co.sz": {
    "country": "SZ",
    "scope": "country",
@@ -6773,6 +6835,19 @@
     "phone +573135966074 (legal/contact page)"
    ],
    "at": "2026-11-10"
+  },
+  "facilityvenezuela.com": {
+   "country": "VE",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry VE",
+    "phone +582129410922",
+    "phone +580212 941 0922 (legal/contact page)",
+    "Google Maps link in VE"
+   ],
+   "at": "2026-11-22"
   },
   "fae.edu": {
    "country": "BR",
@@ -11717,6 +11792,19 @@
    ],
    "at": "2026-11-09"
   },
+  "montevideorentacar.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry UY",
+    "schema.org addressCountry UY (legal/contact page)",
+    "phone +59829292928",
+    "phone +59829292928 (legal/contact page)"
+   ],
+   "at": "2026-11-22"
+  },
   "moph.gov.af": {
    "country": "AF",
    "scope": "country",
@@ -12956,6 +13044,18 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-10"
+  },
+  "olacar.app": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry UY",
+    "phone +598 91 872 872",
+    "written in es, spoken in UY"
+   ],
+   "at": "2026-11-22"
   },
   "olaclick.com": {
    "country": "",
@@ -16855,6 +16955,19 @@
    ],
    "at": "2026-11-15"
   },
+  "softwareuruguay.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry UY",
+    "schema.org addressCountry UY (legal/contact page)",
+    "phone +59898042298",
+    "phone +59898042298 (legal/contact page)"
+   ],
+   "at": "2026-11-22"
+  },
   "soldeinsa.com": {
    "country": "EC",
    "scope": "country",
@@ -17610,6 +17723,17 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "switchsoftware.io": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry UY",
+    "phone +598-2710-1708"
+   ],
+   "at": "2026-11-22"
   },
   "sxmislandtime.com": {
    "country": "SX",
@@ -19306,6 +19430,19 @@
     "phone +54-11-5944-5536 (legal/contact page)"
    ],
    "at": "2026-11-11"
+  },
+  "urbanomontevideo.com": {
+   "country": "UY",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +598 96 402 276 (legal/contact page)",
+    "address names UY (legal/contact page)",
+    "locale es-UY",
+    "locale es-UY (legal/contact page)"
+   ],
+   "at": "2026-11-22"
   },
   "urgenciasodontologicas.com": {
    "country": "CO",

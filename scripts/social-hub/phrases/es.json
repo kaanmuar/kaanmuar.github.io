@@ -613,6 +613,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Un evento en el formulario, la descarga o el registro te dice si la página funcionó.",
  "An http Location adds a hop and an unencrypted request.": "Un Location http añade un salto y una petición sin cifrar.",
  "An icon alone needs an aria-label.": "Un icono solo necesita un aria-label.",
+ "An icon alone needs an…": {
+  "text": "Un icono por sí solo necesita un...",
+  "machine": true
+ },
  "An icon alone…": {
   "text": "Un icono por sí solo...",
   "machine": true
@@ -867,6 +871,10 @@
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Pero ⟦1⟧ prohíbe a OAI-SearchBot y a otros nueve agentes de búsqueda con IA, así que sus respuestas no pueden citarlo.",
  "But ⟦1⟧ elements must be contained in a ⟦2⟧ or ⟦3⟧.": {
   "text": "Pero los elementos ⟦1⟧ deben estar contenidos en ⟦2⟧ o ⟦3⟧.",
+  "machine": true
+ },
+ "But ⟦1⟧ form control has no label.": {
+  "text": "Pero el control de formulario ⟦1⟧ no tiene etiqueta.",
   "machine": true
  },
  "But ⟦1⟧ form controls have no label.": "Pero ⟦1⟧ controles de formulario no tienen etiqueta.",
@@ -1211,9 +1219,17 @@
  "But the viewport tag sets maximum-scale=⟦1⟧ and user-scalable=no, so people with low vision cannot pinch to zoom on a phone.": "Pero la etiqueta viewport fija maximum-scale=⟦1⟧ y user-scalable=no, así que las personas con baja visión no pueden hacer zoom en el móvil.",
  "But the viewport tag sets user-scalable=no, so people on phones can't pinch to zoom.": "Pero la etiqueta viewport fija user-scalable=no, así que en el móvil no se puede hacer zoom con los dedos.",
  "But the WebSite JSON-LD on /en has a name and a date and no url, so it can't be tied to the domain.": "Pero el WebSite en JSON-LD de /en tiene name y fecha pero no url, así que no se puede vincular al dominio.",
+ "But the website link on the Google Business Profile leads to an error.": {
+  "text": "Pero el enlace al sitio web en el perfil empresarial de Google genera un error.",
+  "machine": true
+ },
  "But three scripts sit in the ⟦1⟧ of /en without async or defer, so nothing paints until they load.": "Pero hay tres scripts en el ⟦1⟧ de /en sin async ni defer, así que nada se pinta hasta que cargan.",
  "But tracking starts before the visitor chooses.": {
   "text": "Pero el seguimiento comienza antes de que el visitante elija.",
+  "machine": true
+ },
+ "But tracking tags load with no consent tool in the page.": {
+  "text": "Pero las etiquetas de seguimiento se cargan sin una herramienta de consentimiento en la página.",
   "machine": true
  },
  "But X-Content-Type-Options is missing on all ⟦1⟧ pages analyzed, so browsers may guess file types.": "Pero falta X-Content-Type-Options en las ⟦1⟧ páginas analizadas, así que los navegadores pueden adivinar los tipos de archivo.",
@@ -1297,6 +1313,10 @@
   "machine": true
  },
  "Check your own links after each release, and fix or redirect every one…": "Revisa tus propios enlaces tras cada versión, y arregla o redirige cada uno…",
+ "Check your own links after each release, and fix or redirect every…": {
+  "text": "Verifique sus propios enlaces después de cada lanzamiento y corrija o redirija cada...",
+  "machine": true
+ },
  "Check your own site with URL Review:": {
   "text": "Verifique su propio sitio con Revisión de URL:",
   "machine": true
@@ -1477,6 +1497,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decide bot por bot en ⟦1⟧: permite los motores de respuestas por los que quieres que…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want…": {
+  "text": "Decide por bot en ⟦1⟧: permite los motores de respuesta que quieras…",
+  "machine": true
+ },
  "Declaring keywords dead is easy.": {
   "text": "Declarar palabras clave muertas es fácil.",
   "machine": true
@@ -1842,6 +1866,10 @@
  },
  "Give every page a unique title of about ⟦1⟧ characters: the page first, the…": {
   "text": "Asigne a cada página un título único de aproximadamente ⟦1⟧ caracteres: la página primero, la...",
+  "machine": true
+ },
+ "Give every page a unique title of about ⟦1⟧ characters: the page first…": {
+  "text": "Asigne a cada página un título único de aproximadamente ⟦1⟧ caracteres: la página primero...",
   "machine": true
  },
  "Give every page a unique title of about ⟦1⟧ characters: the page…": {
@@ -2527,6 +2555,14 @@
  },
  "Load every asset over https or as a relative URL.": "Carga cada recurso por https o como URL relativa.",
  "Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.": "Carga una sola etiqueta de Google y envía desde ella a cada destino, o pasa todas las etiquetas por un único Tag Manager.",
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait for it.": {
+  "text": "Cargue el seguimiento solo después de una elección de consentimiento, o use el Modo de consentimiento v2 para que las etiquetas lo esperen.",
+  "machine": true
+ },
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait…": {
+  "text": "Cargue el seguimiento solo después de una elección de consentimiento, o use el Modo de consentimiento v2 para que las etiquetas esperen...",
+  "machine": true
+ },
  "Load your page and press Tab once.": "Carga tu página y pulsa Tab una vez.",
  "Load your page on a slow connection and watch it settle.": "Carga tu página con una conexión lenta y observa cómo se estabiliza.",
  "Logos and slogans often grab the h1.": "Los logos y los eslóganes suelen quedarse con el h1.",
@@ -3000,6 +3036,14 @@
   "machine": true
  },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Apunta cada canonical a la URL https final, la misma que listas en el sitemap.",
+ "Point the profile's website field at a live page of ⟦1⟧, or redirect the old address to one.": {
+  "text": "Apunte el campo del sitio web del perfil a una página activa de ⟦1⟧ o redirija la dirección anterior a una.",
+  "machine": true
+ },
+ "Point the profile's website field at a live page of ⟦1⟧, or…": {
+  "text": "Apunte el campo del sitio web del perfil a una página activa de ⟦1⟧, o...",
+  "machine": true
+ },
  "Pointing it home asks search to drop the page from results.": "Apuntarlo a la portada le pide al buscador que quite la página de los resultados.",
  "Policía Nacional's search has no label.": "El buscador de la Policía Nacional no tiene etiqueta.",
  "Popayán's links share with no preview card.": "Los enlaces de Popayán se comparten sin tarjeta de vista previa.",
@@ -3497,6 +3541,10 @@
   "text": "Publique ⟦1⟧ desde el mismo host que las páginas que enumera y nombre...",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and…": {
+  "text": "Publicar ⟦1⟧ desde el mismo host que las páginas que enumera, y…",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Publica un ⟦1⟧ con una línea Sitemap:.",
  "Serve the full chain: leaf plus intermediates.": "Sirve la cadena completa: certificado final más intermedios.",
  "Served as /⟦1⟧.": "Servido como /⟦1⟧.",
@@ -3515,6 +3563,10 @@
  },
  "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.": {
   "text": "Configure Secure, HttpOnly y SameSite en cada cookie que los scripts no necesiten leer.",
+  "machine": true
+ },
+ "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to…": {
+  "text": "Configure Secure, HttpOnly y SameSite en cada cookie que los scripts no necesiten...",
   "machine": true
  },
  "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not…": {
@@ -3647,6 +3699,10 @@
  "Stripe Docs skips the main landmark.": "Stripe Docs se salta el landmark main.",
  "Structured data naming the municipality, full share cards, alt text on every image, nosniff, and Secure cookies.": "Datos estructurados que nombran al municipio, tarjetas para compartir completas, texto alt en cada imagen, nosniff y cookies Secure.",
  "Structured data naming the network, share cards, a sitemap index, and a canonical.": "Datos estructurados que nombran a la red, tarjetas para compartir, un índice de sitemaps y un canonical.",
+ "Structured data parses and carries the expected properties, and AI answer and search crawlers may read the start page.": {
+  "text": "Los datos estructurados analizan y contienen las propiedades esperadas, y los rastreadores de búsqueda y respuestas de IA pueden leer la página de inicio.",
+  "machine": true
+ },
  "Structured data parses, share cards are complete, and DMARC quarantines spoofed mail.": "Los datos estructurados se procesan bien, las tarjetas para compartir están completas y DMARC pone en cuarentena el correo suplantado.",
  "Structured data that names the city hall, full share cards, one-year HSTS, and a permanent https redirect.": "Datos estructurados que nombran a la alcaldía, tarjetas para compartir completas, HSTS de un año y una redirección https permanente.",
  "Structured data that parses, a ⟦1⟧, alt text on every image, and a start page that arrives fast.": "Datos estructurados que se procesan bien, un ⟦1⟧, texto alt en cada imagen y una página de inicio que llega rápido.",
@@ -3767,6 +3823,10 @@
   "text": "La brecha: canónicos.",
   "machine": true
  },
+ "The gap: consent.": {
+  "text": "La brecha: el consentimiento.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "La brecha: banderas de cookies.",
   "machine": true
@@ -3816,6 +3876,10 @@
  },
  "The gap: page titles.": "El punto débil: títulos de página.",
  "The gap: schema fields.": "El punto débil: campos de schema.",
+ "The gap: search.": {
+  "text": "La brecha: la búsqueda.",
+  "machine": true
+ },
  "The gap: security.": {
   "text": "La brecha: la seguridad.",
   "machine": true

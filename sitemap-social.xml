@@ -205,6 +205,26 @@
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/01-u-kfintech-com.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-40217-litellm-berriai-litellm-unprotected-alternate.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-90436-axis-apache-axis-unsafe-reflection-vulnerabil.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-90817-research-electronic-data-capture-redcap-vande.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/set-playwright-s-baseurl-from-a-dynamic-server-port.html</loc>
+    <lastmod>2026-11-22</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fpxhwae15fqkthg6hphwr.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/runs-100/24-react.html</loc>
     <lastmod>2026-11-22</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/runs-100/feed/24-react.jpg</image:loc></image:image>
@@ -480,9 +500,49 @@
     <image:image><image:loc>https://opengraph.githubassets.com/1/avivgerz-hue/ghost-qa</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/axe-con-2027-agenda-reveal.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://www.deque.com/wp-content/uploads/2026/11/Axe-con-2027-Key-speaker_Blog-Image.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/building-an-accessible-colour-system-for-data-heavy-dashboar.html</loc>
     <lastmod>2026-11-21</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fqn8x1ankz3bszot2a5br.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/create-high-impact-content-using-backward-design-whiteboard-.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://moz.com/images/blog/Blog-OG-images/WBF_CreateHighImpactContent_PurnaV_SocialCard_v1.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1738167869&amp;s=30460c49e3b6ed3ca77b7d3915f8f2dd</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2024-10441-diskstation-manager-dsm-synology-diskstation-.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://carlosandmunoz.com/assets/share/qa-review-social.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-104773-ckan-session-fixation-in-registration-view.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-132277-inscriptis-quadratic-memory-growth-from-sibl.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-63341-aedes-has-uncaught-exception-and-uncontrolled.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/cve-2026-77309-ait-gui-route-chain-allows-unauthenticated-py.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/geo-oder-seo-was-daten-von-1-200-b2b-unternehmen-uber-den-wa.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://cdn.t3n.de/news/wp-content/uploads/2026/11/KI-Suche-Kanal.png?class=content</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/pick/google-told-cmos-to-stop-top-10-listicles-here-s-its-example.html</loc>
@@ -490,9 +550,39 @@
     <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-listicle-guidance-featured.jpg</image:loc></image:image>
   </url>
   <url>
+    <loc>https://carlosandmunoz.com/social/pick/how-ai-agents-read-web-pages-the-accessibility-tree-19-of-20.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fsystemdesignsimple.com%2Fimg%2Fcovers%2Fhow-ai-agents-read-web-pages-accessibility-tree.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/inside-the-ai-software-factory-where-accessibility-is-won-or.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://www.deque.com/wp-content/uploads/2026/11/11.17.2026-Inside-the-AI-software-factory-V3-scaled.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/linggan121-visual-fidelity-numeric-visual-verification-for-f.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://opengraph.githubassets.com/1/linggan121/visual-fidelity</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/playwright-1-65-breaking-changes-each-error-and-its-fix.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fcdn.sanity.io%2Fimages%2F9tez6xmw%2Fproduction%2F251f95a784419bbb81fde6547632657f10efc213-1000x420.png</image:loc></image:image>
+  </url>
+  <url>
     <loc>https://carlosandmunoz.com/social/pick/shipped-streamlit-text-accessibility-checker.html</loc>
     <lastmod>2026-11-21</lastmod>
     <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fq3a1fk412h6q7sb3uo9o.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/wordpress-random-redirects-branded-api-data-cdn-advice-seo-p.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-19-featured-1600x840-1.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://carlosandmunoz.com/social/pick/your-end-to-end-tests-run-a-chrome-with-popup-blocking-and-b.html</loc>
+    <lastmod>2026-11-21</lastmod>
+    <image:image><image:loc>https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fn7zyc8u9cls8m1qlvwie.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/runs-100/22-apache.html</loc>
@@ -2315,31 +2405,127 @@ Tabela: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. The gap: form labels.</video:title>
+      <video:description>Every page has a title, and AI answer and search crawlers may read the start page. But 18 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 15 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de-de.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. Die Lücke: Formular-Labels.</video:title>
+      <video:description>Jede Seite hat einen Titel, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 18 Formularfelder haben kein Label.
+
+Die Lektion für jedes Team: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 15 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de-es.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. El punto débil: etiquetas de formulario.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 18 controles de formulario no tienen etiqueta.
+
+La lección para cualquier equipo: Dale a cada campo una etiqueta visible vinculada con for e id. Los lectores de pantalla la anuncian y el área táctil crece.
+
+Un análisis automatizado de páginas públicas el 15 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de-fr.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. Le point faible : les libellés de formulaire.</video:title>
+      <video:description>Chaque page a un titre, et les robots de recherche et de réponses IA peuvent lire la page d’accueil. Mais 18 champs de formulaire n’ont pas de libellé.
+
+La leçon pour chaque équipe : Donnez à chaque champ un libellé visible, relié par for et id. Les lecteurs d’écran l’annoncent, et la zone tactile s’agrandit.
+
+Une analyse automatisée des pages publiques du 15 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de-it.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. La lacuna: le label dei form.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 18 controlli dei form non hanno label.
+
+La lezione per ogni team: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un'analisi automatizzata delle pagine pubbliche del 15 novembre 2026, uno dei siti più visitati nel suo paese, dall'analisi dei paesi di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/01-u-notino-de-pt.html</loc>
     <lastmod>2026-11-17</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/01-u-notino-de.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/zY12QB34qwE/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>notino.de: 56. A lacuna: rótulos de formulário.</video:title>
+      <video:description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 18 controles de formulário não têm rótulo.
+
+A lição para toda equipe: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
+
+Uma análise automatizada de páginas públicas em 15 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-notino-de&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-notino-de
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Outage #QA #Forms #A11y #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/zY12QB34qwE</video:player_loc>
+      <video:publication_date>2026-11-17</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-16/02-u-predictz-com.html</loc>
@@ -2806,31 +2992,127 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. The gap: AI crawler access.</video:title>
+      <video:description>Every page has a title, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.
+
+The lesson for every team: Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.
+
+One automated analysis of public pages on 14 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io-de.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. Die Lücke: Zugriff für KI-Crawler.</video:title>
+      <video:description>Jede Seite hat einen Titel, und Crawler fürs Modelltraining sind bewusst gesperrt. Aber 1 KI-Antwort oder Such-Crawler ist blockiert.
+
+Die Lektion für jedes Team: Entscheiden Sie in robots.txt pro Bot: Lassen Sie die Antwortmaschinen zu, von denen Sie zitiert werden wollen, und blockieren Sie nur Trainings-Crawler.
+
+Eine automatisierte Analyse öffentlicher Seiten am 14 November 2026, einer der meistbesuchten Websites in ihrem Land, aus der Ländersuche von QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
+Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io-es.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. El punto débil: Acceso de rastreadores de IA.</video:title>
+      <video:description>Cada página tiene título, y los rastreadores de entrenamiento de modelos están bloqueados a propósito. Pero 1 La respuesta de IA o el rastreador de búsqueda están bloqueados.
+
+La lección para cualquier equipo: Decide bot por bot en robots.txt: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.
+
+Un análisis automatizado de páginas públicas el 14 de noviembre de 2026, uno de los sitios más visitados de su país, del barrido nacional de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io-fr.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. Le point faible : Accès des robots IA.</video:title>
+      <video:description>Chaque page a un titre, et les crawlers d’entraînement de modèles sont bloqués par choix. Mais 1 La réponse de l'IA ou le robot de recherche est bloqué.
+
+La leçon pour chaque équipe : Décidez robot par robot dans robots.txt : autorisez les moteurs de réponse qui doivent vous citer, et ne bloquez que les robots d’entraînement.
+
+Une analyse automatisée des pages publiques du 14 novembre 2026, l'un des sites les plus visités de son pays, à partir du balayage national de QA-lab URL Review. Un point de départ, pas un verdict.
+Le rapport complet : https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Analysez votre propre site : https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io-it.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. La lacuna: Accesso dei crawler AI.</video:title>
+      <video:description>Ogni pagina ha un titolo, e i crawler per il training dei modelli sono bloccati per scelta. Ma 1 La risposta AI o il crawler di ricerca sono bloccati.
+
+La lezione per ogni team: Decidi bot per bot in robots.txt: consenti i motori di risposta da cui vuoi essere citato e blocca solo i crawler di training.
+
+Un'analisi automatizzata delle pagine pubbliche del 14 novembre 2026, uno dei siti più visitati nel suo paese, dall'analisi dei paesi di QA-lab URL Review. Un punto di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/01-u-najserialy-io-pt.html</loc>
     <lastmod>2026-11-16</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/01-u-najserialy-io.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/p2u2whvlMWo/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>najserialy.io: 73. A lacuna: Acesso de crawlers de IA.</video:title>
+      <video:description>Toda página tem título, e os crawlers de treinamento de modelos são bloqueados por escolha. Mas 1 A resposta da IA ​​ou o rastreador de pesquisa estão bloqueados.
+
+A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
+
+Uma análise automatizada de páginas públicas em 14 Nov 2026, um dos sites mais visitados em seu país, da varredura de país do QA-lab URL Review. Um ponto de partida, não um veredito.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-najserialy-io&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=country-sweep&amp;utm_content=u-najserialy-io
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/p2u2whvlMWo</video:player_loc>
+      <video:publication_date>2026-11-16</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/auto-2026-11-15/03-vs-mccabespharmacy-com.html</loc>
@@ -6257,31 +6539,121 @@ Como funciona a revisão de páginas públicas, passo a passo: https://carlosand
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP: how fast the page answers a tap.</video:title>
+      <video:description>Word of the day: INP: how fast the page answers a tap.
+
+Interaction to Next Paint measures the delay from a click, tap or key press to the next frame on screen. It replaced First Input Delay as a Core Web Vital in March 2024.
+
+Spot it: Find the slowest tap on your page, often a menu or a filter, and break up the long task behind it.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-de.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP: wie schnell die Seite auf einen Tipp reagiert.</video:title>
+      <video:description>Wort des Tages: INP: wie schnell die Seite auf einen Tipp reagiert.
+
+Interaction to Next Paint misst die Verzögerung von einem Klick, Tippen oder Tastendruck bis zum nächsten Bild auf dem Bildschirm. Sie hat im März 2024 First Input Delay als Core Web Vital abgelöst.
+
+Erkennen Sie es: Finden Sie den langsamsten Tipp auf Ihrer Seite, oft ein Menü oder ein Filter, und teilen Sie die lange Aufgabe dahinter auf.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-es.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP: qué tan rápido responde la página a un toque.</video:title>
+      <video:description>Palabra del día: INP: qué tan rápido responde la página a un toque.
+
+Interaction to Next Paint mide el retraso entre un clic, un toque o una tecla y el siguiente fotograma en pantalla. Reemplazó a First Input Delay como Core Web Vital en marzo de 2024.
+
+Encuéntralo: Encuentra el toque más lento de tu página, a menudo un menú o un filtro, y divide la tarea larga que hay detrás.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-fr.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP : la vitesse à laquelle la page répond à un toucher.</video:title>
+      <video:description>Mot du jour : INP : la vitesse à laquelle la page répond à un toucher.
+
+L'Interaction to Next Paint mesure le délai entre un clic, un toucher ou une touche et la prochaine image à l'écran. Il a remplacé le First Input Delay comme Core Web Vital en mars 2024.
+
+Repérez-le : Trouvez le toucher le plus lent de votre page, souvent un menu ou un filtre, et découpez la longue tâche qui se cache derrière.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-it.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP: quanto in fretta la pagina risponde a un tocco.</video:title>
+      <video:description>Parola del giorno: INP: quanto in fretta la pagina risponde a un tocco.
+
+L'Interaction to Next Paint misura il ritardo tra un clic, un tocco o un tasto e il fotogramma successivo sullo schermo. Ha sostituito il First Input Delay come Core Web Vital a marzo 2024.
+
+Trovalo: Trova il tocco più lento della tua pagina, spesso un menu o un filtro, e spezza il compito lungo che c'è dietro.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/09-inp-pt.html</loc>
     <lastmod>2026-11-11</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/09-inp.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/sMuXXuSi1aI/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>INP: a rapidez com que a página responde a um toque.</video:title>
+      <video:description>Palavra do dia: INP: a rapidez com que a página responde a um toque.
+
+O Interaction to Next Paint mede o atraso entre um clique, toque ou tecla e o próximo quadro na tela. Ele substituiu o First Input Delay como Core Web Vital em março de 2024.
+
+Confira: Encontre o toque mais lento da sua página, muitas vezes um menu ou um filtro, e divida a tarefa longa por trás dele.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=inp
+
+#WebPerformance #Playwright #QA #CoreWebVitals #INP #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/sMuXXuSi1aI</video:player_loc>
+      <video:publication_date>2026-11-11</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/14-a11y-check.html</loc>
@@ -6997,31 +7369,121 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>See your page the way Googlebot does.</video:title>
+      <video:description>30-second trick: See your page the way Googlebot does.
+
+Search Console's URL Inspection tool can fetch a live page as Google and show the rendered HTML, a screenshot, and the resources it could not load.
+
+Try it now: Search the rendered HTML for your main heading and your key facts. If they are missing there, Google may not see them either.
+
+How a public-page review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot-de.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Sehen Sie Ihre Seite so, wie Googlebot sie sieht.</video:title>
+      <video:description>30-Sekunden-Trick: Sehen Sie Ihre Seite so, wie Googlebot sie sieht.
+
+Das URL-Prüftool der Search Console kann eine Live-Seite wie Google abrufen und das gerenderte HTML, einen Screenshot und die Ressourcen zeigen, die es nicht laden konnte.
+
+Jetzt testen: Suchen Sie im gerenderten HTML nach Ihrer Hauptüberschrift und Ihren wichtigsten Fakten. Fehlen sie dort, sieht Google sie womöglich auch nicht.
+
+So funktioniert die Prüfung öffentlicher Seiten, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot-es.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Mira tu página como la ve Googlebot.</video:title>
+      <video:description>Truco de 30 segundos: Mira tu página como la ve Googlebot.
+
+La herramienta de inspección de URLs de Search Console puede rastrear una página en vivo como Google y mostrar el HTML renderizado, una captura y los recursos que no pudo cargar.
+
+Pruébalo ya: Busca en el HTML renderizado tu encabezado principal y tus datos clave. Si no aparecen ahí, puede que Google tampoco los vea.
+
+Cómo funciona una revisión de páginas públicas, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot-fr.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Voyez votre page comme Googlebot la voit.</video:title>
+      <video:description>Astuce de 30 secondes : Voyez votre page comme Googlebot la voit.
+
+L'outil d'inspection d'URL de la Search Console peut explorer une page en ligne comme Google et montrer le HTML rendu, une capture d'écran et les ressources qu'il n'a pas pu charger.
+
+Essayez : Cherchez dans le HTML rendu votre titre principal et vos informations clés. S'ils n'y sont pas, Google risque de ne pas les voir non plus.
+
+Comment se déroule la revue d’une page publique, étape par étape : https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot-it.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Guarda la tua pagina come la vede Googlebot.</video:title>
+      <video:description>Trucco da 30 secondi: Guarda la tua pagina come la vede Googlebot.
+
+Lo strumento Controllo URL di Search Console può recuperare una pagina online come Google e mostrare l'HTML visualizzato, uno screenshot e le risorse che non è riuscito a caricare.
+
+Provalo ora: Cerca nell'HTML visualizzato il titolo principale e le informazioni chiave. Se lì mancano, forse non li vede nemmeno Google.
+
+Come funziona la review di una pagina pubblica, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/08-googlebot-pt.html</loc>
     <lastmod>2026-11-10</lastmod>
     <image:image><image:loc>https://carlosandmunoz.com/media/social-posts/evergreen-2026-11/feed/08-googlebot.jpg</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://i.ytimg.com/vi/NWhoeVwQd2I/hqdefault.jpg</video:thumbnail_loc>
+      <video:title>Veja sua página como o Googlebot vê.</video:title>
+      <video:description>Truque de 30 segundos: Veja sua página como o Googlebot vê.
+
+A ferramenta de inspeção de URL do Search Console pode buscar uma página no ar como o Google e mostrar o HTML renderizado, uma captura de tela e os recursos que não conseguiu carregar.
+
+Teste agora: Procure no HTML renderizado o seu título principal e as informações-chave. Se não estiverem lá, o Google talvez também não as veja.
+
+Como funciona a revisão de páginas públicas, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=evergreen-2026-11&amp;utm_content=googlebot
+
+#SEO #SoftwareTesting #DevOps #QA #TechnicalSEO #QAlab</video:description>
+      <video:player_loc>https://www.youtube.com/embed/NWhoeVwQd2I</video:player_loc>
+      <video:publication_date>2026-11-10</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://carlosandmunoz.com/social/evergreen-2026-11/12-myth-sitemap.html</loc>

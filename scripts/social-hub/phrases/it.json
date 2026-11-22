@@ -385,6 +385,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Un evento sul form, sul download o sull’iscrizione ti dice se la pagina ha funzionato.",
  "An http Location adds a hop and an unencrypted request.": "Una Location http aggiunge un passaggio e una richiesta non cifrata.",
  "An icon alone needs an aria-label.": "Un’icona da sola ha bisogno di un aria-label.",
+ "An icon alone needs an…": {
+  "text": "Solo un'icona ha bisogno di un...",
+  "machine": true
+ },
  "An icon alone…": {
   "text": "Un'icona da sola...",
   "machine": true
@@ -539,6 +543,10 @@
  "But ⟦1⟧ disallows bingbot from the whole site, and Bing's index also feeds Copilot.": "Ma ⟦1⟧ blocca bingbot su tutto il sito, e l’indice di Bing alimenta anche Copilot.",
  "But ⟦1⟧ disallows ChatGPT-User, the agent that opens a page when a person asks ChatGPT about it.": "Ma ⟦1⟧ blocca ChatGPT-User, l’agent che apre una pagina quando qualcuno chiede a ChatGPT di parlarne.",
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Ma ⟦1⟧ blocca OAI-SearchBot e altri nove agent di ricerca AI, quindi le loro risposte non possono citarlo.",
+ "But ⟦1⟧ form control has no label.": {
+  "text": "Ma il controllo del modulo ⟦1⟧ non ha etichetta.",
+  "machine": true
+ },
  "But ⟦1⟧ form controls have no label.": "Ma ⟦1⟧ controlli dei form non hanno label.",
  "But ⟦1⟧ front-end libraries have known flaws.": "Ma ⟦1⟧ librerie front-end hanno vulnerabilità note.",
  "But ⟦1⟧ has Google MX records and no SPF or DMARC record, so anyone can send mail in its name.": "Ma ⟦1⟧ ha record MX di Google e nessun record SPF o DMARC, quindi chiunque può inviare email a suo nome.",
@@ -818,6 +826,10 @@
  "But the sitemap lists ⟦1⟧ ⟦2⟧ URLs, and search engines skip sitemap URLs from another host.": "Ma la sitemap elenca ⟦1⟧ URL ⟦2⟧, e i motori di ricerca ignorano gli URL di sitemap di un altro host.",
  "But the Spanish home page declares ⟦1⟧, and inner pages declare no language, so screen readers read Spanish with English rules.": "Ma la home page spagnola dichiara ⟦1⟧, e le pagine interne non dichiarano nessuna lingua, quindi gli screen reader leggono lo spagnolo con le regole dell’inglese.",
  "But the SPF TXT record begins with a stray quote mark and is split in two, so mail servers read no SPF at all.": "Ma il record TXT SPF inizia con una virgoletta di troppo ed è spezzato in due, quindi i server di posta non leggono alcun SPF.",
+ "But the start page does not declare its language.": {
+  "text": "Ma la pagina iniziale non dichiara la sua lingua.",
+  "machine": true
+ },
  "But the start page has no og: or twitter: tags, so shared links get a bare preview.": "Ma la pagina iniziale non ha tag og: né twitter:, quindi i link condivisi hanno un’anteprima spoglia.",
  "But the start page has no viewport meta tag, so phones draw the desktop layout zoomed out, and Google indexes mobile first.": "Ma la pagina iniziale non ha il meta tag viewport, quindi i telefoni mostrano il layout desktop rimpicciolito, e Google indicizza prima il mobile.",
  "But the start page has no viewport tag.": {
@@ -841,9 +853,17 @@
  "But the viewport tag sets maximum-scale=⟦1⟧ and user-scalable=no, so people with low vision cannot pinch to zoom on a phone.": "Ma il tag viewport imposta maximum-scale=⟦1⟧ e user-scalable=no, quindi chi ha una vista ridotta non può zoomare con due dita sul telefono.",
  "But the viewport tag sets user-scalable=no, so people on phones can't pinch to zoom.": "Ma il tag viewport imposta user-scalable=no, quindi da telefono non si può zoomare con due dita.",
  "But the WebSite JSON-LD on /en has a name and a date and no url, so it can't be tied to the domain.": "Ma il WebSite JSON-LD su /en ha un name e una data ma nessun url, quindi non può essere collegato al dominio.",
+ "But the website link on the Google Business Profile leads to an error.": {
+  "text": "Ma il collegamento al sito web nel profilo dell'attività su Google genera un errore.",
+  "machine": true
+ },
  "But three scripts sit in the ⟦1⟧ of /en without async or defer, so nothing paints until they load.": "Ma tre script stanno nel ⟦1⟧ di /en senza async né defer, quindi nulla viene disegnato finché non si caricano.",
  "But tracking starts before the visitor chooses.": {
   "text": "Ma il monitoraggio inizia prima che il visitatore scelga.",
+  "machine": true
+ },
+ "But tracking tags load with no consent tool in the page.": {
+  "text": "Ma i tag di monitoraggio vengono caricati senza uno strumento di consenso nella pagina.",
   "machine": true
  },
  "But X-Content-Type-Options is missing on all ⟦1⟧ pages analyzed, so browsers may guess file types.": "Ma X-Content-Type-Options manca su tutte le ⟦1⟧ pagine analizzate, quindi i browser possono tirare a indovinare i tipi di file.",
@@ -916,6 +936,10 @@
   "machine": true
  },
  "Check your own links after each release, and fix or redirect every one…": "Controlla i tuoi link dopo ogni release, e correggi o reindirizza ognuno…",
+ "Check your own links after each release, and fix or redirect every…": {
+  "text": "Controlla i tuoi collegamenti dopo ogni rilascio e correggi o reindirizza ogni...",
+  "machine": true
+ },
  "Check your response headers for Content-Security-Policy.": "Controlla se le intestazioni di risposta contengono Content-Security-Policy.",
  "Check your tags feed a live property.": "Controlla che i tuoi tag alimentino una proprietà attiva.",
  "Checklist card.": "Scheda checklist.",
@@ -1010,6 +1034,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Decidi bot per bot in ⟦1⟧: ammetti i motori di risposta da cui vuoi essere…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want…": {
+  "text": "Decidi per bot in ⟦1⟧: consenti i motori di risposta che desideri...",
+  "machine": true
+ },
  "Default both to denied where consent is required, and grant them on acceptance.": "Imposta entrambi su denied di default dove serve il consenso, e concedili all’accettazione.",
  "Default to camera=(), microphone=(), geolocation=().": "Di default usa camera=(), microphone=(), geolocation=().",
  "Defensoría's HTML weighs over ⟦1⟧ MB.": "L’HTML della Defensoría pesa oltre ⟦1⟧ MB.",
@@ -1250,6 +1278,10 @@
  "Give every page a unique title of about ⟦1⟧ characters: the page first, the site second.": "Dai a ogni pagina un titolo unico di circa ⟦1⟧ caratteri: prima la pagina, poi il sito.",
  "Give every page a unique title of about ⟦1⟧ characters: the page first, the site…": {
   "text": "Assegna a ogni pagina un titolo univoco di circa ⟦1⟧ caratteri: prima la pagina, il sito...",
+  "machine": true
+ },
+ "Give every page a unique title of about ⟦1⟧ characters: the page first…": {
+  "text": "Assegna a ogni pagina un titolo univoco di circa ⟦1⟧ caratteri: la pagina per prima...",
   "machine": true
  },
  "Give every page a unique title of about ⟦1⟧ characters: the page…": {
@@ -1570,6 +1602,14 @@
  },
  "Load every asset over https or as a relative URL.": "Carica ogni risorsa via https o come URL relativo.",
  "Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.": "Carica un solo Google tag e invia da lì a ogni destinazione, oppure fai passare tutti i tag da un unico Tag Manager.",
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait for it.": {
+  "text": "Carica il monitoraggio solo dopo una scelta di consenso oppure utilizza la modalità di consenso v2 in modo che i tag lo attendano.",
+  "machine": true
+ },
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait…": {
+  "text": "Carica il monitoraggio solo dopo una scelta di consenso oppure utilizza la modalità di consenso v2 in modo che i tag attendano...",
+  "machine": true
+ },
  "Load your page and press Tab once.": "Carica la pagina e premi Tab una volta.",
  "Load your page on a slow connection and watch it settle.": "Carica la pagina con una connessione lenta e guardala assestarsi.",
  "Logos and slogans often grab the h1.": "Loghi e slogan spesso si prendono l’h1.",
@@ -1853,6 +1893,14 @@
   "machine": true
  },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Punta ogni canonical all’URL https finale, lo stesso che elenchi nella sitemap.",
+ "Point the profile's website field at a live page of ⟦1⟧, or redirect the old address to one.": {
+  "text": "Punta il campo del sito web del profilo su una pagina live di ⟦1⟧ o reindirizza il vecchio indirizzo a uno.",
+  "machine": true
+ },
+ "Point the profile's website field at a live page of ⟦1⟧, or…": {
+  "text": "Punta il campo del sito web del profilo su una pagina live di ⟦1⟧, oppure...",
+  "machine": true
+ },
  "Pointing it home asks search to drop the page from results.": "Puntarlo alla home chiede alla ricerca di togliere la pagina dai risultati.",
  "Policía Nacional's search has no label.": "La ricerca della Policía Nacional non ha label.",
  "Popayán's links share with no preview card.": "I link di Popayán si condividono senza card di anteprima.",
@@ -2180,6 +2228,10 @@
   "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e nomina...",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and…": {
+  "text": "Servi ⟦1⟧ dallo stesso host delle pagine che elenca e...",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Servi un ⟦1⟧ con una riga Sitemap:.",
  "Serve the full chain: leaf plus intermediates.": "Servi la catena completa: certificato finale più intermedi.",
  "Served as /⟦1⟧.": "Servito come /⟦1⟧.",
@@ -2188,8 +2240,16 @@
  "Set canonicals to the exact public URL: https, your real host, no port.": "Imposta i canonical sull’URL pubblico esatto: https, il tuo host reale, nessuna porta.",
  "Set consent defaults to denied before Tag Manager loads; OneTrust then updates them.": "Imposta i default del consenso su denied prima che carichi Tag Manager; poi OneTrust li aggiorna.",
  "Set HSTS max-age to at least one year (⟦1⟧) once https works everywhere.": "Imposta il max-age di HSTS ad almeno un anno (⟦1⟧) quando https funziona ovunque.",
+ "Set lang on the html element, so screen readers pronounce the page in the right language.": {
+  "text": "Imposta la lingua sull'elemento html, in modo che gli screen reader pronuncino la pagina nella lingua corretta.",
+  "machine": true
+ },
  "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.": {
   "text": "Imposta Secure, HttpOnly e SameSite su ogni cookie che gli script non devono leggere.",
+  "machine": true
+ },
+ "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to…": {
+  "text": "Imposta Secure, HttpOnly e SameSite su ogni cookie di cui non è necessario che gli script...",
   "machine": true
  },
  "Set security headers at the edge, not per app, so every path on the host gets the same HSTS policy.": "Imposta gli header di sicurezza sull’edge, non per singola app, così ogni percorso dell’host riceve la stessa policy HSTS.",
@@ -2261,6 +2321,10 @@
  "Stripe Docs skips the main landmark.": "Stripe Docs salta il landmark main.",
  "Structured data naming the municipality, full share cards, alt text on every image, nosniff, and Secure cookies.": "Dati strutturati che nominano il comune, card di condivisione complete, testo alt su ogni immagine, nosniff e cookie Secure.",
  "Structured data naming the network, share cards, a sitemap index, and a canonical.": "Dati strutturati che nominano la rete, card di condivisione, un sitemap index e un canonical.",
+ "Structured data parses and carries the expected properties, and AI answer and search crawlers may read the start page.": {
+  "text": "I dati strutturati analizzano e trasportano le proprietà previste e la risposta dell'intelligenza artificiale e i crawler di ricerca possono leggere la pagina iniziale.",
+  "machine": true
+ },
  "Structured data parses, share cards are complete, and DMARC quarantines spoofed mail.": "I dati strutturati si leggono senza errori, le card di condivisione sono complete e DMARC mette in quarantena la posta contraffatta.",
  "Structured data that names the city hall, full share cards, one-year HSTS, and a permanent https redirect.": "Dati strutturati che nominano il comune, card di condivisione complete, HSTS di un anno e un redirect permanente a https.",
  "Structured data that parses, a ⟦1⟧, alt text on every image, and a start page that arrives fast.": "Dati strutturati che si leggono senza errori, un ⟦1⟧, testo alt su ogni immagine e una pagina iniziale che arriva veloce.",
@@ -2327,6 +2391,10 @@
   "text": "Il divario: i canonici.",
   "machine": true
  },
+ "The gap: consent.": {
+  "text": "Il divario: il consenso.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "Il divario: le bandiere dei cookie.",
   "machine": true
@@ -2364,6 +2432,10 @@
  "The gap: outdated libraries.": "La lacuna: librerie obsolete.",
  "The gap: page titles.": "La lacuna: i titoli delle pagine.",
  "The gap: schema fields.": "La lacuna: i campi schema.",
+ "The gap: search.": {
+  "text": "Il divario: ricerca.",
+  "machine": true
+ },
  "The gap: security.": {
   "text": "Il divario: la sicurezza.",
   "machine": true
@@ -2378,6 +2450,10 @@
   "machine": true
  },
  "The gap: the https redirect.": "La lacuna: il redirect a https.",
+ "The gap: the page language.": {
+  "text": "Il divario: la lingua della pagina.",
+  "machine": true
+ },
  "The gap: the sitemap host.": {
   "text": "Il divario: l'host della mappa del sito.",
   "machine": true
@@ -2691,6 +2767,10 @@
  "Wrap the primary content of every template in one ⟦1⟧ for skip links.": "Racchiudi il contenuto principale di ogni template in un solo ⟦1⟧ per gli skip link.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the pitch, not the crawler.": "Scrivi una descrizione di circa ⟦1⟧ caratteri per ogni pagina chiave, così il messaggio lo scegli tu, non il crawler.",
  "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the crawler.": "Scrivi una descrizione di circa ⟦1⟧ caratteri per ogni pagina chiave, così lo snippet lo scegli tu, non il crawler.",
+ "Write a description of about ⟦1⟧ characters for each key page, so you choose the snippet, not the…": {
+  "text": "Scrivi una descrizione di circa ⟦1⟧ caratteri per ogni pagina chiave, in modo da scegliere lo snippet, non il...",
+  "machine": true
+ },
  "Write a description of about ⟦1⟧ characters for your ten most visited pages, starting with the home page.": "Scrivi una descrizione di circa ⟦1⟧ caratteri per le tue dieci pagine più visitate, partendo dalla home page.",
  "Write a description per page that says what that page answers.": "Scrivi una descrizione per pagina che dica a quale domanda risponde.",
  "Write a fixed home description about your service.": "Scrivi una descrizione fissa della home che parli del tuo servizio.",

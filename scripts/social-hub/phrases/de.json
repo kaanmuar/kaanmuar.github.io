@@ -389,6 +389,10 @@
  "An event on the form, the download, or the signup tells you whether the page worked.": "Ein Event am Formular, am Download oder an der Anmeldung zeigt Ihnen, ob die Seite funktioniert hat.",
  "An http Location adds a hop and an unencrypted request.": "Eine http-Location kostet einen Hop und eine unverschlüsselte Anfrage.",
  "An icon alone needs an aria-label.": "Ein Icon allein braucht ein aria-label.",
+ "An icon alone needs an…": {
+  "text": "Eine Ikone allein braucht eine…",
+  "machine": true
+ },
  "An icon alone…": {
   "text": "Eine Ikone allein…",
   "machine": true
@@ -553,6 +557,10 @@
  "But ⟦1⟧ disallows OAI-SearchBot and nine other AI search agents, so their answers can't cite it.": "Doch ⟦1⟧ sperrt OAI-SearchBot und neun weitere KI-Such-Agents, also können deren Antworten die Website nicht zitieren.",
  "But ⟦1⟧ elements must be contained in a ⟦2⟧ or ⟦3⟧.": {
   "text": "Aber ⟦1⟧ Elemente müssen in einem ⟦2⟧ oder ⟦3⟧ enthalten sein.",
+  "machine": true
+ },
+ "But ⟦1⟧ form control has no label.": {
+  "text": "Aber ⟦1⟧ Formularsteuerung hat keine Bezeichnung.",
   "machine": true
  },
  "But ⟦1⟧ form controls have no label.": "Doch ⟦1⟧ Formularfelder haben kein Label.",
@@ -897,9 +905,17 @@
  "But the viewport tag sets maximum-scale=⟦1⟧ and user-scalable=no, so people with low vision cannot pinch to zoom on a phone.": "Doch das Viewport-Tag setzt maximum-scale=⟦1⟧ und user-scalable=no, also können sehbehinderte Menschen am Smartphone nicht per Pinch zoomen.",
  "But the viewport tag sets user-scalable=no, so people on phones can't pinch to zoom.": "Doch das Viewport-Tag setzt user-scalable=no, also kann am Smartphone niemand per Pinch zoomen.",
  "But the WebSite JSON-LD on /en has a name and a date and no url, so it can't be tied to the domain.": "Doch das WebSite-JSON-LD auf /en hat name und Datum, aber keine url, also lässt es sich nicht mit der Domain verknüpfen.",
+ "But the website link on the Google Business Profile leads to an error.": {
+  "text": "Der Website-Link im Google Business-Profil führt jedoch zu einem Fehler.",
+  "machine": true
+ },
  "But three scripts sit in the ⟦1⟧ of /en without async or defer, so nothing paints until they load.": "Doch drei Skripte stehen im ⟦1⟧ von /en ohne async oder defer, also wird nichts gezeichnet, bis sie geladen sind.",
  "But tracking starts before the visitor chooses.": {
   "text": "Aber das Tracking beginnt, bevor der Besucher sich entscheidet.",
+  "machine": true
+ },
+ "But tracking tags load with no consent tool in the page.": {
+  "text": "Tracking-Tags werden jedoch ohne Zustimmungstool auf der Seite geladen.",
   "machine": true
  },
  "But X-Content-Type-Options is missing on all ⟦1⟧ pages analyzed, so browsers may guess file types.": "Doch X-Content-Type-Options fehlt auf allen ⟦1⟧ analysierten Seiten, also raten Browser womöglich Dateitypen.",
@@ -976,6 +992,10 @@
   "machine": true
  },
  "Check your own links after each release, and fix or redirect every one…": "Prüfen Sie nach jedem Release Ihre eigenen Links und reparieren oder leiten Sie jeden um…",
+ "Check your own links after each release, and fix or redirect every…": {
+  "text": "Überprüfen Sie Ihre eigenen Links nach jeder Veröffentlichung und korrigieren oder leiten Sie alle um.",
+  "machine": true
+ },
  "Check your response headers for Content-Security-Policy.": "Prüfen Sie Ihre Antwort-Header auf Content-Security-Policy.",
  "Check your tags feed a live property.": "Prüfen Sie, ob Ihre Tags eine aktive Property speisen.",
  "Checklist card.": "Checklisten-Karte.",
@@ -1074,6 +1094,10 @@
   "machine": true
  },
  "Decide per bot in ⟦1⟧: allow the answer engines you want to be…": "Entscheiden Sie pro Bot in ⟦1⟧: Lassen Sie die Answer Engines zu, von denen Sie…",
+ "Decide per bot in ⟦1⟧: allow the answer engines you want…": {
+  "text": "Entscheiden Sie pro Bot in ⟦1⟧: Lassen Sie die gewünschten Antwort-Engines zu ...",
+  "machine": true
+ },
  "Default both to denied where consent is required, and grant them on acceptance.": "Setzen Sie beide standardmäßig auf denied, wo Einwilligung nötig ist, und gewähren Sie sie bei Zustimmung.",
  "Default to camera=(), microphone=(), geolocation=().": "Standard: camera=(), microphone=(), geolocation=().",
  "Defensoría's HTML weighs over ⟦1⟧ MB.": "Das HTML der Defensoría wiegt über ⟦1⟧ MB.",
@@ -1322,6 +1346,10 @@
  },
  "Give every page a unique title of about ⟦1⟧ characters: the page first, the…": {
   "text": "Geben Sie jeder Seite einen eindeutigen Titel mit etwa ⟦1⟧ Zeichen: die Seite zuerst, die …",
+  "machine": true
+ },
+ "Give every page a unique title of about ⟦1⟧ characters: the page first…": {
+  "text": "Geben Sie jeder Seite einen eindeutigen Titel mit etwa ⟦1⟧ Zeichen: die Seite zuerst ...",
   "machine": true
  },
  "Give every page a unique title of about ⟦1⟧ characters: the page…": {
@@ -1658,6 +1686,14 @@
  },
  "Load every asset over https or as a relative URL.": "Laden Sie jedes Asset über https oder als relative URL.",
  "Load one Google tag and send to every destination from it, or route all tags through one Tag Manager.": "Laden Sie ein Google-Tag und senden Sie von dort an jedes Ziel, oder leiten Sie alle Tags über einen Tag Manager.",
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait for it.": {
+  "text": "Laden Sie das Tracking erst nach einer Einwilligungsauswahl oder verwenden Sie den Einwilligungsmodus v2, damit die Tags darauf warten.",
+  "machine": true
+ },
+ "Load tracking only after a consent choice, or use Consent Mode v2 so tags wait…": {
+  "text": "Laden Sie das Tracking erst nach einer Einwilligungsauswahl oder verwenden Sie den Einwilligungsmodus v2, damit die Tags warten …",
+  "machine": true
+ },
  "Load your page and press Tab once.": "Laden Sie Ihre Seite und drücken Sie einmal die Tabulatortaste.",
  "Load your page on a slow connection and watch it settle.": "Laden Sie Ihre Seite über eine langsame Verbindung und sehen Sie zu, wie sie sich setzt.",
  "Logos and slogans often grab the h1.": "Logos und Slogans schnappen sich oft die h1.",
@@ -1941,6 +1977,14 @@
   "machine": true
  },
  "Point every canonical at the final https URL, the same one you list in the sitemap.": "Richten Sie jedes Canonical auf die finale https-URL, dieselbe wie in der Sitemap.",
+ "Point the profile's website field at a live page of ⟦1⟧, or redirect the old address to one.": {
+  "text": "Richten Sie das Website-Feld des Profils auf eine Live-Seite von ⟦1⟧ oder leiten Sie die alte Adresse auf eine um.",
+  "machine": true
+ },
+ "Point the profile's website field at a live page of ⟦1⟧, or…": {
+  "text": "Richten Sie das Website-Feld des Profils auf eine Live-Seite von ⟦1⟧, oder…",
+  "machine": true
+ },
  "Pointing it home asks search to drop the page from results.": "Zeigt es auf die Startseite, bittet es die Suche, die Seite aus den Ergebnissen zu nehmen.",
  "Policía Nacional's search has no label.": "Die Suche der Policía Nacional hat kein Label.",
  "Popayán's links share with no preview card.": "Popayáns Links werden ohne Vorschaukarte geteilt.",
@@ -2308,6 +2352,10 @@
   "text": "Stellen Sie ⟦1⟧ vom selben Host wie die darin aufgelisteten Seiten bereit und benennen Sie …",
   "machine": true
  },
+ "Serve ⟦1⟧ from the same host as the pages it lists, and…": {
+  "text": "Stellen Sie ⟦1⟧ vom selben Host bereit wie die darin aufgelisteten Seiten, und…",
+  "machine": true
+ },
  "Serve a ⟦1⟧ with a Sitemap: line.": "Liefern Sie eine ⟦1⟧ mit einer Sitemap:-Zeile aus.",
  "Serve the full chain: leaf plus intermediates.": "Liefern Sie die vollständige Kette aus: Leaf- plus Zwischenzertifikate.",
  "Served as /⟦1⟧.": "Ausgeliefert als /⟦1⟧.",
@@ -2326,6 +2374,10 @@
  },
  "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.": {
   "text": "Legen Sie Secure, HttpOnly und SameSite für jedes Cookie fest, das Skripte nicht lesen müssen.",
+  "machine": true
+ },
+ "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to…": {
+  "text": "Legen Sie Secure, HttpOnly und SameSite für jedes Cookie fest, das Skripte nicht benötigen …",
   "machine": true
  },
  "Set Secure, HttpOnly, and SameSite on every cookie that scripts do not…": {
@@ -2409,6 +2461,10 @@
  "Stripe Docs skips the main landmark.": "Stripe Docs lässt die main-Landmark weg.",
  "Structured data naming the municipality, full share cards, alt text on every image, nosniff, and Secure cookies.": "Strukturierte Daten, die die Gemeinde benennen, vollständige Share-Cards, Alt-Text an jedem Bild, nosniff und Secure-Cookies.",
  "Structured data naming the network, share cards, a sitemap index, and a canonical.": "Strukturierte Daten, die das Netzwerk benennen, Share-Cards, ein Sitemap-Index und ein Canonical.",
+ "Structured data parses and carries the expected properties, and AI answer and search crawlers may read the start page.": {
+  "text": "Strukturierte Daten werden analysiert und tragen die erwarteten Eigenschaften, und KI-Antwort- und Suchcrawler können die Startseite lesen.",
+  "machine": true
+ },
  "Structured data parses, share cards are complete, and DMARC quarantines spoofed mail.": "Die strukturierten Daten sind parsbar, die Share-Cards vollständig, und DMARC stellt gefälschte Mails unter Quarantäne.",
  "Structured data that names the city hall, full share cards, one-year HSTS, and a permanent https redirect.": "Strukturierte Daten, die das Rathaus benennen, vollständige Share-Cards, HSTS für ein Jahr und eine permanente https-Weiterleitung.",
  "Structured data that parses, a ⟦1⟧, alt text on every image, and a start page that arrives fast.": "Parsbare strukturierte Daten, eine ⟦1⟧, Alt-Text an jedem Bild und eine Startseite, die schnell ankommt.",
@@ -2475,6 +2531,10 @@
   "text": "Die Lücke: Kanonika.",
   "machine": true
  },
+ "The gap: consent.": {
+  "text": "Die Lücke: Zustimmung.",
+  "machine": true
+ },
  "The gap: cookie flags.": {
   "text": "Die Lücke: Cookie-Flags.",
   "machine": true
@@ -2524,6 +2584,10 @@
  },
  "The gap: page titles.": "Die Lücke: Seitentitel.",
  "The gap: schema fields.": "Die Lücke: Schema-Felder.",
+ "The gap: search.": {
+  "text": "Die Lücke: Suche.",
+  "machine": true
+ },
  "The gap: security.": {
   "text": "Die Lücke: Sicherheit.",
   "machine": true

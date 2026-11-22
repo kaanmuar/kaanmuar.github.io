@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-21T13:40:58.748Z",
+ "updatedAt": "2026-11-22T23:50:43.705Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -1369,7 +1369,7 @@
     "comments": 1
    },
    "youtube": {
-    "views": 2
+    "views": 1
    },
    "reddit": {
     "likes": 1
@@ -1378,6 +1378,9 @@
   "auto-2026-11-14/01-u-actualite-cd": {
    "telegram": {
     "views": 1
+   },
+   "x": {
+    "impressions": 1
    }
   },
   "auto-2026-11-14/04-vs-sinarharian-com-my": {
@@ -1481,6 +1484,9 @@
    },
    "x": {
     "impressions": 1
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "auto-2026-11-17/13-u-24hour-emergencydentist-co-uk": {
@@ -1495,9 +1501,12 @@
   },
   "auto-2026-11-17/19-u-44ye-com": {
    "tiktok": {
-    "views": 1,
+    "views": 2,
     "likes": 1,
     "comments": 1
+   },
+   "youtube": {
+    "views": 2
    }
   },
   "auto-2026-11-17/25-u-7diasdesabor-com": {
@@ -1514,6 +1523,11 @@
    }
   },
   "auto-2026-11-17/31-u-accounts-google-com": {
+   "x": {
+    "impressions": 2
+   }
+  },
+  "auto-2026-11-17/37-u-abogadosdiazyasociados-com": {
    "x": {
     "impressions": 1
    }
@@ -1556,12 +1570,12 @@
     "views": 1
    },
    "tiktok": {
-    "views": 1,
+    "views": 2,
     "likes": 1,
     "comments": 1
    },
    "x": {
-    "impressions": 1
+    "impressions": 2
    },
    "reddit": {
     "likes": 1
@@ -1585,7 +1599,7 @@
   },
   "auto-2026-11-18/30-u-aijabogados-cl": {
    "x": {
-    "impressions": 2
+    "impressions": 3
    },
    "telegram": {
     "views": 1
@@ -1605,6 +1619,30 @@
   "auto-2026-11-18/39-u-aireacondicionadodemexico-com": {
    "x": {
     "impressions": 2
+   }
+  },
+  "battle-vs-2026-11/01-vs-seo-scorecard": {
+   "tiktok": {
+    "views": 2,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
+    "views": 1
+   }
+  },
+  "battle-vs-2026-11/02-us-vs-them-seo": {
+   "tiktok": {
+    "views": 2,
+    "likes": 1,
+    "comments": 1
+   },
+   "x": {
+    "impressions": 2,
+    "comments": 1
    }
   },
   "compare-2026-11/01-quiz-berlin-vienna": {
@@ -1759,7 +1797,7 @@
     "likes": 3
    },
    "youtube": {
-    "views": 6,
+    "views": 7,
     "likes": 2,
     "comments": 1
    },
@@ -2011,7 +2049,7 @@
     "comments": 1
    },
    "youtube": {
-    "views": 8,
+    "views": 9,
     "likes": 1,
     "comments": 1
    },
@@ -2084,7 +2122,7 @@
     "views": 1
    },
    "tiktok": {
-    "views": 1,
+    "views": 2,
     "likes": 1,
     "comments": 1
    },
@@ -2093,6 +2131,9 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 1
    }
   },
   "evergreen-2026-11/05-myth-https": {
@@ -2124,11 +2165,17 @@
   },
   "evergreen-2026-11/06-sri": {
    "linkedin": {
-    "impressions": 3,
+    "impressions": 4,
     "likes": 1,
     "shares": 1
    },
    "telegram": {
+    "views": 1
+   },
+   "x": {
+    "impressions": 2
+   },
+   "youtube": {
     "views": 1
    }
   },
@@ -2157,6 +2204,11 @@
    },
    "x": {
     "impressions": 2
+   }
+  },
+  "evergreen-2026-11/08-googlebot": {
+   "linkedin": {
+    "impressions": 1
    }
   },
   "evergreen-2026-11/10-myth-overlay": {
@@ -2227,7 +2279,7 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 11,
+    "views": 15,
     "likes": 1,
     "comments": 1
    },
@@ -2507,6 +2559,11 @@
     "views": 1
    }
   },
+  "live/2026-11-21": {
+   "telegram": {
+    "views": 1
+   }
+  },
   "promo-social-hub-2026-10/01-one-page-en": {
    "linkedin": {
     "impressions": 7,
@@ -2626,7 +2683,7 @@
     "comments": 1
    },
    "youtube": {
-    "views": 7,
+    "views": 8,
     "likes": 1,
     "comments": 1
    },
@@ -2741,17 +2798,17 @@
    },
    "x": {
     "impressions": 2
-   },
-   "youtube": {
-    "views": 1
    }
   },
   "promo-social-hub-2026-10/35-follow-es": {
    "x": {
-    "impressions": 1
+    "impressions": 2
    },
    "telegram": {
     "views": 1
+   },
+   "linkedin": {
+    "impressions": 3
    }
   },
   "runs-100/01-wikipedia": {
@@ -2759,10 +2816,13 @@
     "impressions": 1
    },
    "x": {
-    "impressions": 1
+    "impressions": 2
    },
    "telegram": {
     "views": 1
+   },
+   "youtube": {
+    "views": 5
    }
   },
   "runs-100/13-dw": {
@@ -2836,7 +2896,7 @@
     "impressions": 3
    },
    "youtube": {
-    "views": 1,
+    "views": 2,
     "likes": 1,
     "comments": 1
    },
@@ -2895,13 +2955,13 @@
   },
   "runs-2026-10/07-python": {
    "x": {
-    "impressions": 1
+    "impressions": 2
    },
    "telegram": {
     "views": 1
    },
    "tiktok": {
-    "views": 1,
+    "views": 2,
     "likes": 1,
     "comments": 1
    },
@@ -2910,6 +2970,9 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "linkedin": {
+    "impressions": 2
    }
   },
   "runs-2026-10/08-bancolombia": {
@@ -2926,6 +2989,9 @@
     "views": 1,
     "likes": 1,
     "comments": 1
+   },
+   "youtube": {
+    "views": 3
    }
   },
   "runs-2026-10/09-un": {
@@ -3318,7 +3384,7 @@
     "impressions": 3
    },
    "telegram": {
-    "views": 298
+    "views": 300
    },
    "reddit": {
     "likes": 1
@@ -3733,17 +3799,17 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 183,
-   "answered": 176,
-   "insights": 176,
-   "error": "Graph 400: {\"message\":\"(#100) Tried accessing nonexisting field (reactions)\",\"type\":\"OAuthException\",\"code\":100,\"fbtrace_id\":\"A5hvPk6tH-m0DLv83SBt5ox\"}"
+   "asked": 195,
+   "answered": 186,
+   "insights": 186,
+   "error": "Graph 400: {\"message\":\"(#100) Tried accessing nonexisting field (reactions)\",\"type\":\"OAuthException\",\"code\":100,\"fbtrace_id\":\"A-oUNprt-m-h8g6DlzlYrvk\"}"
   }
  },
  "channels": {
   "telegram": {
    "chat": "@qalab_live",
    "members": 3,
-   "at": "2026-11-21T13:40:58.748Z",
+   "at": "2026-11-22T23:50:43.705Z",
    "history": [
     {
      "date": "2026-11-05",
@@ -3807,6 +3873,10 @@
     },
     {
      "date": "2026-11-21",
+     "members": 3
+    },
+    {
+     "date": "2026-11-22",
      "members": 3
     }
    ]
