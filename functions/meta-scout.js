@@ -10,6 +10,7 @@ const OwnerTags = require('./owner-tags');
 const Communities = require('./student-communities');
 const E = require('./engagement');
 const Sources = require('./engagement-sources');
+const Learn = require('./scout-learn');
 
 const MAC_STALE = 2 * 3600000;
 const REDDIT_STALE = 3 * 3600000;
@@ -123,12 +124,34 @@ async function run(deps) {
 	const pack = E.Regions.packForRun(deps.now, conf);
 	const topics = E.Regions.discoveryForRun(deps.now, null, conf);
 	const fs = (scoutRun && scoutRun.fieldSweep) || {};
+	let learn = null;
+	try {
+		const reflection = await Learn.learnDb(
+			deps.db,
+			'engagement',
+			{
+				read: scoutRun && scoutRun.read,
+				fresh: scoutRun && scoutRun.fresh,
+				drafted: scoutRun && scoutRun.drafted,
+				errors: scoutRun && scoutRun.errors,
+				aiError: scoutRun && scoutRun.aiError,
+				paused: scoutRun && scoutRun.paused,
+				needs,
+			},
+			deps.now
+		);
+		learn = reflection.slice;
+		await Learn.publishAiProposals(deps.db, reflection.slice, deps.now).catch(() => 0);
+	} catch (error) {
+		learn = { error: String(error.message || error).slice(0, 160) };
+	}
 	const envelope = {
 		at,
 		ms: Date.now() - started,
 		needs,
 		passes,
 		run: scoutRun,
+		learn,
 		discovery: {
 			budget: E.DISCOVERY_BUDGET,
 			pack: pack.primary,

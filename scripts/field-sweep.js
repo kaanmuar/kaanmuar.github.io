@@ -405,6 +405,7 @@ async function ownerState() {
 }
 
 async function main() {
+  const Learn = require("../functions/scout-learn");
   const dry = process.argv.includes("--dry-run");
   const file = path.join(ROOT, OUT);
   const previous = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null;
@@ -417,8 +418,15 @@ async function main() {
   const added = proposals.filter((proposal) => !(previous && previous.proposals || []).some((other) => other.id === proposal.id)).length;
   proposals.slice(0, dry ? KEEP : 10).forEach((proposal) => console.log(proposal.score.toFixed(2).padStart(6) + "  " + proposal.topic.padEnd(13) + proposal.title.slice(0, 90) + "  [" + proposal.source + "]"));
   console.log(proposals.length + " proposals, " + added + " new");
+  const failedSources = Object.values(report).filter((value) => value === "failed" || value === "error").length;
+  const learned = Learn.learnFile("field-sweep", {
+    proposed: proposals.length,
+    sources: Object.keys(report).length,
+    failedSources,
+  });
+  if (learned.asked.length) console.log("scout learn asks Carlos: " + learned.asked.map((q) => q.text).join(" | "));
   if (dry) return;
-  fs.writeFileSync(file, JSON.stringify({ version: 1, built: new Date().toISOString(), sources: report, proposals }, null, 1) + "\n");
+  fs.writeFileSync(file, JSON.stringify({ version: 1, built: new Date().toISOString(), sources: report, proposals, learn: learned.slice }, null, 1) + "\n");
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, "proposals=" + proposals.length + "\nadded=" + added + "\n");
 }
 

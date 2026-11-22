@@ -39,3 +39,6 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 
 ## When teaching Jarvis
 Hub panel notes (web + Android) and Ask `VOICE` in `functions/jarvis.js` carry these locks. Keep them in sync when decisions change.
+Scout learn (#4237): tool / engagement / field-sweep / trending scouts record lessons, odds, exceptions and cadence questions via `functions/scout-learn.js`; surface them in GitHub Tool scout and Engagement meta panels (web + Android). Never auto-edit the arsenal from a scout.
+
+Scout learning (#4237): every scout keeps scoped lessons, odds, exceptions and questions for Carlos (`functions/scout-learn.js`). Jarvis sees them on `github-work.scout.learn` and engagement meta `learn`. They never auto-edit the arsenal.

@@ -195,6 +195,12 @@ async function main(argv) {
     threads = await readThreads(tags);
   }
   const rows = buildDrafts(source, own, { keep, networks, threads });
+  const Learn = require("../functions/scout-learn");
+  const learned = Learn.learnFile("trending", {
+    drafts: rows.length,
+    tags: new Set(rows.map((r) => r.tag)).size,
+  });
+  if (learned.asked.length) console.log("scout learn asks Carlos: " + learned.asked.map((q) => q.text).join(" | "));
   const out = arg(argv, "out") || QUEUE_FILE;
   if (argv.includes("--dry-run")) { rows.forEach((r) => console.log(r.network + " #" + r.tag + " (" + r.topic + ", " + r.score + "): " + r.draft + (r.thread ? " [thread " + r.thread.url + "]" : ""))); console.log("scout drafts: " + rows.length + " drafts, dry run, nothing written"); return 0; }
   fs.writeFileSync(out, JSON.stringify(mergeQueue(readJson(out, []), rows), null, 1) + "\n");

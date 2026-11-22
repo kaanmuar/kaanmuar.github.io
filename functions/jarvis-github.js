@@ -813,7 +813,8 @@ async function issuesPart(gh, now, start, days, live) {
 const ARSENAL = 3828;
 const SCOUT_REF = /^tool-scout\/(\d{4}-\d{2}-\d{2})$/;
 
-async function scoutPart(gh, open, now) {
+async function scoutPart(gh, open, now, db) {
+	const Learn = require('./scout-learn');
 	const found = open
 		.map((pr) => ({ pr, m: SCOUT_REF.exec((pr.head && pr.head.ref) || '') }))
 		.filter((x) => x.m)
@@ -840,6 +841,25 @@ async function scoutPart(gh, open, now) {
 		.sort((a, b) => b.number - a.number)
 		.slice(0, ITEMS)
 		.map((i) => ({ number: i.number, title: String(i.title || '').slice(0, 160), url: i.html_url || '' }));
+	let learn = null;
+	try {
+		if (db) {
+			const bundle = await Learn.jarvisBundle(db, now);
+			const tool = (bundle.scouts || []).find((s) => s.scout === 'tool');
+			learn = tool
+				? Object.assign({ waiting: (tool.openQuestions || []).length }, tool)
+				: { waiting: bundle.waiting || 0, openQuestions: bundle.openQuestions || [] };
+		}
+		if (!learn || (!(learn.openQuestions || []).length && !(learn.runs > 0))) {
+			const file = await gh.get('repos/' + REPO + '/contents/tool.json?ref=tool-scout-data').catch(() => null);
+			if (file && file.content) {
+				const raw = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+				if (raw && raw.runs > 0) learn = Object.assign({ waiting: (raw.openQuestions || []).length }, Learn.jarvisSlice(raw));
+			}
+		}
+	} catch (error) {
+		learn = { error: clean(error) };
+	}
 	return {
 		run,
 		tickets: {
@@ -847,6 +867,7 @@ async function scoutPart(gh, open, now) {
 			closed: list.filter((i) => i.state !== 'open').length,
 			items,
 		},
+		learn,
 	};
 }
 
@@ -1665,7 +1686,7 @@ async function source(ctx) {
 		),
 		part('issues', async () => issuesPart(repo(), now, start, days, live)),
 		part('branches', async () => branchesPart(repo(), await data.open(), await data.closed(), await data.local(), now)),
-		part('scout', async () => scoutPart(repo(), await data.open(), now)),
+		part('scout', async () => scoutPart(repo(), await data.open(), now, ctx.db)),
 		part('deploys', async () => deploysPart(repo(), await data.runs(), await data.days(), now, days, want)),
 		part('android', async () => androidPart(repo(), start)),
 		part('budget', async () => budgetPart(gh, await data.local(), await data.budgetCloud(), now)),

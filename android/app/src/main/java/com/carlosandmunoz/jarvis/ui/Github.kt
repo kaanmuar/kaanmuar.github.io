@@ -778,6 +778,7 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
     val scout = gh.obj("scout")
     val scoutRun = scout?.obj("run")
     val scoutTickets = scout?.obj("tickets")
+    val scoutLearn = scout?.obj("learn")
     Panel("Tool scout" + (scoutRun?.let { " · ${fmt((it.num("drift") ?: 0.0) + (it.num("candidates") ?: 0.0))} findings" } ?: ""), id = "github-scout") {
         Github.down(scout)?.let { Muted(it); return@Panel }
         if (scoutRun != null) KeyRow("Scout ${scoutRun.str("date").orEmpty()}", "draft PR #${fmt(scoutRun.num("pr"))} · ${fmt(scoutRun.num("drift") ?: 0.0)} drift · ${fmt(scoutRun.num("candidates") ?: 0.0)} new", J.text, scoutRun.str("url"))
@@ -786,6 +787,9 @@ private fun GithubPanels(s: UiState, vm: JarvisViewModel) {
         if (items.isEmpty()) Muted("No arsenal tickets are open.")
         items.forEach { t -> StatusRow(null, t.str("title").orEmpty(), "#${fmt(t.num("number"))}", t.str("url")) }
         Muted("${fmt(scoutTickets.num("open") ?: 0.0)} open, ${fmt(scoutTickets.num("closed") ?: 0.0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.")
+        val asks = scoutLearn.objs("openQuestions").ifEmpty { scoutLearn.objs("questions") }.mapNotNull { it.str("text") }.filter { it.isNotBlank() }
+        if (asks.isNotEmpty()) Muted("Learning asks (#4237): " + asks.joinToString(" · ").take(280))
+        else if ((scoutLearn.num("waiting") ?: 0.0) > 0.0) Muted("Learning (#4237): ${fmt(scoutLearn.num("waiting") ?: 0.0)} open asks.")
     }
 
     val deploys = gh.obj("deploys")
