@@ -322,7 +322,7 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         val before = Layouts.read(_state.value.snapshot, tab) ?: Layouts.Saved()
         val ids = Arrange.defaults[tab].orEmpty().ifEmpty { before.order }
         val stretch = before.stretch.toMutableMap()
-        // #3978: [current] is what the panel shows when nothing is saved (a 3×2 plate starts at 2); max 2 cycles 3×1 and 3×2.
+        // #3978 / #4207: [current] is what the panel shows when nothing is saved (a 3×3 plate on unfold starts at 3); max 3 cycles 3×1..3×3.
         stretch[id] = Layouts.nextStretch(stretch[id] ?: current ?: 1, max)
         val next = Layouts.keep(before, before.order.ifEmpty { ids }, before.hidden, ids).copy(stretch = Layouts.cleanStretch(stretch))
         saveLayout(tab, next)

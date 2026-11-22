@@ -1,0 +1,125 @@
+# .github/workflows/promoter-scout.yml
+# Weekly promoter scout (#4151): discovers public directories, galleries, awards, launch boards, newsletters and
+# communities that promote tools/sites/startups worldwide, finds submit/contact paths, opens a draft PR with the
+# report. Human gate: nothing is emailed; Carlos picks who to introduce QA-lab URL Review to.
+# Memory (seen.json) lives on the promoter-scout-data branch, pushed directly (#3891 pattern).
+
+name: Promoter scout
+
+on:
+  schedule:
+    # Thursday 16:41 UTC ≈ 11:41 Bogotá
+    - cron: '41 16 * * 4'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Report date (YYYY-MM-DD); empty = today UTC'
+        required: false
+      seeds_only:
+        description: 'Enrich curated seeds only (skip Workers AI discovery)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: promoter-scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Restore the scout's memory
+        run: |
+          set -euo pipefail
+          if git fetch -q --depth=1 origin promoter-scout-data; then
+            git show FETCH_HEAD:seen.json > scripts/promoter-scout/seen.json
+          else
+            echo "No memory branch yet; every candidate counts as new."
+          fi
+      - name: Scout promoters and enrich contacts
+        id: scout
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREFLIGHT_TOKEN: ${{ secrets.PREFLIGHT_TOKEN }}
+          PREFLIGHT_URL: ${{ secrets.PREFLIGHT_URL }}
+          INPUT_DATE: ${{ inputs.date }}
+          SEEDS_ONLY: ${{ inputs.seeds_only }}
+        run: |
+          set -euo pipefail
+          DATE="${INPUT_DATE:-$(date -u +%F)}"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          flags=(run --date "$DATE" --limit 100)
+          if [ "${SEEDS_ONLY}" = "true" ]; then flags+=(--seeds-only); fi
+          node scripts/promoter-scout.js "${flags[@]}"
+      - name: Open a draft PR
+        if: steps.scout.outputs.findings == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATE: ${{ steps.scout.outputs.date }}
+          CANDIDATES: ${{ steps.scout.outputs.candidates }}
+          REACHABLE: ${{ steps.scout.outputs.reachable }}
+        run: |
+          set -euo pipefail
+          branch="promoter-scout/$DATE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git switch -q -C "$branch"
+          git add -f "scripts/promoter-scout/reports/$DATE.md"
+          if git diff --cached --quiet; then
+            echo "Nothing new to report."
+            exit 0
+          fi
+          git commit -q -m "Promoter scout $DATE (#4151)" \
+            -m "$CANDIDATES candidates ($REACHABLE reachable). Read-only report; outreach only with Carlos's say-so."
+          git push -q -u origin "HEAD:$branch" --force-with-lease
+          existing=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Draft PR already open: #$existing"
+            exit 0
+          fi
+          body=$(cat <<EOF
+          ## Summary
+          - Weekly promoter scout (#4151): $CANDIDATES candidates, $REACHABLE with a submit page, contact page or email.
+          - Human gate: read \`scripts/promoter-scout/reports/$DATE.md\`. Draft intros with \`node scripts/promoter-scout.js draft <host>\`. Nothing is sent automatically.
+          - Memory is on the \`promoter-scout-data\` branch so hosts are not re-reported. Close this PR once read; it needs no merge.
+          EOF
+          )
+          body=$(printf '%s\n' "$body" | sed 's/^          //')
+          gh pr create --draft --base main --head "$branch" \
+            --title "Promoter scout $DATE: $CANDIDATES candidates, $REACHABLE reachable" \
+            --body "$body"
+      - name: Save the scout's memory
+        if: steps.scout.outcome == 'success'
+        env:
+          DATE: ${{ steps.scout.outputs.date }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          idx="$RUNNER_TEMP/promoter.idx"
+          rm -f "$idx"
+          parent=""
+          if git fetch -q --depth=1 origin promoter-scout-data; then
+            parent=$(git rev-parse FETCH_HEAD)
+            if git show "$parent:seen.json" | cmp -s - scripts/promoter-scout/seen.json; then
+              echo "Memory unchanged."
+              exit 0
+            fi
+            GIT_INDEX_FILE="$idx" git read-tree "$parent"
+          fi
+          add() { GIT_INDEX_FILE="$idx" git update-index --add --cacheinfo "100644,$(git hash-object -w "$1"),$2"; }
+          add scripts/promoter-scout/seen.json seen.json
+          if [ -f "scripts/promoter-scout/reports/$DATE.md" ]; then add "scripts/promoter-scout/reports/$DATE.md" "report-$DATE.md"; fi
+          tree=$(GIT_INDEX_FILE="$idx" git write-tree)
+          commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "Promoter scout memory $DATE (#4151)")
+          git push -q origin "${commit}:refs/heads/promoter-scout-data"

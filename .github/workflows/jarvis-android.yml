@@ -53,6 +53,14 @@ jobs:
           mkdir -p "$RUNNER_TEMP/whats-new"
           node scripts/jarvis-whats-new.js "$GITHUB_SHA" | tee "$RUNNER_TEMP/whats-new/whats-new.txt"
 
+      - name: Require Firebase Auth REST key for release (#4206)
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -z "${JARVIS_FIREBASE_AUTH_KEY:-}" ]; then
+            echo "::error::Set repo secret JARVIS_FIREBASE_AUTH_KEY (Identity Toolkit API key; see android/local.properties.example)."
+            exit 1
+          fi
+
       - name: Signed release
         if: github.event_name != 'pull_request'
         env:

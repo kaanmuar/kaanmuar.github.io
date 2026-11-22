@@ -27,18 +27,21 @@ class ChartsPrefsTest {
         assertEquals(2, kept.stretch["github-ci"])
     }
 
-    // #3978: the 3×1 / 3×2 plate.
-    @Test fun plateStartsAt3x2OnAPhoneAnd3x1OnWideScreens() {
+    // #3978 / #4207: the 3×1 / 3×2 / 3×3 plate — phone 3×2, unfold 3×3; charts match on unfold.
+    @Test fun plateStartsAt3x2OnAPhoneAnd3x3OnWideScreens() {
         assertEquals(2, Layouts.plateDefault(1))
-        assertEquals(1, Layouts.plateDefault(2))
-        assertEquals(1, Layouts.plateDefault(3))
+        assertEquals(3, Layouts.plateDefault(2))
+        assertEquals(3, Layouts.plateDefault(3))
         assertEquals(1, Layouts.plateScale(0))
-        assertEquals(2, Layouts.plateScale(3))
+        assertEquals(3, Layouts.plateScale(3))
+        assertEquals(1, Layouts.chartDefault(1))
+        assertEquals(3, Layouts.chartDefault(2))
     }
 
-    @Test fun plateCyclesBetweenOneAndTwoAndChartsBetweenOneAndThree() {
-        assertEquals(1, Layouts.nextStretch(2, Layouts.PLATE_MAX))
+    @Test fun plateCyclesBetweenOneTwoAndThreeAndChartsBetweenOneAndThree() {
+        assertEquals(1, Layouts.nextStretch(3, Layouts.PLATE_MAX))
         assertEquals(2, Layouts.nextStretch(1, Layouts.PLATE_MAX))
+        assertEquals(3, Layouts.nextStretch(2, Layouts.PLATE_MAX))
         assertEquals(2, Layouts.nextStretch(1, 3))
         assertEquals(1, Layouts.nextStretch(3, 3))
     }

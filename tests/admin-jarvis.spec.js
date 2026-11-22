@@ -2817,7 +2817,7 @@ test.describe('admin statistics (Jarvis)', () => {
 		expect(errors).toEqual([]);
 	});
 
-	test('Map plate: the button makes the map 3×2, twice as wide in a strip that pans, and saves the size (#3984)', async ({
+	test('Map plate: starts at 3×3 on a wide screen; the button cycles 3×1 / 3×2 / 3×3 and saves (#3984 / #4207)', async ({
 		page,
 	}) => {
 		test.setTimeout(90000);
@@ -2828,20 +2828,21 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(panel.locator('.jv-geo-map path').first()).toBeVisible();
 		const strip = panel.locator('.jv-plate-strip');
 		const ratio = () => strip.evaluate((el) => el.scrollWidth / el.clientWidth);
+		await expect(panel).toHaveAttribute('data-plate', '3');
+		await expect.poll(ratio).toBeGreaterThan(2.8);
+		await panel.locator('[data-plate-stretch="geo-map"]').click();
 		await expect(panel).toHaveAttribute('data-plate', '1');
 		expect(await ratio()).toBeLessThan(1.05);
-		await panel.locator('[data-plate-stretch="geo-map"]').click();
-		await expect(panel).toHaveAttribute('data-plate', '2');
-		await expect.poll(ratio).toBeGreaterThan(1.9);
 		await expect
 			.poll(() =>
 				calls
 					.filter((c) => c.op === 'settings-save')
 					.map((c) => c.body.layout && c.body.layout.geo && c.body.layout.geo.stretch)
 			)
-			.toEqual([{ 'geo-map': 2 }]);
+			.toEqual([{ 'geo-map': 1 }]);
 		await panel.locator('[data-plate-stretch="geo-map"]').click();
-		await expect(panel).toHaveAttribute('data-plate', '1');
+		await expect(panel).toHaveAttribute('data-plate', '2');
+		await expect.poll(ratio).toBeGreaterThan(1.9);
 		expect(errors).toEqual([]);
 	});
 
@@ -3919,8 +3920,10 @@ test.describe('admin statistics (Jarvis)', () => {
 		await ci.locator('.jv-hit').last().click();
 		await expect(ci.locator('.jv-tip')).toHaveText('2026-11-03: Runs 2,480 runs · Failed 223 runs');
 		await expect(ci.locator('.jv-grid-dot').first()).toBeAttached();
+		// Wide screens default charts to ↕3 (#4207); one tap cycles 3 → 1.
+		await expect(ci).toHaveAttribute('data-chart-stretch', '3');
 		await ci.locator('[data-chart-stretch="github-ci-trend"]').click();
-		await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('2');
+		await expect.poll(() => ci.getAttribute('data-chart-stretch')).toBe('1');
 		await expect(gh.locator('[data-panel-id="github-trend"] .jv-spark-axis').first()).toContainText('11-02');
 		await expect(gh.locator('[data-panel-id="github-board"] .jv-bars-head')).toContainText('cards');
 		await expect(gh.locator('[data-panel-id="github-board"] .jv-legend')).toContainText('Cards on the board');

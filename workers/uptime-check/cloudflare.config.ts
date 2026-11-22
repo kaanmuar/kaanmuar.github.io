@@ -3,7 +3,8 @@ import { SCHEDULE } from "./src/index.js";
 
 // Deploy: cd workers/uptime-check && npm ci && ../../scripts/cf-quiet-deploy.sh -q
 // Secrets (HEARTBEAT_UPTIME_URL, optional HEARTBEAT_UPTIME_FAIL_URL, optional UPTIME_ENDPOINTS) are set by the
-// operator after deploy — not uploaded from this config, and never committed. See src/index.js header.
+// operator after deploy — not uploaded from this config, and never committed. Names: workers/.env.example.
+// Unset HEARTBEAT_UPTIME_URL = dead-man off (checks still run). See src/index.js header.
 export default defineConfig({
   worker: {
     name: "uptime-check",

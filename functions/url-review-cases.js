@@ -3,6 +3,7 @@
 // Ties every scored finding and browser observation to a proposed case, then ranks the cases by risk.
 
 const { say, english } = require('./url-review-findings-en');
+const actMap = require('./url-review-act-map');
 
 const IMPACT = { critical: 10, high: 7, medium: 4, low: 2 };
 const VERDICT_WEIGHT = { fail: 1, risk: 0.7, person: 0.5, proposed: 0.35, pass: 0.25 };
@@ -263,27 +264,32 @@ function axeCases(cases, byId, browser, host, fw) {
 			return;
 		}
 		if (added.length >= MAX_AXE) return;
-		added.push({
-			id: 'AXE-' + String(added.length + 1).padStart(2, '0'),
-			status: 'proposed',
-			layer: 'Accessibility',
-			title: rule.help + ' on ' + siteLabel(host, rule.pages[0]),
-			why:
-				seen +
-				' The case reruns axe-core with only the ' +
-				rule.id +
-				' rule on each of those pages and expects no violation.' +
-				(rule.helpUrl ? ' Rule: ' + rule.helpUrl : ''),
-			fw,
-			also: ['axe-core'],
-			verdict: 'fail',
-			severity,
-			path: rule.pages[0],
-			pages: rule.pages.slice(0, 12),
-			selectors: rule.targets,
-			check: { kind: 'axe', paths: rule.pages.slice(0, 6), rules: [rule.id] },
-			keys,
-		});
+		added.push(
+			Object.assign(
+				{
+					id: 'AXE-' + String(added.length + 1).padStart(2, '0'),
+					status: 'proposed',
+					layer: 'Accessibility',
+					title: rule.help + ' on ' + siteLabel(host, rule.pages[0]),
+					why:
+						seen +
+						' The case reruns axe-core with only the ' +
+						rule.id +
+						' rule on each of those pages and expects no violation.' +
+						(rule.helpUrl ? ' Rule: ' + rule.helpUrl : ''),
+					fw,
+					also: ['axe-core'],
+					verdict: 'fail',
+					severity,
+					path: rule.pages[0],
+					pages: rule.pages.slice(0, 12),
+					selectors: rule.targets,
+					check: { kind: 'axe', paths: rule.pages.slice(0, 6), rules: [rule.id] },
+					keys,
+				},
+				actMap.enrich(rule.id)
+			)
+		);
 	});
 	return cases.concat(added);
 }
