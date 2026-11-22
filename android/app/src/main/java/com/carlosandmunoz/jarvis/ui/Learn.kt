@@ -31,7 +31,7 @@ private val SCOUT_LABEL = mapOf(
     "trending" to "Trending",
 )
 
-/** Jarvis > Learn (#4237): private scout lessons, odds and decision options for Carlos. */
+/** Jarvis > Learn (#4237 / #4240): private scout lessons, decide options, study board and charts. */
 @Composable
 fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
@@ -47,12 +47,19 @@ fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) 
         val asked = g.objs("asked")
         val waiting = (g.num("waiting") ?: open.size.toDouble()).toInt()
         val byId = scouts.associateBy { it.str("scout") ?: "" }
+        val board = g.obj("board")
+        val tot = board.obj("totals")
 
         Panel("Learn", id = "learn-summary") {
             KpiPairs(
                 listOf(
-                    KpiData("Open asks", waiting.toString(), alert = waiting > 0),
-                    KpiData("Scouts", scouts.size.toString()),
+                    KpiData("Open asks", fmt(tot.num("open") ?: waiting.toDouble()), alert = (tot.num("open") ?: waiting.toDouble()) > 0),
+                    KpiData("Scouts", fmt(tot.num("scouts") ?: scouts.size.toDouble())),
+                    KpiData("Learn runs", fmt(tot.num("runs"))),
+                    KpiData("Lessons", fmt(tot.num("lessons"))),
+                    KpiData("Knowledge", fmt(tot.num("knowledge"))),
+                    KpiData("Decisions", fmt(tot.num("answered"))),
+                    KpiData("Exceptions", fmt(tot.num("exceptions"))),
                     KpiData("Updated", ago(g.str("at")) ?: "—"),
                 )
             )
@@ -62,6 +69,7 @@ fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) 
             Panel("Learn", id = "learn-empty") {
                 Muted("No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).")
             }
+            LearnCharts(board)
             Muted("Learning is for you and the scouts only — never public posts or tool-scout PR bodies. Cadence: tool 7d · engagement 2d · field & trending 3d.")
             return@Column
         }
@@ -86,20 +94,130 @@ fun LearnScreen(s: UiState, vm: JarvisViewModel, modifier: Modifier = Modifier) 
             }
         }
 
-        // Literal panel ids (parity with web learn-<scout>); $id templates are not allowed.
+        LearnCharts(board)
+
         LearnScoutPanel("tool", byId["tool"])
         LearnScoutPanel("engagement", byId["engagement"])
         LearnScoutPanel("field-sweep", byId["field-sweep"])
         LearnScoutPanel("trending", byId["trending"])
 
-        Muted("Learning is for you and the scouts only — never public posts or tool-scout PR bodies. Cadence: tool 7d · engagement 2d · field & trending 3d.")
+        Muted("Learning is for you and the scouts only — never public posts or tool-scout PR bodies. Cadence: tool 7d · engagement 2d · field & trending 3d. Charts (#4240) read the same private Firestore state.")
+    }
+}
+
+@Composable
+private fun LearnCharts(board: JsonObject?) {
+    val study = board.arr("study").mapNotNull { el ->
+        when (el) {
+            is JsonPrimitive -> el.contentOrNull
+            is JsonObject -> el.str("text")
+            else -> null
+        }
+    }.filter { !it.isNullOrBlank() }
+    Panel("Study board", id = "learn-study") {
+        if (study.isEmpty()) Muted("Study notes appear after scouts have run and learned.")
+        else study.take(8).forEach { Text("· $it", fontSize = 13.sp, color = J.text) }
+        Muted("Private analysis (#4240). Built from Firestore learn state — not public posts.")
+    }
+
+    val runs = board.objs("runsByScout")
+    Panel("Runs by scout", id = "learn-runs") {
+        if (runs.isEmpty()) Muted("No learn runs yet.")
+        else BarChart(
+            runs.map { it.num("value") ?: 0.0 },
+            runs.map { it.str("label").orEmpty() },
+            J.cyan,
+            title = "Learn runs stored per scout",
+            yLabel = "runs",
+            unit = "runs",
+            legend = "Runs",
+        )
+    }
+
+    val lessons = board.objs("lessonsByScout")
+    Panel("Lessons by scout", id = "learn-lessons") {
+        if (lessons.isEmpty()) Muted("No lessons yet.")
+        else BarChart(
+            lessons.map { it.num("value") ?: 0.0 },
+            lessons.map { it.str("label").orEmpty() },
+            J.amber,
+            title = "Lessons on file",
+            yLabel = "lessons",
+            unit = "lessons",
+            legend = "Lessons",
+        )
+    }
+
+    val openAsks = board.objs("openByScout")
+    Panel("Open asks by scout", id = "learn-open") {
+        if (openAsks.isEmpty()) Muted("No open asks.")
+        else BarChart(
+            openAsks.map { it.num("value") ?: 0.0 },
+            openAsks.map { it.str("label").orEmpty() },
+            J.pink,
+            title = "Questions waiting",
+            yLabel = "asks",
+            unit = "asks",
+            legend = "Open",
+        )
+    }
+
+    val odds = board.objs("odds")
+    Panel("Odds board", id = "learn-odds-chart") {
+        if (odds.isEmpty()) Muted("No odds yet — they appear after a scout run with findings.")
+        else BarChart(
+            odds.map { it.num("value") ?: 0.0 },
+            odds.map { (it.str("label") ?: "").take(18) },
+            J.violet,
+            title = "Top odds (percent)",
+            yLabel = "p × 100",
+            unit = "%",
+            legend = "Odds",
+        )
+    }
+
+    val decisions = board.objs("decisions")
+    Panel("Decisions", id = "learn-decisions") {
+        if (decisions.isEmpty()) Muted("No decisions yet. Pick options on Decide.")
+        else BarChart(
+            decisions.map { it.num("value") ?: 0.0 },
+            decisions.map { it.str("label").orEmpty() },
+            J.green,
+            title = "Decisions by option",
+            yLabel = "count",
+            unit = "decisions",
+            legend = "Decisions",
+        )
+    }
+
+    val daily = board.objs("daily")
+    if (daily.isNotEmpty()) Panel("Learn runs · last days", id = "learn-trend") {
+        BarChart(
+            daily.map { it.num("runs") ?: 0.0 },
+            daily.map { it.str("day").orEmpty().takeLast(5) },
+            J.green,
+            title = "Scout learn envelopes per day",
+            yLabel = "runs",
+            unit = "runs",
+            legend = "Runs",
+        )
+        if (daily.any { (it.num("questions") ?: 0.0) > 0 }) {
+            BarChart(
+                daily.map { it.num("questions") ?: 0.0 },
+                daily.map { it.str("day").orEmpty().takeLast(5) },
+                J.amber,
+                title = "Questions opened per day",
+                yLabel = "asks",
+                unit = "asks",
+                legend = "Asks",
+            )
+        }
     }
 }
 
 @Composable
 private fun LearnScoutPanel(scoutId: String, scout: JsonObject?) {
     if (scout == null) return
-    // id= when-branches must be string literals for jarvis-panel-ids parity.
     Panel(
         (SCOUT_LABEL[scoutId] ?: scoutId) + (scout.num("runs")?.let { " · ${fmt(it)} runs" } ?: ""),
         id = when (scoutId) {

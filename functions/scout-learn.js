@@ -415,6 +415,103 @@ async function learnDb(db, scoutName, stats, nowMs) {
 	return { slice: jarvisSlice(state), state, asked: analysis.openQuestions || [], private: true };
 }
 
+const SCOUT_SHORT = { tool: 'Tool', engagement: 'Engagement', 'field-sweep': 'Field', trending: 'Trending' };
+
+/**
+ * Study board for the Learn tab (#4240): KPIs, bars, pie inputs, daily run series, short analysis.
+ * Pure — built from scout slices, answered rows, and optional scout_learn_runs docs.
+ */
+function board(scouts, asked, runRows) {
+	const list = Array.isArray(scouts) ? scouts : [];
+	const answers = Array.isArray(asked) ? asked : [];
+	const runs = Array.isArray(runRows) ? runRows : [];
+	const byId = Object.fromEntries(list.map((s) => [s.scout, s]));
+	const count = (s, key) => ((s && s[key]) || []).length;
+	const runsByScout = SCOUTS.map((id) => ({
+		label: SCOUT_SHORT[id] || id,
+		value: (byId[id] && byId[id].runs) || 0,
+		scout: id,
+	})).filter((r) => r.value > 0);
+	const lessonsByScout = SCOUTS.map((id) => ({
+		label: SCOUT_SHORT[id] || id,
+		value: count(byId[id], 'lessons'),
+		scout: id,
+	})).filter((r) => r.value > 0);
+	const openByScout = SCOUTS.map((id) => ({
+		label: SCOUT_SHORT[id] || id,
+		value: count(byId[id], 'openQuestions'),
+		scout: id,
+	})).filter((r) => r.value > 0);
+	const decisionMap = {};
+	answers.forEach((a) => {
+		const key = text(a.option || a.status || 'other', 40) || 'other';
+		decisionMap[key] = (decisionMap[key] || 0) + 1;
+	});
+	const decisions = Object.keys(decisionMap)
+		.map((label) => ({ label, value: decisionMap[label] }))
+		.sort((a, b) => b.value - a.value);
+	const odds = list
+		.flatMap((s) =>
+			(s.odds || []).map((o) => ({
+				label: text(o.claim || o.id, 48),
+				value: Math.round((Number(o.p) || 0) * 100),
+				scout: s.scout,
+			}))
+		)
+		.filter((o) => o.value > 0)
+		.sort((a, b) => b.value - a.value)
+		.slice(0, 8);
+	const byDay = {};
+	runs.forEach((r) => {
+		const day = String(r.at || '').slice(0, 10);
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+		if (!byDay[day]) byDay[day] = { day, runs: 0, questions: 0 };
+		byDay[day].runs += 1;
+		byDay[day].questions += Array.isArray(r.questions) ? r.questions.length : 0;
+	});
+	const daily = Object.keys(byDay)
+		.sort()
+		.slice(-14)
+		.map((d) => byDay[d]);
+	const totals = {
+		runs: list.reduce((n, s) => n + (Number(s.runs) || 0), 0),
+		lessons: list.reduce((n, s) => n + count(s, 'lessons'), 0),
+		knowledge: list.reduce((n, s) => n + count(s, 'knowledge'), 0),
+		exceptions: list.reduce((n, s) => n + count(s, 'exceptions'), 0),
+		open: list.reduce((n, s) => n + count(s, 'openQuestions'), 0),
+		answered: answers.filter((a) => a && a.status !== 'later').length,
+		scouts: list.length,
+	};
+	const study = [];
+	if (totals.open) study.push(totals.open + ' open ask' + (totals.open === 1 ? '' : 's') + ' waiting on the Decide panel.');
+	else study.push('No open asks — scouts will question again on their cadence.');
+	if (totals.runs) study.push(totals.runs + ' learn run' + (totals.runs === 1 ? '' : 's') + ' across ' + totals.scouts + ' scout' + (totals.scouts === 1 ? '' : 's') + '.');
+	if (totals.lessons) study.push(totals.lessons + ' lesson' + (totals.lessons === 1 ? '' : 's') + ' and ' + totals.knowledge + ' knowledge row' + (totals.knowledge === 1 ? '' : 's') + ' on file.');
+	if (totals.answered) study.push(totals.answered + ' decision' + (totals.answered === 1 ? '' : 's') + ' recorded as scout lessons.');
+	if (odds[0]) study.push('Highest odds: ' + odds[0].value + '% — ' + odds[0].label);
+	if (totals.exceptions) study.push(totals.exceptions + ' standing exception' + (totals.exceptions === 1 ? '' : 's') + ' (gates the scouts still honour).');
+	return {
+		totals,
+		runsByScout,
+		lessonsByScout,
+		openByScout,
+		decisions,
+		odds,
+		daily,
+		study: study.slice(0, 8),
+	};
+}
+
+async function loadRunHistory(db) {
+	if (!db) return [];
+	try {
+		const snap = await db.collection('scout_learn_runs').orderBy('at', 'desc').limit(60).get();
+		return snap.docs.map((d) => d.data()).filter(Boolean);
+	} catch (_) {
+		return [];
+	}
+}
+
 async function jarvisBundle(db, nowMs) {
 	const now = Number(nowMs) || Date.now();
 	const scouts = [];
@@ -423,6 +520,8 @@ async function jarvisBundle(db, nowMs) {
 		if (state.runs > 0 || (state.openQuestions || []).length) scouts.push(jarvisSlice(state));
 	}
 	const openQuestions = scouts.flatMap((s) => (s.openQuestions || []).map((q) => Object.assign({ scout: s.scout }, q))).slice(0, 12);
+	const asked = scouts.flatMap((s) => s.asked || []).slice(0, 12);
+	const runRows = await loadRunHistory(db);
 	return {
 		ok: true,
 		private: true,
@@ -430,8 +529,9 @@ async function jarvisBundle(db, nowMs) {
 		scouts,
 		openQuestions,
 		waiting: openQuestions.length,
-		asked: scouts.flatMap((s) => s.asked || []).slice(0, 12),
+		asked,
 		cadence: ASK_EVERY_MS,
+		board: board(scouts, asked, runRows),
 	};
 }
 
@@ -518,11 +618,13 @@ module.exports = {
 	analyze,
 	jarvisSlice,
 	reportMarkdown,
+	board,
 	learnFile,
 	learnDb,
 	syncFile,
 	loadDb,
 	upsertState,
+	loadRunHistory,
 	jarvisBundle,
 	source,
 	publishAiProposals,

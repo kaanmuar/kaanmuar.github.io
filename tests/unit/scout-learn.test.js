@@ -72,3 +72,33 @@ test('analyze is pure and jarvisSlice is bounded', () => {
 	assert.equal(slice.runs, 3);
 	assert.equal(slice.openQuestions.length, 1);
 });
+
+test('board builds study stats and chart series (#4240)', () => {
+	const scouts = [
+		Learn.jarvisSlice(
+			Object.assign(Learn.emptyState('tool'), {
+				runs: 4,
+				lessons: ['a', 'b'],
+				odds: [{ id: 'usable-candidates', p: 0.7, claim: 'candidates may deserve a ticket' }],
+				openQuestions: [{ id: 'tool:x', text: 'Ticket?' }],
+				asked: [{ id: 'tool:y', option: 'ticket', status: 'answered', at: '2026-11-20T00:00:00Z' }],
+			})
+		),
+		Learn.jarvisSlice(Object.assign(Learn.emptyState('engagement'), { runs: 2, lessons: ['c'], openQuestions: [] })),
+	];
+	const asked = [{ option: 'ticket', status: 'answered' }, { option: 'later', status: 'later' }, { option: 'skip', status: 'dismissed' }];
+	const runs = [
+		{ at: '2026-11-20T12:00:00Z', questions: [{ id: '1' }] },
+		{ at: '2026-11-21T12:00:00Z', questions: [] },
+		{ at: '2026-11-21T18:00:00Z', questions: [{ id: '2' }, { id: '3' }] },
+	];
+	const b = Learn.board(scouts, asked, runs);
+	assert.equal(b.totals.runs, 6);
+	assert.equal(b.totals.open, 1);
+	assert.ok(b.runsByScout.some((r) => r.scout === 'tool' && r.value === 4));
+	assert.ok(b.odds[0].value === 70);
+	assert.ok(b.decisions.some((d) => d.label === 'ticket'));
+	assert.equal(b.daily.length, 2);
+	assert.ok(b.study.length >= 2);
+	assert.match(b.study.join(' '), /open ask/i);
+});
