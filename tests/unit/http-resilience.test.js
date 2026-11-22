@@ -314,6 +314,94 @@ test('url review: threat lists keep their answer shapes through retries and the 
 	}
 });
 
+
+test('jarvis index: Brave Search uses resilientFetch and the brave breaker', async () => {
+	const index = require('../../functions/jarvis-index.js');
+	const slept = global.setTimeout;
+	global.setTimeout = (fn, ms, ...a) => slept(fn, Math.min(ms, 1), ...a);
+	const sitemap = (urls) =>
+		'<urlset>' + urls.map((u) => `<url><loc>${u}</loc></url>`).join('') + '</urlset>';
+	const pages = [
+		'https://carlosandmunoz.com/',
+		'https://carlosandmunoz.com/qa-review.html',
+		'https://carlosandmunoz.com/qa-lab.html',
+		'https://carlosandmunoz.com/social/a.html',
+	];
+	const xmlMain = sitemap(pages.slice(0, 3));
+	const xmlSocial = sitemap(pages.slice(3));
+	const braveOk = (urls = []) => ({
+		ok: true,
+		status: 200,
+		json: async () => ({
+			web: { results: urls.map((u) => ({ url: u })) },
+			query: { more_results_available: false },
+		}),
+		text: async () => '',
+	});
+	const fetchFor = (brave) => async (url) => {
+		if (String(url).includes('/sitemap-social.xml')) return { ok: true, status: 200, text: async () => xmlSocial, json: async () => ({}) };
+		if (String(url).includes('/sitemap.xml')) return { ok: true, status: 200, text: async () => xmlMain, json: async () => ({}) };
+		if (String(url).startsWith('https://api.search.brave.com/')) return brave(url);
+		throw new Error('unexpected ' + url);
+	};
+	const env = { BRAVE_SEARCH_KEY: 'k' };
+	const now = Date.parse('2026-11-03T15:00:00Z');
+	try {
+		let n = 0;
+		const out = await index.check({
+			fetch: fetchFor(() => {
+				n++;
+				if (n === 1) return { ok: false, status: 503, headers: { get: () => '1' }, json: async () => ({}), text: async () => '' };
+				return braveOk(['https://carlosandmunoz.com/qa-lab']);
+			}),
+			env,
+			now,
+		});
+		assert.equal(out.ok, true);
+		assert.equal(out.indexed, 1);
+		assert.ok(n >= 2, 'Brave retries a 503 before succeeding');
+
+		n = 0;
+		const denied = await index.check({
+			fetch: fetchFor(() => (n++, { ok: false, status: 401, json: async () => ({}), text: async () => '' })),
+			env,
+			now,
+		});
+		assert.equal(denied.ok, false);
+		assert.match(denied.error, /Brave answered 401/);
+		assert.equal(n, 1, 'permanent 4xx API key failure is not retried as 5xx');
+
+		n = 0;
+		const forbidden = await index.check({
+			fetch: fetchFor(() => (n++, { ok: false, status: 403, json: async () => ({}), text: async () => '' })),
+			env,
+			now,
+		});
+		assert.equal(forbidden.ok, false);
+		assert.match(forbidden.error, /Brave answered 403/);
+		assert.equal(n, 1, '403 is not retried as 5xx');
+
+		n = 0;
+		node.breakers.brave.failure();
+		node.breakers.brave.failure();
+		node.breakers.brave.failure();
+		node.breakers.brave.failure();
+		node.breakers.brave.failure();
+		assert.equal(node.breakers.brave.state, 'open');
+		const paused = await index.check({
+			fetch: fetchFor(() => (n++, braveOk(['https://carlosandmunoz.com/']))),
+			env,
+			now,
+		});
+		assert.equal(paused.ok, false);
+		assert.match(paused.error, /circuit "brave" is open/);
+		assert.equal(n, 0, 'open breaker does not call Brave Search');
+	} finally {
+		global.setTimeout = slept;
+		node.breakers.brave.success();
+	}
+});
+
 test('url review: Identity Toolkit accounts:lookup uses resilientFetch and the identitytoolkit breaker', async () => {
 	const desk = require('../../functions/url-review-desk.js');
 	const auth = require('../../functions/url-review-auth.js');
