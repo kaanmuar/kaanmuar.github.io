@@ -330,7 +330,7 @@ function readJson(file) {
 
 const auditNow = (text) => audit(text, Date.now(), (slug) => gh(['repos/' + slug]), licenseText, readJson(KNOWN));
 
-function run(date) {
+async function run(date) {
 	const Learn = require('../functions/scout-learn');
 	const text = fs.readFileSync(ARSENAL, 'utf8');
 	const now = Date.now();
@@ -352,8 +352,10 @@ function run(date) {
 		usable: groups.permissive.length + groups.attribution.length + groups.isolate.length,
 		traps: groups.trap.length + groups.unknown.length,
 	}));
+	// Learn is private (#4237): cache for the scout + Jarvis Learn tab via Firestore sync — never the public PR body.
 	const learned = Learn.learnFile('tool', { drift: real, candidates: fresh, traps, flags, corners }, now);
-	const body = report(date, drift, found) + '\n' + learned.markdown;
+	await Learn.syncFile('tool').catch(() => null);
+	const body = report(date, drift, found);
 	fs.writeFileSync(path.join(DIR, 'reports', date + '.md'), body);
 	fs.writeFileSync(SEEN, JSON.stringify(seen, null, '\t') + '\n');
 	if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `findings=${fresh + real > 0}\ndrift=${real}\ncandidates=${fresh}\n`);
@@ -411,13 +413,12 @@ function main() {
 	if (mode === 'run') {
 		const i = args.indexOf('--date');
 		const date = i >= 0 ? args[i + 1] : new Date().toISOString().slice(0, 10);
-		const r = run(date);
-		return console.log(`Tool scout ${date}: ${r.drift} drift rows, ${r.candidates} new candidates.`);
+		return run(date).then((r) => console.log(`Tool scout ${date}: ${r.drift} drift rows, ${r.candidates} new candidates.`));
 	}
 	console.error('usage: node scripts/tool-scout.js audit|scout|run [--date YYYY-MM-DD]|repo owner/name');
 	process.exit(2);
 }
 
-if (require.main === module) main();
+if (require.main === module) Promise.resolve(main()).catch((error) => { console.error(error); process.exit(1); });
 
 module.exports = { repoCard, isStatusLine, classifyLicense, detectLicenses, parseArsenal, slugsIn, auditRepo, audit, arsenalSlugs, slugInRecentIssueTitles, filterRankedCandidates, rank, report, CORNERS };

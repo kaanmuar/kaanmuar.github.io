@@ -52,6 +52,7 @@ const SNAPSHOT_OPS = [
 	'engagement',
 	'people',
 	'github-work',
+	'scout-learn',
 	'geo',
 	'calendar',
 	'mail-codes',
@@ -6509,23 +6510,25 @@ export function mountJarvis({
 		const scoutLearn = sct && sct.learn && !sct.learn.error ? sct.learn : null;
 		const scoutLearnQs = scoutLearn && (scoutLearn.openQuestions || scoutLearn.questions || []);
 		const scoutLearnNote = scoutLearn
-			? `<p class="jv-note">Learning (#4237)${scoutLearn.waiting ? ' · ' + fmt(scoutLearn.waiting) + ' open asks' : ''}${
-					scoutLearnQs && scoutLearnQs.length
+			? `<p class="jv-note">Learning (#4237)${scoutLearn.runs ? ' · ' + fmt(scoutLearn.runs) + ' runs' : ''}${
+					scoutLearn.waiting || (scoutLearnQs && scoutLearnQs.length)
 						? ' · ' +
+							fmt(scoutLearn.waiting || scoutLearnQs.length) +
+							' open asks · ' +
 							esc(
-								scoutLearnQs
+								(scoutLearnQs || [])
 									.map((q) => q.text)
 									.join(' · ')
-									.slice(0, 280)
+									.slice(0, 240)
 							)
 						: ''
 				}${
-					scoutLearn.last && scoutLearn.last.odds && scoutLearn.last.odds[0]
+					scoutLearn.odds && scoutLearn.odds[0]
 						? '<br>' +
 							esc(
-								Math.round((scoutLearn.last.odds[0].p || 0) * 100) +
+								Math.round((scoutLearn.odds[0].p || 0) * 100) +
 									'% — ' +
-									(scoutLearn.last.odds[0].note || scoutLearn.last.odds[0].id || '')
+									(scoutLearn.odds[0].claim || scoutLearn.odds[0].note || scoutLearn.odds[0].id || '')
 							)
 						: ''
 				}</p>`
@@ -7844,6 +7847,102 @@ export function mountJarvis({
 			'No owner-tags comment yet. In a dry run nothing is queued; Go live queues them on the next run.'
 		);
 		return head + `<h4>Accounts</h4>${groups}${add}<h4>Recent comments and owner replies</h4>${comments}`;
+	}
+
+	function learnView() {
+		const g = S.external['scout-learn'];
+		if (!g || g.ok === false)
+			return `<div class="jv-grid">${panel('learn-wait', 'Learn', waiting('scout-learn', 'Reading scout learning…'), { wide: true, note: 'Private to you and the scouts (#4237). Firestore is the source of truth.' })}</div>`;
+		const scouts = g.scouts || [];
+		const open = g.openQuestions || [];
+		const asked = g.asked || [];
+		const cadence = g.cadence || {};
+		const SCOUT_LABEL = { tool: 'Tool scout', engagement: 'Engagement', 'field-sweep': 'Field sweep', trending: 'Trending' };
+		const qCard = (q) => {
+			const opts = (q.options || [])
+				.map(
+					(o) =>
+						`<button type="button" class="jv-btn${o.id === 'later' ? '' : ' is-primary'}" data-learn-decide="${esc(o.id)}" data-id="${esc(q.id)}"${S.pending['learn:' + q.id] ? ' disabled' : ''}>${esc(o.label)}</button>`
+				)
+				.join('');
+			return `<li class="jv-learn-q"><strong>${esc(SCOUT_LABEL[q.scout] || q.scout || '')}</strong><p>${esc(q.text)}</p><p class="jv-note">${esc(q.why || '')}${q.at ? ' · ' + esc(when(q.at)) : ''}</p><div class="jv-prop-acts">${opts}</div></li>`;
+		};
+		const scoutPanels = scouts
+			.map((s) => {
+				const days = Math.round((cadence[s.scout] || 0) / 86400000);
+				const odds = (s.odds || [])
+					.map((o) => `<li><span class="jv-chip">${Math.round((o.p || 0) * 100)}%</span> ${esc(o.claim || o.id || '')}</li>`)
+					.join('');
+				const lessons = (s.lessons || []).map((l) => `<li>${esc(typeof l === 'string' ? l : l.text || '')}</li>`).join('');
+				const ex = (s.exceptions || []).map((e) => `<li>${esc(e.reason || e.id || '')}</li>`).join('');
+				const know = (s.knowledge || []).map((k) => `<li>${esc(k.text || k.key || '')}</li>`).join('');
+				return panel(
+					'learn-' + s.scout,
+					(SCOUT_LABEL[s.scout] || s.scout) + (s.runs ? ' · ' + fmt(s.runs) + ' runs' : ''),
+					`<p class="jv-note">Private · ask every ${fmt(days)} day${days === 1 ? '' : 's'} · updated ${esc(when(s.at) || '—')}</p>
+					${lessons ? `<h4>Lessons</h4><ul>${lessons}</ul>` : ''}
+					${odds ? `<h4>Odds</h4><ul>${odds}</ul>` : ''}
+					${ex ? `<h4>Exceptions</h4><ul>${ex}</ul>` : ''}
+					${know ? `<h4>Knowledge</h4><ul>${know}</ul>` : ''}
+					${!lessons && !odds ? '<p class="jv-empty">No lessons yet for this scout.</p>' : ''}`,
+					{ wide: true, data: [s] }
+				);
+			})
+			.join('');
+		const decideBody = open.length
+			? `<ul class="jv-learn-qs">${open.map(qCard).join('')}</ul>`
+			: '<p class="jv-empty">No open questions. Scouts ask on their cadence when something needs a decision.</p>';
+		const askedBody = asked.length
+			? table(
+					[
+						['When', (x) => esc(when(x.at))],
+						['Scout', (x) => esc(SCOUT_LABEL[x.scout] || x.scout || '')],
+						['Decision', (x) => esc(x.note || x.option || x.status || '')],
+						['Question', (x) => esc(x.text || x.id || '')],
+					],
+					asked,
+					'No decisions yet.'
+				)
+			: '<p class="jv-empty">Decisions you make here become lessons for that scout.</p>';
+		if (!scouts.length && !open.length)
+			return (
+				kpis([{ label: 'Open asks', value: 0 }, { label: 'Scouts', value: 0 }]) +
+				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}</div>`
+			);
+		return (
+			kpis([
+				{ label: 'Open asks', value: g.waiting || open.length, alert: (g.waiting || open.length) > 0 },
+				{ label: 'Scouts with knowledge', value: scouts.length },
+				{ label: 'Updated', value: when(g.at) || '—' },
+			]) +
+			`<div class="jv-grid">
+            ${panel('learn-decide', `Decide${open.length ? ' · ' + open.length : ''}`, decideBody, { wide: true, data: open, note: 'Private (#4237). Pick an option; the scout stores your answer as a lesson. "Ask later" leaves the question open.' })}
+            ${panel('learn-asked', 'Recent decisions', askedBody, { wide: true, data: asked })}
+            ${scoutPanels}
+        </div><p class="jv-note">Learning is for you and the scouts only — never public hub posts or tool-scout draft PR bodies. Cadence: tool 7d · engagement 2d · field-sweep & trending 3d.</p>`
+		);
+	}
+
+	async function learnDecide(id, option) {
+		if (!id || !option) return;
+		S.pending['learn:' + id] = true;
+		render();
+		const out = await call('scout-learn-decide', { id, option }).catch((error) => ({ ok: false, error: error.message }));
+		S.pending['learn:' + id] = false;
+		if (out && out.ok === false) {
+			toast('Not saved: ' + (out.error || 'failed'), 6000);
+			render();
+			return;
+		}
+		const g = S.external['scout-learn'];
+		if (g && option !== 'later') {
+			g.openQuestions = (g.openQuestions || []).filter((q) => q.id !== id);
+			g.waiting = (g.openQuestions || []).length;
+			if (out && !out.deferred) g.asked = [out].concat(g.asked || []).slice(0, 12);
+		}
+		render();
+		toast(option === 'later' ? 'Left open.' : 'Saved for the scout.', 5000);
+		loadExternal(['scout-learn']);
 	}
 
 	function engagementView() {
@@ -9409,6 +9508,7 @@ export function mountJarvis({
 		out.geo = geoView() + take();
 		out.github = githubView() + take();
 		out.engagement = engagementView() + take();
+		out.learn = learnView() + take();
 		out.console = '';
 
 		const ga = e.ga4;
@@ -9717,7 +9817,13 @@ export function mountJarvis({
 								: C.readiness(S.external) + '%'
 							: p.key === 'github'
 								? (gw && gw.score && gw.score.overall && gw.score.overall.grade) || ''
-								: '';
+								: p.key === 'learn'
+									? (() => {
+											const L = S.external['scout-learn'];
+											const n = (L && (L.waiting || (L.openQuestions || []).length)) || 0;
+											return n ? n + ' ask' + (n === 1 ? '' : 's') : '';
+										})()
+									: '';
 		});
 		const ready = C.readiness(S.external);
 		$('#jv-ready').textContent = ready === null ? '—' : ready + '%';
@@ -11436,6 +11542,10 @@ export function mountJarvis({
 		if (t.dataset.mkDone) {
 			S.mkDone = t.dataset.mkDone === 'on';
 			render();
+			return;
+		}
+		if (t.dataset.learnDecide) {
+			learnDecide(t.dataset.id, t.dataset.learnDecide);
 			return;
 		}
 		if (t.dataset.egDecide) {

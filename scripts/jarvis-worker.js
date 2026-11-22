@@ -44,7 +44,7 @@ Rules:
   lands in android/ (jarvis-mobile-parity.mdc).
 - Outside tools we evaluated, with verdicts and status, are in .cursor/rules/tool-arsenal.mdc. Use one only where that file lists it as adopted or as a pilot inside this task's scope; never install a rejected or reference-only tool.
 - A weekly scout (scripts/tool-scout.js, tool-scout/<date> draft PRs) re-checks that file and finds new repos. Its report is a suggestion: add or change an arsenal row only when your task's ticket says so.
-- Scouts learn from each run (functions/scout-learn.js, #4237): they record lessons, odds, exceptions and questions for Carlos under their own scope. Use that knowledge; do not invent arsenal verdicts.
+- Scouts learn from each run (functions/scout-learn.js, #4237): private to Carlos and the scouts (Firestore / Learn tab). Use that knowledge; do not put learn text in public posts or draft PR bodies; do not invent arsenal verdicts.
 - Leave .github/workflows/, firebase config, lock files and secrets alone unless the task is about them. Never print a secret.
 - Do not commit, push, or open branches or PRs: the run does that after you finish.
 - Run \`npm run test:review\` before you finish and fix what you broke. After editing js/admin-jarvis-core.js run

@@ -14,7 +14,7 @@ test('SCOUTS and ask cadences are defined', () => {
 	assert.equal(Learn.normalizeScout('field'), 'field-sweep');
 });
 
-test('tool learnFile asks about candidates and records odds', () => {
+test('tool learnFile asks about candidates with decision options (private)', () => {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scout-learn-'));
 	const prev = Learn.DIR;
 	Learn.DIR = dir;
@@ -26,9 +26,11 @@ test('tool learnFile asks about candidates and records odds', () => {
 		);
 		assert.equal(learned.slice.scout, 'tool');
 		assert.equal(learned.slice.runs, 1);
+		assert.equal(learned.private, true);
 		assert.ok(learned.asked.some((q) => /candidates|drift/i.test(q.text)));
+		assert.ok(learned.asked[0].options.some((o) => o.id === 'ticket'));
 		assert.ok(learned.slice.odds.some((o) => o.id === 'usable-candidates'));
-		assert.match(learned.markdown, /Questions for Carlos/);
+		assert.match(learned.markdown, /private/i);
 		assert.ok(fs.existsSync(path.join(dir, 'tool.json')));
 	} finally {
 		Learn.DIR = prev;

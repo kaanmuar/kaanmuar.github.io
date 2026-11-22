@@ -425,6 +425,7 @@ async function main() {
     failedSources,
   });
   if (learned.asked.length) console.log("scout learn asks Carlos: " + learned.asked.map((q) => q.text).join(" | "));
+  if (!dry) await Learn.syncFile("field-sweep").catch(() => null);
   if (dry) return;
   fs.writeFileSync(file, JSON.stringify({ version: 1, built: new Date().toISOString(), sources: report, proposals, learn: learned.slice }, null, 1) + "\n");
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, "proposals=" + proposals.length + "\nadded=" + added + "\n");

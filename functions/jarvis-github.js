@@ -843,19 +843,15 @@ async function scoutPart(gh, open, now, db) {
 		.map((i) => ({ number: i.number, title: String(i.title || '').slice(0, 160), url: i.html_url || '' }));
 	let learn = null;
 	try {
+		// Sync private tool-scout cache from the data branch into Firestore when present.
 		if (db) {
-			const bundle = await Learn.jarvisBundle(db, now);
-			const tool = (bundle.scouts || []).find((s) => s.scout === 'tool');
-			learn = tool
-				? Object.assign({ waiting: (tool.openQuestions || []).length }, tool)
-				: { waiting: bundle.waiting || 0, openQuestions: bundle.openQuestions || [] };
-		}
-		if (!learn || (!(learn.openQuestions || []).length && !(learn.runs > 0))) {
 			const file = await gh.get('repos/' + REPO + '/contents/tool.json?ref=tool-scout-data').catch(() => null);
 			if (file && file.content) {
 				const raw = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
-				if (raw && raw.runs > 0) learn = Object.assign({ waiting: (raw.openQuestions || []).length }, Learn.jarvisSlice(raw));
+				if (raw && raw.runs > 0) await Learn.upsertState(db, Object.assign({ scout: 'tool', private: true }, raw));
 			}
+			const fromDb = await Learn.loadDb(db, 'tool');
+			if (fromDb.runs > 0 || (fromDb.openQuestions || []).length) learn = Learn.jarvisSlice(fromDb);
 		}
 	} catch (error) {
 		learn = { error: clean(error) };

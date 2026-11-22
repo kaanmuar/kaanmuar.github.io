@@ -19,6 +19,7 @@
 		{ key: 'marketing', name: 'Marketing', short: 'MKT' },
 		{ key: 'geo', name: 'Map', short: 'MAP' },
 		{ key: 'engagement', name: 'Engagement', short: 'ENG' },
+		{ key: 'learn', name: 'Learn', short: 'LRN' },
 		{ key: 'traffic', name: 'Traffic', short: 'WEB' },
 		{ key: 'systems', name: 'Systems', short: 'SYS' },
 		{ key: 'github', name: 'GitHub', short: 'GH' },

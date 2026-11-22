@@ -8,16 +8,18 @@ description: >-
 
 # Scout learn
 
-`functions/scout-learn.js` — every scout reflects after a run: lessons, odds, exceptions, in-scope knowledge, and (on a cadence) questions for Carlos. Nothing here edits `.cursor/rules/tool-arsenal.mdc`.
+`functions/scout-learn.js` — private to Carlos and the scouts. Reflect after each run: lessons, odds, exceptions, in-scope knowledge, and (on a cadence) questions with decision options. Authoritative store is **Firestore**. Never public hub/PR copy. Nothing here edits `.cursor/rules/tool-arsenal.mdc`.
+
+Jarvis **Learn** tab (web + Android) shows all scouts live and lets Carlos decide.
 
 ## Scouts
 
 | Scout | Entrypoint | Persist |
 |---|---|---|
-| `tool` | `scripts/tool-scout.js` | `scripts/scout-learn/tool.json` (+ `tool-scout-data`) |
+| `tool` | `scripts/tool-scout.js` | Firestore (+ private `tool-scout-data` / local cache) |
 | `engagement` | `functions/meta-scout.js` | Firestore `jarvis_settings/scout-learn-engagement` |
-| `field-sweep` | `scripts/field-sweep.js` | `scripts/scout-learn/field-sweep.json` |
-| `trending` | `scripts/scout-trending-drafts.js` | `scripts/scout-learn/trending.json` |
+| `field-sweep` | `scripts/field-sweep.js` | Firestore (local cache ok) |
+| `trending` | `scripts/scout-trending-drafts.js` | Firestore (local cache ok) |
 
 Cadence (`ASK_EVERY_MS`): tool 7d, engagement 2d, field-sweep/trending 3d.
 
@@ -25,8 +27,9 @@ Cadence (`ASK_EVERY_MS`): tool 7d, engagement 2d, field-sweep/trending 3d.
 
 ```js
 const Learn = require('../functions/scout-learn');
-const learned = Learn.learnFile('tool', { drift, candidates, traps, flags, corners }, Date.now()); // CLI
-// or: await Learn.learnDb(db, 'engagement', stats, now); // cloud
+const learned = Learn.learnFile('tool', { drift, candidates, traps, flags, corners }, Date.now()); // CLI cache
+await Learn.syncFile('tool'); // best-effort Firestore so Jarvis Learn stays live
+// or: await Learn.learnDb(db, 'engagement', stats, now); // cloud path
 await Learn.publishAiProposals(db, learned.slice, now); // optional Jarvis proposals
 ```
 

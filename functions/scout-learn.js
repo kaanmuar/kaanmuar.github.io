@@ -1,9 +1,10 @@
 'use strict';
 /*
- * Shared scout learn loop (#4237). Every scout reflects after a run: lessons, odds,
- * exceptions, in-scope knowledge, and (on a cadence) questions for Carlos. CLI scouts
- * persist under scripts/scout-learn/<scout>.json; cloud scouts under
- * jarvis_settings/scout-learn-<scout>. Jarvis reads jarvisSlice / jarvisBundle.
+ * Shared scout learn loop (#4237). Private to Carlos and the scouts — never public hub/PR
+ * copy. Every scout reflects after a run: lessons, odds, exceptions, in-scope knowledge,
+ * and (on a cadence) questions with decision options. Authoritative store is Firestore
+ * (jarvis_settings/scout-learn-<scout>); CLI may cache under scripts/scout-learn/<scout>.json
+ * for the scout itself. Jarvis Learn tab reads jarvisBundle / source().
  * Nothing here edits tool-arsenal.mdc.
  */
 const fs = require('fs');
@@ -26,11 +27,45 @@ const clip = (list, n) => (Array.isArray(list) ? list : []).filter(Boolean).slic
 const filePath = (scout) => path.join(module.exports.DIR || DEFAULT_DIR, scout + '.json');
 const stateDoc = (scout) => 'scout-learn-' + scout;
 
+/** Decision buttons on open questions (Jarvis Learn tab). */
+const OPTIONS = {
+	tool: [
+		{ id: 'ticket', label: 'Ticket it' },
+		{ id: 'skip', label: 'Skip' },
+		{ id: 'suppress', label: 'known.json' },
+		{ id: 'later', label: 'Ask later' },
+	],
+	engagement: [
+		{ id: 'fix', label: 'Fix it' },
+		{ id: 'pause', label: 'Keep as-is' },
+		{ id: 'ignore', label: 'Ignore' },
+		{ id: 'later', label: 'Ask later' },
+	],
+	'field-sweep': [
+		{ id: 'approve', label: 'Approve in hub' },
+		{ id: 'dismiss', label: 'Dismiss' },
+		{ id: 'expand-sources', label: 'Expand sources' },
+		{ id: 'later', label: 'Ask later' },
+	],
+	trending: [
+		{ id: 'wire-ui', label: 'Wire #3814' },
+		{ id: 'keep-file', label: 'Keep file-only' },
+		{ id: 'drop', label: 'Drop scout' },
+		{ id: 'later', label: 'Ask later' },
+	],
+};
+
+function withOptions(scout, q) {
+	const opts = OPTIONS[scout] || OPTIONS.tool;
+	return Object.assign({}, q, { options: (q && q.options) || opts, private: true });
+}
+
 function emptyState(scout) {
 	return {
 		scout,
 		runs: 0,
 		at: '',
+		private: true,
 		lessons: [],
 		knowledge: [],
 		exceptions: [],
@@ -180,7 +215,7 @@ function analyze(scout, stats, prior, now) {
 	const freshQuestions = askDue
 		? questions
 				.filter((q) => q && q.id && !answeredIds.has(q.id) && !openIds.has(q.id))
-				.map((q) => Object.assign({ at, scout }, q))
+				.map((q) => withOptions(scout, Object.assign({ at, scout }, q)))
 				.slice(0, MAX.questions)
 		: [];
 
@@ -192,6 +227,7 @@ function analyze(scout, stats, prior, now) {
 		openQuestions: freshQuestions,
 		askDue,
 		at,
+		private: true,
 	};
 }
 
@@ -218,15 +254,19 @@ function mergeQuestions(priorOpen, fresh, askedIds) {
 
 function applyAnalysis(prior, analysis, stats, scout) {
 	const askedIds = (prior.asked || []).map((q) => q.id);
+	const open = mergeQuestions(prior.openQuestions, analysis.openQuestions, askedIds).map((q) =>
+		withOptions(scout, q)
+	);
 	return {
 		scout,
 		runs: (prior.runs || 0) + 1,
 		at: analysis.at,
+		private: true,
 		lessons: clip((analysis.lessons || []).concat(prior.lessons || []), MAX.lessons),
 		knowledge: mergeKnowledge(prior.knowledge, analysis.knowledge),
 		exceptions: clip((analysis.exceptions || []).concat(prior.exceptions || []), MAX.exceptions),
 		odds: clip(analysis.odds || [], MAX.odds),
-		openQuestions: mergeQuestions(prior.openQuestions, analysis.openQuestions, askedIds),
+		openQuestions: open,
 		asked: prior.asked || [],
 		askedAt: analysis.askDue && (analysis.openQuestions || []).length ? analysis.at : prior.askedAt || '',
 		lastStats: stats || {},
@@ -235,21 +275,27 @@ function applyAnalysis(prior, analysis, stats, scout) {
 
 function jarvisSlice(state) {
 	const s = state || emptyState('tool');
+	const scout = s.scout || 'tool';
 	return {
-		scout: s.scout || '',
+		scout,
 		runs: s.runs || 0,
 		at: s.at || '',
+		private: true,
+		cadenceMs: ASK_EVERY_MS[scout] || 3 * DAY,
 		lessons: clip(s.lessons, 6),
-		openQuestions: clip(s.openQuestions, MAX.questions),
+		openQuestions: clip(s.openQuestions, MAX.questions).map((q) => withOptions(scout, q)),
 		odds: clip(s.odds, 5),
 		exceptions: clip(s.exceptions, 5),
 		knowledge: clip(s.knowledge, 8),
+		asked: clip(s.asked, 8),
+		waiting: (s.openQuestions || []).length,
 	};
 }
 
+/** Private note for the scout / Carlos only — never append to public PR reports. */
 function reportMarkdown(state) {
 	const slice = jarvisSlice(state);
-	const lines = ['## Learn (#4237)', ''];
+	const lines = ['## Learn (#4237, private)', '', '_For Carlos and the scouts only. Not for public posts or draft PR bodies._', ''];
 	(slice.lessons || []).forEach((l) => lines.push('- ' + l));
 	if ((slice.odds || []).length) {
 		lines.push('', '### Odds', '');
@@ -260,7 +306,10 @@ function reportMarkdown(state) {
 	}
 	if ((slice.openQuestions || []).length) {
 		lines.push('', '### Questions for Carlos', '');
-		slice.openQuestions.forEach((q) => lines.push('- **' + text(q.text, 200) + '** _(' + text(q.why, 100) + ')_'));
+		slice.openQuestions.forEach((q) => {
+			const opts = (q.options || []).map((o) => o.label).join(' / ');
+			lines.push('- **' + text(q.text, 200) + '** _(' + text(q.why, 100) + ')_' + (opts ? ' → ' + opts : ''));
+		});
 	} else {
 		lines.push('', '_No new questions this run (or ask cadence not due)._');
 	}
@@ -282,7 +331,7 @@ function writeFile(scout, state) {
 }
 
 /**
- * CLI path: update scripts/scout-learn/<scout>.json and return a Jarvis slice + markdown.
+ * CLI cache only (private). Authoritative store is Firestore via learnDb / upsertState.
  */
 function learnFile(scoutName, stats, nowMs) {
 	const scout = normalizeScout(scoutName);
@@ -296,7 +345,32 @@ function learnFile(scoutName, stats, nowMs) {
 		markdown: reportMarkdown(state),
 		asked: analysis.openQuestions || [],
 		state,
+		private: true,
 	};
+}
+
+/** Best-effort push of the local learn cache into Firestore so the Learn tab stays live. */
+async function syncFile(scoutName, db) {
+	const scout = normalizeScout(scoutName);
+	const state = readFile(scout);
+	if (!state.runs && !(state.openQuestions || []).length) return null;
+	let store = db;
+	if (!store) {
+		try {
+			const Module = require('module');
+			const fnRequire = Module.createRequire(path.join(__dirname, 'index.js'));
+			const { Firestore } = fnRequire('@google-cloud/firestore');
+			const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || 'carlosm-interactive-cv';
+			store = new Firestore({ projectId });
+		} catch (_) {
+			return null;
+		}
+	}
+	try {
+		return await upsertState(store, state);
+	} catch (_) {
+		return null;
+	}
 }
 
 async function loadDb(db, scoutName) {
@@ -306,8 +380,17 @@ async function loadDb(db, scoutName) {
 	return snap.exists ? Object.assign(emptyState(scout), snap.data()) : emptyState(scout);
 }
 
+/** Write a full state doc (e.g. sync CLI/tool-scout-data into Firestore). */
+async function upsertState(db, state) {
+	if (!db || !state || !state.scout) return null;
+	const scout = normalizeScout(state.scout);
+	const row = Object.assign(emptyState(scout), state, { scout, private: true });
+	await db.collection('jarvis_settings').doc(stateDoc(scout)).set(row, { merge: true });
+	return row;
+}
+
 /**
- * Cloud path: update jarvis_settings/scout-learn-<scout>.
+ * Cloud path: update jarvis_settings/scout-learn-<scout> (authoritative).
  */
 async function learnDb(db, scoutName, stats, nowMs) {
 	const scout = normalizeScout(scoutName);
@@ -322,13 +405,14 @@ async function learnDb(db, scoutName, stats, nowMs) {
 		.set({
 			scout,
 			at: state.at,
+			private: true,
 			lessons: analysis.lessons,
 			odds: analysis.odds,
 			questions: analysis.openQuestions,
 			askDue: analysis.askDue,
 		})
 		.catch(() => null);
-	return { slice: jarvisSlice(state), state, asked: analysis.openQuestions || [] };
+	return { slice: jarvisSlice(state), state, asked: analysis.openQuestions || [], private: true };
 }
 
 async function jarvisBundle(db, nowMs) {
@@ -336,10 +420,27 @@ async function jarvisBundle(db, nowMs) {
 	const scouts = [];
 	for (const scout of SCOUTS) {
 		const state = await loadDb(db, scout);
-		if (state.runs > 0) scouts.push(jarvisSlice(state));
+		if (state.runs > 0 || (state.openQuestions || []).length) scouts.push(jarvisSlice(state));
 	}
-	const openQuestions = scouts.flatMap((s) => s.openQuestions || []).slice(0, 12);
-	return { at: new Date(now).toISOString(), scouts, openQuestions, waiting: openQuestions.length };
+	const openQuestions = scouts.flatMap((s) => (s.openQuestions || []).map((q) => Object.assign({ scout: s.scout }, q))).slice(0, 12);
+	return {
+		ok: true,
+		private: true,
+		at: new Date(now).toISOString(),
+		scouts,
+		openQuestions,
+		waiting: openQuestions.length,
+		asked: scouts.flatMap((s) => s.asked || []).slice(0, 12),
+		cadence: ASK_EVERY_MS,
+	};
+}
+
+/** Jarvis external source for the Learn tab (live, short TTL). */
+async function source(ctx) {
+	const db = ctx && ctx.db;
+	const now = (ctx && ctx.now) || Date.now();
+	const bundle = await jarvisBundle(db, now);
+	return Object.assign({ needs: [] }, bundle);
 }
 
 /** Push open learn questions into jarvis_ai_proposals so Jarvis proposals can show them. */
@@ -367,25 +468,41 @@ async function publishAiProposals(db, slice, nowMs) {
 	return n;
 }
 
-async function answer(db, { id, status, note }, by, nowMs) {
+async function answer(db, { id, status, note, option }, by, nowMs) {
 	const qid = text(id, 120);
 	if (!qid) throw new Error('Which scout question?');
-	const scout = normalizeScout(String(qid).split(':')[0]);
+	const scoutHint = String(qid).split(':')[0];
+	const scout = normalizeScout(scoutHint === 'field' ? 'field-sweep' : scoutHint);
 	const prior = await loadDb(db, scout);
 	const found = (prior.openQuestions || []).find((q) => q.id === qid);
+	if (option === 'later') {
+		return { id: qid, status: 'later', text: found ? found.text : qid, deferred: true };
+	}
 	const openQuestions = (prior.openQuestions || []).filter((q) => q.id !== qid);
+	const optLabel =
+		option && found && Array.isArray(found.options)
+			? ((found.options.find((o) => o.id === option) || {}).label || option)
+			: '';
 	const row = {
 		id: qid,
-		status: status === 'dismissed' ? 'dismissed' : 'answered',
-		note: text(note, 240),
+		status: status === 'dismissed' || option === 'skip' || option === 'ignore' || option === 'dismiss' || option === 'drop' ? 'dismissed' : 'answered',
+		note: text(note || optLabel || option || '', 240),
+		option: text(option, 40),
 		text: found ? found.text : qid,
 		at: new Date(Number(nowMs) || Date.now()).toISOString(),
 		by: text(by, 120),
+		scout,
 	};
+	const lessons =
+		row.status === 'answered' && row.note
+			? clip([{ id: 'ans-' + qid, text: 'Carlos: ' + row.note, at: row.at, hits: 1 }].concat(prior.lessons || []).map((l) => (typeof l === 'string' ? l : l.text)).filter(Boolean), MAX.lessons)
+			: prior.lessons;
 	const state = Object.assign({}, prior, {
 		openQuestions,
 		asked: clip([row].concat(prior.asked || []), MAX.asked),
+		lessons,
 		at: row.at,
+		private: true,
 	});
 	await db.collection('jarvis_settings').doc(stateDoc(scout)).set(state);
 	return row;
@@ -394,6 +511,7 @@ async function answer(db, { id, status, note }, by, nowMs) {
 module.exports = {
 	SCOUTS,
 	ASK_EVERY_MS,
+	OPTIONS,
 	DIR: DEFAULT_DIR,
 	emptyState,
 	normalizeScout,
@@ -402,10 +520,14 @@ module.exports = {
 	reportMarkdown,
 	learnFile,
 	learnDb,
+	syncFile,
 	loadDb,
+	upsertState,
 	jarvisBundle,
+	source,
 	publishAiProposals,
 	answer,
+	withOptions,
 	filePath,
 	mergeKnowledge,
 	mergeQuestions,

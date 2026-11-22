@@ -204,6 +204,7 @@ async function main(argv) {
   const out = arg(argv, "out") || QUEUE_FILE;
   if (argv.includes("--dry-run")) { rows.forEach((r) => console.log(r.network + " #" + r.tag + " (" + r.topic + ", " + r.score + "): " + r.draft + (r.thread ? " [thread " + r.thread.url + "]" : ""))); console.log("scout drafts: " + rows.length + " drafts, dry run, nothing written"); return 0; }
   fs.writeFileSync(out, JSON.stringify(mergeQueue(readJson(out, []), rows), null, 1) + "\n");
+  await Learn.syncFile("trending").catch(() => null);
   console.log("scout drafts: " + rows.length + " drafts (" + rows.filter((r) => r.thread).length + " with a thread) in " + path.relative(ROOT, out) + "; none posted");
   return 0;
 }
