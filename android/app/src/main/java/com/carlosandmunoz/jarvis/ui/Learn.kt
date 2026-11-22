@@ -125,7 +125,9 @@ private fun LearnGuidesAppend(s: UiState, vm: JarvisViewModel) {
     }
     ExtLinksPanel("learn-links", learn.obj("links"), LEARN_GUIDE_LINKS)
     learn.obj("actions")?.objs("rows")?.takeIf { it.isNotEmpty() }?.let {
-        ExtActionsPanel("learn", "learn-actions", learn.obj("actions"), s, vm)
+        ExtActionsPanel("learn", "learn-actions", learn.obj("actions"), s.running) { key, op, body, note ->
+            vm.act(key, op, body, note)
+        }
     }
 }
 
