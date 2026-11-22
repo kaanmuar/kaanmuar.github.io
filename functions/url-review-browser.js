@@ -16,6 +16,7 @@ const { ipBlocked } = require('./url-review-ip');
 const { legalLinks, LEGAL_ANY } = require('./url-review-legal');
 const chatTalk = require('./url-review-chat-talk');
 const har = require('./url-review-har');
+const axtreeCdp = require('./url-review-axtree-cdp');
 const { registrable: siteOf } = require('./url-review-suffix');
 const {
 	fromUrl: libraryFromUrl,
@@ -2813,6 +2814,27 @@ async function browse(job, log, onStart) {
 			},
 			after: null,
 		};
+		if (axtreeCdp.enabled()) {
+			try {
+				const got = await axtreeCdp.attach(page, {
+					enabled: true,
+					url: first.finalUrl || start,
+					keepTree: false,
+				});
+				if (got.attached && got.axtree) {
+					result.axtree = got.axtree;
+					say(
+						'CDP accessibility tree: ' +
+							(got.report ? got.report.total + ' nodes, ' + got.report.issues.length + ' problems' : 'captured') +
+							' (QA_AXTREE_CDP).'
+					);
+				}
+				lap('axtree');
+			} catch (error) {
+				/* opt-in AXTree attach must not fail the review */
+				lap('axtree');
+			}
+		}
 		if (left() > 25000) {
 			say('Running axe-core on ' + pathOf(first.finalUrl) + '.');
 			const axe = await runAxe(page);

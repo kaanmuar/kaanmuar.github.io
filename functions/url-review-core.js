@@ -7060,6 +7060,9 @@ async function reviewTarget(rawUrl, hooks) {
 		);
 	else if (browser)
 		note('The browser pass did not finish (' + (browser.error || 'no answer') + '). The report uses the HTML alone.');
+	if (browser && browser.ok && browser.axtree && extras && extras.axtree == null) {
+		extras.axtree = browser.axtree;
+	}
 	let analysis = null;
 	note(
 		'Scoring the checks from the pages analyzed' +
