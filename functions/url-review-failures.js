@@ -201,6 +201,13 @@ const FIXES = [
 		ref: '#4142',
 		label: 'A response header whose value has a line feed is read, as Chrome reads it',
 	},
+	{
+		cause: 'timeout',
+		at: '2026-11-22T07:10:00Z',
+		ref: '#4143',
+		label:
+			'A start-page recovery whose tagged Chrome gets no document for the nav budget is tried again as plain Chrome',
+	},
 ];
 const fixKey = (fix) => fix.cause + ' ' + fix.ref;
 const runningFixes = () => FIXES.map(fixKey);

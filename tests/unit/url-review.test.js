@@ -4222,7 +4222,7 @@ test('a redirect that sets a cookie and points at itself is read with that cooki
 });
 
 test('a start page whose host cuts Chrome off for the review tag is loaded again as plain Chrome; a slow one is not (#1180)', () => {
-	const { tagCut } = require('../../functions/url-review-browser');
+	const { tagCut, tagRetry } = require('../../functions/url-review-browser');
 	const start = { url: 'https://hpe.com/', paths: [], html: true };
 	assert.equal(
 		tagCut(start, new Error('net::ERR_HTTP2_PROTOCOL_ERROR at https://www.hpe.com/')),
@@ -4237,6 +4237,15 @@ test('a start page whose host cuts Chrome off for the review tag is loaded again
 		''
 	);
 	assert.equal(tagCut(start, null), '');
+	// Recovery browse with no document for the full nav budget retries as plain Chrome (#4143); tagCut stays strict (#1180).
+	const timedOut = new Error('Navigation timeout of 20000 ms exceeded');
+	timedOut.name = 'TimeoutError';
+	assert.equal(tagRetry(start, timedOut), 'Navigation timeout');
+	assert.equal(tagRetry({ url: 'https://hpe.com/', paths: [] }, timedOut), '');
+	assert.equal(
+		tagRetry(start, new Error('net::ERR_HTTP2_PROTOCOL_ERROR at https://hpe.com/')),
+		'net::ERR_HTTP2_PROTOCOL_ERROR'
+	);
 });
 
 test('a page that moves itself on after it loaded is read again once the next page settles, not failed as a browser that did not finish (#2268)', async () => {
