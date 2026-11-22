@@ -72,6 +72,7 @@ const APP_ONLY = {
 	outreach: ['summary', 'segments', 'results', 'link-visits', 'link-opens', 'link-make', 'link-channels'],
 	marketing: ['summary', 'approvals', 'countdowns'],
 	engagement: ['summary', 'owner-accounts', 'owner-comments'],
+	learn: ['summary'],
 	business: ['providers', 'channels'],
 	systems: ['functions'],
 	github: ['health', 'summary', 'workflows'],

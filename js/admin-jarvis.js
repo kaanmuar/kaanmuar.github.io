@@ -52,6 +52,7 @@ const SNAPSHOT_OPS = [
 	'engagement',
 	'people',
 	'github-work',
+	'scout-learn',
 	'geo',
 	'calendar',
 	'mail-codes',
@@ -6506,6 +6507,32 @@ export function mountJarvis({
 		// The weekly tool scout (#3857): its open draft PR and the arsenal tickets still open. Nothing here changes the arsenal.
 		const scoutRun = sct ? sct.run : null;
 		const scoutOpen = sct ? (sct.tickets && sct.tickets.items) || [] : [];
+		const scoutLearn = sct && sct.learn && !sct.learn.error ? sct.learn : null;
+		const scoutLearnQs = scoutLearn && (scoutLearn.openQuestions || scoutLearn.questions || []);
+		const scoutLearnNote = scoutLearn
+			? `<p class="jv-note">Learning (#4237)${scoutLearn.runs ? ' · ' + fmt(scoutLearn.runs) + ' runs' : ''}${
+					scoutLearn.waiting || (scoutLearnQs && scoutLearnQs.length)
+						? ' · ' +
+							fmt(scoutLearn.waiting || scoutLearnQs.length) +
+							' open asks · ' +
+							esc(
+								(scoutLearnQs || [])
+									.map((q) => q.text)
+									.join(' · ')
+									.slice(0, 240)
+							)
+						: ''
+				}${
+					scoutLearn.odds && scoutLearn.odds[0]
+						? '<br>' +
+							esc(
+								Math.round((scoutLearn.odds[0].p || 0) * 100) +
+									'% — ' +
+									(scoutLearn.odds[0].claim || scoutLearn.odds[0].note || scoutLearn.odds[0].id || '')
+							)
+						: ''
+				}</p>`
+			: '';
 		const scoutBody = sct
 			? `<p class="jv-note">${
 					scoutRun
@@ -6515,7 +6542,7 @@ export function mountJarvis({
 					[['Arsenal ticket', (t) => `${ghLink(t.url, '#' + t.number)} ${esc(t.title)}`]],
 					scoutOpen,
 					'No arsenal tickets are open.'
-				)}<p class="jv-note">${fmt((sct.tickets && sct.tickets.open) || 0)} open, ${fmt((sct.tickets && sct.tickets.closed) || 0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.</p>`
+				)}<p class="jv-note">${fmt((sct.tickets && sct.tickets.open) || 0)} open, ${fmt((sct.tickets && sct.tickets.closed) || 0)} done under #3828. Read the report in the draft PR, then tell Jarvis or Carlos which candidates to ticket.</p>${scoutLearnNote}`
 			: off(g.scout);
 
 		const depDaily = dep
@@ -7822,6 +7849,150 @@ export function mountJarvis({
 		return head + `<h4>Accounts</h4>${groups}${add}<h4>Recent comments and owner replies</h4>${comments}`;
 	}
 
+	function learnView() {
+		const g = S.external['scout-learn'];
+		if (!g || g.ok === false)
+			return `<div class="jv-grid">${panel('learn-wait', 'Learn', waiting('scout-learn', 'Reading scout learning…'), { wide: true, note: 'Private to you and the scouts (#4237). Firestore is the source of truth.' })}</div>`;
+		const scouts = g.scouts || [];
+		const open = g.openQuestions || [];
+		const asked = g.asked || [];
+		const cadence = g.cadence || {};
+		const SCOUT_LABEL = {
+			tool: 'Tool scout',
+			engagement: 'Engagement',
+			'field-sweep': 'Field sweep',
+			trending: 'Trending',
+		};
+		const qCard = (q) => {
+			const opts = (q.options || [])
+				.map(
+					(o) =>
+						`<button type="button" class="jv-btn${o.id === 'later' ? '' : ' is-primary'}" data-learn-decide="${esc(o.id)}" data-id="${esc(q.id)}"${S.pending['learn:' + q.id] ? ' disabled' : ''}>${esc(o.label)}</button>`
+				)
+				.join('');
+			return `<li class="jv-learn-q"><strong>${esc(SCOUT_LABEL[q.scout] || q.scout || '')}</strong><p>${esc(q.text)}</p><p class="jv-note">${esc(q.why || '')}${q.at ? ' · ' + esc(when(q.at)) : ''}</p><div class="jv-prop-acts">${opts}</div></li>`;
+		};
+		const scoutBody = (s) => {
+			const days = Math.round((cadence[s.scout] || 0) / 86400000);
+			const odds = (s.odds || [])
+				.map(
+					(o) => `<li><span class="jv-chip">${Math.round((o.p || 0) * 100)}%</span> ${esc(o.claim || o.id || '')}</li>`
+				)
+				.join('');
+			const lessons = (s.lessons || [])
+				.map((l) => `<li>${esc(typeof l === 'string' ? l : l.text || '')}</li>`)
+				.join('');
+			const ex = (s.exceptions || []).map((e) => `<li>${esc(e.reason || e.id || '')}</li>`).join('');
+			const know = (s.knowledge || []).map((k) => `<li>${esc(k.text || k.key || '')}</li>`).join('');
+			return `<p class="jv-note">Private · ask every ${fmt(days)} day${days === 1 ? '' : 's'} · updated ${esc(when(s.at) || '—')}</p>
+					${lessons ? `<h4>Lessons</h4><ul>${lessons}</ul>` : ''}
+					${odds ? `<h4>Odds</h4><ul>${odds}</ul>` : ''}
+					${ex ? `<h4>Exceptions</h4><ul>${ex}</ul>` : ''}
+					${know ? `<h4>Knowledge</h4><ul>${know}</ul>` : ''}
+					${!lessons && !odds ? '<p class="jv-empty">No lessons yet for this scout.</p>' : ''}`;
+		};
+		const byScout = Object.fromEntries(scouts.map((s) => [s.scout, s]));
+		// Literal panel ids (parity with Android Learn.kt); extractor needs string literals.
+		const scoutPanels = [
+			byScout.tool &&
+				panel(
+					'learn-tool',
+					(SCOUT_LABEL.tool || 'tool') + (byScout.tool.runs ? ' · ' + fmt(byScout.tool.runs) + ' runs' : ''),
+					scoutBody(byScout.tool),
+					{
+						wide: true,
+						data: [byScout.tool],
+					}
+				),
+			byScout.engagement &&
+				panel(
+					'learn-engagement',
+					(SCOUT_LABEL.engagement || 'engagement') +
+						(byScout.engagement.runs ? ' · ' + fmt(byScout.engagement.runs) + ' runs' : ''),
+					scoutBody(byScout.engagement),
+					{ wide: true, data: [byScout.engagement] }
+				),
+			byScout['field-sweep'] &&
+				panel(
+					'learn-field-sweep',
+					(SCOUT_LABEL['field-sweep'] || 'field-sweep') +
+						(byScout['field-sweep'].runs ? ' · ' + fmt(byScout['field-sweep'].runs) + ' runs' : ''),
+					scoutBody(byScout['field-sweep']),
+					{ wide: true, data: [byScout['field-sweep']] }
+				),
+			byScout.trending &&
+				panel(
+					'learn-trending',
+					(SCOUT_LABEL.trending || 'trending') +
+						(byScout.trending.runs ? ' · ' + fmt(byScout.trending.runs) + ' runs' : ''),
+					scoutBody(byScout.trending),
+					{ wide: true, data: [byScout.trending] }
+				),
+		]
+			.filter(Boolean)
+			.join('');
+		const decideBody = open.length
+			? `<ul class="jv-learn-qs">${open.map(qCard).join('')}</ul>`
+			: '<p class="jv-empty">No open questions. Scouts ask on their cadence when something needs a decision.</p>';
+		const askedBody = asked.length
+			? table(
+					[
+						['When', (x) => esc(when(x.at))],
+						['Scout', (x) => esc(SCOUT_LABEL[x.scout] || x.scout || '')],
+						['Decision', (x) => esc(x.note || x.option || x.status || '')],
+						['Question', (x) => esc(x.text || x.id || '')],
+					],
+					asked,
+					'No decisions yet.'
+				)
+			: '<p class="jv-empty">Decisions you make here become lessons for that scout.</p>';
+		if (!scouts.length && !open.length)
+			return (
+				kpis([
+					{ label: 'Open asks', value: 0 },
+					{ label: 'Scouts', value: 0 },
+				]) +
+				`<div class="jv-grid">${panel('learn-empty', 'Learn', '<p class="jv-empty">No scout has learned yet. After the next tool, engagement, field-sweep or trending run, lessons and questions land here (Firestore, private).</p>', { wide: true })}</div>`
+			);
+		return (
+			kpis([
+				{ label: 'Open asks', value: g.waiting || open.length, alert: (g.waiting || open.length) > 0 },
+				{ label: 'Scouts with knowledge', value: scouts.length },
+				{ label: 'Updated', value: when(g.at) || '—' },
+			]) +
+			`<div class="jv-grid">
+            ${panel('learn-decide', `Decide${open.length ? ' · ' + open.length : ''}`, decideBody, { wide: true, data: open, note: 'Private (#4237). Pick an option; the scout stores your answer as a lesson. "Ask later" leaves the question open.' })}
+            ${panel('learn-asked', 'Recent decisions', askedBody, { wide: true, data: asked })}
+            ${scoutPanels}
+        </div><p class="jv-note">Learning is for you and the scouts only — never public hub posts or tool-scout draft PR bodies. Cadence: tool 7d · engagement 2d · field-sweep & trending 3d.</p>`
+		);
+	}
+
+	async function learnDecide(id, option) {
+		if (!id || !option) return;
+		S.pending['learn:' + id] = true;
+		render();
+		const out = await call('scout-learn-decide', { id, option }).catch((error) => ({
+			ok: false,
+			error: error.message,
+		}));
+		S.pending['learn:' + id] = false;
+		if (out && out.ok === false) {
+			toast('Not saved: ' + (out.error || 'failed'), 6000);
+			render();
+			return;
+		}
+		const g = S.external['scout-learn'];
+		if (g && option !== 'later') {
+			g.openQuestions = (g.openQuestions || []).filter((q) => q.id !== id);
+			g.waiting = (g.openQuestions || []).length;
+			if (out && !out.deferred) g.asked = [out].concat(g.asked || []).slice(0, 12);
+		}
+		render();
+		toast(option === 'later' ? 'Left open.' : 'Saved for the scout.', 5000);
+		loadExternal(['scout-learn']);
+	}
+
 	function engagementView() {
 		const g = S.external.engagement;
 		if (!g || !g.ok || !g.report)
@@ -7882,8 +8053,25 @@ export function mountJarvis({
 			d
 				? `Pack <strong>${esc(d.packName || d.pack || 'global')}</strong>${d.rotate ? ' (auto-rotates each slot)' : d.setting && d.setting !== 'auto' ? ' (pinned)' : ''} · ${fmt(d.topics)} searches · langs ${esc((d.langs || []).join(', '))}${scoutMeta.fieldSweep && scoutMeta.fieldSweep.count ? ` · field sweep ${fmt(scoutMeta.fieldSweep.count)}${scoutMeta.fieldSweep.tender ? ' (' + fmt(scoutMeta.fieldSweep.tender) + ' tender)' : ''}` : ''}`
 				: '';
+		const metaLearn = scoutMeta && scoutMeta.learn && !scoutMeta.learn.error ? scoutMeta.learn : null;
+		const metaLearnQs = metaLearn && (metaLearn.openQuestions || metaLearn.questions || []);
+		const metaLearnNote = metaLearn
+			? `<p class="jv-note">Learning (#4237)${metaLearn.waiting ? ' · ' + fmt(metaLearn.waiting) + ' open asks' : ''}${
+					metaLearnQs && metaLearnQs.length
+						? ' · ' +
+							esc(
+								metaLearnQs
+									.map((q) => q.text)
+									.join(' · ')
+									.slice(0, 280)
+							)
+						: metaLearn.lessons && metaLearn.lessons[0]
+							? ' · ' + esc(String(metaLearn.lessons[0]).slice(0, 160))
+							: ''
+				}</p>`
+			: '';
 		const metaBody = scoutMeta
-			? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(scoutMeta.at))}${scoutMeta.discovery ? ` · ${packLine(scoutMeta.discovery)}` : ''}${scoutMeta.needs && scoutMeta.needs.length ? '<br>' + esc(scoutMeta.needs.join(' · ')) : ''}</p>`
+			? `<p class="jv-chips">${Object.keys(metaTitles).map(metaChip).join(' ')}</p><p class="jv-note">Last meta scout ${esc(when(scoutMeta.at))}${scoutMeta.discovery ? ` · ${packLine(scoutMeta.discovery)}` : ''}${scoutMeta.needs && scoutMeta.needs.length ? '<br>' + esc(scoutMeta.needs.join(' · ')) : ''}</p>${metaLearnNote}`
 			: '<p class="jv-empty">The meta scout envelope appears after the next run.</p>';
 		const readTotal = (run) => Object.values((run && run.read) || {}).reduce((a, b) => a + b, 0);
 		const statusBody =
@@ -8108,7 +8296,7 @@ export function mountJarvis({
 			]) +
 			`<div class="jv-grid">${briefPanel('engagement')}
             ${panel('engagement-waiting', `Replies waiting for you${g.waiting.length ? ' · ' + g.waiting.length : ''}`, waitingBody, { wide: true, data: g.waiting.map((d) => ({ network: d.network, url: d.url, author: who(d), score: d.score, draft: d.actions.reply.draft, expires: d.actions.reply.expiresAt })), note: "Approve tells Jarvis to send a field reply (never a clipboard paste). Trend drafts (scout-drafts.json, #3814) use Save (no post): the decision is stored and nothing goes to any network. Your edit goes when you changed the text. A draft in a language other than English shows Gemini's English translation under it (#2630). Field drafts expire 6 hours after the scout found the post, or a day for an answer to a comment on our reply. No draft is made in a conversation we already answered; on Bluesky, Mastodon and YouTube the poster also checks the post itself before it sends, and comments on our replies, posts and clips there come back here to like and answer. An approved field reply posts at once on Bluesky, Mastodon and YouTube (in a dry run too); on X, LinkedIn, Meta and TikTok it waits for the Mac's browser agent (#1991). A profile-campaign message with no fresh post goes under their latest post of the last year (#3461)." })}
-            ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs.' })}
+            ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs. Learning (#4237) keeps scoped lessons, odds and questions for Carlos.' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: "The poster acts as these accounts. Connect signs in on the network's own page and comes back here; Mastodon is marked as a bot when it connects." })}
             ${panel('engagement-joins', 'Joins', joinsBody, { wide: true, data: joins.log, note: 'Telegram channels and groups and subreddits in our field, found by topic searches in any language. One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.' })}
@@ -9370,6 +9558,7 @@ export function mountJarvis({
 		out.geo = geoView() + take();
 		out.github = githubView() + take();
 		out.engagement = engagementView() + take();
+		out.learn = learnView() + take();
 		out.console = '';
 
 		const ga = e.ga4;
@@ -9678,7 +9867,13 @@ export function mountJarvis({
 								: C.readiness(S.external) + '%'
 							: p.key === 'github'
 								? (gw && gw.score && gw.score.overall && gw.score.overall.grade) || ''
-								: '';
+								: p.key === 'learn'
+									? (() => {
+											const L = S.external['scout-learn'];
+											const n = (L && (L.waiting || (L.openQuestions || []).length)) || 0;
+											return n ? n + ' ask' + (n === 1 ? '' : 's') : '';
+										})()
+									: '';
 		});
 		const ready = C.readiness(S.external);
 		$('#jv-ready').textContent = ready === null ? '—' : ready + '%';
@@ -11397,6 +11592,10 @@ export function mountJarvis({
 		if (t.dataset.mkDone) {
 			S.mkDone = t.dataset.mkDone === 'on';
 			render();
+			return;
+		}
+		if (t.dataset.learnDecide) {
+			learnDecide(t.dataset.id, t.dataset.learnDecide);
 			return;
 		}
 		if (t.dataset.egDecide) {

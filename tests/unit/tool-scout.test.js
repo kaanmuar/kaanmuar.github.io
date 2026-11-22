@@ -174,6 +174,7 @@ test('the scout keeps its memory on the tool-scout-data branch, not in the draft
 	assert.match(flow, /refs\/heads\/tool-scout-data/, 'saves the memory by pushing the data branch');
 	assert.ok(!/git add -f[^\n]*seen\.json/.test(flow), 'seen.json never rides on the PR branch');
 	assert.ok(flow.indexOf('Open a draft PR') < flow.indexOf("Save the scout's memory"), 'memory is saved only after the PR is opened');
+	assert.match(flow, /tool\.json/, 'learning memory (#4237) rides on the data branch with seen.json');
 });
 
 test('the README status check reads a status line, not a passing mention (#3901)', () => {

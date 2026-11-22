@@ -40,6 +40,8 @@ jobs:
           set -euo pipefail
           if git fetch -q --depth=1 origin tool-scout-data; then
             git show FETCH_HEAD:seen.json > scripts/tool-scout/seen.json
+            mkdir -p scripts/scout-learn
+            git show FETCH_HEAD:tool.json > scripts/scout-learn/tool.json 2>/dev/null || true
           else
             echo "No memory branch yet; every candidate counts as new."
           fi
@@ -116,6 +118,7 @@ jobs:
           add() { GIT_INDEX_FILE="$idx" git update-index --add --cacheinfo "100644,$(git hash-object -w "$1"),$2"; }
           add scripts/tool-scout/seen.json seen.json
           if [ -f "scripts/tool-scout/reports/$DATE.md" ]; then add "scripts/tool-scout/reports/$DATE.md" "report-$DATE.md"; fi
+          if [ -f scripts/scout-learn/tool.json ]; then add scripts/scout-learn/tool.json tool.json; fi
           tree=$(GIT_INDEX_FILE="$idx" git write-tree)
           commit=$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "Tool scout memory $DATE (#3857)")
           git push -q origin "${commit}:refs/heads/tool-scout-data"

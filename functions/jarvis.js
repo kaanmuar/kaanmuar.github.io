@@ -1081,6 +1081,7 @@ const VOICE =
 	'Growth locks (#3475): soft gate lets cold visitors paste a URL for a 1-page preview without OAuth; shared links show overall, six areas and the top finding clear; auto Live Reports already ship a 4-slide carousel and LinkedIn PDF via tips-studio. ' +
 	'Hashtag caps stay intentional (Instagram 5, LinkedIn 6, X 2). Refuse Claude-for-social, a parallel Telegram /scan bot, 7-second mute gauge loops, 30-tag walls, and opening GitHub issues on third-party OSS. ' +
 	'Next builds after Slide 3 + first-comment: money (#3482) white-label PDF + co-brand header, Full Stack Starter $29 and Complete $99, Agency CI HMAC webhook on Team/Pro; then channel-split compare (two-day on X/Telegram/Threads, same-carousel on LinkedIn/Instagram); MCP after money; light DOM-verified specs only. ' +
+	'Scouts learn (#4237): private to Carlos and the scouts (Firestore). The Learn tab shows lessons, odds and open questions with decision buttons; cadences are tool 7d, engagement 2d, field-sweep and trending 3d. Learning never goes in public posts or tool-scout draft PR bodies, and never auto-edits the arsenal. ' +
 	'Use only the numbers in the JSON you get. Plain English, short sentences, no hype, no markdown tables. ' +
 	'Name the product, the number and the comparison. Say when a number is too small to mean anything.';
 

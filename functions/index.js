@@ -10606,6 +10606,7 @@ const JARVIS_SNAPSHOT_OPS = [
 	'engagement',
 	'people',
 	'github-work',
+	'scout-learn',
 	'geo',
 	'calendar',
 ];
@@ -10721,6 +10722,8 @@ const JARVIS_LIVE_OPS = new Set([
 	'geo-costs-save',
 	'send-report',
 	'engagement-decide',
+	'scout-learn-decide',
+	'scout-learn-ingest',
 ]);
 
 const jarvisLiveNote = (out) =>
@@ -12995,6 +12998,31 @@ exports.jarvis = functions
 				]);
 			} else if (op === 'engagement-decide')
 				out = await jarvisEngagement.decide(Object.assign(engagementDeps(), { now }), body, operator);
+			else if (op === 'scout-learn-decide') {
+				const Learn = require('./scout-learn');
+				const learnDb = getFirestore();
+				const decided = await Learn.answer(
+					learnDb,
+					{ id: body.id || body.key, status: body.status, note: body.note, option: body.option || body.decision },
+					operator,
+					now
+				);
+				out = Object.assign({ ok: true }, decided);
+				await Promise.all([
+					learnDb.collection('jarvis_cache').doc('scout-learn-0').delete().catch(() => null),
+					jarvisSnap.drop(learnDb, ['external']),
+				]);
+			} else if (op === 'scout-learn-ingest') {
+				const Learn = require('./scout-learn');
+				const learnDb = getFirestore();
+				const state = body.state || body;
+				if (!state || !state.scout) throw new Error('Which scout state?');
+				out = { ok: true, state: await Learn.upsertState(learnDb, state) };
+				await Promise.all([
+					learnDb.collection('jarvis_cache').doc('scout-learn-0').delete().catch(() => null),
+					jarvisSnap.drop(learnDb, ['external']),
+				]);
+			}
 			else if (op === 'outreach-send-settings')
 				out = await outreachSend.save(getFirestore(), body.settings || body, operator, now);
 			else if (op === 'engagement-settings')

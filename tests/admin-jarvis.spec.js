@@ -2150,7 +2150,7 @@ test.describe('admin statistics (Jarvis)', () => {
 		page.on('pageerror', (error) => errors.push(error.message));
 		const calls = await openStats(page);
 		const tabs = page.locator('.jv-tabs [role="tab"]');
-		await expect(tabs).toHaveCount(16);
+		await expect(tabs).toHaveCount(17);
 		await expect(tabs).toContainText([
 			'Overview',
 			'Inbox',
@@ -2164,6 +2164,7 @@ test.describe('admin statistics (Jarvis)', () => {
 			'Marketing',
 			'Map',
 			'Engagement',
+			'Learn',
 			'Traffic',
 			'Systems',
 			'GitHub',

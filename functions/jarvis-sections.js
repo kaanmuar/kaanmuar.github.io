@@ -35,7 +35,7 @@ const SECTIONS = {
 	},
 	pagespeed: { external: ['pagespeed', 'local', 'search', 'rescue', 'checks'], from: ['external'] },
 	marketing: {
-		external: ['marketing', 'marketing-sync', 'social', 'outreach', 'targets', 'engagement', 'ga4', 'geo', 'calendar'],
+		external: ['marketing', 'marketing-sync', 'social', 'outreach', 'targets', 'engagement', 'scout-learn', 'ga4', 'geo', 'calendar'],
 		from: ['external'],
 	},
 	people: { external: ['people', 'calls'], from: ['external'] },

@@ -53,6 +53,7 @@ const TTL = {
 	checks: 10 * MINUTE,
 	pagespeed: 10 * MINUTE,
 	'github-work': 10 * MINUTE,
+	'scout-learn': 2 * MINUTE,
 	targets: HOUR,
 	geo: 15 * MINUTE,
 	calendar: 6 * HOUR,
@@ -74,6 +75,7 @@ const jarvisGithub = require('./jarvis-github');
 const jarvisTargets = require('./jarvis-targets');
 const jarvisGeo = require('./jarvis-geo');
 const jarvisCalendar = require('./jarvis-calendar');
+const scoutLearn = require('./scout-learn');
 const booking = require('./booking');
 const FIRESTORE_FREE = { reads: 50000, writes: 20000, deletes: 20000 };
 
@@ -1302,6 +1304,7 @@ const SOURCES = {
 	fixes: jarvisReviewOps.fixesSource,
 	checks: jarvisReviewOps.checksSource,
 	'github-work': jarvisGithub.source,
+	'scout-learn': scoutLearn.source,
 	targets: jarvisTargets.source,
 	geo: jarvisGeo.geo,
 	calendar: jarvisCalendar.source,

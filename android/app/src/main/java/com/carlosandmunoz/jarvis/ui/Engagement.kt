@@ -224,6 +224,10 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
             meta.obj("fieldSweep")?.num("count")?.takeIf { it > 0 }?.let { KeyRow("Field sweep", fmt(it) + " proposals" + (meta.obj("fieldSweep")?.num("tender")?.takeIf { t -> t > 0 }?.let { " · ${fmt(it)} tender" } ?: "")) }
             meta.str("at")?.let { KeyRow("Last envelope", ago(it) ?: it) }
             (meta.get("needs") as? kotlinx.serialization.json.JsonArray)?.strings()?.takeIf { it.isNotEmpty() }?.let { Muted(it.joinToString(" · ")) }
+            val learn = meta.obj("learn")
+            val asks = learn.objs("openQuestions").ifEmpty { learn.objs("questions") }.mapNotNull { it.str("text") }.filter { it.isNotBlank() }
+            if (asks.isNotEmpty()) Muted("Learning asks (#4237): " + asks.joinToString(" · ").take(280))
+            else if ((learn.num("waiting") ?: 0.0) > 0.0) Muted("Learning (#4237): ${fmt(learn.num("waiting") ?: 0.0)} open asks.")
         }
     }
 

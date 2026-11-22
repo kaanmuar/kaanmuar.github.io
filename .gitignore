@@ -84,6 +84,7 @@ assets/review-arena/*-v2.jpg
 # Tool scout output (#3857): Tailwind scans tracked text, so the weekly files are force-added by the workflow
 scripts/tool-scout/reports/
 scripts/tool-scout/seen.json
+scripts/scout-learn/*.json
 # Promoter scout output (#4151): same pattern
 scripts/promoter-scout/reports/
 scripts/promoter-scout/seen.json
