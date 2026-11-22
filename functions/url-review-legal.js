@@ -4,6 +4,9 @@ const LEGAL = {
 	// The bare word, or a statement or declaration of it. A forum or article about accessibility is not the statement.
 	accessibility: {
 		text: /^(web )?(accessibility|accesibilidad|acessibilidade|barrierefreiheit|accessibilit[ée]|accessibilit[àa])$|(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)(?<=(?:^|\s)(?:(?!accessib|barrierefrei)\S)*(?:accessib|barrierefrei))\S*\s+(statement|erkl[äa]rung)|accessibilit[ée]\s*:\s*(non|partiellement|totalement)\s+conforme/i,
+		// Statement wording in the link text, not the bare topic word; away paths still count when only the address matches.
+		statementText:
+			/(statement|declaraci[oó]n|declara[cç][ãa]o|erkl[äa]rung|d[ée]claration|dichiarazione)\b.{0,30}(accessib|accesib|acessib|barrierefrei)|(accessib|barrierefrei)(?<=(?:^|\s)(?:(?!accessib|barrierefrei)\S)*(?:accessib|barrierefrei))\S*\s+(statement|erkl[äa]rung)|accessibilit[ée]\s*:\s*(non|partiellement|totalement)\s+conforme/i,
 		href: /\/(?=[a-z-]*(accessib|accesib|acessib|barrierefrei))[a-z-]*(\.[a-z]+)?\/?$/i,
 		away: /\/(forums?|blog|news|tags?|categor(y|ies)|topics?|support|help|kb|articles?|docs?|products?|collections?)\//i,
 	},
@@ -60,12 +63,15 @@ function legalLinks(anchors, pageUrl) {
 	});
 	KINDS.forEach((kind) => {
 		const rule = LEGAL[kind];
-		const fits = (link) =>
-			!(kind === 'accessibility' && OVERLAY.test(link.host)) && !(rule.away && rule.away.test(link.path));
+		const overlay = (link) => kind === 'accessibility' && OVERLAY.test(link.host);
+		const away = (link) => rule.away && rule.away.test(link.path);
+		const wording = (link) => link.text || link.label;
+		const named = (link) => rule.text.test(wording(link));
+		const statement = (link) => rule.statementText && rule.statementText.test(wording(link));
 		// aria-label and title name the link only when it shows no words of its own.
 		const hit =
-			usable.find((link) => fits(link) && rule.text.test(link.text || link.label)) ||
-			usable.find((link) => fits(link) && rule.href.test(link.path));
+			usable.find((link) => !overlay(link) && named(link) && (!away(link) || statement(link))) ||
+			usable.find((link) => !overlay(link) && !away(link) && rule.href.test(link.path));
 		if (hit) found[kind] = { href: hit.href, text: hit.text || hit.label };
 	});
 	return found;
