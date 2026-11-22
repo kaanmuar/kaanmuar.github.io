@@ -10609,7 +10609,7 @@ const JARVIS_SNAPSHOT_OPS = [
 	'scout-learn',
 	'geo',
 	'calendar',
-};
+];
 
 // Everything the stats page shows, in one answer for the Android app and the web page (#2102); neither reads Firestore
 // itself. One builder per section, each kept until its TTL or the write that changes it (jarvis-snapshot.js, #2099).
