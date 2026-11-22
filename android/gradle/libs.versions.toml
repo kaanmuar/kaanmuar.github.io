@@ -28,6 +28,10 @@ detekt = "1.23.8"
 composeLints = "1.4.2"
 # getsentry/sentry-java (MIT) and touchlab/Kermit (Apache-2.0), both LICENSE-checked via the GitHub API (#3836).
 sentry = "8.65.0"
+# getsentry/sentry-android-gradle-plugin (MIT): mapping upload companion to sentry-android 8.65.0 (#3836).
+# Plugin id io.sentry.android.gradle → Maven module io.sentry:sentry-android-gradle-plugin (see settings.gradle.kts).
+# Separate version line from the SDK; 6.27.0 is current Maven Central release (auto-install off so SDK pin wins).
+sentryGradle = "6.27.0"
 # 2.2.0 needs compileSdk 36 (AGP 8.7.3 caps at 35); raise with AGP.
 kermit = "2.1.0"
 # google/horologist datalayer (Apache-2.0, LICENSE + Maven POM verified); 0.7.15 = latest non-alpha (#3836).
@@ -81,3 +85,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+sentry-gradle = { id = "io.sentry.android.gradle", version.ref = "sentryGradle" }

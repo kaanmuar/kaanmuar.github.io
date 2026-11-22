@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.sentry.gradle) apply false
 }
 
 // Dependency locking (#3951): gradle.lockfile per module so OSV-Scanner can scan Android dependencies.
