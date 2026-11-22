@@ -1396,6 +1396,7 @@ exports.emailQuarterSiteReport = scheduled(withMail, 'emailQuarterSiteReport', a
 
 const reviewMail = require('./url-review-mail');
 const webhookIdem = require('./webhook-idempotency');
+const stripeWebhook = require('./stripe-webhook');
 
 async function loadBound(name, field, startVal, endVal, options) {
 	const pageSize = (options && options.pageSize) || 400;
@@ -3859,6 +3860,65 @@ exports.legalWatch = require('firebase-functions/v2/scheduler').onSchedule(
 		})
 );
 
+
+const checkoutReconcile = require('./checkout-reconcile');
+
+// Checkout reconcile (#3837): daily compare of recent PayPal payment rows vs provider captures.
+async function runCheckoutReconcile() {
+	const keys = paypalKeys('live');
+	let ready = false;
+	try {
+		urlReview.paypalCredentials(keys);
+		ready = true;
+	} catch (error) {
+		ready = false;
+	}
+	const provider = ready
+		? {
+				ready: true,
+				async getCapture(captureId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/payments/captures/' + captureId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+				async getOrder(orderId) {
+					const creds = urlReview.paypalCredentials(keys);
+					const token = await urlReview.paypalAccessToken(creds);
+					const res = await fetch('https://' + creds.host + '/v2/checkout/orders/' + orderId, {
+						headers: { authorization: 'Bearer ' + token, accept: 'application/json' },
+						signal: AbortSignal.timeout(12000),
+					});
+					if (!res.ok) return null;
+					return res.json();
+				},
+			}
+		: { ready: false };
+	return checkoutReconcile.run({
+		store: checkoutReconcile.firestoreStore(getFirestore()),
+		provider,
+		log: (text) => console.log(text),
+	});
+}
+
+exports.checkoutReconcile = require('firebase-functions/v2/scheduler').onSchedule(
+	{
+		schedule: ops.cron('checkoutReconcile'),
+		timeZone: ops.TIME_ZONE,
+		timeoutSeconds: 300,
+		memory: '512MiB',
+		maxInstances: 1,
+		retryConfig: { retryCount: 0 },
+		secrets: SECRETS.checkoutReconcile,
+	},
+	() => track('checkoutReconcile', () => runCheckoutReconcile())
+);
+
+
 exports.outreachSweep = require('firebase-functions/v2/scheduler').onSchedule(
 	{
 		schedule: ops.cron('outreachSweep'),
@@ -5868,6 +5928,16 @@ async function reversePayment(ids, keys, testRun) {
 	return true;
 }
 
+
+// Stripe posts each event to /stripe-webhook/live or /stripe-webhook/test. Stub: verify + claim-once ack only (#3837).
+async function handleStripeWebhook(req, res, mode) {
+	await stripeWebhook.handle(req, res, {
+		mode,
+		store: webhookIdem.firestoreStore(getFirestore()),
+		rawBody: req.rawBody,
+	});
+}
+
 // PayPal posts each event to /paypal-webhook/live or /paypal-webhook/sandbox. A non-2xx answer makes PayPal retry for three days.
 async function handlePayPalWebhook(req, res, mode) {
 	const keys = paypalKeys(mode);
@@ -6752,6 +6822,13 @@ exports.reviewUrl = functions
 			(pathName.endsWith('/paypal-webhook/live') || pathName.endsWith('/paypal-webhook/sandbox'))
 		) {
 			await handlePayPalWebhook(req, res, pathName.endsWith('/sandbox') ? 'sandbox' : 'live');
+			return;
+		}
+		if (
+			req.method === 'POST' &&
+			(pathName.endsWith('/stripe-webhook/live') || pathName.endsWith('/stripe-webhook/test'))
+		) {
+			await handleStripeWebhook(req, res, pathName.endsWith('/test') ? 'test' : 'live');
 			return;
 		}
 		if (pathName.indexOf('/auth/') !== -1) {
@@ -10028,7 +10105,7 @@ exports.webfinger = functions
 	});
 
 // Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
-// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; does not Accept Follows automatically.
+// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; auto-Accepts Follow when PRIVATE_KEY_PEM is set.
 const socialInbox = require('./social-inbox');
 exports.socialInbox = functions
 	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })

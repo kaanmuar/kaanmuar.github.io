@@ -886,7 +886,7 @@
         .gauge-bar i:nth-child(2) { background: var(--amber); }
         .gauge-bar i:nth-child(3) { flex: 1; background: var(--red); border-radius: 0 999px 999px 0; }
         .gauge-bar u { position: absolute; top: -4px; width: 3px; height: 16px; margin-left: -1.5px; background: var(--text); border-radius: 2px; }
-        .table-scroll { overflow-x: auto; }
+        .table-scroll { overflow-x: auto; max-width: 100%; }
         .sec-matrix td.ok { color: var(--green); text-align: center; }
         .sec-matrix td.no { color: var(--red); text-align: center; font-weight: 700; }
         .sec-matrix th:not(:first-child) { text-align: center; }
@@ -972,9 +972,16 @@
         .shots figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
         .shots-3 { grid-template-columns: minmax(0, 1fr) 190px 120px; }
         @media (max-width: 640px) { .shots { grid-template-columns: minmax(0, 1fr) 110px; } .shots-3 { grid-template-columns: 1fr 1fr; } .shots-3 figure:first-child { grid-column: 1 / -1; } }
-        .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+        .mini-table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+        .mini-table th, .mini-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; min-width: 0; overflow-wrap: anywhere; }
         .mini-table th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+        /* Keep Why / trailing labels readable when a path is a long query string (#4202). */
+        .mini-table th:last-child, .mini-table td:last-child { width: 28%; }
+        .mini-table.sec-matrix { min-width: 640px; }
+        .mini-table.sec-matrix th:first-child, .mini-table.sec-matrix td:first-child { width: 26%; }
+        .mini-table.sec-matrix th:not(:first-child):not(:last-child),
+        .mini-table.sec-matrix td:not(:first-child):not(:last-child) { width: 3.2rem; white-space: nowrap; }
+        .mini-table.sec-matrix th:last-child, .mini-table.sec-matrix td:last-child { width: 7.5rem; }
         .stat-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
         .stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel); }
         .stat b { display: block; font-size: 1.5rem; font-family: "Source Serif 4", Georgia, serif; }
@@ -1334,6 +1341,14 @@
         .report-top .btn[hidden] { display: none; }
         .report-top .btn::before { content: ""; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--arrow-up) center / contain no-repeat; mask: var(--arrow-up) center / contain no-repeat; }
         .dash-overlay { --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 19V5M5.5 11.5 12 5l6.5 6.5' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+        /* Open report sheet stays opaque under every site look (#4202, #2796). Screen only: print keeps #fff below. */
+        @media screen {
+            html[data-look] .dash-overlay.open .dash-modal {
+                background: var(--bg);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+        }
         @media screen and (min-width: 801px) {
             .dash-overlay .dash-modal { padding-left: 36px; padding-right: 36px; }
         }
@@ -1348,7 +1363,6 @@
             #report .filters button { min-height: 36px; padding: 6px 12px; }
             #report .fold-toggle { min-height: 36px; }
             #report .list-more { padding: 10px 6px; margin: 0 -6px; }
-            .dash-overlay.open .dash-modal { -webkit-backdrop-filter: none; backdrop-filter: none; }
             .report-toolbar .actions .btn { min-height: 40px; }
             .dash-overlay.open { --close-bar: calc(env(safe-area-inset-top, 0px) + 70px); padding-right: calc(var(--dash-pad) + 16px); }
             .dash-overlay.open::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 7; height: var(--close-bar); background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px -10px rgba(8, 14, 18, .45); opacity: 0; pointer-events: none; }
@@ -1358,9 +1372,6 @@
             .dash-overlay.open .report-brand { min-width: 0; padding-right: var(--close-room, 0px); }
             .dash-overlay.open .report-toolbar .actions { padding-right: var(--close-room, 0px); }
             .report-cover h2 { font-size: clamp(1.25rem, 6.4vw, 1.8rem); }
-        }
-        @media screen and (max-width: 800px) {
-            .dash-overlay.open .dash-modal { background: var(--bg); }
         }
         @media (max-width: 520px) {
             .stage-start-row { flex-direction: column; align-items: stretch; }
@@ -1543,8 +1554,17 @@
         @media print {
             .topbar, .gate, #intake, #run-panel, .filters, .no-print, .report-toolbar, #share-link, #share-note, #pay, #run-pay, .wire, .stage { display: none !important; }
             .dash-overlay { display: block !important; position: static; background: #fff; padding: 0; overflow: visible; }
-            .dash-modal { box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f; }
-            .card, .kpi, .tick, .report-cover { box-shadow: none; break-inside: avoid; }
+            .dash-modal,
+            html[data-look] .dash-modal {
+                box-shadow: none; margin: 0; max-width: none; border: 0; background: #fff; color: #12181f;
+                -webkit-backdrop-filter: none; backdrop-filter: none;
+            }
+            .card, .kpi, .tick, .report-cover,
+            html[data-look] .dash-modal .card,
+            html[data-look] .dash-modal .kpi {
+                box-shadow: none; break-inside: avoid; background: #fff;
+                -webkit-backdrop-filter: none; backdrop-filter: none;
+            }
             #compare:has(> #compare-result[hidden]), h2:has(+ #compare > #compare-result[hidden]) { display: none !important; }
             #compare-result { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             main { max-width: none; }

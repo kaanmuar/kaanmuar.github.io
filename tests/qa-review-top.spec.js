@@ -1069,24 +1069,27 @@ test.describe('Report section index (#2770)', () => {
 		expect(shots).toEqual(shots.map(() => ({ set: true, ratio: true })));
 	});
 
+	async function sheetOpacity(page) {
+		return page.locator('#dash-overlay .dash-modal').evaluate((el) => {
+			const style = getComputedStyle(el);
+			const probe = document.createElement('i');
+			probe.style.color = style.backgroundColor;
+			document.body.appendChild(probe);
+			const alpha = getComputedStyle(probe)
+				.color.match(/[\d.]+/g)
+				.map(Number)[3];
+			probe.remove();
+			return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
+		});
+	}
+
 	test('on a phone the report sheet is opaque, and Close stays pinned on top (#2796)', async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 844 });
 		await openSample(page);
 		await page.locator('#dash-overlay').evaluate((el) => el.scrollTo(0, 1400));
 		for (const dark of [false, true]) {
 			await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
-			const sheet = await page.locator('#dash-overlay .dash-modal').evaluate((el) => {
-				const style = getComputedStyle(el);
-				const probe = document.createElement('i');
-				probe.style.color = style.backgroundColor;
-				document.body.appendChild(probe);
-				const alpha = getComputedStyle(probe)
-					.color.match(/[\d.]+/g)
-					.map(Number)[3];
-				probe.remove();
-				return { alpha: alpha === undefined ? 1 : alpha, image: style.backgroundImage, filter: style.backdropFilter };
-			});
-			expect(sheet).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+			expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
 		}
 		const close = await page.locator('#dash-close').boundingBox();
 		expect(close.y).toBeLessThan(30);
@@ -1095,6 +1098,64 @@ test.describe('Report section index (#2770)', () => {
 		expect(
 			await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)
 		).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
+	});
+
+	test('on desktop the open report sheet stays opaque under the golden look (#4202)', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await openSample(page);
+		await page.evaluate(() => document.documentElement.setAttribute('data-look', 'golden'));
+		for (const dark of [false, true]) {
+			await page.evaluate((on) => document.documentElement.classList.toggle('dark-mode', on), dark);
+			expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+		}
+		await page.emulateMedia({ media: 'print' });
+		expect(await sheetOpacity(page)).toEqual({ alpha: 1, image: 'none', filter: 'none' });
+		expect(
+			await page.locator('#dash-overlay .dash-modal').evaluate((el) => getComputedStyle(el).backgroundColor)
+		).toMatch(/^(rgb\(255, 255, 255\)|color\(srgb 1 1 1( \/ [\d.]+)?\))$/);
+	});
+
+	test('a long page path cannot crush the Why or cookie columns in report tables (#4202)', async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 900 });
+		await openSample(page);
+		const long =
+			'/v3/signin/identifier?opparams=' +
+			encodeURIComponent('https://accounts.google.com/' + 'x'.repeat(180));
+		const sizes = await page.evaluate((path) => {
+			const host = document.querySelector('#report') || document.body;
+			const seo = document.createElement('table');
+			seo.className = 'mini-table';
+			seo.innerHTML =
+				'<thead><tr><th>Page not indexable</th><th>Why</th></tr></thead><tbody><tr><td class="notranslate">' +
+				path +
+				'</td><td>noindex</td></tr></tbody>';
+			host.appendChild(seo);
+			const matrix = document.createElement('table');
+			matrix.className = 'mini-table sec-matrix';
+			matrix.innerHTML =
+				'<thead><tr><th>Page</th><th>HSTS</th><th>CSP</th><th>Cookies</th></tr></thead><tbody><tr><td class="notranslate">' +
+				path +
+				'</td><td class="ok">✓</td><td class="no">✗</td><td>1, 1 without Secure</td></tr></tbody>';
+			const wrap = document.createElement('div');
+			wrap.className = 'table-scroll';
+			wrap.appendChild(matrix);
+			host.appendChild(wrap);
+			const measure = (table) => {
+				const first = table.querySelector('td');
+				const last = table.querySelector('tr td:last-child');
+				return {
+					tableW: Math.round(table.getBoundingClientRect().width),
+					firstW: Math.round(first.getBoundingClientRect().width),
+					lastW: Math.round(last.getBoundingClientRect().width),
+				};
+			};
+			return { seo: measure(seo), matrix: measure(matrix) };
+		}, long);
+		// Width is the crush signal; last-cell height tracks the path row once the path wraps.
+		expect(sizes.seo.lastW).toBeGreaterThan(80);
+		expect(sizes.seo.firstW).toBeLessThan(sizes.seo.tableW * 0.85);
+		expect(sizes.matrix.lastW).toBeGreaterThan(80);
+		expect(sizes.matrix.firstW).toBeLessThan(sizes.matrix.tableW * 0.5);
 	});
 
 	test('each language page labels the index and its groups in its language', async ({ page }) => {

@@ -9,6 +9,10 @@
  * Gate: SOCIAL_INBOX_AP=1. Optional SOCIAL_INBOX_AP_ACTOR (our actor IRI) drops activities that do not address us.
  * Optional SOCIAL_INBOX_AP_SKIP_SIG=1 accepts unsigned POSTs (local tests only; never set in production).
  *
+ * Follow auto-Accept: after a new Follow is stored, build an Accept. If SOCIAL_INBOX_AP_PRIVATE_KEY_PEM is set
+ * (ops secret; PUBLIC half is SOCIAL_INBOX_AP_PUBLIC_KEY_PEM for actor#main-key), sign + POST to the
+ * follower's inbox. Otherwise store acceptIntent on the fediverse_inbox doc (ops gap — no private key).
+ *
  * Does not touch scripts/social-inbox.js (owner share → post) or open-social-queue.js (outbound posting).
  */
 
@@ -275,6 +279,228 @@ async function verifyHttpSignature(
 	return ok ? { ok: true, keyId: sig.keyId } : { ok: false, reason: 'bad-signature' };
 }
 
+function privateKeyPem(env = process.env) {
+	return String(env.SOCIAL_INBOX_AP_PRIVATE_KEY_PEM || '')
+		.trim()
+		.replace(/\\n/g, '\n');
+}
+
+function publicKeyPem(env = process.env) {
+	return String(env.SOCIAL_INBOX_AP_PUBLIC_KEY_PEM || '')
+		.trim()
+		.replace(/\\n/g, '\n');
+}
+
+function keyIdFor(env = process.env) {
+	const actor = ourActor(env);
+	if (!actor) return '';
+	const hash = actor.indexOf('#');
+	return (hash >= 0 ? actor.slice(0, hash) : actor) + '#main-key';
+}
+
+function buildAccept(followEvent, env = process.env, now = new Date()) {
+	const actor = ourActor(env);
+	if (!actor || !followEvent || followEvent.type !== 'Follow') return null;
+	const when = now instanceof Date ? now : new Date(now);
+	return {
+		'@context': 'https://www.w3.org/ns/activitystreams',
+		id: (actor.endsWith('/') ? actor : actor + '/') + 'accepts/' + docIdFor(followEvent.id),
+		type: 'Accept',
+		actor,
+		object: followEvent.activity || {
+			id: followEvent.id,
+			type: 'Follow',
+			actor: followEvent.actor,
+			object: followEvent.objectId,
+		},
+		to: [followEvent.actor],
+		published: when.toISOString(),
+	};
+}
+
+function signOutboundRequest({ method, path, host, date, body, keyId, pem }) {
+	const digest = bodyDigest(body);
+	const headersList = '(request-target) host date digest';
+	const stringToSign = [
+		'(request-target): ' + String(method || 'POST').toLowerCase() + ' ' + path,
+		'host: ' + host,
+		'date: ' + date,
+		'digest: ' + digest,
+	].join('\n');
+	const signature = crypto.sign('sha256', Buffer.from(stringToSign, 'utf8'), pem).toString('base64');
+	return {
+		digest,
+		date,
+		signatureHeader:
+			'keyId="' +
+			keyId +
+			'",algorithm="rsa-sha256",headers="' +
+			headersList +
+			'",signature="' +
+			signature +
+			'"',
+	};
+}
+
+async function resolveInboxUrl(actorIri, { fetchImpl = fetch, actors = defaultActors } = {}) {
+	if (!actorIri) return '';
+	const actor = await actors.get(actorIri, fetchImpl);
+	return iriOf(actor && actor.inbox);
+}
+
+/**
+ * Deliver a signed Accept to the follower's inbox, or record an ops-gap intent when we cannot sign.
+ * Signing needs SOCIAL_INBOX_AP_PRIVATE_KEY_PEM. PUBLIC_KEY_PEM is the published half (keyId = actor#main-key).
+ */
+async function autoAcceptFollow(event, saved, opts = {}) {
+	if (!event || event.type !== 'Follow') return null;
+	if (saved && saved.duplicate) return { ok: true, skipped: true, reason: 'duplicate' };
+
+	const env = opts.env || process.env;
+	const fetchImpl = opts.fetchImpl || fetch;
+	const actors = opts.actors || defaultActors;
+	const db = opts.db || null;
+	const now = opts.now instanceof Date ? opts.now : new Date(opts.now || Date.now());
+	const docId = saved && saved.id ? saved.id : docIdFor(event.id);
+	const pem = privateKeyPem(env);
+	const accept = buildAccept(event, env, now);
+
+	if (!accept) {
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason: 'missing-actor',
+			at: now.toISOString(),
+		});
+	}
+
+	if (!pem) {
+		const reason = publicKeyPem(env) ? 'missing-private-key' : 'missing-keys';
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason,
+			acceptId: accept.id,
+			at: now.toISOString(),
+			note: 'Set SOCIAL_INBOX_AP_PRIVATE_KEY_PEM (and matching PUBLIC_KEY_PEM on the actor) to auto-deliver Accept.',
+		});
+	}
+
+	let inboxUrl = '';
+	try {
+		inboxUrl = await resolveInboxUrl(event.actor, { fetchImpl, actors });
+	} catch (error) {
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason: 'actor-fetch',
+			acceptId: accept.id,
+			at: now.toISOString(),
+		});
+	}
+	if (!inboxUrl) {
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason: 'no-inbox',
+			acceptId: accept.id,
+			at: now.toISOString(),
+		});
+	}
+
+	let target;
+	try {
+		target = new URL(inboxUrl);
+	} catch (error) {
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason: 'bad-inbox',
+			acceptId: accept.id,
+			at: now.toISOString(),
+		});
+	}
+
+	const body = Buffer.from(JSON.stringify(accept), 'utf8');
+	const date = now.toUTCString();
+	const path = (target.pathname || '/') + (target.search || '');
+	const keyId = keyIdFor(env);
+	let signed;
+	try {
+		signed = signOutboundRequest({
+			method: 'POST',
+			path,
+			host: target.host,
+			date,
+			body,
+			keyId,
+			pem,
+		});
+	} catch (error) {
+		return recordAcceptIntent(db, docId, {
+			status: 'pending',
+			reason: 'sign-failed',
+			acceptId: accept.id,
+			at: now.toISOString(),
+		});
+	}
+
+	let status = 0;
+	try {
+		const res = await fetchImpl(inboxUrl, {
+			method: 'POST',
+			headers: {
+				Host: target.host,
+				Date: signed.date,
+				Digest: signed.digest,
+				Signature: signed.signatureHeader,
+				'Content-Type': 'application/activity+json',
+				Accept: 'application/activity+json',
+			},
+			body,
+			signal: AbortSignal.timeout(15000),
+		});
+		status = res.status;
+		if (status < 200 || status >= 300) {
+			return recordAcceptIntent(db, docId, {
+				status: 'failed',
+				reason: 'delivery-' + status,
+				acceptId: accept.id,
+				inbox: inboxUrl,
+				at: now.toISOString(),
+			});
+		}
+	} catch (error) {
+		return recordAcceptIntent(db, docId, {
+			status: 'failed',
+			reason: 'delivery-error',
+			acceptId: accept.id,
+			inbox: inboxUrl,
+			at: now.toISOString(),
+		});
+	}
+
+	const intent = {
+		status: 'delivered',
+		reason: 'ok',
+		acceptId: accept.id,
+		inbox: inboxUrl,
+		httpStatus: status,
+		at: now.toISOString(),
+	};
+	await recordAcceptIntent(db, docId, intent);
+	return { ok: true, delivered: true, accept, intent };
+}
+
+async function recordAcceptIntent(db, docId, intent) {
+	if (db && docId) {
+		const ref = db.collection(COLLECTION).doc(docId);
+		if (typeof ref.update === 'function') {
+			await ref.update({ acceptIntent: intent });
+		} else if (typeof ref.set === 'function') {
+			const snap = await ref.get();
+			const prev = snap.exists && typeof snap.data === 'function' ? snap.data() || {} : {};
+			await ref.set(Object.assign({}, prev, { acceptIntent: intent }));
+		}
+	}
+	return { ok: true, delivered: intent.status === 'delivered', intent };
+}
+
 async function remember(db, event, now = new Date()) {
 	if (!db) return { stored: false, duplicate: false };
 	const ref = db.collection(COLLECTION).doc(docIdFor(event.id));
@@ -318,7 +544,7 @@ async function handleRequest(req, opts = {}) {
 			body: {
 				'@context': 'https://www.w3.org/ns/activitystreams',
 				type: 'OrderedCollection',
-				id: ourActor(env) ? ourActor(env).replace(/\/?$/, '/') + 'inbox' : '',
+				id: ourActor(env) ? ((a) => (a.endsWith('/') ? a : a + '/'))(ourActor(env)) + 'inbox' : '',
 				totalItems: 0,
 				orderedItems: [],
 			},
@@ -370,17 +596,38 @@ async function handleRequest(req, opts = {}) {
 		return { status: 202, body: { ok: true, ignored: true, reason: 'not-addressed' }, reason: 'not-addressed' };
 	}
 
-	const saved = await remember(db, norm.event, now instanceof Date ? now : new Date(now));
+	const when = now instanceof Date ? now : new Date(now);
+	const saved = await remember(db, norm.event, when);
+	let followAccept = null;
+	if (norm.event.type === 'Follow' && saved.stored) {
+		followAccept = await autoAcceptFollow(norm.event, saved, {
+			env,
+			db,
+			fetchImpl,
+			actors,
+			now: when,
+		});
+	}
+	const body = {
+		ok: true,
+		id: norm.event.id,
+		type: norm.event.type,
+		duplicate: saved.duplicate,
+		stored: saved.stored,
+	};
+	if (followAccept && followAccept.intent) {
+		body.accept = {
+			status: followAccept.intent.status,
+			reason: followAccept.intent.reason,
+			acceptId: followAccept.intent.acceptId || '',
+			delivered: !!followAccept.delivered,
+		};
+	}
 	return {
 		status: 202,
-		body: {
-			ok: true,
-			id: norm.event.id,
-			type: norm.event.type,
-			duplicate: saved.duplicate,
-			stored: saved.stored,
-		},
+		body,
 		event: norm.event,
+		followAccept,
 		reason: saved.duplicate ? 'duplicate' : 'accepted',
 	};
 }
@@ -404,4 +651,11 @@ module.exports = {
 	handleRequest,
 	actorCache,
 	publicKeyPemFromActor,
+	privateKeyPem,
+	publicKeyPem,
+	keyIdFor,
+	buildAccept,
+	signOutboundRequest,
+	resolveInboxUrl,
+	autoAcceptFollow,
 };

@@ -19,7 +19,7 @@ const SCAN = [
 	'CLOUDFLARE_URLSCAN_TOKEN',
 ];
 const SITE_TOKEN = ['REVIEW_VERIFY_KEY'];
-const PAY = ['STRIPE_SECRET_KEY', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_SANDBOX_CLIENT_SECRET'];
+const PAY = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_TEST_WEBHOOK_SECRET', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_SANDBOX_CLIENT_SECRET'];
 const GEMINI = ['GEMINI_API_KEY'];
 // jarvisExternal and the jarvis-sources table: GitHub, speed, money, social, safety, search, outreach and mailbox.
 const GRAPH = ['MS_GRAPH_TENANT_ID', 'MS_GRAPH_CLIENT_ID', 'MS_GRAPH_CLIENT_SECRET'];
@@ -49,6 +49,8 @@ const BY_FUNCTION = {
 	fileReviewFailureBugs: list(GITHUB),
 	// legalWatch (#4004): the app token that files the issue under #4004 when a cited law page changed.
 	legalWatch: list(GITHUB),
+	// checkoutReconcile (#3837): PayPal capture compare against recent payment rows.
+	checkoutReconcile: list(PAY),
 	// threatFeeds (#3935): Cloudflare Radar attack traffic for the internal Jarvis cyber map (personal use only).
 	threatFeeds: list(['CLOUDFLARE_API_TOKEN']),
 	sweep: list(SCAN),

@@ -12,6 +12,8 @@
 
    ctx = { fetch, env, db, now, browse(job) -> reviewBrowser's answer } */
 
+const resilience = require('./http-resilience');
+
 const ORIGIN = 'https://carlosandmunoz.com';
 const DOMAIN = 'carlosandmunoz.com';
 const SITEMAPS = [
@@ -62,11 +64,22 @@ async function sitemapPages(fetchFn) {
 	return pages;
 }
 
+// Retries 5xx/429 with backoff and pauses after repeated failures (#3838); permanent 4xx (incl. 401/403
+// API key) return at once and never count against the breaker. Answer shapes and jarvis_cache stay the same.
 async function braveSite(ctx, key, page) {
-	const res = await ctx.fetch(
+	const res = await resilience.resilientFetch(
 		`https://api.search.brave.com/res/v1/web/search?count=${PAGE}&offset=${page}&q=` +
 			encodeURIComponent('site:' + DOMAIN),
-		{ headers: { 'X-Subscription-Token': key, Accept: 'application/json' }, signal: AbortSignal.timeout(20000) }
+		{ headers: { 'X-Subscription-Token': key, Accept: 'application/json' } },
+		{
+			retries: 2,
+			baseMs: 300,
+			maxMs: 2000,
+			maxRetryAfterMs: 3000,
+			timeoutMs: 20000,
+			breaker: resilience.breakers.brave,
+			fetchImpl: (...args) => ctx.fetch(...args),
+		}
 	);
 	if (!res.ok) throw new Error('Brave answered ' + res.status);
 	const data = await res.json();
