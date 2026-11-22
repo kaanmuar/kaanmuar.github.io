@@ -26,6 +26,8 @@ sentry {
     includeSourceContext.set(false)
     ignoredBuildTypes.set(setOf("debug"))
     autoInstallation { enabled.set(false) }
+    // Same as :app — no Sentry bytecode instrumentation (#4232).
+    tracingInstrumentation { enabled.set(false) }
     telemetry.set(false)
 }
 
