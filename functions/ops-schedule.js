@@ -337,6 +337,13 @@ const JOBS = [
 		what: 'Weekly tool scout (#3857): re-check every repo in .cursor/rules/tool-arsenal.mdc (gone, archived, license drift) and search GitHub per corner (B geo/agency, C secops, D design/social, A cyber) for new permissive repos; a draft PR with the report, nothing added to the arsenal or board without Carlos',
 	},
 	{
+		job: 'promoter-scout.yml',
+		host: 'github',
+		cron: '41 16 * * 4',
+		gap: 8 * 24,
+		what: 'Weekly promoter scout (#4151): discover worldwide directories, galleries, awards, launch boards, newsletters and communities that promote tools/sites/startups; enrich submit and contact paths; draft PR report — Carlos approves any outreach, nothing is sent automatically',
+	},
+	{
 		job: 'creative-intel.yml',
 		host: 'github',
 		cron: '15 14 * * 5',

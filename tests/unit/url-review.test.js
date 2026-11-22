@@ -1520,6 +1520,35 @@ test.describe('start page reads', () => {
 		assert.ok(!untagged.report.insights.warnings.includes(insights.BROWSER_READ_NOTE));
 	});
 
+	test('a certificate mismatch in headless Chrome is not reported as HTTP status 200 (#4025)', async () => {
+		const failures = require('../../functions/url-review-failures');
+		const certErr = 'net::ERR_CERT_COMMON_NAME_INVALID at ' + BANK;
+		await assert.rejects(
+			review({ [BANK]: WAF }, async () => ({ ok: false, error: certErr })),
+			/^Error: Headless Chrome could not verify the site's certificate \(net::ERR_CERT_COMMON_NAME_INVALID at https:\/\/bank\.example\.com\/\)\.$/
+		);
+		const tls = failures.causeOf(
+			"Headless Chrome could not verify the site's certificate (net::ERR_CERT_COMMON_NAME_INVALID)."
+		);
+		assert.equal(tls.id, 'tls');
+		const chromeweb = await review({ [BANK]: WAF }, async () => ({
+			ok: true,
+			ms: 900,
+			timing: { load: 800 },
+			start: {
+				status: 200,
+				docStatus: 200,
+				finalUrl: 'chrome-error://chromewebdata/',
+				headers: {},
+				html: '<html><body>Your connection is not private</body></html>',
+				htmlCut: false,
+			},
+		})).catch((error) => error);
+		assert.match(chromeweb.message, /could not verify the site's certificate/);
+		assert.doesNotMatch(chromeweb.message, /returned status 200, in the plain request and in headless Chrome/);
+		assert.equal(failures.causeOf(chromeweb.message).id, 'tls');
+	});
+
 	test('a host that accepts no connection is tried in headless Chrome, then named as down (#411)', async () => {
 		const failures = require('../../functions/url-review-failures');
 		const jobs = [];
@@ -5161,6 +5190,17 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 		dns,
 		plain: { hops: [], error: 'unable to verify the first certificate', code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' },
 	});
+	const handshake = filed('2026-10-28T13:00:00Z', 'tls', 'The plain read failed during the TLS handshake.', {
+		dns,
+		plain: { hops: [], error: 'error:0A000458:SSL routines::SSL alert number 112', code: 'EPROTO' },
+	});
+	const handshakeAltHost = filed(
+		'2026-10-28T14:00:00Z',
+		'tls',
+		'The plain read failed during the TLS handshake.',
+		{ dns, plain: { hops: [], error: 'SSL alert number 112', code: 'EPROTO' } },
+		{ rescue: { lines: ['alt-host: apex.example.com answered 200 with an HTML page'] } }
+	);
 	const originDown = filed('2026-10-28T10:00:00Z', 'status', 'The URL returned status 522.', {
 		dns,
 		plain: { hops: [], status: 522, html: true },
@@ -5207,7 +5247,19 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 
 	assert.ok(failures.siteSide(slowOrigin, 'status'));
 	const bugs = failures.bugPlan(
-		[wall, plainOnly, expired, wrongName, noIntermediate, originDown, slowOrigin, placeholder, plainPdf],
+		[
+			wall,
+			plainOnly,
+			expired,
+			wrongName,
+			noIntermediate,
+			handshake,
+			handshakeAltHost,
+			originDown,
+			slowOrigin,
+			placeholder,
+			plainPdf,
+		],
 		[wallRerun],
 		[]
 	);
@@ -5223,7 +5275,11 @@ test("each filed run is triaged as the site's own state or ours, and the issue c
 		byKey['bot-protection-319'].body,
 		/on bot-protection\.example\.com: .* Site's own state: behind a bot wall that refuses headless Chrome too\./
 	);
-	assert.deepEqual(marker(byKey.tls.body), { runs: 3, ours: 1, site: { cert: 2 } });
+	assert.deepEqual(marker(byKey.tls.body), { runs: 5, ours: 2, site: { cert: 2, 'tls-handshake': 1 } });
+	assert.match(
+		byKey.tls.body,
+		/on tls\.example\.com: .* Site's own state: with a server that ends the TLS handshake for every name asked/
+	);
 	assert.deepEqual(marker(byKey.status.body), { runs: 1, ours: 0, site: { '5xx': 1 } });
 	assert.match(
 		byKey.status.body,
