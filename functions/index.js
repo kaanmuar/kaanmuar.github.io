@@ -10087,7 +10087,7 @@ exports.webfinger = functions
 	});
 
 // Fediverse ActivityPub inbox (#3841): clean-room receive path (fedify is ~5.9 MB — too heavy here).
-// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; does not Accept Follows automatically.
+// Off unless SOCIAL_INBOX_AP=1. Stores into fediverse_inbox; auto-Accepts Follow when PRIVATE_KEY_PEM is set.
 const socialInbox = require('./social-inbox');
 exports.socialInbox = functions
 	.runWith({ timeoutSeconds: 30, memory: '256MB', maxInstances: 5 })
