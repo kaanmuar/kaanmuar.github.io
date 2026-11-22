@@ -34,10 +34,11 @@ function docIdFor(activityId) {
 }
 
 function slugPart(raw, fallback) {
-	const s = String(raw || '')
-		.replace(/[^a-zA-Z0-9._-]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 80);
+	let s = String(raw || '').replace(/[^a-zA-Z0-9._-]+/g, '-');
+	// Trim leading/trailing hyphens without /^-+|-+$/ (ReDoS-flagged alternation).
+	while (s.startsWith('-')) s = s.slice(1);
+	while (s.endsWith('-')) s = s.slice(0, -1);
+	s = s.slice(0, 80);
 	return s || fallback;
 }
 
