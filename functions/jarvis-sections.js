@@ -42,6 +42,8 @@ const SECTIONS = {
 	money: { external: ['money', 'fixes'], from: ['external'] },
 	mail: { fields: ['mailCodes'], external: ['email', 'mailbox', 'addresses'], from: ['external'], live: true },
 	devices: { fields: ['devices'], live: true },
+	legal: { external: ['legal'], from: ['external'] },
+	intelligence: { external: ['learn', 'ai', 'scouts'], from: ['external'] },
 	other: { from: [] },
 };
 const NAMES = Object.keys(SECTIONS);

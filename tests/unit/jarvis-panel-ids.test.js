@@ -252,9 +252,20 @@ function appPanels() {
 	const calls = new RegExp(`(?<!fun )\\b(${[...takesId].join('|')})\\(`, 'g');
 	const out = [];
 	const missing = [];
+	const extId =
+		/\bExt(?:Section|Links)Panel\(\s*"([^"]+)"/g;
+	// ExtTabWait(title, waitId, …) and ExtActionsPanel(prefix, id, …)
+	const extId2 = /\bExt(?:TabWait|ActionsPanel)\(\s*"[^"]+"\s*,\s*"([^"]+)"/g;
 	for (const { f, src } of files) {
 		if (NOT_TABS.has(f)) continue;
+		for (const rx of [extId, extId2]) {
+			for (const c of src.matchAll(rx)) {
+				const line = src.slice(0, c.index).split('\n').length;
+				out.push({ id: c[1], where: `${f}:${line}` });
+			}
+		}
 		for (const c of src.matchAll(calls)) {
+			if (/^Ext\w*Panel$/.test(c[1])) continue;
 			const a = args(src, c.index + c[0].length - 1);
 			const line = src.slice(0, c.index).split('\n').length;
 			const id = a.find((x) => /^id\s*=/.test(x));
