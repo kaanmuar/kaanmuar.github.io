@@ -5,9 +5,149 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 22 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 23 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>aeofmiami.com: 44. The gap: button names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/05-u-aeofmiami-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/05-u-aeofmiami-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+The lesson for every team: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-aeofmiami-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Programming #WebDev #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/05-u-aeofmiami-com.jpg" length="233644" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/05-u-aeofmiami-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>aldoshoes.com: 62. The gap: button names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/04-u-aldoshoes-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/04-u-aldoshoes-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+Apply this: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-aldoshoes-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #OpenSource #Chrome #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/04-u-aldoshoes-com.jpg" length="235379" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/04-u-aldoshoes-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>marca.com: 49. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/05-u-marca-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/05-u-marca-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But HSTS is not sent.
+
+Apply this: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-marca-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Vulnerability #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/05-u-marca-com.jpg" length="222166" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/05-u-marca-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>all.accor.com: 58. The gap: broken links.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/11-u-all-accor-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/11-u-all-accor-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 1 internal link leads to an error.
+
+The lesson for every team: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-all-accor-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #SoftwareTesting #Automation #QA #BrokenLinks #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/11-u-all-accor-com.jpg" length="229326" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/11-u-all-accor-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>arteypasioncafe.com: 75. The gap: framing.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/03-u-arteypasioncafe-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/03-u-arteypasioncafe-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every external link that was checked answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Apply this: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-arteypasioncafe-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #Vulnerability #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/03-u-arteypasioncafe-com.jpg" length="243085" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/03-u-arteypasioncafe-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>juxia.com: 49. The gap: the viewport.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/02-u-juxia-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/02-u-juxia-com</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But the start page has no viewport tag.
+
+Takeaway: Add a width=device-width, initial-scale=1 viewport to every page, so phones do not shrink it.
+
+One automated analysis of public pages on 20 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A baseline, not a ruling.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-juxia-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#MobileUX #Programming #DevOps #QA #SEO #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/02-u-juxia-com.jpg" length="229965" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/02-u-juxia-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>haj.gov.bh: 71. The gap: meta descriptions.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/01-u-haj-gov-bh.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/01-u-haj-gov-bh</guid>
+      <pubDate>Mon, 23 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>National</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 19 pages have no meta description.
+
+Takeaway: Write a description of about 150 characters for each key page, so you choose the snippet, not the crawler.
+
+One automated analysis of public pages on 21 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A starting point, not a verdict.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-haj-gov-bh
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Outage #DevOps #QA #MetaDescription #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/01-u-haj-gov-bh.jpg" length="234687" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/01-u-haj-gov-bh.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>aelf.org: 67. The gap: tap targets.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/04-u-aelf-org.html</link>
@@ -719,144 +859,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #DevOps #SoftwareTesting #QA #Cookies #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" length="238495" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. myarubaguide.com leads: 76.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/15-vs-myarubaguide-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/15-vs-myarubaguide-com</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>myarubaguide.com leads in SEO, GEO, Security, Accessibility; visitaruba.com leads in Analytics; airportaruba.com leads in Performance.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 5 Nov 2026 of myarubaguide.com, visitaruba.com, boardwalkaruba.com, airportaruba.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-myarubaguide-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-myarubaguide-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #QA #WebPerf #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg" length="264177" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 natural competitors. byamica.com leads: 68.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-16/04-vs-byamica-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-16/04-vs-byamica-com</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Versus</category>
-      <description>scamadviser.com leads in SEO, Accessibility; sachadrake.com leads in GEO; amazon.com leads in Analytics, Performance; byamica.com leads in Security.
-
-The lesson for every team: Benchmark against the sites your visitors compare you with, not against a perfect score: the gap that costs you is the one a competitor has already closed.
-
-Automated analyses of public pages on 16 Nov 2026 of byamica.com, scamadviser.com, sachadrake.com, amazon.com, natural competitors found on the open web by QA-lab URL Review's rival sweep. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-byamica-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-byamica-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Outage #SoftwareTesting #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/04-vs-byamica-com.jpg" length="266161" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/04-vs-byamica-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>advancedplumbing.ca: 74. The gap: text contrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/02-u-advancedplumbing-ca.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/02-u-advancedplumbing-ca</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
-
-Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
-Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-advancedplumbing-ca
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/02-u-advancedplumbing-ca.jpg" length="245606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/02-u-advancedplumbing-ca.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aijabogados.cl: 74. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/30-u-aijabogados-cl</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 25 form controls have no label.
-
-What to change: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
-Full report: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Automation #QA #Forms #A11y #QAlab
-
-https://www.youtube.com/shorts/A6DNNICqGZk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg" length="240408" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aire-plus.com: 79. The gap: framing.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/36-u-aire-plus-com</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
-
-The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
-Report: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab
-
-https://www.youtube.com/shorts/9ADHvMpIutM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg" length="234126" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>almazangourmet.cl: 57. The gap: framing.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-19/01-u-almazangourmet-cl.html</link>
-      <guid isPermaLink="false">auto-2026-11-19/01-u-almazangourmet-cl</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
-
-Lesson: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
-Full report: https://carlosandmunoz.com/qa-review.html?live=u-almazangourmet-cl
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/01-u-almazangourmet-cl.jpg" length="239190" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/01-u-almazangourmet-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>A keyboard-and-contrast baseline for a static CSS demo</title>
-      <link>https://carlosandmunoz.com/social/pick/a-keyboard-and-contrast-baseline-for-a-static-css-demo.html</link>
-      <guid isPermaLink="false">pick/a-keyboard-and-contrast-baseline-for-a-static-css-demo</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Standards</category>
-      <description>Accessibility work often starts with a claim that is bigger than the evidence. A small static page is...
-
-Via DEV, by Vibe Coding by Ice, 2026-11-19.
-
-https://dev.to/vibecodingbyice/a-keyboard-and-contrast-baseline-for-a-static-css-demo-2nmj</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Ffk83hp8th77rg2ytqgr9.png" medium="image"/>
     </item>
   </channel>
 </rss>
