@@ -1,6 +1,154 @@
 {
  "runs": [
   {
+   "at": "2026-11-23T18:04:36.942Z",
+   "run": {
+    "id": 45220019586,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/45220019586"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2698,
+   "scored": 2687,
+   "failed": 11,
+   "below": 1173,
+   "avg": {
+    "mobile": 89,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-23",
+    "files": [
+     "assets/share/qa-review-social.jpg",
+     "assets/social/rss.xml",
+     "data/pagespeed/compressed.json",
+     "index.html"
+    ],
+    "fixes": [
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 6 images or frames that start below 1.5 screens on phone and desktop."
+     },
+     {
+      "page": "assets/share/qa-review-social.jpg",
+      "kind": "image",
+      "detail": "Compressed assets/share/qa-review-social.jpg from 94 KB to 62 KB."
+     }
+    ],
+    "pages": [
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 61,
+       "after": 62,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     },
+     {
+      "file": "social/pick/captioned-doesn-t-always-mean-accessible-2-pt.html",
+      "mobile": {
+       "before": 99,
+       "after": 99,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 91,
+       "after": 91,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/captioned-doesn-t-always-mean-accessible-2-pt.html"
+     },
+     {
+      "file": "social/pick/ai-search-measurement-needs-to-move-beyond-brand-mentions.html",
+      "mobile": {
+       "before": 98,
+       "after": 98,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 99,
+       "after": 99,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/ai-search-measurement-needs-to-move-beyond-brand-mentions.html"
+     },
+     {
+      "file": "social/promo-social-hub-2026-10/22-follow-en.html",
+      "mobile": {
+       "before": 93,
+       "after": 93,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 100,
+       "after": 100,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/promo-social-hub-2026-10/22-follow-en.html"
+     },
+     {
+      "file": "social/pick/google-s-next-update-won-t-touch-the-index-and-nobody-will-a.html",
+      "mobile": {
+       "before": 75,
+       "after": 75,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 89,
+       "after": 92,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/google-s-next-update-won-t-touch-the-index-and-nobody-will-a.html"
+     },
+     {
+      "file": "social/pick/ai-visibility-data-avoid-4-traps-prioritize-the-right-work.html",
+      "mobile": {
+       "before": 76,
+       "after": 76,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 93,
+       "after": 93,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/social/pick/ai-visibility-data-avoid-4-traps-prioritize-the-right-work.html"
+     }
+    ],
+    "verdict": {
+     "up": true,
+     "reason": "Rose on social/pick/google-s-next-update-won-t-touch-the-index-and-nobody-will-a.html (desktop 89 → 92); nothing fell more than 2.",
+     "drops": 0,
+     "rises": 1,
+     "missing": 0
+    },
+    "note": "8 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "3 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-22T14:42:50.230Z",
    "run": {
     "id": 45029097947,
