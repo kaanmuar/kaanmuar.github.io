@@ -34,7 +34,16 @@ const MODES = ['render', 'rotate', 'captions'];
 const LANGS = ['en', 'es', 'pt', 'de', 'fr', 'it'];
 const FLAGS = ['batch', 'start', 'tips', 'langs', 'mode', 'networks'];
 // tips-studio files that hold no posts, and runs-auto, which the daily Live Reports job renders itself.
-const NOT_SOURCES = ['build', 'brands', 'buffer-voiced', 'site-assets', 'runs-auto'];
+const NOT_SOURCES = [
+	'build',
+	'brands',
+	'buffer-voiced',
+	'site-assets',
+	'runs-auto',
+	'repair-documents', // PDF repair CLI (#4243 / #4252), not a tips source
+	'audit-carousel',
+	'carousel-loop',
+];
 const TEXT_NETWORKS = 'linkedin,x,facebook,instagram';
 const SLUG = /^[a-z0-9][a-z0-9-]*$/;
 const LIST = /^[a-z0-9-]+(,[a-z0-9-]+)*$/;
