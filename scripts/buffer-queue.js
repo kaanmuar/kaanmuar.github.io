@@ -15,6 +15,12 @@
        batch post scheduled twice on one profile, keeping the first one created
      BUFFER_API_KEY=... node scripts/buffer-queue.js --requeue <batch/slug,...> [--channel youtube] [--dry-run]
        delete those queued posts and create them again from captions.json at the same time
+     node scripts/buffer-queue.js --list-sent-documents <batch>
+       list LinkedIn ledger rows that are already sent for slugs with document/{slug}.pdf (#4246);
+       no API key; print LinkedIn URLs for manual delete, then clear-sent + --batch to recreate
+     node scripts/buffer-queue.js --clear-sent-linkedin <batch/slug,...> [--dry-run]
+       drop sent LinkedIn ledger rows so --batch can createPost again after the Page post is deleted
+       (LinkedIn cannot replace a document; remedia/--requeue cannot fix sent PDFs)
 
    Reads media/social-posts/<batch>/captions.json from scripts/tips-studio/build.js. Feed and story
    images are served by the site, so the script waits until the first one answers 200 (the Pages
@@ -505,6 +511,118 @@ function requeueTargets(book, posts, channel, now) {
 	});
 }
 
+// Sent LinkedIn document posts after a blank PDF repair (#4246): list / clear ledger so --batch can recreate.
+function hasDocumentPdf(batch, slug, root = ROOT) {
+	return fs.existsSync(path.join(root, 'media/social-posts', batch, 'document', slug + '.pdf'));
+}
+
+function sentLinkedInDocuments(book, batch, { root = ROOT, site = SITE } = {}) {
+	const prefix = batch + '/';
+	const out = [];
+	for (const [name, entries] of Object.entries(book.posts || {})) {
+		if (!name.startsWith(prefix)) continue;
+		const slug = name.slice(prefix.length);
+		if (!slug || slug.includes('/')) continue;
+		if (!hasDocumentPdf(batch, slug, root)) continue;
+		for (const e of entries) {
+			if (e.channel !== 'linkedin' || e.result !== 'sent') continue;
+			out.push({
+				post: name,
+				batch,
+				slug,
+				profile: e.profile,
+				id: e.id,
+				at: e.at,
+				url: e.url,
+				pdfUrl: site + '/media/social-posts/' + batch + '/document/' + slug + '.pdf',
+			});
+		}
+	}
+	return out.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+}
+
+function clearSentLinkedIn(book, posts, { channel = 'linkedin' } = {}) {
+	const counts = { cleared: 0, skip: [] };
+	for (const name of posts) {
+		const list = book.posts[name];
+		if (!list) {
+			counts.skip.push([name, 'not in ledger']);
+			continue;
+		}
+		const before = list.length;
+		book.posts[name] = list.filter((e) => !(e.channel === channel && e.result === 'sent'));
+		if (book.posts[name].length === before) counts.skip.push([name, 'no sent linkedin entry']);
+		else {
+			counts.cleared += 1;
+			if (!book.posts[name].length) delete book.posts[name];
+		}
+	}
+	return counts;
+}
+
+async function listSentDocuments(batch) {
+	if (!/^[\w-]+$/.test(batch)) throw new Error('--list-sent-documents takes a batch name');
+	const book = ledger.read(ledger.BUFFER);
+	const rows = sentLinkedInDocuments(book, batch);
+	if (!rows.length) {
+		console.log('No sent LinkedIn document posts for', batch);
+		return;
+	}
+	for (const r of rows) {
+		const live = await fetch(r.pdfUrl, { method: 'HEAD' }).catch(() => null);
+		const pdf = live && live.ok ? 'pdf ok' : 'pdf missing/unreachable';
+		console.log(
+			r.post,
+			'|',
+			r.profile || 'linkedin',
+			'|',
+			r.at || '?',
+			'|',
+			r.url || '(no LinkedIn url)',
+			'|',
+			r.pdfUrl,
+			'|',
+			pdf
+		);
+	}
+	console.log(
+		'Next: delete each LinkedIn post in the UI → --clear-sent-linkedin <post,...> → BUFFER_API_KEY=... node scripts/buffer-queue.js --batch',
+		batch,
+		'(other networks stay sent; do not use --requeue).'
+	);
+}
+
+function clearSentLinkedInCli(posts, dry) {
+	const bad = posts.find((p) => !/^[\w-]+\/[\w-]+$/.test(p));
+	if (!posts.length || bad) throw new Error('--clear-sent-linkedin takes batch/slug,batch/slug' + (bad ? '; not ' + bad : ''));
+	const book = ledger.read(ledger.BUFFER);
+	for (const name of posts) {
+		const entry = (book.posts[name] || []).find((e) => e.channel === 'linkedin' && e.result === 'sent');
+		if (entry)
+			console.log(
+				dry ? 'would clear' : 'clear',
+				name,
+				entry.profile || '',
+				entry.id || '',
+				entry.url || ''
+			);
+	}
+	const counts = clearSentLinkedIn(book, posts);
+	for (const [name, why] of counts.skip) console.log('skip', name, '-', why);
+	if (dry) {
+		console.log('dry-run: would clear', counts.cleared, 'post(s); ledger unchanged');
+		if (counts.skip.length) process.exit(1);
+		return;
+	}
+	ledger.write(ledger.BUFFER, book);
+	console.log(
+		'cleared',
+		counts.cleared,
+		'LinkedIn sent row(s). Commit assets/social/buffer.json, then --batch the batch to recreate documents.'
+	);
+	if (counts.skip.length) process.exit(1);
+}
+
 // Deletes each queued post and creates it again from its batch's captions.json at the same time (#1191). The clip
 // must answer before the old post is deleted.
 async function requeue(posts, channel, dry) {
@@ -960,6 +1078,17 @@ async function main() {
 		if (!process.env.BUFFER_API_KEY) throw new Error('BUFFER_API_KEY is not set.');
 		return mediaReport();
 	}
+	if (opts['list-sent-documents']) {
+		const batch = opts['list-sent-documents'] === true ? '' : String(opts['list-sent-documents']);
+		return listSentDocuments(batch);
+	}
+	if (opts['clear-sent-linkedin']) {
+		const posts = String(opts['clear-sent-linkedin'] === true ? '' : opts['clear-sent-linkedin'])
+			.split(',')
+			.map((p) => p.trim())
+			.filter(Boolean);
+		return clearSentLinkedInCli(posts, Boolean(opts['dry-run']));
+	}
 	if (opts.requeue) {
 		const posts = String(opts.requeue)
 			.split(',')
@@ -1157,4 +1286,7 @@ module.exports = {
 	onNetwork,
 	mediaHost,
 	SLOT,
+	hasDocumentPdf,
+	sentLinkedInDocuments,
+	clearSentLinkedIn,
 };
