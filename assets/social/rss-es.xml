@@ -170,6 +170,48 @@ Pruébalo con una URL pública: https://carlosandmunoz.com/qa-review-es.html?utm
       <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/es/security-portrait.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>adonay.cl: 58. El punto débil: contraste del texto.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/55-u-adonay-cl-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/55-u-adonay-cl-es</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los elementos deben cumplir los umbrales mínimos de contraste de color.
+
+La lección para cualquier equipo: Mantén el texto principal con un contraste de 4.5:1 o más respecto a su fondo.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-adonay-cl
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #Outage #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/mMyLcmjLbg0</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/55-u-adonay-cl.jpg" length="230251" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/55-u-adonay-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>organicadigital.com: 66. El punto débil: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/61-u-organicadigital-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/61-u-organicadigital-com-es</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-organicadigital-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Outage #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/61-u-organicadigital-com.jpg" length="236911" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/61-u-organicadigital-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>aelf.org: 67. La brecha: aprovechar los objetivos.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/04-u-aelf-org-es.html</link>
       <guid isPermaLink="false">auto-2026-11-18/04-u-aelf-org-es</guid>
@@ -362,6 +404,50 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #Accessibility #DevOps #QA #Forms #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" length="230472" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>abstract.cl: 69. El punto débil: enmarcado.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/43-u-abstract-cl-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/43-u-abstract-cl-es</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
+
+La lección para cualquier equipo: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-abstract-cl
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #QAlab
+
+https://www.youtube.com/shorts/9VsQrSbAErA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" length="231556" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>acs.edu.au: 59. La brecha: el host del mapa del sitio.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/49-u-acs-edu-au-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/49-u-acs-edu-au-es</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero 905 las URL del mapa del sitio apuntan a otro host o esquema.
+
+La lección para cualquier equipo: Publique sitemap.xml desde el mismo host que las páginas que enumera y asígnele el nombre robots.txt.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-acs-edu-au
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #Automation #QA #Sitemap #QAlab
+
+https://www.youtube.com/shorts/bbt0gIMK7ys</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" length="237927" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>aegas247.co.uk: 72. El punto débil: HSTS.</title>
@@ -596,6 +682,50 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/04-vs-byamica-com.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>accounts.google.com: 68. La brecha: cabezazos desiguales.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/31-u-accounts-google-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/31-u-accounts-google-com-es</guid>
+      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero en otras páginas faltan encabezados de seguridad en la página de inicio.
+
+La lección para cualquier equipo: Establezca encabezados de seguridad en el borde, una vez, para que cada página y ruta envíe los mismos.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-accounts-google-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Outage #SoftwareTesting #QA #HTTPHeaders #QAlab
+
+https://www.youtube.com/shorts/4FTI39rz_3Y</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/31-u-accounts-google-com.jpg" length="250633" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/31-u-accounts-google-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Anotó 61 de 100. El punto débil: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/37-u-abogadosdiazyasociados-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/37-u-abogadosdiazyasociados-com-es</guid>
+      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-abogadosdiazyasociados-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #DevOps #QA #HSTS #QAlab
+
+https://www.youtube.com/shorts/Q1d6xdy-9LU</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/37-u-abogadosdiazyasociados-com.jpg" length="231025" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/37-u-abogadosdiazyasociados-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>advancedplumbing.ca: 74. El punto débil: contraste del texto.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/02-u-advancedplumbing-ca-es.html</link>
       <guid isPermaLink="false">auto-2026-11-18/02-u-advancedplumbing-ca-es</guid>
@@ -816,6 +946,50 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>44ye.com: 75. El punto débil: Acceso de rastreadores de IA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/19-u-44ye-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/19-u-44ye-com-es</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de entrenamiento de modelos están bloqueados a propósito. Pero 1 La respuesta de IA o el rastreador de búsqueda están bloqueados.
+
+La lección para cualquier equipo: Decide bot por bot en robots.txt: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-44ye-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab
+
+https://www.youtube.com/shorts/E1PGxs9wSt4</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/19-u-44ye-com.jpg" length="236922" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/19-u-44ye-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>7diasdesabor.com: 66. El punto débil: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/25-u-7diasdesabor-com-es.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/25-u-7diasdesabor-com-es</guid>
+      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisión de sitio</category>
+      <category>Requested</category>
+      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero no se envía HSTS.
+
+La lección para cualquier equipo: Envía Strict-Transport-Security con un max-age de al menos un año, para que los navegadores no vuelvan a probar http sin cifrar.
+
+Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un punto de partida, no un veredicto.
+El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-7diasdesabor-com
+
+Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab
+
+https://www.youtube.com/shorts/QrhjiirWjpc</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/25-u-7diasdesabor-com.jpg" length="234049" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/25-u-7diasdesabor-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>Anotó 52 de 100. El punto débil: etiquetas de formulario.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/01-u-advanceconstrucciones-com-es.html</link>
       <guid isPermaLink="false">auto-2026-11-18/01-u-advanceconstrucciones-com-es</guid>
@@ -834,168 +1008,6 @@ Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
 #Accessibility #Automation #QA #Forms #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" length="234306" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Anotó 81 de 100. El punto débil: contraste del texto.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/18-u-agenciadeviajestravelone-cl-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/18-u-agenciadeviajestravelone-cl-es</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los elementos deben cumplir los umbrales mínimos de contraste de color.
-
-Conclusión: Mantén el texto principal con un contraste de 4.5:1 o más respecto a su fondo.
-
-Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una instantánea de partida, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-agenciadeviajestravelone-cl
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab
-
-https://www.youtube.com/shorts/Qh00N6AzXKY</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" length="239243" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>agilex.com.co: 64. El punto débil: Acceso de rastreadores de IA.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/24-u-agilex-com-co-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/24-u-agilex-com-co-es</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos que se abrieron respondieron y la página de inicio se lee bien sin JavaScript. Pero 1 La respuesta de IA o el rastreador de búsqueda están bloqueados.
-
-Conclusión: Decide bot por bot en robots.txt: permite los motores de respuesta que quieres que te citen y bloquea solo los rastreadores de entrenamiento.
-
-Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una línea base, no un dictamen.
-Informe completo: https://carlosandmunoz.com/qa-review.html?live=u-agilex-com-co
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#GEO #DevOps #Automation #QA #AISearch #QAlab
-
-https://www.youtube.com/shorts/P2FFK6IcwFA</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" length="240118" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/24-u-agilex-com-co.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Nosotros contra ellos: Auditorías SEO en cuatro tiempos.</title>
-      <link>https://carlosandmunoz.com/social/battle-vs-2026-11/02-us-vs-them-seo-es.html</link>
-      <guid isPermaLink="false">battle-vs-2026-11/02-us-vs-them-seo-es</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Comparativa</category>
-      <category>Battle</category>
-      <description>Un breve hilo de X/Threads: en qué ganan las auditorías de SEO, qué cubre la revisión de URL, una división honesta y la tabla de comparación.
-
-Lección: Publique el gancho, luego los cuatro tiempos como respuestas, no un carrusel LI/IG.
-
-Cobertura comparada desde las páginas de cada proveedor, marcada 2026-11-10. Los nombres son marcas comerciales de sus propietarios.
-Tabla: https://carlosandmunoz.com/qa-review-vs.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=battle-vs-2026-11&amp;utm_content=us-vs-them-seo
-
-#WebQuality #SRE #SoftwareTesting #QA #SEO #QAlab
-
-https://www.youtube.com/shorts/avYfQI9q_Zk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" length="213969" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/battle-vs-2026-11/feed/02-us-vs-them-seo.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Cualquier sitio puede enmarcar las páginas de Harvard.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/18-harvard-es.html</link>
-      <guid isPermaLink="false">runs-100/18-harvard-es</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Worldwide</category>
-      <description>Organization en JSON-LD, un índice de sitemaps y Core Web Vitals que aprueban con visitantes reales. Pero las páginas analizadas no envían ni X-Frame-Options ni frame-ancestors, así que otro sitio podría cargarlas en un frame oculto.
-
-La lección para cualquier equipo: Envía Content-Security-Policy: frame-ancestors 'self'. Bloquea el clickjacking y sustituye a X-Frame-Options.
-
-Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
-Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=harvard
-
-#WebSecurity #Clickjacking #HigherEd #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/18-harvard.jpg" length="252211" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/18-harvard.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Node.js tiene llms.txt. Sus páginas comparten la misma descripción.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/19-nodejs-es.html</link>
-      <guid isPermaLink="false">runs-100/19-nodejs-es</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Worldwide</category>
-      <description>Un llms.txt para herramientas de IA, security.txt, HSTS con preload y dos sitemaps. Pero 19 de las 20 páginas analizadas comparten una meta description, la de la home, así que Learn y About venden la misma frase en el buscador.
-
-La lección para cualquier equipo: Escribe una descripción por página que diga qué responde esa página. Uno compartido no le dice nada nuevo al buscador.
-
-Un análisis automatizado de páginas públicas el 19 oct. 2026. Un punto de partida, no un veredicto.
-Cómo funciona la revisión, paso a paso: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=nodejs
-
-#SEO #MetaDescription #OpenSource #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/19-nodejs.jpg" length="254748" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/19-nodejs.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>motives.ai: 70. El punto débil: enmarcado.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/01-u-motives-ai-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/01-u-motives-ai-es</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero otros sitios pueden enmarcar la página.
-
-Qué cambiar: Envía frame-ancestors 'self' en la CSP, o X-Frame-Options: SAMEORIGIN, así que otros sitios no pueden enmarcar tus páginas.
-
-Un análisis automatizado de páginas públicas el 17 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una instantánea para empezar, no un veredicto.
-El informe completo: https://carlosandmunoz.com/qa-review.html?live=u-motives-ai
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" length="230186" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/01-u-motives-ai.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aeropost.com: 61. El punto débil: nombres de botones.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/06-u-aeropost-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/06-u-aeropost-com-es</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero los botones deben tener texto discernible.
-
-Conclusión: Dale a cada botón texto o un aria-label, para que un lector de pantalla pueda anunciarlo.
-
-Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Una línea base, no un dictamen.
-Abre el informe completo: https://carlosandmunoz.com/qa-review.html?live=u-aeropost-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #WebDev #OpenSource #QA #A11y #QAlab
-
-https://www.youtube.com/shorts/yrea2uKdlGM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" length="234360" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/06-u-aeropost-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>affinityplusbb.com: 59. El punto débil: Roles ARIA.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/12-u-affinityplusbb-com-es.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/12-u-affinityplusbb-com-es</guid>
-      <pubDate>Wed, 18 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisión de sitio</category>
-      <category>Requested</category>
-      <description>Todos los enlaces internos abiertos respondieron, y los rastreadores de búsqueda y de respuestas con IA pueden leer la página de inicio. Pero ciertos roles ARIA deben estar contenidos en padres concretos.
-
-Qué cambiar: Utilice primero elementos HTML nativos. Cuando utilice roles ARIA, anídelos de la manera que lo requiera el rol.
-
-Un análisis automatizado de páginas públicas el 18 de noviembre de 2026, solicitado a través de QA-lab URL Review. Un análisis inicial, no una decisión final.
-Abre el informe completo: https://carlosandmunoz.com/qa-review.html?live=u-affinityplusbb-com
-
-Revisa tu propio sitio: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #DevOps #QA #ARIA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" length="240946" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/12-u-affinityplusbb-com.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

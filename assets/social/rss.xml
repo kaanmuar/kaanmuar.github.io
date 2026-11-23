@@ -149,6 +149,48 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/01-u-haj-gov-bh.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
+      <title>adonay.cl: 58. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/55-u-adonay-cl.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/55-u-adonay-cl</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-adonay-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #Outage #QA #Contrast #QAlab
+
+https://www.youtube.com/shorts/mMyLcmjLbg0</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/55-u-adonay-cl.jpg" length="230251" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/55-u-adonay-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>organicadigital.com: 66. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/61-u-organicadigital-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/61-u-organicadigital-com</guid>
+      <pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-organicadigital-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Outage #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/61-u-organicadigital-com.jpg" length="236911" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/61-u-organicadigital-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
       <title>aelf.org: 67. The gap: tap targets.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/04-u-aelf-org.html</link>
       <guid isPermaLink="false">auto-2026-11-18/04-u-aelf-org</guid>
@@ -400,6 +442,50 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #DevOps #QA #Forms #A11y #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" length="230472" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/17-u-enae-es.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>abstract.cl: 69. The gap: framing.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/43-u-abstract-cl.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/43-u-abstract-cl</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+The lesson for every team: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-abstract-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #DevOps #CyberSecurity #QA #Clickjacking #QAlab
+
+https://www.youtube.com/shorts/9VsQrSbAErA</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" length="231556" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>acs.edu.au: 59. The gap: the sitemap host.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-17/49-u-acs-edu-au.html</link>
+      <guid isPermaLink="false">auto-2026-11-17/49-u-acs-edu-au</guid>
+      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 905 sitemap URLs point at another host or scheme.
+
+The lesson for every team: Serve sitemap.xml from the same host as the pages it lists, and name it in robots.txt.
+
+One automated analysis of public pages on 17 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-acs-edu-au
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #Automation #QA #Sitemap #QAlab
+
+https://www.youtube.com/shorts/bbt0gIMK7ys</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" length="237927" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
       <title>aegas247.co.uk: 72. The gap: HSTS.</title>
@@ -785,80 +871,6 @@ How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.h
 #SEO #MetaDescription #OpenSource #QA #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" length="245653" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The Linux Foundation never states a language.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/23-linuxfoundation.html</link>
-      <guid isPermaLink="false">runs-100/23-linuxfoundation</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A sitemap, one-year HSTS, framing limited to its own origin, and no broken links among the pages analyzed. But the &lt;html&gt; tag has no lang attribute, so screen readers guess which voice to use.
-
-The lesson for every team: Add lang=&quot;en&quot; to the html tag in the site template. One attribute fixes every page at once.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=linuxfoundation
-
-#Accessibility #A11y #i18n #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg" length="252145" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/23-linuxfoundation.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>GitHub Docs sets no canonical link.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/25-githubdocs.html</link>
-      <guid isPermaLink="false">runs-100/25-githubdocs</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A content security policy that starts from default-src 'none', HSTS, nosniff, and framing limited to its own origin. But none of the 20 pages analyzed has a canonical link, so URL variants compete in search.
-
-The lesson for every team: Add a self-referencing canonical to every docs page. Versioned and translated docs need it most.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=githubdocs
-
-#SEO #Canonical #Docs #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg" length="247486" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/25-githubdocs.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Stripe Docs skips the main landmark.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/26-stripedocs.html</link>
-      <guid isPermaLink="false">runs-100/26-stripedocs</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Preloaded HSTS, a content security policy, and a skip link to the content. But none of the 20 pages analyzed marks that content with a &lt;main&gt; landmark, which screen-reader users jump to directly.
-
-The lesson for every team: Wrap the primary content in one &lt;main&gt; element. Screen readers list it as a landmark you can jump to.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=stripedocs
-
-#Accessibility #A11y #Docs #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg" length="251031" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/26-stripedocs.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>ispgaya.pt: 67. The gap: cookie flags.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-04/16-u-ispgaya-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-04/16-u-ispgaya-pt</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 4 cookies are sent without Secure, and 1 session cookie is readable by scripts.
-
-The lesson for every team: Set Secure, HttpOnly, and SameSite on every cookie that scripts do not need to read.
-
-One automated analysis of public pages on 4 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
-The full report: https://carlosandmunoz.com/qa-review.html?live=u-ispgaya-pt&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=requested-reviews&amp;utm_content=u-ispgaya-pt
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #SoftwareTesting #QA #Cookies #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" length="238495" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
