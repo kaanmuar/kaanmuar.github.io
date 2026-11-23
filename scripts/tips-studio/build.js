@@ -51,6 +51,7 @@ const brands = require('./brands');
 const assets = require('./site-assets');
 const { auditCarouselSlides } = require('./audit-carousel');
 const { encodeCarouselLoop } = require('./carousel-loop');
+const { pdfFrom } = require('../studio-pdf');
 const ROOT = path.resolve(__dirname, '../..');
 const FFMPEG = fs.existsSync('/opt/homebrew/bin/ffmpeg') ? '/opt/homebrew/bin/ffmpeg' : 'ffmpeg';
 const FFPROBE = FFMPEG.replace(/ffmpeg$/, 'ffprobe');
@@ -635,21 +636,6 @@ async function renderStill(page, tip, fmt, index, total, file, ui, cat, extras) 
 	);
 	await page.waitForTimeout(150);
 	await page.locator('#c').screenshot({ path: file, type: 'jpeg', quality: 92 });
-}
-
-async function pdfFrom(browser, images, file) {
-	const html =
-		'<!doctype html><html><head><style>@page{size:1080px 1350px;margin:0}html,body{margin:0}img{display:block;width:1080px;height:1350px;page-break-after:always}</style></head><body>' +
-		images.map((img) => '<img src="' + path.basename(img) + '">').join('') +
-		'</body></html>';
-	const tmp = path.join(path.dirname(file), '.pdf-' + path.basename(file, '.pdf') + '.html');
-	fs.writeFileSync(tmp, html);
-	const page = await browser.newPage();
-	await page.goto('file://' + tmp);
-	await page.waitForFunction(() => Array.from(document.images).every((i) => i.complete));
-	await page.pdf({ path: file, width: '1080px', height: '1350px', printBackground: true });
-	await page.close();
-	fs.unlinkSync(tmp);
 }
 
 async function renderCarousel(page, browser, tip, index, total, slug, ui, extras) {
