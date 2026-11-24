@@ -80,6 +80,13 @@ test('pickColdScenario returns the first cold_safe email scenario', () => {
 	assert.equal(scenarios.pickColdScenario(['sec-csp']), null);
 });
 
+test('scenariosForOffer accepts review insight `key` the same as `id`', () => {
+	const fromKey = scenarios.pickColdScenario([
+		{ key: 'a11y-labels', confidence: 0.9, verdict: 'fail' },
+	]);
+	assert.equal(fromKey.scenarioId, 'cold-a11y-labels');
+});
+
 test('each scenario exposes the schema fields outreach expects', () => {
 	const tiers = new Set(['cold_safe', 'warm_only', 'social_generic']);
 	const media = new Set(['evidence_card', 'skit', 'static_post']);
