@@ -1,7 +1,8 @@
 # .github/workflows/promoter-scout.yml
-# Weekly promoter scout (#4151): discovers public directories, galleries, awards, launch boards, newsletters and
-# communities that promote tools/sites/startups worldwide, finds submit/contact paths, opens a draft PR with the
-# report. Human gate: nothing is emailed; Carlos picks who to introduce QA-lab URL Review to.
+# Weekly promoter scout (#4151): discovers public directories, galleries, awards, launch boards, newsletters,
+# podcasts, accelerators and communities worldwide, finds submit/contact paths, opens a draft PR with the report.
+# Workers AI langs: core six site languages plus two rotated from nl/pl/ja/ko/zh/ar each week (scripts/promoter-scout.js).
+# Human gate: nothing is emailed; Carlos picks who to introduce QA-lab URL Review to.
 # Memory (seen.json) lives on the promoter-scout-data branch, pushed directly (#3891 pattern).
 
 name: Promoter scout
