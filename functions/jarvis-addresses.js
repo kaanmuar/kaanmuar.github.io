@@ -18,6 +18,7 @@
 
 const mailHealth = require('./mail-health');
 const jarvisOutreach = require('./jarvis-outreach');
+const dmarcConsent = require('./url-review-dmarc-consent');
 
 const IMPROVMX = 'https://api.improvmx.com/v4/';
 const INSTANTLY = 'https://api.instantly.ai/api/v2/';
@@ -26,8 +27,9 @@ const FORWARD_DOMAIN = 'carlosandmunoz.com';
 const OUTREACH_DOMAIN = 'qalabreview.com';
 // SendGrid signs as s1/s2, ImprovMX's SMTP as dkimprovmx1/2.
 const FORWARD_DKIM = ['s1', 's2', 'dkimprovmx1', 'dkimprovmx2'];
-// Aliases mail depends on: canary@ for the daily round trip (inbox and webhook), postmaster@ and abuse@ (RFC 2142).
-const REQUIRED = [{ alias: mailHealth.CANARY, webhook: true }, { alias: 'postmaster' }, { alias: 'abuse' }];
+// Aliases mail depends on: canary@ for the daily round trip (inbox and webhook), postmaster@ and abuse@ (RFC 2142),
+// dmarc@ webhook-only for owner DMARC / TLS-RPT ingest (#3777; mailbox in url-review-dmarc-consent.js).
+const REQUIRED_BASE = [{ alias: mailHealth.CANARY, webhook: true }, { alias: 'postmaster' }, { alias: 'abuse' }];
 const LINKS = {
 	instantly: 'https://app.instantly.ai/app/accounts',
 	improvmx: 'https://app.improvmx.com/',
@@ -44,6 +46,8 @@ const lower = (v) =>
 	String(v || '')
 		.trim()
 		.toLowerCase();
+const DMARC_ALIAS = lower(String(dmarcConsent.RUA_MAILBOX || '').split('@')[0] || 'dmarc');
+const REQUIRED = REQUIRED_BASE.concat([{ alias: DMARC_ALIAS, webhook: true, webhookOnly: true }]);
 const clip = (value, max) => {
 	const s = String(value || '')
 		.replace(/\s+/g, ' ')
@@ -109,9 +113,14 @@ const hookOf = (aliases) =>
     that has one. null when it cannot be built. Carries the webhook key: server side only, never in a row. */
 function restorePlan(aliases, alias) {
 	const want = REQUIRED.find((r) => r.alias === alias);
+	if (!want) return null;
 	const inbox = inboxOf(aliases);
-	const hook = want && want.webhook ? hookOf(aliases) : '';
-	if (!want || !inbox || (want.webhook && !hook)) return null;
+	const hook = want.webhook ? hookOf(aliases) : '';
+	if (want.webhookOnly) {
+		if (!hook) return null;
+		return { alias, forward: hook };
+	}
+	if (!inbox || (want.webhook && !hook)) return null;
 	return { alias, forward: [inbox].concat(hook ? [hook] : []).join(',') };
 }
 
@@ -173,9 +182,18 @@ function improvmxRows(aliases, credentials, box, domain) {
 			);
 		});
 	const inbox = inboxOf(aliases);
-	const hook = !!hookOf(aliases);
+	const hook = hookOf(aliases);
 	REQUIRED.filter((r) => !have.has(r.alias)).forEach((r) => {
-		const can = !!inbox && (!r.webhook || hook);
+		const can = r.webhookOnly ? !!hook : !!inbox && (!r.webhook || !!hook);
+		const forwards = can
+			? r.webhookOnly
+				? ['webhook']
+				: [inbox].concat(r.webhook ? ['webhook'] : [])
+			: [];
+		let detail = 'Missing from ImprovMX';
+		if (r.alias === mailHealth.CANARY) detail += ': the daily round trip cannot come back.';
+		else if (r.webhookOnly) detail += ': owner DMARC / TLS-RPT reports cannot reach mailInbound.';
+		else detail += '.';
 		rows.push(
 			row({
 				address: r.alias + '@' + d,
@@ -183,9 +201,8 @@ function improvmxRows(aliases, credentials, box, domain) {
 				kind: 'alias',
 				state: 'error',
 				problem: 'missing',
-				forwards: can ? [inbox].concat(r.webhook ? ['webhook'] : []) : [],
-				detail:
-					'Missing from ImprovMX' + (r.alias === mailHealth.CANARY ? ': the daily round trip cannot come back.' : '.'),
+				forwards,
+				detail,
 				fix: can
 					? { by: 'jarvis', action: 'restore-alias' }
 					: { by: 'carlos', action: 'Add the alias', link: LINKS.improvmx },

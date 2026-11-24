@@ -14,6 +14,7 @@ const hooked = [
 	'bluesky',
 	'buffer',
 	'canary',
+	'dmarc',
 	'linkedin',
 	'mastodon',
 	'meta',
@@ -46,7 +47,7 @@ test('ImprovMX rows: forwards with the webhook as "webhook", the last day per al
 		problems: [{ alias: 'qa', outcome: 'bounced', reason: '550 mailbox full' }],
 	};
 	const rows = addresses.improvmxRows(ALIASES, [{ username: 'notices', usage: 12 }], box, 'carlosandmunoz.com');
-	assert.equal(rows.filter((r) => r.kind === 'alias').length, 21);
+	assert.equal(rows.filter((r) => r.kind === 'alias').length, 22);
 	const qa = rows.find((r) => r.address === 'qa@carlosandmunoz.com');
 	assert.deepEqual(qa.forwards, [INBOX, 'webhook']);
 	assert.equal(qa.state, 'error');
@@ -80,6 +81,26 @@ test("a missing required alias is Jarvis's to restore, with the inbox and the we
 	const noHook = without.map((a) => ({ alias: a.alias, forward: INBOX }));
 	assert.equal(addresses.restorePlan(noHook, 'canary'), null);
 	assert.equal(addresses.improvmxRows(noHook, [], null).find((r) => r.address.startsWith('canary@')).fix.by, 'carlos');
+});
+
+test('a missing dmarc@ alias is webhook-only so aggregate reports skip the inbox (#3777)', async () => {
+	const without = ALIASES.filter((a) => a.alias !== 'dmarc');
+	const rows = addresses.improvmxRows(without, [], null);
+	const dmarc = rows.find((r) => r.address === 'dmarc@carlosandmunoz.com');
+	assert.equal(dmarc.problem, 'missing');
+	assert.deepEqual(dmarc.forwards, ['webhook']);
+	assert.deepEqual(dmarc.fix, { by: 'jarvis', action: 'restore-alias' });
+	assert.match(dmarc.detail, /mailInbound/);
+	assert.deepEqual(addresses.restorePlan(without, 'dmarc'), { alias: 'dmarc', forward: HOOK });
+	const { fetch, calls } = fakeFetch({
+		'/aliases': (url, init) => [
+			init && init.method === 'POST' ? { success: true } : { aliases: without },
+		],
+	});
+	const res = await addresses.restoreAlias({ fetch, env: { IMPROVMX_API_KEY: 'imx' } }, 'dmarc');
+	const post = calls.find(([, method]) => method === 'POST');
+	assert.deepEqual(JSON.parse(post[2]), { alias: 'dmarc', forward: HOOK });
+	assert.equal(res.detail, 'Restored dmarc@carlosandmunoz.com → webhook.');
 });
 
 test("Instantly rows: an error is Carlos's to reconnect, warm-up off is Jarvis's, a Jarvis pause shows its reason", () => {
@@ -309,7 +330,7 @@ test("source: every address with its state, the domains' mail records, and the G
 		m[r.system] = (m[r.system] || 0) + 1;
 		return m;
 	}, {});
-	assert.deepEqual(systems, { ImprovMX: 22, 'Microsoft 365': 2, Instantly: 2, SendGrid: 1 });
+	assert.deepEqual(systems, { ImprovMX: 23, 'Microsoft 365': 2, Instantly: 2, SendGrid: 1 });
 	assert.equal(out.rows[0].domain, 'carlosandmunoz.com');
 	assert.equal(out.rows.find((r) => r.system === 'SendGrid').state, 'ok');
 	assert.deepEqual(
@@ -318,7 +339,7 @@ test("source: every address with its state, the domains' mail records, and the G
 	);
 	assert.equal(
 		out.counts.addresses,
-		24,
+		25,
 		'qa@ is an alias and the SendGrid sender; carlos@ and hello@ are in Instantly and Microsoft 365'
 	);
 	assert.ok(!JSON.stringify(out).includes('s3cret'), 'the webhook key never leaves the server');

@@ -26,7 +26,7 @@
    #2338, from the addresses source (jarvis-addresses.js), each at most once per occurrence of a problem:
    enable-warmup   an Instantly mailbox with warm-up off gets it turned on, before the pause loop, so it is healed
                    rather than paused
-   restore-alias   a missing required ImprovMX alias (canary, postmaster, abuse) is added back
+   restore-alias   a missing required ImprovMX alias (canary, postmaster, abuse, dmarc) is added back
                    what Jarvis cannot fix (a mailbox to reconnect, DNS, a blocked Microsoft 365 user, a failed fix) is
                    pushed once per occurrence; jarvis_watch/addresses keeps which, so a problem that clears and comes
                    back pushes again
