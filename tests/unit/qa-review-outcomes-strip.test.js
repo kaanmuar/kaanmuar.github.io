@@ -15,13 +15,13 @@ function loadCopy(lang) {
 	return sandbox.window.QAReviewReportCopy;
 }
 
-test('outcomes strip copy is EN-first with fallbacks (#4298)', () => {
+test('outcomes strip copy is present in EN and localized (#4298)', () => {
 	const en = loadCopy('en');
 	assert.equal(en.t('outcomesTitle'), 'Outcome packs');
 	assert.equal(en.t('outcomesOpen', { n: 3 }), '3 open');
 	const es = loadCopy('es');
-	assert.equal(es.t('outcomesTitle'), 'Outcome packs');
-	assert.equal(es.t('outcomesOpen', { n: 1 }), '1 open');
+	assert.equal(es.t('outcomesTitle'), 'Paquetes de resultado');
+	assert.equal(es.t('outcomesOpen', { n: 1 }), '1 abierto');
 });
 
 test('qa-review.js renders the strip only when insights.outcomes is non-empty (#4298)', () => {
