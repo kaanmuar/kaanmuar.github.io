@@ -24,6 +24,8 @@ const E = require('./engagement');
 const people = require('./outreach-people');
 const trials = require('./outreach-trials');
 const Send = require('./outreach-send');
+const scenarios = require('./url-review-scenarios');
+const scenarioCard = require('./url-review-scenario-card');
 
 const FUNNEL = ['found', 'reviewed', 'offered', 'claimed', 'paid'];
 const CLAIMED = ['claimed', 'trial_ended', 'discount_sent'];
@@ -65,6 +67,11 @@ const LEAD_HEADER = [
 	'trial_days',
 	'after_percent',
 	'live_report_url',
+	'scenario_id',
+	'scenario_consequence',
+	'scenario_cta',
+	'scenario_body_line',
+	'scenario_card_url',
 	'approved',
 	'status',
 ];
@@ -111,7 +118,48 @@ function findingsFor(findings, sector, n) {
 		area: String(f.area || ''),
 		severity: String(f.severity || ''),
 		title: String(f.title).slice(0, 140),
+		key: String(f.key || ''),
+		evidence: String(f.evidence || '').slice(0, 280),
 	}));
+}
+
+const findingTitle = (f) => (f && typeof f.title === 'string' ? f.title : '');
+
+const emptyScenarioVars = () => ({
+	scenario_id: '',
+	scenario_consequence: '',
+	scenario_cta: '',
+	scenario_body_line: '',
+	scenario_card_url: '',
+});
+
+/** Instantly scenario vars when a cold_safe row matches; card is a data-URL SVG. Empty strings when none. */
+function scenarioVarsFor(host, reviewFindings, offer) {
+	if (!offer || !offer.channels || !offer.channels.includes('email')) return emptyScenarioVars();
+	const open = (reviewFindings || []).filter(
+		(f) => f && (!f.verdict || f.verdict === 'fail' || f.verdict === 'risk')
+	);
+	const pick = scenarios.pickColdScenario(open);
+	if (!pick) return emptyScenarioVars();
+	const matched =
+		open.find((f) => pick.findingIds.includes(String(f.key || f.id || ''))) || null;
+	const title =
+		findingTitle(matched) || (offer.findings[0] && offer.findings[0].title) || pick.copyHooks.subjectHint;
+	const evidence = String((matched && matched.evidence) || pick.copyHooks.bodyLine || '').slice(0, 280);
+	const card = scenarioCard.scenarioCardDataUrl({
+		host: bare(host),
+		title,
+		evidence,
+		consequence: pick.consequence,
+		cta: pick.copyHooks.cta,
+	});
+	return {
+		scenario_id: pick.scenarioId,
+		scenario_consequence: pick.consequence,
+		scenario_cta: pick.copyHooks.cta,
+		scenario_body_line: pick.copyHooks.bodyLine,
+		scenario_card_url: card,
+	};
 }
 
 /**
@@ -218,6 +266,11 @@ function leadRow(row, person, offer, trial, extra) {
 		trial_days: String(t.days),
 		after_percent: String(t.after),
 		live_report_url: x.liveReport || '',
+		scenario_id: x.scenario_id || '',
+		scenario_consequence: x.scenario_consequence || '',
+		scenario_cta: x.scenario_cta || '',
+		scenario_body_line: x.scenario_body_line || '',
+		scenario_card_url: x.scenario_card_url || '',
 		approved: x.approved || '',
 		status: 'new',
 	};
@@ -415,6 +468,7 @@ module.exports = {
 	release,
 	emailApproved,
 	findingsFor,
+	scenarioVarsFor,
 	offerFor,
 	personOf,
 	ledgerPatch,
