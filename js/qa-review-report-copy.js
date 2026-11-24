@@ -79,6 +79,7 @@
       compareIntro: "Run the same review on a competitor's site and see who wins each indicator: the six areas as a radar and 3D columns, speed and page weight head to head, your advantages and theirs, the common ground, the open problems only one site has, and how present each site is in the market, from its Tranco rank and 30-day trend.",
       compareLabel: "Competitor's address", compareGo: "Compare", compareAdd: "+ Add another competitor", left: "({n} left)", compareStop: "Stop the comparison",
       ring: "Health score {n} out of 100, grade {g}", grade: "Grade {g}", sevAria: "Open problems by severity",
+      outcomesTitle: "Outcome packs", outcomesOpen_one: "{n} open", outcomesOpen_other: "{n} open",
       measured: "Every check below was measured from the public response, not guessed. Checks marked “{person}” are judgments a machine should not make for you.",
       delta: "Change since your last review",
       deltaFixed_one: "{n} fixed", deltaFixed_other: "{n} fixed",
