@@ -2901,7 +2901,10 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(geo.locator('.jv-geo-legend')).toContainText('Low replies');
 		if (process.env.GEO_SHOTS) await geo.screenshot({ path: `${process.env.GEO_SHOTS}/2976-map-gaps.png` });
 		// #2989: the Dates ahead metric, the Upcoming dates panel, and the holiday pause in the country sheet.
+		// Map aria-label uses the soonest date for BR (commerce like Black Friday can beat the injected holiday) (#4289).
 		const holiday = CALENDAR.days.find((d) => d.kind === 'holiday' && d.ccs.includes('BR'));
+		const brNext = GEO_DATED.countries.find((r) => r.cc === 'BR')?.nextDate;
+		const brLabel = (brNext && brNext.name) || 'Proclamação da República';
 		await geo.locator('[data-geo-channel="all"]').click();
 		await geo.locator('[data-geo-metric]').selectOption('dates');
 		await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Dates ahead');
@@ -2909,7 +2912,7 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute(
 			'aria-label',
-			/Proclamação da República in \d+ days/
+			new RegExp(brLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' in \\d+ days')
 		);
 		await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*in \d+ days/);
 		const dates = geo.locator('[data-panel-id="geo-dates"]');
