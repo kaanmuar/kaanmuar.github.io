@@ -9,13 +9,10 @@
    is our own site's review (a real run) moved to the skit's example host with the skit's finding set.
    Writes media/skits/screen/<skit>-<lang>.mp4 (1000x1580) and .json with the times of each step. */
 
-require('../playwright-sandbox');
-const { chromium } = require('playwright');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const auth = require('../../functions/url-review-auth');
 const sample = {
 	frameworks: require('../../functions/url-review-core').FRAMEWORKS,
 	report: require('../../tests/unit/fixtures/review-carlosandmunoz.json'),
@@ -31,7 +28,12 @@ const SIZE = { width: VIEW.width * SCALE, height: VIEW.height * SCALE };
 const API = /us-central1-carlosm-interactive-cv\.cloudfunctions\.net\//;
 const BLOCKED = /googletagmanager|google-analytics|ipwho\.is/;
 const DEVICE = 'd'.repeat(64);
-const TERMS = fs.readFileSync(path.join(ROOT, 'js/qa-review.js'), 'utf8').match(/TERMS_VERSION = "([^"]+)"/)[1];
+function termsVersion() {
+	const src = fs.readFileSync(path.join(ROOT, 'js/qa-review.js'), 'utf8');
+	const m = src.match(/TERMS_VERSION\s*=\s*["']([^"']+)["']/);
+	if (!m) throw new Error('TERMS_VERSION not found in js/qa-review.js');
+	return m[1];
+}
 
 function args() {
 	const out = { _: [] };
@@ -51,44 +53,119 @@ function args() {
 	return out;
 }
 
-// Our own run on carlosandmunoz.com, moved to the skit's host, with its broken-links check failing.
+const AREA_BY_KEY = {
+	'seo-broken-links': 'SEO',
+	'geo-llms': 'GEO',
+	'a11y-labels': 'Accessibility',
+};
+
+function evidenceFor(skit, lang) {
+	const key = skit.findingKey || 'seo-broken-links';
+	if (key === 'seo-broken-links') {
+		const paths = ['/summer-sale', '/help/returns'].slice(0, skit.broken || 2);
+		return {
+			count: paths.length,
+			pages: paths.map((p) => 'https://' + skit.host + p),
+			evidence: paths.join(' and ') + ' answered 404 Not Found.',
+			fix: 'Fix or remove the links before the release.',
+		};
+	}
+	if (key === 'geo-llms') {
+		return {
+			count: 1,
+			pages: ['https://' + skit.host + '/'],
+			evidence: 'https://' + skit.host + '/llms.txt answered 404; no machine-readable site summary was found.',
+			fix: 'Publish an llms.txt that names the product and the pages answer engines should cite.',
+		};
+	}
+	if (key === 'a11y-labels') {
+		return {
+			count: 3,
+			pages: ['https://' + skit.host + '/signup'],
+			evidence: 'Name, email and password on /signup have no programmatic label.',
+			fix: 'Pair each control with a visible <label> or an aria-label before the release.',
+		};
+	}
+	return {
+		count: 1,
+		pages: ['https://' + skit.host + '/'],
+		evidence: skit.lang[lang].finding,
+		fix: 'Fix the finding before the release.',
+	};
+}
+
+// Our own run on carlosandmunoz.com, moved to the skit's host, with the skit's finding failing (#4286).
 function reportFor(skit, lang) {
+	const key = skit.findingKey || 'seo-broken-links';
+	const area = skit.area || AREA_BY_KEY[key] || 'SEO';
 	const text = JSON.stringify(sample.report).split('carlosandmunoz.com').join(skit.host);
 	const report = Object.assign(JSON.parse(text), {
 		id: '5k1t' + skit.id.replace(/[^a-z]/g, '').slice(0, 8),
 		fetchedAt: new Date().toISOString(),
 	});
-	const finding = report.insights.findings.find((item) => item.key === 'seo-broken-links');
-	const paths = ['/summer-sale', '/help/returns'].slice(0, skit.broken);
+	let finding = report.insights.findings.find((item) => item.key === key);
+	if (!finding) {
+		finding = {
+			key,
+			area,
+			id: 'skit-' + key,
+			effort: 'S',
+			cases: [],
+		};
+		report.insights.findings.push(finding);
+	}
+	const detail = evidenceFor(skit, lang);
+	const wasPass = finding.verdict === 'pass';
 	Object.assign(finding, {
 		verdict: 'fail',
 		severity: 'high',
-		count: paths.length,
-		pages: paths.map((p) => 'https://' + skit.host + p),
+		area,
+		count: detail.count,
+		pages: detail.pages,
 		title: skit.lang[lang].finding,
-		evidence: paths.join(' and ') + ' answered 404 Not Found.',
-		fix: 'Fix or remove the links before the release.',
+		evidence: detail.evidence,
+		fix: detail.fix,
 	});
-	const seo = report.insights.score.areas.SEO;
-	Object.assign(seo, { fail: seo.fail + 1, pass: seo.pass - 1, score: seo.score - 12, grade: 'B' });
+	const bucket = report.insights.score.areas[area];
+	if (bucket) {
+		Object.assign(bucket, {
+			fail: bucket.fail + 1,
+			pass: wasPass ? Math.max(0, bucket.pass - 1) : bucket.pass,
+			score: Math.max(0, bucket.score - 12),
+			grade: 'B',
+		});
+	}
 	report.insights.score.totals.fail += 1;
-	report.insights.score.totals.pass -= 1;
-	report.insights.score.overall -= 3;
+	if (wasPass) report.insights.score.totals.pass = Math.max(0, report.insights.score.totals.pass - 1);
+	report.insights.score.overall = Math.max(0, report.insights.score.overall - 3);
 	report.findingId = finding.id;
-	report.insights.findings.sort((a, b) => (a.verdict === 'fail' ? 0 : 1) - (b.verdict === 'fail' ? 0 : 1));
+	report.insights.findings.sort((a, b) => {
+		if (a === finding) return -1;
+		if (b === finding) return 1;
+		return (a.verdict === 'fail' ? 0 : 1) - (b.verdict === 'fail' ? 0 : 1);
+	});
 	return report;
 }
 
-const LOG = (host) => [
-	'Checking the fields, the email domain, and that this is a browser.',
-	'Fetching https://' + host + '/ and its robots.txt.',
-	'Found 10 linked pages. Opening 3 in a headless browser.',
-	'Checking every internal link for its status.',
-	'Two links answered 404.',
-	'Scoring SEO, GEO, analytics, security, accessibility and performance.',
-];
+const LOG = (host, skit) => {
+	const key = (skit && skit.findingKey) || 'seo-broken-links';
+	const mid =
+		key === 'geo-llms'
+			? ['Looking for llms.txt and structured entity facts.', 'llms.txt was missing.']
+			: key === 'a11y-labels'
+				? ['Checking form controls for labels.', 'Three signup fields had no label.']
+				: ['Checking every internal link for its status.', 'Two links answered 404.'];
+	return [
+		'Checking the fields, the email domain, and that this is a browser.',
+		'Fetching https://' + host + '/ and its robots.txt.',
+		'Found 10 linked pages. Opening 3 in a headless browser.',
+		...mid,
+		'Scoring SEO, GEO, analytics, security, accessibility and performance.',
+	];
+};
 
 async function record(browser, skit, lang) {
+	const auth = require('../../functions/url-review-auth');
 	const store = auth.memoryStore();
 	const started = await auth.startEmail(store, { email: 'ana@example.com', deviceKey: DEVICE, ip: '1.1.1.1' });
 	const signed = await auth.finishEmail(store, { id: started.id, code: started.code, deviceKey: DEVICE });
@@ -119,7 +196,7 @@ async function record(browser, skit, lang) {
 				/* storage is optional */
 			}
 		},
-		{ terms: TERMS, session: signed.session, device: DEVICE, lang }
+		{ terms: termsVersion(), session: signed.session, device: DEVICE, lang }
 	);
 	await context.route(BLOCKED, (route) => route.abort());
 	await context.route(API, async (route) => {
@@ -145,7 +222,7 @@ async function record(browser, skit, lang) {
 		if (pathname === '/auth/providers') return json({ providers: [{ id: 'email' }] });
 		if (pathname === '/review') {
 			await new Promise((r) => setTimeout(r, 2600));
-			const lines = LOG(skit.host)
+			const lines = LOG(skit.host, skit)
 				.map((text) => ({ type: 'log', text }))
 				.concat({ type: 'done', report, frameworks: sample.frameworks, paid: true });
 			return route.fulfill({
@@ -312,7 +389,9 @@ async function record(browser, skit, lang) {
 	console.log('recorded', path.relative(ROOT, file), JSON.stringify(marks));
 }
 
-(async () => {
+async function main() {
+	require('../playwright-sandbox');
+	const { chromium } = require('playwright');
 	const opts = args();
 	const skit = SKITS.find((s) => s.id === opts._[0]);
 	if (!skit) throw new Error('name a skit: ' + SKITS.map((s) => s.id).join(', '));
@@ -320,7 +399,13 @@ async function record(browser, skit, lang) {
 	const browser = await chromium.launch();
 	for (const lang of langs) await record(browser, skit, lang);
 	await browser.close();
-})().catch((error) => {
-	console.error(error);
-	process.exit(1);
-});
+}
+
+if (require.main === module) {
+	main().catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
+}
+
+module.exports = { reportFor, evidenceFor, LOG };
