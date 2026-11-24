@@ -134,6 +134,40 @@ test('the lead row carries the trial, the findings in both languages and the pub
 	);
 });
 
+test('scenario Instantly vars fill when a cold_safe finding matches, and stay empty otherwise', () => {
+	const o = CP.offerFor({ person: PERSON, findings: FINDINGS, sector: 'hotel' });
+	const review = [
+		{
+			key: 'a11y-labels',
+			verdict: 'fail',
+			severity: 'medium',
+			area: 'Accessibility',
+			title: '2 form controls have no label',
+			evidence: 'On /book. Screen readers announce them as unnamed fields.',
+		},
+		...FINDINGS,
+	];
+	const vars = CP.scenarioVarsFor('hotelcasabrava.com.co', review, o);
+	assert.equal(vars.scenario_id, 'cold-a11y-labels');
+	assert.match(vars.scenario_consequence, /form abandonment|labels/i);
+	assert.match(vars.scenario_cta, /label/i);
+	assert.match(vars.scenario_body_line, /Screen-reader|blank control/i);
+	assert.match(vars.scenario_card_url, /^data:image\/svg\+xml/);
+	const row = CP.leadRow({ host: 'hotelcasabrava.com.co', cc: 'co' }, PERSON, o, TRIAL, vars);
+	assert.equal(row.scenario_id, 'cold-a11y-labels');
+	const de = CP.offerFor({
+		person: Object.assign({}, PERSON, { country: 'de', lang: 'de' }),
+		findings: FINDINGS,
+		sector: 'hotel',
+	});
+	const empty = CP.scenarioVarsFor('hotelcasabrava.com.co', review, de);
+	assert.deepEqual(
+		[empty.scenario_id, empty.scenario_consequence, empty.scenario_cta, empty.scenario_card_url],
+		['', '', '', '']
+	);
+	assert.deepEqual(CP.scenarioVarsFor('x.com', [{ key: 'sec-hsts', verdict: 'fail', title: 'HSTS' }], o).scenario_id, '');
+});
+
 test('profile messages wait for Carlos with the trial tone, and the ledger stops the domain-offer touches', () => {
 	const o = CP.offerFor({ person: PERSON, findings: FINDINGS, sector: 'hotel' });
 	const items = CP.socialItems(PERSON, o, TRIAL);

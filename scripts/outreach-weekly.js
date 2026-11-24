@@ -1060,12 +1060,14 @@ async function companies(log) {
 		const trial = await CP.mint(db, person, offer);
 		if (offer.channels.includes('email')) {
 			const [finding_1, finding_2] = await translateFindings(offer.findings, offer.lang, log);
+			const scenario = CP.scenarioVarsFor(h.host, review.findings, offer);
 			rows.push(
 				CP.leadRow(h, person, offer, trial, {
 					finding_1,
 					finding_2,
 					country: COUNTRY[person.country],
 					approved: await CP.emailApproved(send, Date.now()),
+					...scenario,
 				})
 			);
 			used.add(offer.email);
