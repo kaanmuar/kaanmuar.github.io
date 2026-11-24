@@ -5,9 +5,128 @@
     <link>https://carlosandmunoz.com/qa-review-social-pt.html</link>
     <description>Cada publicação do QA-lab URL Review: dicas, análises reais de sites e clipes curtos.</description>
     <language>pt</language>
-    <lastBuildDate>Mon, 23 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 24 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-pt.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-pt.html</link></image>
+    <item>
+      <title>allservicecyc.com: 56. A lacuna: links quebrados.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/17-u-allservicecyc-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/17-u-allservicecyc-com-pt</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Cada link externo verificado foi respondido e os rastreadores de resposta e pesquisa da IA ​​​​podem ler a página inicial. Mas 11 links internos levam a um erro.
+
+Leve isto adiante: Verifique seus links após cada release e corrija ou redirecione todo aquele que responder 404.
+
+Uma análise automatizada de páginas públicas em 19 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um retrato inicial, não um veredito.
+Relatório: https://carlosandmunoz.com/qa-review.html?live=u-allservicecyc-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #SoftwareTesting #QA #BrokenLinks #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/17-u-allservicecyc-com.jpg" length="238032" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/17-u-allservicecyc-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Marcou 88 de 100. A lacuna: acessibilidade.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/04-u-artificearcondicionado-com-br-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/04-u-artificearcondicionado-com-br-pt</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os elementos devem ter o seu texto visível como parte do seu nome acessível.
+
+Conclusão: Inicie o aria-label com as palavras que estão visíveis no controle.
+
+Uma análise automatizada de páginas públicas em 20 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um primeiro olhar, não um julgamento.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-artificearcondicionado-com-br
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #Programming #QA #WebDevelopment #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/04-u-artificearcondicionado-com-br.jpg" length="243569" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/04-u-artificearcondicionado-com-br.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bairesdev.com: 62. A lacuna: Funções ARIA.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/03-u-bairesdev-com-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/03-u-bairesdev-com-pt</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas certos papéis ARIA precisam estar contidos em elementos pais específicos.
+
+Lição: Use elementos HTML nativos primeiro. Ao usar funções ARIA, aninhe-as da maneira exigida pela função.
+
+Uma análise automatizada de páginas públicas em 21 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um primeiro olhar, não um julgamento.
+O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-bairesdev-com
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #ARIA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/03-u-bairesdev-com.jpg" length="236820" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/03-u-bairesdev-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>aqicn.org: 48. A lacuna: texto alt.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/02-u-aqicn-org-pt.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/02-u-aqicn-org-pt</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Requested</category>
+      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 962 imagens não têm atributo alt.
+
+Conclusão: Descreva o que cada imagem mostra no atributo alt e use alt=&quot;&quot; nas puramente decorativas.
+
+Uma análise automatizada de páginas públicas em 21 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Uma análise inicial, não uma decisão final.
+Abra o relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-aqicn-org
+
+Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #JavaScript #WebDev #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/02-u-aqicn-org.jpg" length="226379" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/02-u-aqicn-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Os cabeçalhos da sua resposta pública dizem mais do que você imagina.</title>
+      <link>https://carlosandmunoz.com/social/launch-2026-10/pt/security.html</link>
+      <guid isPermaLink="false">launch-2026-10/pt/security</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Produto</category>
+      <description>A revisão lista as marcas de segurança que uma resposta pública mostra, como HTTPS, HSTS, CSP e nosniff, como sinais para checar depois. Não é um teste de invasão nem prova de invasão.
+
+→ HTTPS, HSTS, CSP, nosniff
+→ Encontrado na resposta pública
+→ Um sinal para checar depois
+
+Primeira revisão incluída · 20 páginas · 2 links de profundidade
+Propõe casos de teste a partir de uma leitura pública. Não os executa, não faz login, não envia formulários nem gera carga.
+
+Teste com uma URL pública: https://carlosandmunoz.com/qa-review-pt.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=url-review-security&amp;utm_content=pt
+
+#TesteDeSoftware #QA #AutomaçãoDeTestes #WebSecurity #HTTPHeaders</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/security-portrait.jpg" length="174494" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/launch-2026-10/pt/security-portrait.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Três páginas do Louvre, um título.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/29-louvre-pt.html</link>
+      <guid isPermaLink="false">runs-100/29-louvre-pt</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Análise de site</category>
+      <category>Worldwide</category>
+      <description>security.txt, uma content security policy rígida e framing negado. robots.txt até mantém os bots de IA longe só das imagens. Mas as páginas de exposições, eventos e visitas guiadas compartilham um único título.
+
+A lição para toda equipe: Dê a toda página um título único que comece pelo assunto. Abas, favoritos e resultados de busca mostram isso.
+
+Uma análise automatizada de páginas públicas em 19 out. 2026. Um ponto de partida, não um veredito.
+Como a revisão funciona, passo a passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=louvre
+
+#SEO #Titles #Museums #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg" length="235526" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>aeofmiami.com: 44. A lacuna: nomes de botões.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/05-u-aeofmiami-com-pt.html</link>
@@ -883,132 +1002,6 @@ Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
 #SEO #SoftwareTesting #WebPerformance #QA #WebPerf #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/04-vs-zefoy-com.jpg" length="252174" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-15/feed/04-vs-zefoy-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>doram-ru.org versus doramclub.com. doramclub.com leads: 62.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-16/03-vs-doram-ru-org-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-16/03-vs-doram-ru-org-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Versus</category>
-      <description>doramclub.com lidera em SEO, Segurança, Desempenho; doram-ru.org lidera em GEO, Analytics, Acessibilidade.
-
-A lição para toda equipe: Compare-se com os sites com que seus visitantes comparam você, não com uma nota perfeita: a diferença que custa caro é a que um concorrente já fechou.
-
-Análises automatizadas de páginas públicas em 16 novembro 2026 de doram-ru.org, doramclub.com, concorrentes naturais encontrados na web aberta pela varredura rival do QA-lab URL Review. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-doram-ru-org&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-doram-ru-org
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Outage #SoftwareTesting #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/03-vs-doram-ru-org.jpg" length="260896" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/03-vs-doram-ru-org.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>zegel.edu.pe: 67. A lacuna: contraste de texto.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/02-u-zegel-edu-pe-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/02-u-zegel-edu-pe-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os elementos precisam atingir os limites mínimos de razão de contraste de cor.
-
-O que mudar: Mantenha o texto do corpo com contraste de 4.5:1 ou mais contra o fundo.
-
-Uma análise automatizada de páginas públicas em 17 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
-Relatório: https://carlosandmunoz.com/qa-review.html?live=u-zegel-edu-pe
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg" length="234186" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/02-u-zegel-edu-pe.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>44ye.com: 75. A lacuna: Acesso de crawlers de IA.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/19-u-44ye-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/19-u-44ye-com-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de treinamento de modelos estão bloqueados por escolha. Mas 1 A resposta da IA ​​ou o rastreador de pesquisa estão bloqueados.
-
-A lição para toda equipe: Decida bot a bot no robots.txt: libere os motores de resposta pelos quais você quer ser citado e bloqueie só os crawlers de treinamento.
-
-Uma análise automatizada de páginas públicas em 17 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-44ye-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#GEO #SoftwareTesting #DevOps #QA #AISearch #QAlab
-
-https://www.youtube.com/shorts/E1PGxs9wSt4</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/19-u-44ye-com.jpg" length="236922" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/19-u-44ye-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>7diasdesabor.com: 66. A lacuna: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/25-u-7diasdesabor-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/25-u-7diasdesabor-com-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas o HSTS não é enviado.
-
-A lição para toda equipe: Envie Strict-Transport-Security com max-age de pelo menos um ano, para que os navegadores nunca mais tentem http simples.
-
-Uma análise automatizada de páginas públicas em 17 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um ponto de partida, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-7diasdesabor-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #CyberSecurity #QA #HSTS #QAlab
-
-https://www.youtube.com/shorts/QrhjiirWjpc</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/25-u-7diasdesabor-com.jpg" length="234049" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/25-u-7diasdesabor-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Marcou 52 de 100. A lacuna: rótulos de formulário.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/01-u-advanceconstrucciones-com-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/01-u-advanceconstrucciones-com-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Toda página tem título, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas 12 controles de formulário não têm rótulo.
-
-O que mudar: Dê a cada campo um rótulo visível ligado a ele com for e id. Leitores de tela o anunciam, e a área de toque cresce.
-
-Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um retrato inicial, não um veredito.
-Abra o relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-advanceconstrucciones-com
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Automation #QA #Forms #A11y #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" length="234306" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/01-u-advanceconstrucciones-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Marcou 81 de 100. A lacuna: contraste de texto.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/18-u-agenciadeviajestravelone-cl-pt.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/18-u-agenciadeviajestravelone-cl-pt</guid>
-      <pubDate>Thu, 19 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Análise de site</category>
-      <category>Requested</category>
-      <description>Todo link interno aberto respondeu, e os crawlers de busca e de respostas de IA podem ler a página inicial. Mas os elementos precisam atingir os limites mínimos de razão de contraste de cor.
-
-Conclusão: Mantenha o texto do corpo com contraste de 4.5:1 ou mais contra o fundo.
-
-Uma análise automatizada de páginas públicas em 18 novembro 2026, solicitada através da revisão de URL do laboratório de controle de qualidade. Um retrato inicial, não um veredito.
-O relatório completo: https://carlosandmunoz.com/qa-review.html?live=u-agenciadeviajestravelone-cl
-
-Revise o seu próprio site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab
-
-https://www.youtube.com/shorts/Qh00N6AzXKY</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" length="239243" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/18-u-agenciadeviajestravelone-cl.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

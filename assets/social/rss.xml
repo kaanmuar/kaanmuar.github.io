@@ -5,9 +5,107 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Mon, 23 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 24 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>allservicecyc.com: 56. The gap: broken links.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/17-u-allservicecyc-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/17-u-allservicecyc-com</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 11 internal links lead to an error.
+
+Carry this forward: Check your own links after each release, and fix or redirect every one that answers 404.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-allservicecyc-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #DevOps #SoftwareTesting #QA #BrokenLinks #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/17-u-allservicecyc-com.jpg" length="238032" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/17-u-allservicecyc-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Scored 88 of 100. The gap: accessibility.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/04-u-artificearcondicionado-com-br.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/04-u-artificearcondicionado-com-br</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must have their visible text as part of their accessible name.
+
+Takeaway: Start the aria-label with the words that are visible on the control.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-artificearcondicionado-com-br
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #Programming #QA #WebDevelopment #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/04-u-artificearcondicionado-com-br.jpg" length="243569" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/04-u-artificearcondicionado-com-br.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bairesdev.com: 62. The gap: ARIA roles.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/03-u-bairesdev-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/03-u-bairesdev-com</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.
+
+Lesson: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-bairesdev-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #ARIA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/03-u-bairesdev-com.jpg" length="236820" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/03-u-bairesdev-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>aqicn.org: 48. The gap: alt text.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/02-u-aqicn-org.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/02-u-aqicn-org</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 962 images have no alt attribute.
+
+Takeaway: Describe what each image shows in its alt attribute, and use alt=&quot;&quot; on purely decorative ones.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-aqicn-org
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #JavaScript #WebDev #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/02-u-aqicn-org.jpg" length="226379" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/02-u-aqicn-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Three Louvre pages, one title.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/29-louvre.html</link>
+      <guid isPermaLink="false">runs-100/29-louvre</guid>
+      <pubDate>Tue, 24 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>security.txt, a strict content security policy, and framing denied. robots.txt even keeps AI bots off images only. But the exhibitions, events, and guided-tours pages all share one title.
+
+The lesson for every team: Give every page a unique title that leads with its topic. Tabs, bookmarks, and search results all show it.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=louvre
+
+#SEO #Titles #Museums #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg" length="235526" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/29-louvre.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>aeofmiami.com: 44. The gap: button names.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/05-u-aeofmiami-com.html</link>
@@ -797,80 +895,6 @@ Via GitHub, by linggan121, 2026-11-11.
 
 https://github.com/linggan121/visual-fidelity</description>
       <media:content url="https://opengraph.githubassets.com/1/linggan121/visual-fidelity" medium="image"/>
-    </item>
-    <item>
-      <title>Playwright 1.65 breaking changes: each error and its fix</title>
-      <link>https://carlosandmunoz.com/social/pick/playwright-1-65-breaking-changes-each-error-and-its-fix.html</link>
-      <guid isPermaLink="false">pick/playwright-1-65-breaking-changes-each-error-and-its-fix</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Playwright 1.65 lists ten changes that can fail your tests. See each real error after the upgrade, and a fix that worked in a demo.
-
-Via DEV, by Anton Gulin, 2026-11-21.
-
-https://www.anton.qa/blog/posts/playwright-1-65-breaking-changes</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fcdn.sanity.io%2Fimages%2F9tez6xmw%2Fproduction%2F251f95a784419bbb81fde6547632657f10efc213-1000x420.png" medium="image"/>
-    </item>
-    <item>
-      <title>Shipped: Streamlit Text Accessibility Checker</title>
-      <link>https://carlosandmunoz.com/social/pick/shipped-streamlit-text-accessibility-checker.html</link>
-      <guid isPermaLink="false">pick/shipped-streamlit-text-accessibility-checker</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Today I'm sharing a new tool from QuackBuilds: the Streamlit Text Accessibility Checker. This is a...
-
-Via DEV, by ItsEvilDuck, 2026-11-17.
-
-https://itsevilduck.gumroad.com/l/qlphwt</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fq3a1fk412h6q7sb3uo9o.png" medium="image"/>
-    </item>
-    <item>
-      <title>WordPress Random Redirects, Branded API Data &amp; CDN Advice – SEO Pulse via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/wordpress-random-redirects-branded-api-data-cdn-advice-seo-p.html</link>
-      <guid isPermaLink="false">pick/wordpress-random-redirects-branded-api-data-cdn-advice-seo-p</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>This week's SEO Pulse covers WordPress's random redirect, branded data in Search Console API, Google's CDN guidance, and who controls access for bots and agents. The post WordPress Random Redirects, Branded API Data &amp; CDN Advice – SEO Pulse appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-21.
-
-https://www.searchenginejournal.com/seo-pulse-wordpress-random-redirects-branded-api-data-cdn-advice/598173/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/seo-pulse-november-19-featured-1600x840-1.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>Your End-to-End Tests Run a Chrome With Popup Blocking and Background Throttling Turned Off</title>
-      <link>https://carlosandmunoz.com/social/pick/your-end-to-end-tests-run-a-chrome-with-popup-blocking-and-b.html</link>
-      <guid isPermaLink="false">pick/your-end-to-end-tests-run-a-chrome-with-popup-blocking-and-b</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>A user reports a bug. You write a Playwright or Puppeteer test that does exactly what they did. It passes. You close the report.
-
-Via DEV, by Vladimir Elchinov, 2026-11-20.
-
-https://dev.to/session_replay/your-end-to-end-tests-run-a-chrome-with-popup-blocking-and-background-throttling-turned-off-46l5</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fn7zyc8u9cls8m1qlvwie.png" medium="image"/>
-    </item>
-    <item>
-      <title>Apache.org runs without descriptions.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/22-apache.html</link>
-      <guid isPermaLink="false">runs-100/22-apache</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Preloaded HSTS, a security.txt, a content security policy, and Core Web Vitals that pass for real visitors. But none of the 20 pages analyzed, the home page included, has a meta description.
-
-The lesson for every team: Give each page a description of about 150 characters. Search and AI answers quote it when they introduce you.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=apache
-
-#SEO #MetaDescription #OpenSource #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" length="245653" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
