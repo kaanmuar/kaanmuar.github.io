@@ -382,8 +382,16 @@ function fakeDb(seed) {
 }
 
 test('rescue: the cloud pass reads as Chrome, re-runs, keeps a hint, and queues the rest for the Mac', async () => {
-	const walled = failed('w1');
-	const blocked = failed('b1', { url: 'https://blocked.example/', host: 'blocked.example', email: '' });
+	// runRescues uses Date.now() and drops failures older than RESCUE_DAYS (#4290).
+	const recent = new Date(Date.now() - 86400000).toISOString();
+	const walled = failed('w1', { at: recent, diagnosedAt: recent });
+	const blocked = failed('b1', {
+		url: 'https://blocked.example/',
+		host: 'blocked.example',
+		email: '',
+		at: recent,
+		diagnosedAt: recent,
+	});
 	const db = fakeDb({ url_review_failures: [walled, blocked] });
 	const reads = [];
 	const reruns = [];
