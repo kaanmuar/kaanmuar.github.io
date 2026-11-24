@@ -122,6 +122,28 @@
     "checked": "2026-11-08T20:50:31.397Z"
    }
   ],
+  "auto-2026-10-25/02-u-corporacionjaar-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3x19h",
+    "at": "2026-11-23T23:00:31.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3x19h/corporacionjaarcom_59_le_point_faible_hsts/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
+  "auto-2026-10-25/03-u-bible-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y40bzg",
+    "at": "2026-11-24T01:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y40bzg/biblecom_68_la_lacuna_i_frame/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
   "auto-2026-11-03/02-u-iteso-mx": [
    {
     "channel": "reddit",
@@ -372,7 +394,7 @@
     "at": "2026-11-22T01:00:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y2cg48/najserialyio_73_the_gap_ai_crawler_access/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-15/03-vs-mccabespharmacy-com": [
@@ -394,7 +416,7 @@
     "at": "2026-11-22T14:00:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y2pzix/notinode_56_the_gap_form_labels/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-16/02-u-predictz-com": [
@@ -417,6 +439,17 @@
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xzke8c/motivesai_70_a_lacuna_frames/",
     "checked": "2026-11-20T22:53:18.834Z"
+   }
+  ],
+  "auto-2026-11-18/01-u-advanceconstrucciones-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3of1c",
+    "at": "2026-11-23T17:30:37.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3of1c/erzielte_52_von_100_die_lücke_formularlabels/",
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-18/06-u-aeropost-com": [
@@ -493,7 +526,7 @@
     "at": "2026-11-21T17:00:31.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y21ssx/marcou_79_de_100_a_lacuna_contraste_de_texto/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-18/48-u-airequipo-com": [
@@ -504,7 +537,7 @@
     "at": "2026-11-21T19:30:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y25cqo/airequipocom_71_a_lacuna_contraste_de_texto/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-18/54-u-airgreenland-gl": [
@@ -515,7 +548,7 @@
     "at": "2026-11-22T19:30:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y2xpfu/airgreenlandgl_46_a_lacuna_rótulos_de_formulário/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "auto-2026-11-18/60-u-aiyellow-com": [
@@ -526,7 +559,29 @@
     "at": "2026-11-22T22:00:31.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3168x/aiyellowcom_45_a_lacuna_rótulos_de_formulário/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
+  "auto-2026-11-19/05-u-marca-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3x19q",
+    "at": "2026-11-23T23:00:31.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3x19q/marcacom_49_a_lacuna_hsts/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
+  "auto-2026-11-19/11-u-all-accor-com": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y40bzl",
+    "at": "2026-11-24T01:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y40bzl/allaccorcom_58_a_lacuna_links_quebrados/",
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "compare-2026-11/11-cities": [
@@ -680,7 +735,7 @@
     "at": "2026-11-21T14:30:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y1ydff/mira_tu_página_como_la_ve_googlebot/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "evergreen-2026-11/09-inp": [
@@ -691,7 +746,7 @@
     "at": "2026-11-22T17:00:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y2u2wm/inp_a_rapidez_com_que_a_página_responde_a_um_toque/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "evergreen-2026-11/10-myth-overlay": [
@@ -703,6 +758,17 @@
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1xrsdp8/mythos_eine_codezeile_macht_eine_website/",
     "checked": "2026-11-11T23:09:43.256Z"
+   }
+  ],
+  "evergreen-2026-11/11-vision": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3sh92",
+    "at": "2026-11-23T20:00:28.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3sh92/simulez_le_daltonisme_en_deux_clics/",
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "evergreen-2026-11/12-myth-sitemap": [
@@ -760,6 +826,17 @@
     "checked": "2026-11-14T21:00:31.940Z"
    }
   ],
+  "launch-2026-10/es/security": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3kh6q",
+    "at": "2026-11-23T15:00:28.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3kh6q/las_cabeceras_de_tu_respuesta_pública_dicen_más/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
   "launch-2026-10/fr/a11y": [
    {
     "channel": "reddit",
@@ -779,7 +856,7 @@
     "at": "2026-11-21T22:30:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y29dt6/ti_chiedono_se_il_sito_funziona_con_tastiera_e/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "launch-2026-10/pt/a11y": [
@@ -955,7 +1032,7 @@
     "at": "2026-11-21T16:20:28.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y20uzl/132_new_live_reports_20261121_bdebookscom_leads/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "promo-social-hub-2026-10/11-clips-pt": [
@@ -1057,6 +1134,17 @@
     "checked": "2026-11-22T22:12:02.505Z"
    }
   ],
+  "promo-social-hub-2026-10/36-real-reviews-pt": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y34f5f",
+    "at": "2026-11-23T00:30:28.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y34f5f/sites_reais_notas_reais/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
   "runs-100/01-wikipedia": [
    {
     "channel": "reddit",
@@ -1076,7 +1164,7 @@
     "at": "2026-11-21T19:30:29.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y25cqx/mozilla_85_languages_no_sitemap/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "runs-100/03-mdn": [
@@ -1087,7 +1175,7 @@
     "at": "2026-11-22T19:30:29.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y2xpg2/mdn_web_docs_95_no_jsonld_at_all/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "runs-100/04-w3c": [
@@ -1098,7 +1186,29 @@
     "at": "2026-11-22T22:00:31.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y31691/w3cs_home_pages_share_one_title/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
+  "runs-100/05-unesco": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y3x1a3",
+    "at": "2026-11-23T23:00:31.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y3x1a3/unesco_has_llmstxt_but_no_hsts/",
+    "checked": "2026-11-24T03:07:36.718Z"
+   }
+  ],
+  "runs-100/06-unicef": [
+   {
+    "channel": "reddit",
+    "profile": "Reddit r/QALabLiveReports",
+    "id": "t3_1y40bzu",
+    "at": "2026-11-24T01:30:29.000Z",
+    "result": "sent",
+    "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y40bzu/unicefs_date_filter_has_no_label/",
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "runs-2026-10/01-govuk": [
@@ -1208,7 +1318,7 @@
     "at": "2026-11-21T17:00:32.000Z",
     "result": "sent",
     "url": "https://www.reddit.com/r/QALabLiveReports/comments/1y21st7/nasa_is_wide_open_to_ai_search/",
-    "checked": "2026-11-22T22:12:02.505Z"
+    "checked": "2026-11-24T03:07:36.718Z"
    }
   ],
   "runs-3/01-ilo": [
@@ -1413,7 +1523,7 @@
  "members": {
   "chat": "r/QALabLiveReports",
   "members": 2,
-  "at": "2026-11-22T22:00:31.857Z",
+  "at": "2026-11-24T01:30:29.916Z",
   "history": [
    {
     "date": "2026-11-05",
@@ -1504,6 +1614,16 @@
     "date": "2026-11-22",
     "members": 2,
     "at": "2026-11-22T22:00:31.857Z"
+   },
+   {
+    "date": "2026-11-23",
+    "members": 2,
+    "at": "2026-11-23T23:00:32.129Z"
+   },
+   {
+    "date": "2026-11-24",
+    "members": 2,
+    "at": "2026-11-24T01:30:29.916Z"
    }
   ]
  },
