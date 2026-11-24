@@ -19,6 +19,18 @@
 
 const CHANGES = [
 	{
+		date: '2026-11-24',
+		eg: 'Outcome packs turn a finding into a sales, marketing, engagement or security next step on the report.',
+		items: [
+			{ face: 'health', t: 'Outcome packs on the health strip', d: 'When a review finds open issues, the unpaid report’s health area shows short commerce, marketing, engagement and security packs with a clear next step—so owners see the business cost of leaving a failure open.' },
+			{ face: 'a11y', t: 'Live keyboard Tab walk', d: 'On the lab and review pages, an optional Tab walk follows real focus moves and reports when a modal or dialog lets Tab escape the trap.' },
+			{ face: 'a11y', t: 'Accessibility checklist IDs on findings', d: 'Accessibility findings can carry ACT, RGAA, eMAG and related checklist IDs so auditors can map a result to the standard they already use.' },
+			{ face: 'tls', t: 'Clearer “site did not answer” wording', d: 'When TLS opens but the site stays silent, or a handshake aborts on the site’s side, the report says so in plain words instead of sounding like our scanner failed.' },
+			{ face: 'a11y', t: 'Accessibility statement links under Help', d: 'Links to accessibility statements stay on help-style paths so they are easy to find and are not mixed into marketing pages.' },
+			{ face: 'preview', t: 'Report sheet stays solid when open', d: 'Opening a report no longer leaves a see-through sheet under the golden look—the content stays readable.' },
+		],
+	},
+	{
 		date: '2026-11-21',
 		eg: 'The deck stays current by itself: a PR that changes URL Review must update this list, or say why not.',
 		items: [
