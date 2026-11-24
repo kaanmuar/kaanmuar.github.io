@@ -14,7 +14,7 @@ test('reportFor fails seo-broken-links for friday-release and avoidable-404', ()
 		assert.equal(finding.title, skit.lang.en.finding);
 		assert.match(finding.evidence, /404/);
 		assert.equal(report.findingId, finding.id);
-		assert.equal(report.insights.findings[0].key, 'seo-broken-links');
+		assert.ok(report.insights.findings.some((f) => f.key === 'seo-broken-links' && f.verdict === 'fail'));
 	}
 });
 

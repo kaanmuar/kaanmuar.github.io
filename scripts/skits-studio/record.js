@@ -139,7 +139,11 @@ function reportFor(skit, lang) {
 	if (wasPass) report.insights.score.totals.pass = Math.max(0, report.insights.score.totals.pass - 1);
 	report.insights.score.overall = Math.max(0, report.insights.score.overall - 3);
 	report.findingId = finding.id;
-	report.insights.findings.sort((a, b) => (a.verdict === 'fail' ? 0 : 1) - (b.verdict === 'fail' ? 0 : 1));
+	report.insights.findings.sort((a, b) => {
+		if (a === finding) return -1;
+		if (b === finding) return 1;
+		return (a.verdict === 'fail' ? 0 : 1) - (b.verdict === 'fail' ? 0 : 1);
+	});
 	return report;
 }
 
