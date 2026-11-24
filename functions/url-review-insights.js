@@ -25,6 +25,7 @@ const waterfall = require('./url-review-har');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
 const trustGrade = require('./url-review-trust-grade');
+const outcomes = require('./url-review-outcomes');
 
 const BROWSER_READ_NOTE = english(say('warn.browserRead'));
 const UNTAGGED_READ_NOTE = english(say('warn.untaggedRead'));
@@ -5160,6 +5161,7 @@ function analyze(input) {
 		analytics,
 		security,
 		trust: trustGrade.trustGrade(findings),
+		outcomes: outcomes.build({ findings: ordered, score: { overall, grade: grade(overall), areas, totals, severities } }),
 		chat,
 		carbon,
 		headOrder: headReport,

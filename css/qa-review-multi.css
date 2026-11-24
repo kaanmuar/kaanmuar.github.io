@@ -106,6 +106,7 @@
   .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-row { row-gap: 0; }
   .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell { display: grid; grid-template-rows: subgrid; row-gap: normal; }
   .multi-modal .multi-sec[data-sec="health"] .multi-cell { grid-row: span 12; }
+  .multi-modal .multi-sec[data-sec="health"] .multi-cell:has(.outcome-strip) { grid-row: span 13; }
   .multi-modal .multi-sec[data-sec="exec"] .multi-cell { grid-row: span 7; }
   .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell::before { grid-row: 1; }
   .multi-modal .multi-sec:is([data-sec="health"], [data-sec="exec"]) .multi-cell > *, .multi-modal .multi-sec[data-sec="health"] .multi-cell > [data-slot] > .card { grid-row: 2 / -1; }
@@ -115,9 +116,12 @@
   .multi-modal .multi-sec[data-sec="health"] .ring { grid-row: 1; justify-self: center; }
   .multi-modal .multi-sec[data-sec="health"] .health-summary { grid-row: 2; margin-top: 20px; }
   .multi-modal .multi-sec[data-sec="health"] .verdict-chips { grid-row: 3; margin-top: 8px; }
-  .multi-modal .multi-sec[data-sec="health"] .verdict-chips[aria-label] { grid-row: 4; }
+  .multi-modal .multi-sec[data-sec="health"] .verdict-chips[aria-label]:not(.outcome-strip) { grid-row: 4; }
   .multi-modal .multi-sec[data-sec="health"] .health .meta-line { grid-row: 5; margin: 4px 0; }
   .multi-modal .multi-sec[data-sec="health"] .area { grid-row: calc(6 + round(down, var(--i) / var(--tc, 1))); grid-column: calc(1 + mod(var(--i), var(--tc, 1))); margin: 10px 0 0; }
+  .multi-modal .multi-sec[data-sec="health"] .verdict-chips.outcome-strip { grid-row: 5; margin-top: 4px; }
+  .multi-modal .multi-sec[data-sec="health"] .health:has(.outcome-strip) .meta-line { grid-row: 6; }
+  .multi-modal .multi-sec[data-sec="health"] .health:has(.outcome-strip) .area { grid-row: calc(7 + round(down, var(--i) / var(--tc, 1))); }
   .multi-modal .multi-sec[data-sec="health"] .area[data-area="SEO"] { --i: 0; }
   .multi-modal .multi-sec[data-sec="health"] .area[data-area="GEO"] { --i: 1; }
   .multi-modal .multi-sec[data-sec="health"] .area[data-area="Analytics"] { --i: 2; }
@@ -579,19 +583,20 @@ body:not(.printing-multi) .multi-cell .print-more { display: none !important; }
   body.printing-multi .multi-modal .multi-sec[data-sec="exec"] .exec-cols > :nth-child(2) { grid-row: 6; }
   body.printing-multi .multi-modal .multi-sec[data-sec="exec"] .exec-cols > :nth-child(3) { grid-row: 7; }
   /* Health: the ring, its sentence, the chips, the note, then one row per area, a tile a row. */
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .multi-row { grid-template-rows: repeat(12, auto); }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .multi-row { grid-template-rows: repeat(13, auto); }
   body.printing-multi .multi-modal .multi-sec[data-sec="health"] :is(.ring, .health-summary, .verdict-chips, .health .meta-line, .area) { grid-column: var(--c); }
   body.printing-multi .multi-modal .multi-sec[data-sec="health"] .ring { grid-row: 2; }
   body.printing-multi .multi-modal .multi-sec[data-sec="health"] .health-summary { grid-row: 3; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .verdict-chips { grid-row: 4; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .verdict-chips[aria-label] { grid-row: 5; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .health .meta-line { grid-row: 6; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="SEO"] { grid-row: 7; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="GEO"] { grid-row: 8; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Analytics"] { grid-row: 9; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Security"] { grid-row: 10; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Accessibility"] { grid-row: 11; }
-  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Performance"] { grid-row: 12; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .verdict-chips:not([aria-label]) { grid-row: 4; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .verdict-chips[aria-label]:not(.outcome-strip) { grid-row: 5; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .verdict-chips.outcome-strip { grid-row: 6; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .health .meta-line { grid-row: 7; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="SEO"] { grid-row: 8; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="GEO"] { grid-row: 9; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Analytics"] { grid-row: 10; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Security"] { grid-row: 11; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Accessibility"] { grid-row: 12; }
+  body.printing-multi .multi-modal .multi-sec[data-sec="health"] .area[data-area="Performance"] { grid-row: 13; }
   /* Security and email: the cover, the difference note, the checks and the meta line. */
   body.printing-multi .multi-modal .multi-sec[data-sec="security"] .multi-row { grid-template-rows: repeat(5, auto); }
   body.printing-multi .multi-modal .multi-sec[data-sec="security"] .card > * { grid-column: var(--c); }
