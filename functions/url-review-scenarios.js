@@ -114,11 +114,14 @@ function normalizeFindings(findings, maxConfidenceMissing) {
 			out.push({ id: item, confidence: 1 });
 			continue;
 		}
-		if (!item || typeof item.id !== 'string') continue;
+		if (!item || (typeof item !== 'object')) continue;
+		// Review insights use `key`; outreach helpers may pass `id`.
+		const id = typeof item.id === 'string' && item.id ? item.id : typeof item.key === 'string' ? item.key : '';
+		if (!id) continue;
 		const hasConfidence = item.confidence !== undefined && item.confidence !== null;
 		if (maxConfidenceMissing && !hasConfidence) continue;
 		out.push({
-			id: item.id,
+			id,
 			confidence: hasConfidence ? Number(item.confidence) : 1,
 		});
 	}
