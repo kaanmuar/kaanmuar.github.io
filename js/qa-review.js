@@ -1938,6 +1938,39 @@
 		);
 	}
 
+	function outcomesHealthStrip(ins) {
+		const pack = ins && ins.outcomes;
+		if (!Array.isArray(pack) || !pack.length) return '';
+		const chips = pack
+			.map((row) => {
+				if (!row || !row.label) return '';
+				const open = Number(row.open) || 0;
+				const cta = row.primaryCta && row.primaryCta.text ? String(row.primaryCta.text) : '';
+				const tip = cta ? ' title="' + esc(cta) + '"' : '';
+				return (
+					'<span class="vchip o-outcome"' +
+					tip +
+					'><b>' +
+					open +
+					'</b>' +
+					esc(row.label) +
+					' · ' +
+					esc(rc.t('outcomesOpen', { n: open })) +
+					'</span>'
+				);
+			})
+			.filter(Boolean)
+			.join('');
+		if (!chips) return '';
+		return (
+			'<div class="verdict-chips outcome-strip" aria-label="' +
+			esc(rc.t('outcomesTitle')) +
+			'">' +
+			chips +
+			'</div>'
+		);
+	}
+
 	function paintHealth(ins, paid) {
 		const score = ins.score || {};
 		const value = score.overall || 0;
@@ -1991,6 +2024,7 @@
 				)
 				.join('') +
 			'</div>' +
+			outcomesHealthStrip(ins) +
 			'<p class="meta-line" data-note>' +
 			esc(rc.t('measured', { person: VERDICT_LABEL.person })) +
 			'</p></div></div>' +
