@@ -149,6 +149,7 @@ test('scenario Instantly vars fill when a cold_safe finding matches, and stay em
 	];
 	const vars = CP.scenarioVarsFor('hotelcasabrava.com.co', review, o);
 	assert.equal(vars.scenario_id, 'cold-a11y-labels');
+	assert.equal(vars.scenario_subject, 'A form field on hotelcasabrava.com.co ships without a tied label');
 	assert.match(vars.scenario_consequence, /form abandonment|labels/i);
 	assert.match(vars.scenario_cta, /label/i);
 	assert.match(vars.scenario_body_line, /Screen-reader|blank control/i);
@@ -162,8 +163,8 @@ test('scenario Instantly vars fill when a cold_safe finding matches, and stay em
 	});
 	const empty = CP.scenarioVarsFor('hotelcasabrava.com.co', review, de);
 	assert.deepEqual(
-		[empty.scenario_id, empty.scenario_consequence, empty.scenario_cta, empty.scenario_card_url],
-		['', '', '', '']
+		[empty.scenario_id, empty.scenario_subject, empty.scenario_consequence, empty.scenario_cta, empty.scenario_card_url],
+		['', '', '', '', '']
 	);
 	assert.deepEqual(CP.scenarioVarsFor('x.com', [{ key: 'sec-hsts', verdict: 'fail', title: 'HSTS' }], o).scenario_id, '');
 });

@@ -26,6 +26,7 @@ const trials = require('./outreach-trials');
 const Send = require('./outreach-send');
 const scenarios = require('./url-review-scenarios');
 const scenarioCard = require('./url-review-scenario-card');
+const scenarioTemplates = require('./outreach-scenario-templates');
 
 const FUNNEL = ['found', 'reviewed', 'offered', 'claimed', 'paid'];
 const CLAIMED = ['claimed', 'trial_ended', 'discount_sent'];
@@ -68,6 +69,7 @@ const LEAD_HEADER = [
 	'after_percent',
 	'live_report_url',
 	'scenario_id',
+	'scenario_subject',
 	'scenario_consequence',
 	'scenario_cta',
 	'scenario_body_line',
@@ -127,6 +129,7 @@ const findingTitle = (f) => (f && typeof f.title === 'string' ? f.title : '');
 
 const emptyScenarioVars = () => ({
 	scenario_id: '',
+	scenario_subject: '',
 	scenario_consequence: '',
 	scenario_cta: '',
 	scenario_body_line: '',
@@ -155,6 +158,7 @@ function scenarioVarsFor(host, reviewFindings, offer) {
 	});
 	return {
 		scenario_id: pick.scenarioId,
+		scenario_subject: scenarioTemplates.renderSubject(pick, host),
 		scenario_consequence: pick.consequence,
 		scenario_cta: pick.copyHooks.cta,
 		scenario_body_line: pick.copyHooks.bodyLine,
@@ -267,6 +271,7 @@ function leadRow(row, person, offer, trial, extra) {
 		after_percent: String(t.after),
 		live_report_url: x.liveReport || '',
 		scenario_id: x.scenario_id || '',
+		scenario_subject: x.scenario_subject || '',
 		scenario_consequence: x.scenario_consequence || '',
 		scenario_cta: x.scenario_cta || '',
 		scenario_body_line: x.scenario_body_line || '',
