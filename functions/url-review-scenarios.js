@@ -84,6 +84,96 @@ const SCENARIOS = [
 		},
 		confidenceMin: 0.4,
 	},
+	{
+		scenarioId: 'cold-pf-lcp',
+		findingIds: ['pf-lcp'],
+		tier: 'cold_safe',
+		consequence:
+			'A slow largest paint pushes meaningful content down the timeline and drags engagement on mobile connections.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'The hero on {host} paints later than visitors expect',
+			bodyLine: 'LCP crossed the common 2.5 s bar, so the main block stays blank while scripts and images compete.',
+			cta: 'Open the report for the element timing and try preload plus defer on non-critical scripts.',
+		},
+		confidenceMin: 0.55,
+	},
+	{
+		scenarioId: 'cold-pf-slow',
+		findingIds: ['pf-slow'],
+		tier: 'cold_safe',
+		consequence:
+			'Templates that load in slow buckets drag down site-wide speed scores and add friction on repeat visits.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'One template on {host} loads slower than the rest of the site',
+			bodyLine: 'The scan grouped pages over 1.8 s; that path is an outlier worth profiling first.',
+			cta: 'See which URLs are in the slow set and compare them to a fast sibling page in the report.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'cold-a11y-alt',
+		findingIds: ['a11y-alt'],
+		tier: 'cold_safe',
+		consequence:
+			'Images without alt text hide meaning from screen readers and weaken image search context.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'Images on {host} ship without alt text',
+			bodyLine: 'Assistive tech cannot describe those graphics, so key visuals read as silent gaps.',
+			cta: 'Use the report list to add concise alt on each flagged image.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'warm-sec-dmarc',
+		findingIds: ['sec-dmarc'],
+		tier: 'warm_only',
+		consequence:
+			'Without DMARC, forged mail from your domain is harder for receivers to block and easier for phishers to imitate.',
+		channelAllow: ['email', 'linkedin', 'landing', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'No DMARC record published for {host}',
+			bodyLine: 'The domain has no policy telling mailbox providers how to treat spoofed messages.',
+			cta: 'Start with p=none plus rua in the fix kit, review reports, then tighten to quarantine or reject.',
+		},
+		confidenceMin: 0.55,
+	},
+	{
+		scenarioId: 'warm-geo-entity',
+		findingIds: ['geo-entity'],
+		tier: 'warm_only',
+		consequence:
+			'An incomplete Organization or Person entity makes AI summaries and rich results less sure who owns the brand.',
+		channelAllow: ['email', 'linkedin', 'landing'],
+		mediaKind: 'skit',
+		copyHooks: {
+			subjectHint: 'Structured data on {host} does not fully name the business',
+			bodyLine: 'The entity block is missing fields or linked profiles that answer engines expect in sameAs.',
+			cta: 'Fill the gaps from the fix-kit draft and re-run the GEO check.',
+		},
+		confidenceMin: 0.55,
+	},
+	{
+		scenarioId: 'warm-an-privacy',
+		findingIds: ['an-privacy'],
+		tier: 'warm_only',
+		consequence:
+			'Tracking or forms without a visible privacy notice leave visitors without a clear data-use explanation.',
+		channelAllow: ['email', 'linkedin', 'landing'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'Visitors on {host} cannot find a privacy notice',
+			bodyLine: 'The page loads tags or forms but does not link where personal data is described.',
+			cta: 'Publish or link a notice from the footer and mention it in the consent flow.',
+		},
+		confidenceMin: 0.6,
+	},
 ];
 
 const BY_FINDING = new Map();

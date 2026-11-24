@@ -5,7 +5,20 @@ const assert = require('node:assert/strict');
 const scenarios = require('../../functions/url-review-scenarios');
 const findingsEn = require('../../functions/url-review-findings-en');
 
-const SEEDED_IDS = ['seo-broken-links', 'a11y-labels', 'an-consent', 'an-reject', 'sec-csp', 'geo-llms'];
+const SEEDED_IDS = [
+	'seo-broken-links',
+	'a11y-labels',
+	'an-consent',
+	'an-reject',
+	'sec-csp',
+	'geo-llms',
+	'pf-lcp',
+	'pf-slow',
+	'a11y-alt',
+	'sec-dmarc',
+	'geo-entity',
+	'an-privacy',
+];
 
 test('seed rows use real finding ids from url-review-findings-en', () => {
 	const keys = new Set(Object.keys(findingsEn.EN));
@@ -15,8 +28,19 @@ test('seed rows use real finding ids from url-review-findings-en', () => {
 			assert.ok(hasTitle, id);
 		}
 	}
-	assert.equal(scenarios.SCENARIOS.length, 5);
-	for (const id of ['seo-broken-links', 'a11y-labels', 'sec-csp', 'geo-llms']) {
+	assert.equal(scenarios.SCENARIOS.length, 11);
+	for (const id of [
+		'seo-broken-links',
+		'a11y-labels',
+		'sec-csp',
+		'geo-llms',
+		'pf-lcp',
+		'pf-slow',
+		'a11y-alt',
+		'sec-dmarc',
+		'geo-entity',
+		'an-privacy',
+	]) {
 		assert.ok(scenarios.scenarioForFinding(id), id);
 	}
 	assert.ok(scenarios.scenarioForFinding('an-consent'));
@@ -96,11 +120,17 @@ test('each scenario exposes the schema fields outreach expects', () => {
 	assert.deepEqual(
 		scenarios.SCENARIOS.map((row) => row.scenarioId).sort(),
 		[
+			'cold-a11y-alt',
 			'cold-a11y-labels',
+			'cold-pf-lcp',
+			'cold-pf-slow',
 			'cold-seo-broken-links',
 			'social-geo-llms',
 			'warm-an-consent',
+			'warm-an-privacy',
+			'warm-geo-entity',
 			'warm-sec-csp',
+			'warm-sec-dmarc',
 		]
 	);
 	for (const id of SEEDED_IDS) {
