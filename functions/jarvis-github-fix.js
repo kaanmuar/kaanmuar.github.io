@@ -515,9 +515,10 @@ async function quarantine(ctx, args) {
 	const runs = num(a.runs) ?? 0;
 	const prefix = 'CI: ' + workflow + ' is flaky';
 	const open = await openIssueTitled(ctx, REPO, 'area:ci', prefix);
+	// Idempotent: githubAct throws on ok:false and the hourly pass logs ERROR.
 	if (open)
 		return {
-			ok: false,
+			ok: true,
 			message: '#' + open.number + ' already tracks ' + workflow + '.',
 			url: open.html_url,
 			number: open.number,
@@ -598,9 +599,10 @@ async function securityTicket(ctx, args) {
 	const prefix = 'Security: ' + what + where;
 	const area = areaOfPath(path, repo);
 	const open = await openIssueTitled(ctx, REPO, 'bug', prefix);
+	// Idempotent: githubAct throws on ok:false and the hourly pass logs ERROR.
 	if (open)
 		return {
-			ok: false,
+			ok: true,
 			message: '#' + open.number + ' already tracks this alert.',
 			url: open.html_url,
 			number: open.number,

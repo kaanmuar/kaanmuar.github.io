@@ -85,6 +85,11 @@ jobs:
         if: steps.ready.outputs.ok == 'true'
         with:
           node-version: '22'
+          cache: npm
+      # masto + @atproto/* land in package.json (#3841 / #4130 / #4179); install before posting (#4333).
+      - name: Install Node dependencies
+        if: steps.ready.outputs.ok == 'true'
+        run: npm ci --no-audit --no-fund
       - name: Wait for a hub rebuild or Pages deploy on main
         if: steps.ready.outputs.ok == 'true'
         env:

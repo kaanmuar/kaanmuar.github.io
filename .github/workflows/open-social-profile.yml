@@ -33,4 +33,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+          cache: npm
+      # Profile updates reuse open-social-queue's masto / @atproto clients (#4333).
+      - run: npm ci --no-audit --no-fund
       - run: node scripts/open-social-profile.js ${{ inputs.dry_run && '--dry-run' || '' }}
