@@ -2669,10 +2669,7 @@ export function mountJarvis({
 		const line = (rows, label) =>
 			`<li><b>${esc(label)}</b>: ${
 				rows && rows.length
-					? rows
-							.slice(0, 5)
-							.map((r) => `${esc(r.name || r.cc)} ${fmt(r.share)}%`)
-							.join(' · ')
+					? rows.map((r) => `${esc(r.name || r.cc)} ${fmt(r.share)}%`).join(' · ')
 					: 'none read'
 			}</li>`;
 		return `<h4 class="jv-sub">Attack traffic, last 24 h · Cloudflare Radar</h4><ul class="jv-facts">${line(rd.layer3Origin, 'Network attacks from')}${line(rd.layer3Target, 'Network attacks to')}${line(rd.layer7Origin, 'Web attacks from')}${line(rd.layer7Target, 'Web attacks to')}</ul><p class="jv-note">Share of each attack type's traffic, data as of ${esc(when(rd.asOf))}. Not for customers, reports or the public map.</p>`;
