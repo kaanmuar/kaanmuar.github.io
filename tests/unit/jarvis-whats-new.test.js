@@ -8,6 +8,10 @@ test('a PR title loses its area prefix and ticket refs and starts with a capital
 		'Settles the outreach leads by itself'
 	);
 	assert.equal(line('Android 2.5.0: fits foldables (kaanmuar/kaanmuar.github.io#2140) (#25)'), 'Fits foldables');
+	assert.equal(
+		line("Jarvis app: a one-time What's new window after each release (#2270)"),
+		"A one-time What's new window after each release"
+	);
 	assert.equal(line('Jarvis Marketing: every cold email (#2017)'), 'Jarvis Marketing: every cold email');
 	assert.equal(line('Jarvis: (#1)'), '');
 });
