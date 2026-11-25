@@ -68,6 +68,26 @@ const SKIP_INBOX =
 const FREE_MAIL =
 	/@(gmail|googlemail|hotmail|outlook|live|yahoo|icloud|me|aol|proton(mail)?|gmx|uol|bol|terra)\./i;
 const KIND_IDS = () => loadJson(KINDS).kinds.map((k) => k.id);
+const kindLabel = (id) => {
+	const k = loadJson(KINDS).kinds.find((x) => x.id === id);
+	return k ? k.en : id;
+};
+
+/** Core six site languages every run; rotate two more from the tail by ISO week (#4151 growth). */
+function defaultDiscoverLangs(pack, dateStr) {
+	const all = pack.langs || [];
+	const core = all.slice(0, 6);
+	const tail = all.slice(6);
+	if (!tail.length) return core;
+	const d = new Date((dateStr || day()) + 'T12:00:00Z');
+	const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+	const wk = Math.floor((d - jan1) / (7 * 86400000));
+	const step = 2;
+	const slot = Math.floor(wk % Math.ceil(tail.length / step)) * step;
+	const extra = tail.slice(slot, slot + step);
+	while (extra.length < step && tail.length) extra.push(tail[extra.length % tail.length]);
+	return [...core, ...extra];
+}
 
 const CFG = (() => {
 	try {
@@ -314,12 +334,12 @@ async function enrichOne(row) {
 	};
 }
 
-async function discover(langs, kinds, per, skip) {
+async function discover(langs, kinds, per, skip, dateStr) {
 	const pack = loadJson(KINDS);
 	const kindList = (kinds.length ? kinds : pack.kinds.map((k) => k.id))
 		.map((id) => pack.kinds.find((k) => k.id === id))
 		.filter(Boolean);
-	const langList = langs.length ? langs : pack.langs.slice(0, 6);
+	const langList = langs.length ? langs : defaultDiscoverLangs(pack, dateStr || day());
 	const found = [];
 	for (const lang of langList) {
 		const hint = pack.langHints[lang] || lang;
@@ -357,7 +377,7 @@ async function discover(langs, kinds, per, skip) {
 
 function isPromoter(facts) {
 	const blob = (facts.title + ' ' + facts.description + ' ' + facts.text).toLowerCase();
-	return /directory|directories|gallery|galleries|award|nominate|submit (your|a)|launch|showcase|inspiration|alternatives?|startup|saas|tools? (of|for)|newsletter|round.?up|indie|maker|founder/.test(
+	return /directory|directories|gallery|galleries|award|nominate|submit (your|a)|launch|showcase|inspiration|alternatives?|startup|saas|tools? (of|for)|newsletter|round.?up|indie|maker|founder|podcast|interview|accelerator|incubator|demo day|portfolio companies|pitch us|media kit/.test(
 		blob
 	);
 }
@@ -394,12 +414,17 @@ function toCsv(header, rows) {
 	return [header.join(',')].concat(rows.map((r) => header.map((h) => esc(r[h])).join(','))).join('\n') + '\n';
 }
 
-function report(date, rows, discovered) {
+function report(date, rows, discovered, meta = {}) {
 	const byKind = {};
+	const byLang = {};
 	for (const r of rows) {
 		(byKind[r.kind] || (byKind[r.kind] = [])).push(r);
+		(byLang[r.lang] || (byLang[r.lang] = { total: 0, reachable: 0 })).total += 1;
+		if (r.status === 'reachable') byLang[r.lang].reachable += 1;
 	}
 	const reachable = rows.filter((r) => r.status === 'reachable');
+	const aiFresh = rows.filter((r) => String(r.source || '').startsWith('ai:'));
+	const scoutLangs = meta.scoutLangs || [];
 	const lines = [
 		`# Promoter scout ${date} (#4151)`,
 		'',
@@ -407,7 +432,8 @@ function report(date, rows, discovered) {
 		'',
 		`- Candidates enriched: ${rows.length} (${reachable.length} with email, submit or contact page)`,
 		`- Fresh from AI this run: ${discovered}`,
-		`- Languages: ${[...new Set(rows.map((r) => r.lang))].sort().join(', ') || '—'}`,
+		`- Languages in report: ${[...new Set(rows.map((r) => r.lang))].sort().join(', ') || '—'}`,
+		scoutLangs.length ? `- AI discovery langs this run: ${scoutLangs.join(', ')}` : '',
 		'',
 		'## How to use',
 		'',
@@ -416,10 +442,27 @@ function report(date, rows, discovered) {
 		'3. Mark a host done by keeping it in `seen.json` (Actions memory branch); do not re-spam.',
 		'',
 	];
+	const langKeys = Object.keys(byLang).sort();
+	if (langKeys.length) {
+		lines.push('## By language', '', '| Lang | Rows | Reachable |', '|---|---|---|');
+		for (const lang of langKeys) {
+			const s = byLang[lang];
+			lines.push(`| ${lang} | ${s.total} | ${s.reachable} |`);
+		}
+		lines.push('');
+	}
+	if (aiFresh.length) {
+		lines.push('## New from AI this run', '', '| Host | Kind | Lang | Notes |', '|---|---|---|---|');
+		for (const r of aiFresh.slice(0, 40)) {
+			lines.push(`| \`${r.host}\` | ${r.kind} | ${r.lang} | ${clip(r.notes || r.source, 80)} |`);
+		}
+		if (aiFresh.length > 40) lines.push('', `_…and ${aiFresh.length - 40} more in the kind tables below._`);
+		lines.push('');
+	}
 	for (const kind of KIND_IDS()) {
 		const list = byKind[kind] || [];
 		if (!list.length) continue;
-		lines.push(`## ${kind}`, '', '| Host | Name | Lang | Submit | Contact | Email | Status |', '|---|---|---|---|---|---|---|');
+		lines.push(`## ${kind} — ${kindLabel(kind)}`, '', '| Host | Name | Lang | Submit | Contact | Email | Status |', '|---|---|---|---|---|---|---|');
 		for (const r of list) {
 			lines.push(
 				`| \`${r.host}\` | ${clip(r.name, 40)} | ${r.lang} | ${r.submit_url ? '[submit](' + r.submit_url + ')' : '—'} | ${r.contact_url ? '[contact](' + r.contact_url + ')' : '—'} | ${r.email || '—'} | ${r.status} |`
@@ -466,9 +509,12 @@ async function run(opts) {
 	const seeds = seedRows().filter((s) => opts.reseeds || !skip.has(s.host));
 	for (const s of seeds) skip.add(s.host);
 
+	const pack = loadJson(KINDS);
+	const scoutLangs = opts.langs.length ? opts.langs : defaultDiscoverLangs(pack, date);
+
 	let discovered = [];
 	if (!opts.seedsOnly) {
-		discovered = await discover(opts.langs, opts.kinds, opts.per, skip);
+		discovered = await discover(scoutLangs, opts.kinds, opts.per, skip, date);
 		discovered = await judgeBatch(discovered);
 	}
 
@@ -509,7 +555,7 @@ async function run(opts) {
 		allRows = rowsFromCsv(file);
 	}
 
-	const body = report(date, allRows, discovered.length);
+	const body = report(date, allRows, discovered.length, { scoutLangs: opts.seedsOnly ? [] : scoutLangs });
 	fs.writeFileSync(path.join(REPORTS, date + '.md'), body);
 
 	const reachable = allRows.filter((r) => r.status === 'reachable').length;
@@ -654,6 +700,8 @@ module.exports = {
 	emailsIn,
 	profilesIn,
 	isPromoter,
+	defaultDiscoverLangs,
+	kindLabel,
 	report,
 	toCsv,
 	HEADER,

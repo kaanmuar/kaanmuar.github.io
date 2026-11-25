@@ -40,6 +40,16 @@
 			"id": "review",
 			"en": "software review and alternatives sites",
 			"ask": "review or alternatives sites where vendors list a product and buyers compare tools"
+		},
+		{
+			"id": "podcast",
+			"en": "podcasts or shows that interview founders or feature tools and startups",
+			"ask": "public podcasts, video shows or interview series that feature SaaS tools, websites, startups or founders (with a contact or pitch page)"
+		},
+		{
+			"id": "accelerator",
+			"en": "accelerators, incubators and startup programs with public portfolios or demo days",
+			"ask": "accelerators, incubators or startup programs that publicly showcase portfolio companies or accept startup applications"
 		}
 	],
 	"langHints": {
