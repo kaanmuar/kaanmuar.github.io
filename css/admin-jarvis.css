@@ -122,13 +122,13 @@
 .jv-panel.is-resizing { outline: 1px solid rgba(56, 225, 255, 0.55); outline-offset: 1px; }
 /* #3673: long-press arms resize; dashed outline while armed so nav stays free until then. */
 .jv-panel.is-resize-armed { outline: 1px dashed rgba(56, 225, 255, 0.45); outline-offset: 2px; }
-/* Edge chrome (#4338): ± step buttons; drag strip in the middle. Off-hit when hidden so panel links stay clickable. */
+/* Edge chrome (#4338): ± + drag strip. The edge box itself never hits; only its children do, so panel links stay clickable. */
 .jv-edge {
     position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 2px;
     opacity: 0; pointer-events: none; transition: opacity 0.15s;
 }
 .jv-panel:hover > .jv-edge, .jv-panel:focus-within > .jv-edge, .jv-panel.is-resizing > .jv-edge,
-.jv-panel.is-resize-armed > .jv-edge { opacity: 1; pointer-events: auto; }
+.jv-panel.is-resize-armed > .jv-edge { opacity: 1; }
 .jv-edge[data-edge="n"], .jv-edge[data-edge="s"] { left: 18%; right: 18%; height: 22px; flex-direction: row; }
 .jv-edge[data-edge="n"] { top: 0; }
 .jv-edge[data-edge="s"] { bottom: 0; }
@@ -138,12 +138,20 @@
 .jv-resize-step {
     flex: 0 0 auto; width: 18px; height: 18px; padding: 0; margin: 0; border: 1px solid rgba(56, 225, 255, 0.55);
     border-radius: 4px; background: rgba(56, 225, 255, 0.18); color: var(--cyan); font: 700 12px ui-monospace, Menlo, monospace;
-    line-height: 1; cursor: pointer;
+    line-height: 1; cursor: pointer; pointer-events: none;
+}
+.jv-panel:hover > .jv-edge > .jv-resize-step, .jv-panel:focus-within > .jv-edge > .jv-resize-step,
+.jv-panel.is-resizing > .jv-edge > .jv-resize-step, .jv-panel.is-resize-armed > .jv-edge > .jv-resize-step {
+    pointer-events: auto;
 }
 .jv-resize-step:hover { background: rgba(56, 225, 255, 0.35); }
 .jv-resize {
     position: relative; z-index: 3; padding: 0; margin: 0; border: 0; background: transparent; opacity: 1;
-    transition: background 0.15s;
+    transition: background 0.15s; pointer-events: none;
+}
+.jv-panel:hover > .jv-edge > .jv-resize, .jv-panel:focus-within > .jv-edge > .jv-resize,
+.jv-panel.is-resizing > .jv-edge > .jv-resize, .jv-panel.is-resize-armed > .jv-edge > .jv-resize {
+    pointer-events: auto;
 }
 .jv-edge[data-edge="n"] > .jv-resize, .jv-edge[data-edge="s"] > .jv-resize { flex: 1 1 auto; min-width: 24px; height: 10px; cursor: ns-resize; }
 .jv-edge[data-edge="e"] > .jv-resize, .jv-edge[data-edge="w"] > .jv-resize { flex: 1 1 auto; min-height: 24px; width: 10px; cursor: ew-resize; }
@@ -158,8 +166,8 @@
 @media (pointer: coarse) {
     .jv-edge[data-edge="n"] > .jv-resize, .jv-edge[data-edge="s"] > .jv-resize { height: 18px; }
     .jv-edge[data-edge="e"] > .jv-resize, .jv-edge[data-edge="w"] > .jv-resize { width: 18px; }
-    /* ± stay hit-able (#4338); the edge box itself stays off-hit so panel links work; drag waits for long-press (#3673). */
-    .jv-panel > .jv-edge { opacity: 1; pointer-events: none; }
+    /* ± always hit-able (#4338); drag strip waits for long-press (#3673). Edge box stays pointer-events: none. */
+    .jv-panel > .jv-edge { opacity: 1; }
     .jv-panel > .jv-edge > .jv-resize-step { pointer-events: auto; }
     .jv-panel > .jv-edge > .jv-resize { opacity: 0; pointer-events: none; }
     .jv-panel.is-resize-armed > .jv-edge > .jv-resize,
