@@ -510,6 +510,7 @@
 			const offers = offersFor(packages, open);
 			const name = (item) => (item.name && (item.name[lang()] || item.name.en)) || item.id;
 			const what = (item) => (item.what && (item.what[lang()] || item.what.en)) || '';
+			const rival = (item) => (item.rival && (item.rival[lang()] || item.rival.en)) || '';
 			const path = (key, title, copy, action) =>
 				'<article class="fix-path" data-path="' +
 				key +
@@ -557,7 +558,11 @@
 										'</span>' +
 										'<small>' +
 										esc(what(item)) +
-										'</small><small class="notranslate" translate="no">' +
+										'</small>' +
+										(rival(item)
+											? '<small class="fix-rival notranslate" translate="no">' + esc(rival(item)) + '</small>'
+											: '') +
+										'<small class="notranslate" translate="no">' +
 										esc(fill(words.packCovers, { list: item.findings.join(', ') })) +
 										'</small></div>' +
 										'<button type="button" class="btn btn-primary" data-fix-package="' +

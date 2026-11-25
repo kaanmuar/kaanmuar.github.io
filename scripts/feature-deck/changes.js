@@ -22,6 +22,7 @@ const CHANGES = [
 		date: '2026-11-24',
 		eg: 'Outcome packs turn a finding into a sales, marketing, engagement or security next step on the report.',
 		items: [
+			{ face: 'fixkit', t: 'Rival prices on three fix packages', d: 'While launch prices last, accessibility, SEO meta, and performance packages on a paid report name what similar tools charge, in all six languages.' },
 			{ face: 'ai', t: 'Landing hero leads with AI and local', d: 'The URL Review start page headline in all six languages now asks whether AI search can read and cite your site and whether your local profile matches it. The security checkup stays in the paragraph below the headline.' },
 			{ face: 'login', t: 'One clear buy on an unpaid report', d: 'On a stored report you have not paid for yet, the 5 USD fix list is now the only big button. The full report sits in one line underneath, and local-business reports also name the 9 USD competitor compare.' },
 			{ face: 'tools', t: 'Freelancer pass vs audit subscriptions', d: 'On the account pass card and the Freelancer pay page, one line names SE Ranking Core and Ahrefs Lite monthly prices next to the 29 USD pass. Team and Pro are unchanged.' },

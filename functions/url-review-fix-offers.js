@@ -179,8 +179,51 @@ const PACKAGES = [
 // Launch prices run through Dec 10 in Bogotá (UTC-5); from endsAt every quote, request and checkout takes listUsd.
 const LAUNCH = { until: '2026-12-10', endsAt: '2026-12-11T05:00:00.000Z' };
 
+// The performance rival sentence names GTmetrix’s sale through 2 December; hide it from this moment (#4309).
+const GTMETRIX_SALE_ENDS = '2026-12-03T00:00:00.000Z';
+
+const RIVAL = {
+	accessibility: {
+		en: 'accessiBe Micro is 490 USD a year and UserWay’s Small widget is 490 USD a year. This package changes the templates once.',
+		es: 'accessiBe Micro cuesta 490 USD al año y el widget Small de UserWay cuesta 490 USD al año. Este paquete cambia las plantillas una vez.',
+		pt: 'O accessiBe Micro custa 490 USD por ano e o widget Small da UserWay custa 490 USD por ano. Este pacote altera os templates uma vez.',
+		de: 'accessiBe Micro kostet 490 USD im Jahr und das Small-Widget von UserWay kostet 490 USD im Jahr. Dieses Paket ändert die Vorlagen einmalig.',
+		fr: 'accessiBe Micro coûte 490 USD par an et le widget Small de UserWay coûte 490 USD par an. Ce forfait modifie les gabarits une fois.',
+		it: 'accessiBe Micro costa 490 USD all’anno e il widget Small di UserWay costa 490 USD all’anno. Questo pacchetto modifica i template una volta.',
+	},
+	'seo-meta': {
+		en: 'Semrush’s AI Visibility toolkit is 99 USD per domain a month, billed annually, and includes a site audit for AI readiness. This package writes the titles, schema, and llms.txt once.',
+		es: 'El toolkit AI Visibility de Semrush cuesta 99 USD por dominio al mes, con facturación anual, e incluye una auditoría del sitio para preparación ante la IA. Este paquete escribe los títulos, el schema y llms.txt una vez.',
+		pt: 'O toolkit AI Visibility da Semrush custa 99 USD por domínio por mês, com cobrança anual, e inclui uma auditoria do site para prontidão para IA. Este pacote escreve os títulos, o schema e o llms.txt uma vez.',
+		de: 'Semrushs AI-Visibility-Toolkit kostet 99 USD pro Domain und Monat bei jährlicher Abrechnung und enthält ein Site-Audit für KI-Bereitschaft. Dieses Paket schreibt Titel, Schema und llms.txt einmalig.',
+		fr: 'Le toolkit AI Visibility de Semrush coûte 99 USD par domaine et par mois, facturation annuelle, et inclut un audit de site pour la préparation à l’IA. Ce forfait rédige les titres, le schéma et llms.txt une fois.',
+		it: 'Il toolkit AI Visibility di Semrush costa 99 USD per dominio al mese, con fatturazione annuale, e include un audit del sito per la prontezza all’IA. Questo pacchetto scrive titoli, schema e llms.txt una volta.',
+	},
+	performance: {
+		en: 'GTmetrix yearly Lite shows 4.99 USD and 2.99 USD a month while the discount lasts, through 2 December. That plan monitors a page. This package changes the templates once.',
+		es: 'GTmetrix yearly Lite muestra 4,99 USD y 2,99 USD al mes mientras dura el descuento, hasta el 2 de diciembre. Ese plan monitoriza una página. Este paquete cambia las plantillas una vez.',
+		pt: 'O GTmetrix yearly Lite mostra 4,99 USD e 2,99 USD por mês enquanto o desconto durar, até 2 de dezembro. Esse plano monitora uma página. Este pacote altera os templates uma vez.',
+		de: 'GTmetrix Yearly Lite zeigt 4,99 USD und 2,99 USD pro Monat, solange der Rabatt gilt, bis zum 2. Dezember. Dieser Plan überwacht eine Seite. Dieses Paket ändert die Vorlagen einmalig.',
+		fr: 'GTmetrix Yearly Lite affiche 4,99 USD et 2,99 USD par mois tant que la remise dure, jusqu’au 2 décembre. Ce plan surveille une page. Ce forfait modifie les gabarits une fois.',
+		it: 'GTmetrix Yearly Lite mostra 4,99 USD e 2,99 USD al mese finché dura lo sconto, fino al 2 dicembre. Quel piano monitora una pagina. Questo pacchetto modifica i template una volta.',
+	},
+};
+
 function launchOn(now) {
 	return (now == null ? Date.now() : new Date(now).getTime()) < Date.parse(LAUNCH.endsAt);
+}
+
+function atMs(now) {
+	return now == null ? Date.now() : new Date(now).getTime();
+}
+
+// Rival anchor copy shows only while launch prices hold; the performance line also ends with the GTmetrix sale (#4309).
+function rivalOn(id, now) {
+	if (!launchOn(now)) return false;
+	const row = RIVAL[id];
+	if (!row) return false;
+	if (id === 'performance' && atMs(now) >= Date.parse(GTMETRIX_SALE_ENDS)) return false;
+	return true;
 }
 
 // What a package costs at `now`: its launch price until LAUNCH.endsAt, its list price after.
@@ -249,17 +292,21 @@ function offersFor(findings, now) {
 // launch price holds; the card then shows the list price struck through and the launch end date.
 function publicPackages(now) {
 	const launch = launchOn(now);
-	return PACKAGES.map((item) => ({
-		id: item.id,
-		usd: usdOf(item, now),
-		listUsd: item.listUsd || item.usd,
-		launch,
-		launchUntil: launch ? LAUNCH.until : '',
-		days: item.days,
-		keys: item.keys.slice(),
-		name: Object.assign({}, item.name),
-		what: Object.assign({}, item.what),
-	}));
+	return PACKAGES.map((item) => {
+		const row = {
+			id: item.id,
+			usd: usdOf(item, now),
+			listUsd: item.listUsd || item.usd,
+			launch,
+			launchUntil: launch ? LAUNCH.until : '',
+			days: item.days,
+			keys: item.keys.slice(),
+			name: Object.assign({}, item.name),
+			what: Object.assign({}, item.what),
+		};
+		if (rivalOn(item.id, now)) row.rival = Object.assign({}, RIVAL[item.id]);
+		return row;
+	});
 }
 
 function dayOf(value) {
@@ -479,7 +526,10 @@ function ownerNotice(record, deskUrl) {
 module.exports = {
 	PACKAGES,
 	LAUNCH,
+	GTMETRIX_SALE_ENDS,
+	RIVAL,
 	launchOn,
+	rivalOn,
 	usdOf,
 	chargeableUsd,
 	STATUSES,

@@ -174,6 +174,9 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
 		await expect(panel.locator('.fix-packs .fix-launch')).toHaveText(
 			Array(await panel.locator('.fix-packs li').count()).fill('Launch price until Dec 10')
 		);
+		await expect(panel.locator('[data-package="security-headers"] .fix-rival')).toHaveCount(0);
+		await expect(panel.locator('[data-package="seo-meta"] .fix-rival')).toContainText('Semrush');
+		await expect(panel.locator('[data-package="performance"] .fix-rival')).toContainText('GTmetrix');
 		const call = new URL(await panel.locator('[data-fix-call]').getAttribute('href'), 'https://carlosandmunoz.com/');
 		expect(call.searchParams.get('review')).toBe(ID);
 		expect(call.searchParams.get('findings')).toMatch(/^F-01,F-02,/);
@@ -318,6 +321,16 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
 		);
 		await expect(panel.locator('.fix-launch')).toHaveCount(0);
 		await expect(panel.locator('.fix-list')).toHaveCount(0);
+		await expect(panel.locator('.fix-rival')).toHaveCount(0);
+	});
+
+	test('after 3 December the performance rival line is gone but SEO keeps it until launch ends (#4309)', async ({
+		page,
+	}) => {
+		await open(page, { at: Date.parse('2026-12-03T12:00:00Z') });
+		const panel = page.locator('#fix-offer');
+		await expect(panel.locator('[data-package="performance"] .fix-rival')).toHaveCount(0);
+		await expect(panel.locator('[data-package="seo-meta"] .fix-rival')).toContainText('Semrush');
 	});
 
 	test('on a phone each package carries the launch price label next to its price (#3326)', async ({ page }) => {
