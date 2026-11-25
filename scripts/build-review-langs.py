@@ -33,67 +33,67 @@ LANGS = {
     "es": {
         "language": "Spanish",
         "native": "Español",
-        "title": "Encuentra fugas, fallas y bloqueos primero.",
+        "title": "¿Puede la búsqueda con IA leer y citar tu sitio?",
         "seo_title": "QA-lab URL Review: SEO, GEO y casos de prueba desde una URL",
-        "description": "Una página https calificada en SEO, GEO, analítica, seguridad, accesibilidad y velocidad, revisada contra phishing, malware, listas de bloqueo y hackeos, con casos y correcciones.",
+        "description": "Comprueba si la IA puede leer tu sitio y si tu ficha local coincide. Una página https puntuada en SEO, GEO, seguridad, accesibilidad y velocidad, con casos y arreglos.",
         "og_description": "Un análisis público por https, calificado en SEO, GEO, analítica, seguridad, accesibilidad y rendimiento, con una lista de qué corregir primero y casos de QA propuestos con scripts iniciales para veinte frameworks. Un navegador sin interfaz ejecuta axe-core, registra el rastreo antes y después de una elección de cookies y toma capturas de pantalla. También revisa listas de phishing y malware, cada host enlazado con Google Web Risk, listas de bloqueo de spam, señales de un sitio hackeado, dominios parecidos, vulnerabilidades de WordPress, SPF, DMARC y DKIM, widgets de chat, páginas legales, librerías desactualizadas y el vencimiento del dominio. Si una revisión no se puede concluir, el informe completo llega por correo cuando esté listo, normalmente en 48 horas. Paquetes de corrección de precio fijo desde 69 USD. Inicia sesión con tu correo o con una cuenta que ya tienes. Seis idiomas.",
         "twitter_title": "Privacidad, accesibilidad y seguridad desde una URL.",
         "twitter_description": "Un análisis público de un sitio https: puntuaciones, listas de phishing, malware y bloqueo, señales de hackeo, autenticación del correo y casos de QA propuestos. Correcciones de precio fijo desde 69 USD, o arréglalo tú.",
         "image_alt": "QA-lab URL Review. ¿Tu sitio es seguro? Revisamos más a fondo, lo corregimos a precio fijo y siempre te respondemos.",
         "gate": "Antes de analizar una sola dirección.",
-        "display": ["Encuentra fugas,", "fallas y bloqueos", "antes que tus clientes", "o un regulador."],
+        "display": ["¿Puede la búsqueda con IA", "leer y citar", "tu sitio, y coincide", "tu ficha local?"],
     },
     "pt": {
         "language": "Portuguese",
         "native": "Português",
-        "title": "Encontre vazamentos, falhas e bloqueios primeiro.",
+        "title": "A busca com IA pode ler e citar seu site?",
         "seo_title": "QA-lab URL Review: SEO, GEO e casos de teste de uma URL",
-        "description": "Uma página https avaliada em SEO, GEO, analytics, segurança, acessibilidade e velocidade, verificada contra phishing, malware, listas de bloqueio e invasões, com casos e correções.",
+        "description": "Veja se a busca com IA lê seu site e se o perfil local bate. Uma página https avaliada em SEO, GEO, segurança, acessibilidade e velocidade, com casos e correções.",
         "og_description": "Uma análise pública via https, avaliada em SEO, GEO, analytics, segurança, acessibilidade e desempenho, com uma lista do que corrigir primeiro e casos de QA propostos com scripts iniciais para vinte frameworks. Um navegador headless executa o axe-core, registra o rastreamento antes e depois de uma escolha de cookies e faz capturas de tela. Também verifica listas de phishing e malware, cada host vinculado no Google Web Risk, listas de bloqueio de spam, sinais de site hackeado, domínios parecidos, vulnerabilidades do WordPress, SPF, DMARC e DKIM, widgets de chat, páginas legais, bibliotecas desatualizadas e o vencimento do domínio. Se uma revisão não puder ser concluída, o relatório completo chega por e-mail quando estiver pronto, geralmente em até 48 horas. Pacotes de correção de preço fixo a partir de US$ 69. Entre com seu e-mail ou com uma conta que você já tem. Seis idiomas.",
         "twitter_title": "Privacidade, acessibilidade e segurança a partir de uma URL.",
         "twitter_description": "Uma análise pública de um site https: notas, listas de phishing, malware e bloqueio, sinais de invasão, autenticação de e-mail e casos de QA propostos. Correções de preço fixo a partir de US$ 69, ou corrija você mesmo.",
         "image_alt": "QA-lab URL Review. Seu site é seguro? Verificamos mais a fundo, corrigimos a preço fixo e você sempre tem retorno.",
         "gate": "Antes de analisar um único endereço.",
-        "display": ["Encontre vazamentos,", "falhas e bloqueios", "antes dos seus clientes", "ou de um regulador."],
+        "display": ["A busca com IA pode", "ler e citar", "seu site, e o perfil", "local bate com ele?"],
     },
     "de": {
         "language": "German",
         "native": "Deutsch",
-        "title": "Lecks, Fehler und Sperren zuerst finden.",
+        "title": "Kann KI-Suche Ihre Website lesen und zitieren?",
         "seo_title": "QA-lab URL Review: SEO, GEO und Testfälle aus einer URL",
-        "description": "Eine https-Seite, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Tempo, geprüft auf Phishing, Malware, Blocklisten und Hacks, mit Testfällen und Korrekturen.",
+        "description": "Prüfen Sie, ob KI-Suche Ihre Site lesen kann und Ihr lokales Profil passt. Eine https-Seite zu SEO, GEO, Sicherheit, Barrierefreiheit und Tempo—mit Fällen und Fixes.",
         "og_description": "Eine öffentliche https-Prüfung, bewertet nach SEO, GEO, Analytics, Sicherheit, Barrierefreiheit und Performance, mit einer Liste der dringendsten Korrekturen und vorgeschlagenen QA-Fällen mit Startskripten für zwanzig Frameworks. Ein Headless-Browser führt axe-core aus, zeichnet Tracking vor und nach einer Cookie-Wahl auf und macht Screenshots. Außerdem prüft sie Phishing- und Malware-Listen, jeden verlinkten Host mit Google Web Risk, Spam-Blocklisten, Anzeichen einer gehackten Website, Lookalike-Domains, WordPress-Schwachstellen, SPF, DMARC und DKIM, Chat-Widgets, Rechtsseiten, veraltete Bibliotheken und den Domain-Ablauf. Lässt sich eine Prüfung nicht abschließen, kommt der vollständige Bericht per E-Mail, sobald er fertig ist, meist innerhalb von 48 Stunden. Korrekturpakete zum Festpreis ab 69 US$. Anmeldung per E-Mail oder mit einem bestehenden Konto. Sechs Sprachen.",
         "twitter_title": "Datenschutz, Barrierefreiheit und Sicherheit aus einer URL.",
         "twitter_description": "Eine öffentliche Prüfung einer https-Website: Bewertungen, Phishing-, Malware- und Blocklisten, Hack-Anzeichen, E-Mail-Authentifizierung und vorgeschlagene QA-Fälle. Korrekturen zum Festpreis ab 69 US$ oder selbst beheben.",
         "image_alt": "QA-lab URL Review. Ist Ihre Website sicher? Wir prüfen gründlicher, beheben zum Festpreis, und Sie hören immer von uns.",
         "gate": "Bevor eine einzige Adresse geprüft wird.",
-        "display": ["Finden Sie Lecks,", "Fehler und Sperren,", "bevor Kunden", "oder Behörden es tun."],
+        "display": ["Kann KI-Suche Ihre", "Website lesen und zitieren,", "und passt Ihr", "lokales Profil dazu?"],
     },
     "fr": {
         "language": "French",
         "native": "Français",
-        "title": "Trouvez d’abord les fuites, pannes et blocages.",
+        "title": "L’IA peut-elle lire et citer votre site ?",
         "seo_title": "QA-lab URL Review : SEO, GEO et cas de test depuis une URL",
-        "description": "Une page https notée en SEO, GEO, analytics, sécurité, accessibilité et vitesse, contrôlée contre phishing, malware, listes de blocage et piratage, avec cas de test et corrections.",
+        "description": "Vérifiez si la recherche IA lit votre site et si votre fiche locale correspond. Une page https notée SEO, GEO, sécurité, accessibilité et vitesse—avec cas et correctifs.",
         "og_description": "Une analyse publique en https, notée en SEO, GEO, analytics, sécurité, accessibilité et performance, avec une liste des corrections prioritaires et des cas de QA proposés avec des scripts de départ pour vingt frameworks. Un navigateur headless lance axe-core, relève le suivi avant et après un choix de cookies et prend des captures d’écran. Elle contrôle aussi les listes de phishing et de malware, chaque hôte lié avec Google Web Risk, les listes de blocage de spam, les signes d’un site piraté, les domaines sosies, les vulnérabilités WordPress, SPF, DMARC et DKIM, les widgets de chat, les pages légales, les bibliothèques obsolètes et l’expiration du domaine. Si une analyse ne peut pas aboutir, le rapport complet arrive par e-mail dès qu’il est prêt, en général sous 48 heures. Forfaits de correction à prix fixe dès 69 US$. Connexion par e-mail ou avec un compte que vous avez déjà. Six langues.",
         "twitter_title": "Confidentialité, accessibilité et sécurité depuis une URL.",
         "twitter_description": "Une analyse publique d’un site https : notes, listes de phishing, de malware et de blocage, signes de piratage, authentification des e-mails et cas de QA proposés. Corrections à prix fixe dès 69 US$, ou corrigez vous-même.",
         "image_alt": "QA-lab URL Review. Votre site est-il sûr ? Nous vérifions plus en profondeur, corrigeons à prix fixe, et vous avez toujours une réponse.",
         "gate": "Avant d’analyser une seule adresse.",
-        "display": ["Trouvez les fuites,", "pannes et blocages", "avant vos clients", "ou un régulateur."],
+        "display": ["L’IA peut-elle lire", "et citer votre site,", "et votre fiche", "locale est-elle alignée ?"],
     },
     "it": {
         "language": "Italian",
         "native": "Italiano",
-        "title": "Trova prima perdite, guasti e blocchi.",
+        "title": "L’AI può leggere e citare il tuo sito?",
         "seo_title": "QA-lab URL Review: SEO, GEO e casi di test da un URL",
-        "description": "Una pagina https valutata per SEO, GEO, analytics, sicurezza, accessibilità e velocità, controllata contro phishing, malware, blocklist e violazioni, con casi di test e correzioni.",
+        "description": "Verifica se la ricerca IA legge il tuo sito e se il profilo locale coincide. Una pagina https valutata per SEO, GEO, sicurezza, accessibilità e velocità—con casi e fix.",
         "og_description": "Un’analisi pubblica via https, valutata per SEO, GEO, analytics, sicurezza, accessibilità e prestazioni, con un elenco di cosa sistemare prima e casi di QA proposti con script iniziali per venti framework. Un browser headless esegue axe-core, registra il tracciamento prima e dopo una scelta sui cookie e fa screenshot. Controlla anche liste di phishing e malware, ogni host collegato con Google Web Risk, blocklist di spam, segni di un sito violato, domini sosia, vulnerabilità di WordPress, SPF, DMARC e DKIM, widget di chat, pagine legali, librerie obsolete e scadenza del dominio. Se una revisione non si può concludere, il report completo arriva via email appena è pronto, di solito entro 48 ore. Pacchetti di correzione a prezzo fisso da 69 US$. Accedi con la tua email o con un account che hai già. Sei lingue.",
         "twitter_title": "Privacy, accessibilità e sicurezza da un URL.",
         "twitter_description": "Un’analisi pubblica di un sito https: punteggi, liste di phishing, malware e blocco, segni di violazione, autenticazione email e casi di QA proposti. Correzioni a prezzo fisso da 69 US$, o correggilo tu.",
         "image_alt": "QA-lab URL Review. Il tuo sito è sicuro? Controlliamo più a fondo, lo sistemiamo a prezzo fisso e ti rispondiamo sempre.",
         "gate": "Prima di analizzare un solo indirizzo.",
-        "display": ["Trova perdite,", "guasti e blocchi", "prima dei clienti", "o di un’autorità."],
+        "display": ["L’AI può leggere", "e citare il tuo sito,", "e il profilo locale", "è allineato?"],
     },
 }
 
@@ -485,7 +485,7 @@ def build(source, code, data):
     s = swap(s, '<link rel="canonical" href="https://carlosandmunoz.com/qa-review.html">', f'<link rel="canonical" href="{url}">')
     s = swap(s, locale_block("en"), locale_block(code))
     s = swap(s, '<meta property="og:url" content="https://carlosandmunoz.com/qa-review.html">', f'<meta property="og:url" content="{url}">')
-    s = swap(s, '<meta property="og:title" content="Find the leaks, breaks and blocks first. · QA-lab URL Review">', f'<meta property="og:title" content="{t["title"]} · QA-lab URL Review">')
+    s = swap(s, '<meta property="og:title" content="Can AI search read and cite your site? · QA-lab URL Review">', f'<meta property="og:title" content="{t["title"]} · QA-lab URL Review">')
     og_desc = s[s.index('<meta property="og:description" content="'):]
     og_desc = og_desc[: og_desc.index(">") + 1]
     s = swap(s, og_desc, f'<meta property="og:description" content="{t["og_description"]}">')
@@ -510,10 +510,10 @@ def build(source, code, data):
     s = swap(
         s,
         '<h1 id="studio-title" class="display">\n'
-        "                <span>Find the leaks,</span>\n"
-        '                <span class="display-em">breaks and blocks</span>\n'
-        "                <span>before customers</span>\n"
-        "                <span>or regulators do.</span>",
+        "                <span>Can AI search</span>\n"
+        '                <span class="display-em">read and cite</span>\n'
+        "                <span>your site, and does</span>\n"
+        "                <span>your local profile match?</span>",
         f'<h1 id="studio-title" class="display" lang="{code}" translate="no">\n'
         f"                <span>{d[0]}</span>\n"
         f'                <span class="display-em">{d[1]}</span>\n'
