@@ -655,7 +655,7 @@ async function queryEpss(cves, fetchImpl) {
 	}
 }
 
-async function checkCertificates(host, cert, certspotterKey, fetchImpl) {
+async function checkCertificates(host, cert, certspotterKey, fetchImpl, nowMs) {
 	const anomalies = [];
 	if (cert && cert.missingIntermediate) {
 		anomalies.push({
@@ -687,7 +687,8 @@ async function checkCertificates(host, cert, certspotterKey, fetchImpl) {
 			ctChecked = true;
 			if (Array.isArray(rows)) {
 				ctIssuances = rows.length;
-				const now = Date.now();
+				// Callers pass a frozen now (Deep / unit tests); wall clock alone makes the 7-day window drift (#4345).
+				const now = Number.isFinite(nowMs) ? nowMs : Date.now();
 				const recent = rows.filter((r) => now - Date.parse(r.not_before || '') <= 7 * 86400000);
 				const wildcards = rows.filter(
 					(r) => Array.isArray(r.dns_names) && r.dns_names.some((n) => String(n).startsWith('*.'))
@@ -1039,7 +1040,7 @@ async function check(input, options) {
 				.catch(() => ({ ip: '', ips: [], country: '', asn: 0, asName: '', prefix: '', source: '', attribution: '' })),
 			loadFeeds(opts).catch(() => null),
 			queryOsvBatch(libs, fetchImpl).catch(() => []),
-			checkCertificates(host, cert, certspotterKey, fetchImpl).catch(() => ({
+			checkCertificates(host, cert, certspotterKey, fetchImpl, now).catch(() => ({
 				anomalies: [],
 				ctChecked: false,
 				ctIssuances: 0,
