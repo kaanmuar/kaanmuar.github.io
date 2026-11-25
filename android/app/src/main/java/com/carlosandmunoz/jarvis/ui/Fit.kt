@@ -59,25 +59,27 @@ fun ProvideForm(content: @Composable () -> Unit) {
 const val WIDE = "wide"
 
 /**
- * Panels in [columns] columns, each into the shortest so far. A child with Modifier.layoutId(WIDE) spans every column
- * and starts a new band below the tallest one. One column is the same layout, so opening Ask or unfolding keeps each panel's state.
+ * Panels in [columns] columns (max [Layouts.MAX_COLUMNS], #4338), each into the shortest so far.
+ * A child with Modifier.layoutId(WIDE) or a wide saved size spans every column and starts a new band below the tallest one,
+ * so expanding a section reflows its neighbors. One column is the same layout, so opening Ask or unfolding keeps each panel's state.
  * Inside a tab its panels take their slots in the tab's saved layout order, and hidden ones are left out (#2809).
  */
 @Composable
 fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val tab = LocalLayoutTab.current
     val saved = LocalLayout.current
+    val cols = columns.coerceIn(1, Layouts.MAX_COLUMNS)
     Layout(content, modifier) { items, constraints ->
         val width = constraints.maxWidth
-        val colW = width / columns.coerceAtLeast(1)
-        val heights = IntArray(columns.coerceAtLeast(1))
+        val colW = width / cols
+        val heights = IntArray(cols)
         val panelId = { m: Measurable -> (m.parentData as? PanelSlot)?.id }
         val placed = arranged(items, tab, saved).map { m ->
             val id = panelId(m)
             val sizeW = id?.let { saved?.size?.get(it)?.w } ?: 1f
-            // Full-bleed when w is wide (#3611); mid widths grow inside the slot via Panel's continuous w (#3709).
-            val asWide = m.layoutId == WIDE || Layouts.isWideSize(sizeW, m.layoutId == WIDE)
-            if (asWide) {
+            // Full-bleed when marked wide or w is mid/full (#3611 / #4338); else one column, continuous w inside (#3709).
+            val span = if (m.layoutId == WIDE) cols else Layouts.sizeSpan(sizeW, m.layoutId == WIDE, cols)
+            if (span >= cols) {
                 val top = heights.max()
                 val p = m.measure(Constraints(maxWidth = width))
                 heights.fill(top + p.height)
@@ -88,7 +90,7 @@ fun Masonry(columns: Int, modifier: Modifier = Modifier, content: @Composable ()
                 Triple(p, i * colW, heights[i]).also { heights[i] += p.height }
             }
         }
-        layout(width, heights.max()) { placed.forEach { (p, x, y) -> p.place(x, y) } }
+        layout(width, heights.maxOrNull() ?: 0) { placed.forEach { (p, x, y) -> p.place(x, y) } }
     }
 }
 

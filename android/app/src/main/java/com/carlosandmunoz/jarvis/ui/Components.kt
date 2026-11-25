@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -249,67 +250,121 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
             if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch, LocalChartFlag provides markChart) { content() }
         }
-        // Edge drag only while armed (#3673); otherwise scroll and dock taps win.
-        if (canResize && armed) {
-            val edge = 14.dp
-            val strip = J.cyan.copy(alpha = 0.22f)
-            val commit = { saveSize!!(id, live) }
-            Box(
-                Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
-                    .pointerInput(id, live) {
-                        detectDragGestures(
-                            onDragEnd = commit,
-                            onDragCancel = commit,
-                            onDrag = { change, drag ->
-                                change.consume()
-                                live = Layouts.clampSize(live.h - drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
-                            }
-                        )
-                    }
-                    .background(strip)
-            )
-            Box(
-                Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
-                    .pointerInput(id, live) {
-                        detectDragGestures(
-                            onDragEnd = commit,
-                            onDragCancel = commit,
-                            onDrag = { change, drag ->
-                                change.consume()
-                                live = Layouts.clampSize(live.h + drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
-                            }
-                        )
-                    }
-                    .background(strip)
-            )
-            Box(
-                Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
-                    .pointerInput(id, live) {
-                        detectDragGestures(
-                            onDragEnd = commit,
-                            onDragCancel = commit,
-                            onDrag = { change, drag ->
-                                change.consume()
-                                live = Layouts.clampSize(live.h, live.w - drag.x / size.width.coerceAtLeast(1).toFloat())
-                            }
-                        )
-                    }
-                    .background(strip)
-            )
-            Box(
-                Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
-                    .pointerInput(id, live) {
-                        detectDragGestures(
-                            onDragEnd = commit,
-                            onDragCancel = commit,
-                            onDrag = { change, drag ->
-                                change.consume()
-                                live = Layouts.clampSize(live.h, live.w + drag.x / size.width.coerceAtLeast(1).toFloat())
-                            }
-                        )
-                    }
-                    .background(strip)
-            )
+        // Edge expand/contract (#4338): always-on ± so a section can grow without long-press; neighbors reflow via Masonry.
+        // Drag strips still appear while armed (#3673).
+        if (canResize) {
+            val commit = { next: Layouts.Size -> live = next; saveSize!!(id, next) }
+            val step = { edge: Char, expand: Boolean -> commit(Layouts.stepSize(live, edge, expand)) }
+            PanelEdgeSteps(Alignment.TopCenter, horizontal = true, onContract = { step('n', false) }, onExpand = { step('n', true) }, label = title)
+            PanelEdgeSteps(Alignment.BottomCenter, horizontal = true, onContract = { step('s', false) }, onExpand = { step('s', true) }, label = title)
+            PanelEdgeSteps(Alignment.CenterStart, horizontal = false, onContract = { step('w', false) }, onExpand = { step('w', true) }, label = title)
+            PanelEdgeSteps(Alignment.CenterEnd, horizontal = false, onContract = { step('e', false) }, onExpand = { step('e', true) }, label = title)
+            if (armed) {
+                val edge = 14.dp
+                val strip = J.cyan.copy(alpha = 0.22f)
+                val dragCommit = { saveSize!!(id, live) }
+                Box(
+                    Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
+                        .pointerInput(id, live) {
+                            detectDragGestures(
+                                onDragEnd = dragCommit,
+                                onDragCancel = dragCommit,
+                                onDrag = { change, drag ->
+                                    change.consume()
+                                    live = Layouts.clampSize(live.h - drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                                }
+                            )
+                        }
+                        .background(strip)
+                )
+                Box(
+                    Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
+                        .pointerInput(id, live) {
+                            detectDragGestures(
+                                onDragEnd = dragCommit,
+                                onDragCancel = dragCommit,
+                                onDrag = { change, drag ->
+                                    change.consume()
+                                    live = Layouts.clampSize(live.h + drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                                }
+                            )
+                        }
+                        .background(strip)
+                )
+                Box(
+                    Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
+                        .pointerInput(id, live) {
+                            detectDragGestures(
+                                onDragEnd = dragCommit,
+                                onDragCancel = dragCommit,
+                                onDrag = { change, drag ->
+                                    change.consume()
+                                    live = Layouts.clampSize(live.h, live.w - drag.x / size.width.coerceAtLeast(1).toFloat())
+                                }
+                            )
+                        }
+                        .background(strip)
+                )
+                Box(
+                    Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
+                        .pointerInput(id, live) {
+                            detectDragGestures(
+                                onDragEnd = dragCommit,
+                                onDragCancel = dragCommit,
+                                onDrag = { change, drag ->
+                                    change.consume()
+                                    live = Layouts.clampSize(live.h, live.w + drag.x / size.width.coerceAtLeast(1).toFloat())
+                                }
+                            )
+                        }
+                        .background(strip)
+                )
+            }
+        }
+    }
+}
+
+/** − / + on one panel edge (#4338); [horizontal] for north/south, vertical stack for east/west. */
+@Composable
+private fun BoxScope.PanelEdgeSteps(
+    align: Alignment,
+    horizontal: Boolean,
+    onContract: () -> Unit,
+    onExpand: () -> Unit,
+    label: String
+) {
+    val chip = Modifier
+        .size(28.dp)
+        .clip(RoundedCornerShape(6.dp))
+        .background(J.cyan.copy(alpha = 0.18f))
+        .border(1.dp, J.cyan.copy(alpha = 0.55f), RoundedCornerShape(6.dp))
+    val btn: @Composable (String, String, () -> Unit) -> Unit = { mark, desc, act ->
+        Box(
+            chip
+                .clickable(onClickLabel = desc, onClick = act)
+                .semantics { contentDescription = desc },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(mark, color = J.cyan, fontFamily = Mono, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+    if (horizontal) {
+        Row(
+            Modifier.align(align).padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            btn("−", "Contract $label", onContract)
+            btn("+", "Expand $label", onExpand)
+        }
+    } else {
+        Column(
+            Modifier.align(align).padding(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            btn("−", "Contract $label", onContract)
+            btn("+", "Expand $label", onExpand)
         }
     }
 }

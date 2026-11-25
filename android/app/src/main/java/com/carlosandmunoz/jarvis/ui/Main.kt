@@ -299,8 +299,10 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
     PullToRefreshBox(isRefreshing = s.loading, onRefresh = vm::refresh, modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val width = maxWidth.value.toInt()
-            val columns = Device.columns(width, Device.dense(LocalForm.current))
-            CompositionLocalProvider(LocalDense provides (columns == 3 && width < 1100), LocalColumns provides columns) {
+            val form = LocalForm.current
+            val dense = Device.dense(form)
+            val columns = Device.columns(width, dense)
+            CompositionLocalProvider(LocalDense provides dense, LocalColumns provides columns) {
             AnimatedContent(tab, transitionSpec = {
                 val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
                 (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith

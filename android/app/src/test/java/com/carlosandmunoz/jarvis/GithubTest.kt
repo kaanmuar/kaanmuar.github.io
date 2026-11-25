@@ -111,7 +111,7 @@ class GithubTest {
         assertEquals(1, Github.columnsFor(412))
         assertEquals(2, Github.columnsFor(600))
         assertEquals(2, Github.columnsFor(884))
-        assertEquals(3, Github.columnsFor(1280))
+        assertEquals(2, Github.columnsFor(1280))
     }
 
     @Test fun theProcessMapFitsAcrossAnUnfoldedScreenAndScrollsOnTheCover() {

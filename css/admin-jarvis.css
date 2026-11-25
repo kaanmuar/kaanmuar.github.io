@@ -82,7 +82,8 @@
 .jv-tile small { color: var(--dim); font-size: 0.75rem; }
 .jv-spark { width: 100%; height: 32px; display: block; margin-top: 0.2rem; }
 
-.jv-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 0.75rem; }
+/* Cap at two columns (#4338); phone stays one via the 720px query below. */
+.jv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 0.75rem; }
 .jv-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 0.85rem 0.95rem; backdrop-filter: blur(6px); min-width: 0; position: relative; --jv-size-h: 1; --jv-size-w: 1; }
 .jv-panel::after { content: ""; position: absolute; top: -1px; left: 18px; width: 46px; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); border-radius: 2px; }
 .jv-panel.is-wide, .jv-panel.is-size-wide { grid-column: 1 / -1; }
@@ -121,35 +122,58 @@
 .jv-panel.is-resizing { outline: 1px solid rgba(56, 225, 255, 0.55); outline-offset: 1px; }
 /* #3673: long-press arms resize; dashed outline while armed so nav stays free until then. */
 .jv-panel.is-resize-armed { outline: 1px dashed rgba(56, 225, 255, 0.45); outline-offset: 2px; }
-.jv-resize {
-    position: absolute; z-index: 3; padding: 0; margin: 0; border: 0; background: transparent; opacity: 0;
-    transition: opacity 0.15s, background 0.15s;
+/* Edge chrome (#4338): ± + drag strip. The edge box itself never hits; only its children do, so panel links stay clickable. */
+.jv-edge {
+    position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; gap: 2px;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s;
 }
-.jv-panel:hover > .jv-resize, .jv-panel:focus-within > .jv-resize, .jv-panel.is-resizing > .jv-resize,
-.jv-panel.is-resize-armed > .jv-resize { opacity: 1; }
-.jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { left: 18%; right: 18%; height: 10px; cursor: ns-resize; }
-.jv-resize[data-resize="n"] { top: 0; }
-.jv-resize[data-resize="s"] { bottom: 0; }
-.jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { top: 18%; bottom: 18%; width: 10px; cursor: ew-resize; }
-.jv-resize[data-resize="e"] { right: 0; }
-.jv-resize[data-resize="w"] { left: 0; }
-.jv-panel:hover > .jv-resize[data-resize="n"], .jv-panel.is-resizing > .jv-resize[data-resize="n"], .jv-panel.is-resize-armed > .jv-resize[data-resize="n"],
-.jv-panel:hover > .jv-resize[data-resize="s"], .jv-panel.is-resizing > .jv-resize[data-resize="s"], .jv-panel.is-resize-armed > .jv-resize[data-resize="s"] {
+.jv-panel:hover > .jv-edge, .jv-panel:focus-within > .jv-edge, .jv-panel.is-resizing > .jv-edge,
+.jv-panel.is-resize-armed > .jv-edge { opacity: 1; }
+.jv-edge[data-edge="n"], .jv-edge[data-edge="s"] { left: 18%; right: 18%; height: 22px; flex-direction: row; }
+.jv-edge[data-edge="n"] { top: 0; }
+.jv-edge[data-edge="s"] { bottom: 0; }
+.jv-edge[data-edge="e"], .jv-edge[data-edge="w"] { top: 18%; bottom: 18%; width: 22px; flex-direction: column; }
+.jv-edge[data-edge="e"] { right: 0; }
+.jv-edge[data-edge="w"] { left: 0; }
+.jv-resize-step {
+    flex: 0 0 auto; width: 18px; height: 18px; padding: 0; margin: 0; border: 1px solid rgba(56, 225, 255, 0.55);
+    border-radius: 4px; background: rgba(56, 225, 255, 0.18); color: var(--cyan); font: 700 12px ui-monospace, Menlo, monospace;
+    line-height: 1; cursor: pointer; pointer-events: none;
+}
+.jv-panel:hover > .jv-edge > .jv-resize-step, .jv-panel:focus-within > .jv-edge > .jv-resize-step,
+.jv-panel.is-resizing > .jv-edge > .jv-resize-step, .jv-panel.is-resize-armed > .jv-edge > .jv-resize-step {
+    pointer-events: auto;
+}
+.jv-resize-step:hover { background: rgba(56, 225, 255, 0.35); }
+.jv-resize {
+    position: relative; z-index: 3; padding: 0; margin: 0; border: 0; background: transparent; opacity: 1;
+    transition: background 0.15s; pointer-events: none;
+}
+.jv-panel:hover > .jv-edge > .jv-resize, .jv-panel:focus-within > .jv-edge > .jv-resize,
+.jv-panel.is-resizing > .jv-edge > .jv-resize, .jv-panel.is-resize-armed > .jv-edge > .jv-resize {
+    pointer-events: auto;
+}
+.jv-edge[data-edge="n"] > .jv-resize, .jv-edge[data-edge="s"] > .jv-resize { flex: 1 1 auto; min-width: 24px; height: 10px; cursor: ns-resize; }
+.jv-edge[data-edge="e"] > .jv-resize, .jv-edge[data-edge="w"] > .jv-resize { flex: 1 1 auto; min-height: 24px; width: 10px; cursor: ew-resize; }
+.jv-panel:hover > .jv-edge .jv-resize[data-resize="n"], .jv-panel.is-resizing > .jv-edge .jv-resize[data-resize="n"], .jv-panel.is-resize-armed > .jv-edge .jv-resize[data-resize="n"],
+.jv-panel:hover > .jv-edge .jv-resize[data-resize="s"], .jv-panel.is-resizing > .jv-edge .jv-resize[data-resize="s"], .jv-panel.is-resize-armed > .jv-edge .jv-resize[data-resize="s"] {
     background: linear-gradient(to bottom, transparent, rgba(56, 225, 255, 0.35), transparent);
 }
-.jv-panel:hover > .jv-resize[data-resize="e"], .jv-panel.is-resizing > .jv-resize[data-resize="e"], .jv-panel.is-resize-armed > .jv-resize[data-resize="e"],
-.jv-panel:hover > .jv-resize[data-resize="w"], .jv-panel.is-resizing > .jv-resize[data-resize="w"], .jv-panel.is-resize-armed > .jv-resize[data-resize="w"] {
+.jv-panel:hover > .jv-edge .jv-resize[data-resize="e"], .jv-panel.is-resizing > .jv-edge .jv-resize[data-resize="e"], .jv-panel.is-resize-armed > .jv-edge .jv-resize[data-resize="e"],
+.jv-panel:hover > .jv-edge .jv-resize[data-resize="w"], .jv-panel.is-resizing > .jv-edge .jv-resize[data-resize="w"], .jv-panel.is-resize-armed > .jv-edge .jv-resize[data-resize="w"] {
     background: linear-gradient(to right, transparent, rgba(56, 225, 255, 0.35), transparent);
 }
 @media (pointer: coarse) {
-    .jv-resize[data-resize="n"], .jv-resize[data-resize="s"] { height: 18px; }
-    .jv-resize[data-resize="e"], .jv-resize[data-resize="w"] { width: 18px; }
-    /* Hidden and non-hit until long-press (#3673), so scroll and tab taps are not stolen. */
-    .jv-panel > .jv-resize { opacity: 0; pointer-events: none; }
-    .jv-panel.is-resize-armed > .jv-resize,
-    .jv-panel.is-resizing > .jv-resize { opacity: 1; pointer-events: auto; }
+    .jv-edge[data-edge="n"] > .jv-resize, .jv-edge[data-edge="s"] > .jv-resize { height: 18px; }
+    .jv-edge[data-edge="e"] > .jv-resize, .jv-edge[data-edge="w"] > .jv-resize { width: 18px; }
+    /* ± always hit-able (#4338); drag strip waits for long-press (#3673). Edge box stays pointer-events: none. */
+    .jv-panel > .jv-edge { opacity: 1; }
+    .jv-panel > .jv-edge > .jv-resize-step { pointer-events: auto; }
+    .jv-panel > .jv-edge > .jv-resize { opacity: 0; pointer-events: none; }
+    .jv-panel.is-resize-armed > .jv-edge > .jv-resize,
+    .jv-panel.is-resizing > .jv-edge > .jv-resize { opacity: 1; pointer-events: auto; }
 }
-@media print { .jv-resize { display: none !important; } }
+@media print { .jv-edge { display: none !important; } }
 .jv-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
 .jv-panel h3 { margin: 0; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); font-weight: 600; }
 .jv-fold { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
@@ -475,7 +499,7 @@
 
 .jv-print-head, .jv-print-title { display: none; }
 
-@media (max-width: 1100px) { .jv-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); } .jv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .jv-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); } .jv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .jv-top { grid-template-columns: auto 1fr; } .jv-controls { grid-column: 1 / -1; justify-content: flex-start; } .jv-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } .jv-grid { grid-template-columns: 1fr; } .jv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; } .jv-tile { padding: 0.6rem 0.7rem; } .jv-tile strong { font-size: 1.35rem; } .jv-panel.is-tall { grid-row: auto; } }
 @media (prefers-reduced-motion: reduce) { .jv-scan, .jv-reactor::before, .jv-reactor-core { animation: none; } }
 
@@ -586,8 +610,9 @@
     .jv-tiles { display: none; }
     .jv-panel[data-panel-id="overview-products"] { display: block; }
 }
+/* Dense foldable / tablet (#2139): tighter chrome, still max two columns (#4338). */
 @container jv (min-width: 740px) and (max-width: 1040px) {
-    .jv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
+    .jv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; }
     .jv-panel { padding: 0.6rem 0.7rem; border-radius: 12px; }
     .jv-panel > header { margin-bottom: 0.4rem; }
     .jv-kpis { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 0.45rem; }
