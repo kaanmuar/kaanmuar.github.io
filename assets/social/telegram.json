@@ -122,6 +122,28 @@
     "checked": "2026-11-06T17:11:23.806Z"
    }
   ],
+  "auto-2026-10-25/06-vs-subastasventura-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "131",
+    "at": "2026-11-25T23:01:52.560Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/131",
+    "checked": "2026-11-25T23:02:00.270Z"
+   }
+  ],
+  "auto-2026-10-25/07-vs-kemik-gt": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "134",
+    "at": "2026-11-25T23:02:12.542Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/134",
+    "checked": "2026-11-25T23:02:16.283Z"
+   }
+  ],
   "auto-2026-11-03/02-u-iteso-mx": [
    {
     "channel": "telegram",
@@ -131,6 +153,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/17",
     "checked": "2026-11-06T22:14:21.008Z"
+   }
+  ],
+  "auto-2026-11-03/05-u-hneu-edu-ua": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "132",
+    "at": "2026-11-25T23:02:00.270Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/132",
+    "checked": "2026-11-25T23:02:06.780Z"
    }
   ],
   "auto-2026-11-04/01-u-selia-co": [
@@ -1017,6 +1050,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/122",
     "checked": "2026-11-20T17:19:23.800Z"
+   }
+  ],
+  "runs-100/09-msf": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "133",
+    "at": "2026-11-25T23:02:06.780Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/133",
+    "checked": "2026-11-25T23:02:12.542Z"
    }
   ],
   "runs-2026-10/01-govuk": [
