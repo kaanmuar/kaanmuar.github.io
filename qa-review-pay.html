@@ -354,7 +354,9 @@
                 const plan = PASSES[passPlan];
                 document.getElementById("pay-heading").textContent = pc.t("headingPass", { plan: plan.name });
                 document.getElementById("pay-item").textContent = pc.t("itemPass", { runs: plan.runs });
-                document.getElementById("pay-copy").textContent = pc.t("copyPass", { usd: money(usd), runs: plan.runs, pages: plan.pages, depth: plan.depth, limits: plan.tools ? pc.t("limitsPassPro") : pc.t("limitsPass", { n: plan.frameworks }) });
+                let passCopy = pc.t("copyPass", { usd: money(usd), runs: plan.runs, pages: plan.pages, depth: plan.depth, limits: plan.tools ? pc.t("limitsPassPro") : pc.t("limitsPass", { n: plan.frameworks }) });
+                if (passPlan === "freelancer") passCopy += " " + pc.t("copyPassFreelancerAnchor");
+                document.getElementById("pay-copy").textContent = passCopy;
                 document.getElementById("pay-yield").hidden = true;
                 paintLines();
                 return;

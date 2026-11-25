@@ -451,5 +451,17 @@ test.describe('The pass card on the account page', () => {
 		await expect(card).toBeVisible({ timeout: 20000 });
 		await expect(card.locator('h3')).toHaveText('30-day passes');
 		await expect(card.getByRole('link', { name: /^Buy / })).toHaveText(['Buy Freelancer', 'Buy Team', 'Buy Pro']);
+		await expect(card).toContainText('SE Ranking Core is 129 USD a month');
+		await expect(card.locator('li').filter({ hasText: 'Team ·' })).not.toContainText('SE Ranking Core');
+	});
+
+	test('the Freelancer pass pay page names SE Ranking and Ahrefs', async ({ page }) => {
+		const store = await signIn(page);
+		await mock(page, store, (where) =>
+			where === '/checkout/quote' ? [200, { usd: 29, cop: 116000, rate: 4000, count: 1, frameworks: [], tools: [], plan: 'freelancer', pass: PLANS[0] }] : null
+		);
+		await page.goto('/qa-review-pay.html?purpose=pass&plan=freelancer');
+		await expect(page.locator('#pay-copy')).toContainText('SE Ranking Core is 129 USD a month');
+		await expect(page.locator('#pay-copy')).toContainText('This pass is 29 USD once for 10 runs over 30 days');
 	});
 });

@@ -164,6 +164,7 @@
     .pass-card p { margin: 0 0 8px; }
     .pass-card ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
     .pass-card li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .pass-card .pass-anchor { flex-basis: 100%; margin: 0; }
     .pass-card .pass-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .sign-in { border-color: color-mix(in srgb, var(--cyan) 40%, var(--edge)); }
@@ -976,6 +977,7 @@
     return plan.name + " · " + plan.runs + " runs · " + plan.usd + " USD · up to " + plan.pages + " pages, " + plan.depth + " links deep, "
       + (plan.tools ? "every framework and tool, and the signed-in run" : plan.frameworks + " frameworks or tools a run");
   }
+  const FREELANCER_PASS_ANCHOR = "SE Ranking Core is 129 USD a month, or 103.20 USD a month billed annually, for a website audit and 25 AI prompts a day. Ahrefs Lite is 129 USD a month and includes Site Audit. This pass is 29 USD once for 10 runs over 30 days, and it does not renew.";
   // The open pass with its runs left and end date, and renew or upgrade; with none open, the three passes to buy.
   function paintPass(data) {
     const box = document.getElementById("pass-card");
@@ -1001,6 +1003,7 @@
     plans.forEach((plan) => {
       const row = node("li", "");
       row.append(node("span", planLine(plan)), passLink(plan, "Buy " + plan.name));
+      if (plan.id === "freelancer") row.append(node("p", FREELANCER_PASS_ANCHOR, "small muted pass-anchor"));
       list.append(row);
     });
     box.replaceChildren(
