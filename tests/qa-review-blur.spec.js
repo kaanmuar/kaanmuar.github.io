@@ -108,16 +108,17 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
 		await expect(page.locator('#cases .case-sample-label')).toHaveCount(0);
 	});
 
-	test('the two prices sit in the clear above the frost: a 5 USD fix list and the full report', async ({ page }) => {
+	test('the fix list is the only primary offer; the full report is a line below', async ({ page }) => {
 		await openUnpaid(page);
-		const offers = page.locator('#unlock-offer a.offer');
-		await expect(offers).toHaveCount(2);
-		await expect(offers.nth(0)).toContainText('Fix list · 5 USD');
-		await expect(offers.nth(0)).toHaveAttribute('href', /purpose=fixlist&reportId=bl12cd34ef56/);
-		const full = Number((await offers.nth(1).locator('b').textContent()).match(/Full report · (\d+) USD/)[1]);
-		expect((full - 19) % 5).toBe(0);
-		expect(full).toBeGreaterThanOrEqual(19 + 5 * (sample.frameworks.length - 1));
-		await expect(offers.nth(1)).toHaveAttribute('href', /purpose=report/);
+		const primary = page.locator('#unlock-offer a.offer');
+		await expect(primary).toHaveCount(1);
+		await expect(primary).toHaveClass(/offer-full/);
+		await expect(primary).toContainText('Fix list · 5 USD');
+		await expect(primary).toHaveAttribute('href', /purpose=fixlist&reportId=bl12cd34ef56/);
+		const fullLine = page.locator('#unlock-offer .offer-secondary a[data-offer="report"]');
+		await expect(fullLine).toHaveAttribute('href', /purpose=report/);
+		await expect(fullLine).toContainText('Full report: 19 USD');
+		await expect(page.locator('#unlock-offer .offer-local-compare')).toHaveCount(0);
 	});
 
 	test('a bought fix list clears the scores and findings, keeps the cases frosted, and leaves only the full report to buy', async ({
@@ -130,7 +131,25 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
 		expect(await page.locator('#cases .case-fade').count()).toBeGreaterThan(0);
 		const offers = page.locator('#unlock-offer a.offer');
 		await expect(offers).toHaveCount(1);
+		await expect(offers.first()).toHaveClass(/offer-full/);
 		await expect(offers.first()).toHaveAttribute('href', /purpose=report/);
+	});
+
+	test('a local unpaid report adds the compare line under the fix-list offer', async ({ page }) => {
+		const local = Object.assign({}, sample.report, {
+			id: ID,
+			insights: Object.assign({}, sample.report.insights, {
+				findings: (sample.report.insights.findings || []).concat([
+					{ key: 'local-profile', verdict: 'person', severity: 'low', msg: { title: { id: 'local-profile.title' } } },
+				]),
+			}),
+		});
+		await openUnpaid(page, { report: local });
+		await expect(page.locator('#unlock-offer .offer-local-compare a[data-offer="compare"]')).toHaveAttribute(
+			'href',
+			'#compare'
+		);
+		await expect(page.locator('#unlock-offer .offer-local-compare')).toContainText('BrightLocal');
 	});
 
 	test('the JSON and the text file keep the readable opening and cut the rest', async ({ page }) => {
