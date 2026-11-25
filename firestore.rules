@@ -62,7 +62,7 @@ service cloud.firestore {
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
           || (request.resource.data.kind == 'export' && request.resource.data.name in ['export_cv', 'print_cv', 'lab_report', 'studio_report'])
-          || (request.resource.data.kind == 'run' && request.resource.data.name in ['lab_run', 'qa_lab_run', 'qa_review_start', 'qa_review_done'])
+          || (request.resource.data.kind == 'run' && request.resource.data.name in ['lab_run', 'qa_lab_run', 'qa_review_start', 'qa_review_done', 'soft_run', 'full_crawl_queued'])
           || (request.resource.data.kind == 'view' && request.resource.data.name in ['hub_view', 'post_view'])
           || (request.resource.data.kind == 'click' && request.resource.data.name in [
             'share_cv', 'open_simulator', 'open_qa_lab', 'open_contact_widget',
@@ -79,7 +79,9 @@ service cloud.firestore {
             'qa_review_live_open', 'qa_review_live_filter', 'qa_review_live_nav', 'open_url_review',
             'qa_review_inconclusive', 'qa_review_apology_shown', 'qa_review_apology_copy', 'qa_review_fix_open',
             'qa_review_fix_way', 'qa_review_fix_request', 'qa_review_fix_checkout', 'qa_review_fix_paid', 'qa_review_fix_recheck',
-            'qa_review_hero_start', 'qa_review_compare', 'qa_review_rivals_kind', 'qa_review_rivals_add',
+            'qa_review_hero_start', 'qa_review_hub_soft',
+            'soft_preview_shown', 'soft_unlock_start', 'soft_unlock_ok', 'soft_quota_hit',
+            'qa_review_compare', 'qa_review_rivals_kind', 'qa_review_rivals_add',
             'qa_review_offer', 'qa_review_offer_shown', 'qa_review_offer_go', 'qa_review_offer_later', 'qa_review_offer_closed',
             'qa_review_pass_offer', 'qa_review_watch_scripts', 'qa_review_lang_offer',
             'qa_review_trial_shown', 'qa_review_trial_claimed', 'qa_review_ask', 'qa_review_url_suggest',

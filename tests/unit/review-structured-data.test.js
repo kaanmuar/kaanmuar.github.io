@@ -128,12 +128,36 @@ const EVENTS = [
 	'qa_review_fix_recheck',
 ];
 
+const SOFT_FUNNEL = [
+	'soft_preview_shown',
+	'soft_unlock_start',
+	'soft_unlock_ok',
+	'soft_quota_hit',
+	'soft_run',
+	'full_crawl_queued',
+	'qa_review_hub_soft',
+];
+
 test('every stored analytics event is allowed by the site_events rule', () => {
 	const kinds = read('js/site-analytics.js').match(/const KINDS = \{([\s\S]*?)\n\s*\};/)[1];
 	const names = [...kinds.matchAll(/^\s*(\w+): '(\w+)'/gm)].map((m) => m[1]);
 	const rule = read('firestore.rules').match(/match \/site_events\/\{id\} \{([\s\S]*?)\n    \}/)[1];
 	names.forEach((name) => assert.ok(rule.includes(`'${name}'`), name));
 	EVENTS.forEach((name) => assert.ok(names.includes(name), name));
+});
+
+test('soft-funnel review events are in KINDS, firestore rules, and qa-review.js', () => {
+	const kinds = read('js/site-analytics.js').match(/const KINDS = \{([\s\S]*?)\n\s*\};/)[1];
+	const names = [...kinds.matchAll(/^\s*(\w+): '(\w+)'/gm)].map((m) => m[1]);
+	const rule = read('firestore.rules').match(/match \/site_events\/\{id\} \{([\s\S]*?)\n    \}/)[1];
+	const review = read('js/qa-review.js');
+	SOFT_FUNNEL.forEach((name) => {
+		assert.ok(names.includes(name), name);
+		assert.ok(rule.includes(`'${name}'`), name);
+		assert.ok(review.includes(`'${name}'`), name);
+	});
+	assert.match(kinds, /soft_run: 'run'/);
+	assert.match(kinds, /full_crawl_queued: 'run'/);
 });
 
 test('the promise, apology and fix events are sent from the review pages', () => {
