@@ -65,7 +65,7 @@ async function run(record, options) {
 		targeted.loadFeeds(opts).catch(() => null),
 		// No TLS certificate is passed: the chain and validity checks belong to the plain read.
 		targeted
-			.checkCertificates(host, null, key, fetchImpl)
+			.checkCertificates(host, null, key, fetchImpl, now)
 			.catch(() => ({ anomalies: [], ctChecked: false, ctIssuances: 0 })),
 	]);
 	const breachNews = targeted.matchBreachNews(host, feeds && feeds.gdelt);
