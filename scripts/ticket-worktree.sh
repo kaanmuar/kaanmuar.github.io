@@ -34,6 +34,10 @@ warn_dirty() { # <dir> <what>
 root_modules_usable() {
 	[ -f "$1/node_modules/postcss/package.json" ] && [ -f "$1/node_modules/css-select/package.json" ]
 }
+# scripts/sweep-outreach.js and peer-groups need @google-cloud/firestore (#2367, found in #2363).
+functions_modules_usable() {
+	[ -f "$1/functions/node_modules/@google-cloud/firestore/package.json" ]
+}
 # Drop a symlink (or leave a real install alone) when it cannot resolve those packages.
 drop_unusable_root_modules() { # <worktree>
 	local wt=$1
@@ -51,6 +55,14 @@ link_shared() { # <worktree>
 				[ ! -e "$wt/node_modules" ] && ln -s "$main/node_modules" "$wt/node_modules"
 			elif [ -e "$main/node_modules" ] && [ ! -e "$wt/node_modules" ]; then
 				echo "warning: main node_modules lacks postcss/css-select; not linking. Run npm ci in the worktree, or npm run test:review (installs the CI CSS deps) (#4056)" >&2
+			fi
+			continue
+		fi
+		if [ "$deps" = "functions/node_modules" ]; then
+			if functions_modules_usable "$main"; then
+				[ ! -e "$wt/functions/node_modules" ] && ln -s "$main/functions/node_modules" "$wt/functions/node_modules"
+			elif [ -e "$main/functions/node_modules" ] && [ ! -e "$wt/functions/node_modules" ]; then
+				echo "warning: main functions/node_modules is empty or incomplete; not linking. Run: npm --prefix functions ci (#2367)" >&2
 			fi
 			continue
 		fi
