@@ -38,6 +38,10 @@ test('outcomeForScenario maps curated scenarios to packs', () => {
 	assert.equal(outcomes.outcomeForScenario('warm-geo-entity').outcomeId, 'marketing');
 	assert.equal(outcomes.outcomeForScenario('cold-a11y-alt').outcomeId, 'engagement');
 	assert.equal(outcomes.outcomeForScenario('warm-an-privacy').outcomeId, 'security');
+	assert.equal(outcomes.outcomeForScenario('cold-b2b-pf-cls').outcomeId, 'commerce');
+	assert.equal(outcomes.outcomeForScenario('cold-saas-seo-title-missing').outcomeId, 'marketing');
+	assert.equal(outcomes.outcomeForScenario('cold-legal-a11y-labels').outcomeId, 'engagement');
+	assert.equal(outcomes.outcomeForScenario('warm-saas-an-consent').outcomeId, 'security');
 	assert.equal(outcomes.outcomeForScenario('unknown'), null);
 });
 

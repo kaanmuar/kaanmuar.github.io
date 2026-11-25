@@ -28,7 +28,7 @@ test('seed rows use real finding ids from url-review-findings-en', () => {
 			assert.ok(hasTitle, id);
 		}
 	}
-	assert.equal(scenarios.SCENARIOS.length, 11);
+	assert.equal(scenarios.SCENARIOS.length, 20);
 	for (const id of [
 		'seo-broken-links',
 		'a11y-labels',
@@ -68,18 +68,19 @@ test('scenariosForOffer accepts string ids, filters channel and confidence', () 
 	);
 	const linkedinOnly = scenarios.scenariosForOffer([{ id: 'geo-llms', confidence: 0.9 }], { channel: 'email' });
 	assert.equal(linkedinOnly.length, 0);
-	assert.equal(
-		scenarios.scenariosForOffer([{ id: 'geo-llms', confidence: 0.9 }], { channel: 'linkedin' }).length,
-		1
+	const geoLinkedin = scenarios.scenariosForOffer([{ id: 'geo-llms', confidence: 0.9 }], { channel: 'linkedin' });
+	assert.equal(geoLinkedin.length, 2);
+	assert.deepEqual(
+		geoLinkedin.map((row) => row.scenarioId).sort(),
+		['social-geo-llms', 'social-saas-geo-llms']
 	);
 	assert.equal(
 		scenarios.scenariosForOffer([{ id: 'a11y-labels', confidence: 0.2 }], { channel: 'email' }).length,
 		0
 	);
-	assert.equal(
-		scenarios.scenariosForOffer([{ id: 'a11y-labels', confidence: 0.6 }], { channel: 'email' }).length,
-		1
-	);
+	const a11yEmail = scenarios.scenariosForOffer([{ id: 'a11y-labels', confidence: 0.6 }], { channel: 'email' });
+	assert.equal(a11yEmail.length, 3);
+	assert.ok(a11yEmail.some((row) => row.scenarioId === 'cold-a11y-labels'));
 });
 
 test('maxConfidenceMissing drops findings without confidence', () => {
@@ -97,11 +98,15 @@ test('maxConfidenceMissing drops findings without confidence', () => {
 	assert.equal(strictOk.length, 1);
 });
 
-test('pickColdScenario returns the first cold_safe email scenario', () => {
+test('pickColdScenario returns the first generic cold_safe email scenario', () => {
 	const picked = scenarios.pickColdScenario(['seo-broken-links', 'sec-csp', 'a11y-labels']);
 	assert.equal(picked.scenarioId, 'cold-seo-broken-links');
 	assert.equal(picked.mediaKind, 'evidence_card');
 	assert.equal(scenarios.pickColdScenario(['sec-csp']), null);
+	assert.equal(
+		scenarios.pickColdScenario([{ id: 'a11y-labels', confidence: 0.9 }]).scenarioId,
+		'cold-a11y-labels'
+	);
 });
 
 test('scenariosForOffer accepts review insight `key` the same as `id`', () => {
@@ -129,13 +134,22 @@ test('each scenario exposes the schema fields outreach expects', () => {
 		[
 			'cold-a11y-alt',
 			'cold-a11y-labels',
+			'cold-b2b-a11y-labels',
+			'cold-b2b-pf-cls',
+			'cold-legal-a11y-labels',
 			'cold-pf-lcp',
 			'cold-pf-slow',
+			'cold-saas-seo-title-missing',
 			'cold-seo-broken-links',
 			'social-geo-llms',
+			'social-saas-geo-llms',
 			'warm-an-consent',
 			'warm-an-privacy',
+			'warm-b2b-geo-entity',
 			'warm-geo-entity',
+			'warm-legal-an-privacy',
+			'warm-legal-sec-hsts',
+			'warm-saas-an-consent',
 			'warm-sec-csp',
 			'warm-sec-dmarc',
 		]
@@ -143,4 +157,38 @@ test('each scenario exposes the schema fields outreach expects', () => {
 	for (const id of SEEDED_IDS) {
 		assert.ok(scenarios.scenarioForFinding(id), id);
 	}
+});
+
+test('vertical seeds cover saas, legal-professional, and b2b-lead-gen', () => {
+	assert.deepEqual(scenarios.VERTICALS, ['saas', 'legal-professional', 'b2b-lead-gen']);
+	for (const vertical of scenarios.VERTICALS) {
+		const rows = scenarios.SCENARIOS.filter((row) => row.vertical === vertical);
+		assert.equal(rows.length, 3, vertical);
+		const tiers = new Set(rows.map((row) => row.tier));
+		assert.ok(tiers.has('cold_safe'), vertical);
+	}
+	const generic = scenarios.SCENARIOS.filter((row) => !row.vertical);
+	assert.equal(generic.length, 11);
+	for (const id of ['seo-title-missing', 'pf-cls', 'sec-hsts']) {
+		assert.ok(scenarios.scenarioForFinding(id), id);
+	}
+});
+
+test('scenariosForVertical filters by industry and channel', () => {
+	const open = [{ id: 'a11y-labels', confidence: 0.8 }];
+	assert.equal(
+		scenarios.scenariosForVertical('b2b-lead-gen', open, { channel: 'email' })[0].scenarioId,
+		'cold-b2b-a11y-labels'
+	);
+	assert.equal(scenarios.scenariosForVertical('saas', open, { channel: 'email' }).length, 0);
+	assert.equal(scenarios.scenariosForVertical('unknown', open).length, 0);
+});
+
+test('pickColdScenarioForVertical prefers vertical cold rows', () => {
+	const picked = scenarios.pickColdScenarioForVertical('legal-professional', [{ id: 'a11y-labels', confidence: 0.9 }]);
+	assert.equal(picked.scenarioId, 'cold-legal-a11y-labels');
+	assert.equal(
+		scenarios.pickColdScenarioForVertical('saas', [{ id: 'seo-title-missing', confidence: 0.85 }]).scenarioId,
+		'cold-saas-seo-title-missing'
+	);
 });

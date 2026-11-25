@@ -22,7 +22,9 @@ function wordCount(text) {
 }
 
 test('every cold_safe scenario has an Instantly template with required placeholders', () => {
-	const coldIds = scenarios.SCENARIOS.filter((row) => row.tier === 'cold_safe').map((row) => row.scenarioId);
+	const coldIds = scenarios.SCENARIOS.filter((row) => row.tier === 'cold_safe' && !row.vertical).map(
+		(row) => row.scenarioId
+	);
 	assert.deepEqual(
 		templates.listColdTemplates().map((row) => row.scenarioId).sort(),
 		coldIds.slice().sort()

@@ -1,9 +1,12 @@
 'use strict';
 
 /**
- * Curated outreach scenarios keyed by URL Review finding ids (#4279, #4280).
+ * Curated outreach scenarios keyed by URL Review finding ids (#4279, #4280, #4319).
  * cold_safe copy stays operational; warm_only and social_generic allow richer hooks.
+ * Rows with `vertical` are industry-tailored seeds; generic rows omit the field.
  */
+
+const VERTICALS = ['saas', 'legal-professional', 'b2b-lead-gen'];
 
 const FORBIDDEN_COLD =
 	/\b(sue|lawsuit|sued|embarrass|humiliation|breach scandal|courtroom|regulators will fine)\b/i;
@@ -174,6 +177,150 @@ const SCENARIOS = [
 		},
 		confidenceMin: 0.6,
 	},
+	{
+		scenarioId: 'cold-saas-seo-title-missing',
+		vertical: 'saas',
+		findingIds: ['seo-title-missing'],
+		tier: 'cold_safe',
+		consequence:
+			'Product and pricing URLs without titles look unnamed in tabs and shared links, which blurs which plan or feature page prospects opened.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'A product page on {host} loads without a browser title',
+			bodyLine: 'The scan hit at least one SaaS template with an empty <title>, so bookmarks and CRM referrers show a blank label.',
+			cta: 'Give each template a unique 30–60 character title in the report list.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'warm-saas-an-consent',
+		vertical: 'saas',
+		findingIds: ['an-consent', 'an-reject'],
+		tier: 'warm_only',
+		consequence:
+			'Trial and demo funnels that fire tags before consent skew product analytics and can block modeled signups until defaults load first.',
+		channelAllow: ['email', 'linkedin', 'landing'],
+		mediaKind: 'skit',
+		copyHooks: {
+			subjectHint: 'Measurement on {host} may run before trial visitors choose cookies',
+			bodyLine: 'The review saw GTM or analytics snippets without a consent gate or Consent Mode v2 defaults on signup paths.',
+			cta: 'Map consent on trial URLs from the report and retest after defaults ship first.',
+		},
+		confidenceMin: 0.6,
+	},
+	{
+		scenarioId: 'social-saas-geo-llms',
+		vertical: 'saas',
+		findingIds: ['geo-llms'],
+		tier: 'social_generic',
+		consequence:
+			'Without llms.txt, docs and changelog pages are easier for answer engines to skip when they summarize your product.',
+		channelAllow: ['linkedin', 'landing'],
+		mediaKind: 'static_post',
+		copyHooks: {
+			subjectHint: '{host} has no llms.txt for AI assistants',
+			bodyLine: 'A short llms.txt helps assistants point buyers at pricing, security, and API docs you care about.',
+			cta: 'Draft one from the fix kit and host it at /llms.txt.',
+		},
+		confidenceMin: 0.4,
+	},
+	{
+		scenarioId: 'cold-legal-a11y-labels',
+		vertical: 'legal-professional',
+		findingIds: ['a11y-labels'],
+		tier: 'cold_safe',
+		consequence:
+			'Intake and consultation fields without labels slow keyboard clients and add friction before a matter is described.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'A client intake field on {host} has no tied label',
+			bodyLine: 'Screen readers announce a blank control on the inquiry form, so the field is harder to complete.',
+			cta: 'Open the report for the selector and pair each intake input with a visible label.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'warm-legal-an-privacy',
+		vertical: 'legal-professional',
+		findingIds: ['an-privacy'],
+		tier: 'warm_only',
+		consequence:
+			'Contact or intake flows without a clear privacy notice leave visitors unsure how inquiry data will be handled.',
+		channelAllow: ['email', 'linkedin', 'landing'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'Visitors on {host} cannot find a privacy notice near intake',
+			bodyLine: 'The page loads forms or tags but does not link where personal data is described before someone submits.',
+			cta: 'Publish or link a notice from the footer and reference it beside the intake form.',
+		},
+		confidenceMin: 0.6,
+	},
+	{
+		scenarioId: 'warm-legal-sec-hsts',
+		vertical: 'legal-professional',
+		findingIds: ['sec-hsts'],
+		tier: 'warm_only',
+		consequence:
+			'Without HSTS, the first visit to the firm site can downgrade to plain HTTP before the browser learns to stay on TLS.',
+		channelAllow: ['email', 'linkedin', 'landing', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'HSTS is not sent from {host}',
+			bodyLine: 'The home page did not include Strict-Transport-Security with a long max-age.',
+			cta: 'Add the header from the fix kit and consider preload once TLS is stable.',
+		},
+		confidenceMin: 0.55,
+	},
+	{
+		scenarioId: 'cold-b2b-pf-cls',
+		vertical: 'b2b-lead-gen',
+		findingIds: ['pf-cls'],
+		tier: 'cold_safe',
+		consequence:
+			'Hero images without dimensions shift the layout when they load, which nudges mobile visitors off long lead forms.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'Images on {host} shift the layout when they load',
+			bodyLine: 'Unsized images on the landing template jumped the page during paint, hurting layout stability on phones.',
+			cta: 'Set width and height (or aspect-ratio) on each flagged image in the report.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'cold-b2b-a11y-labels',
+		vertical: 'b2b-lead-gen',
+		findingIds: ['a11y-labels'],
+		tier: 'cold_safe',
+		consequence:
+			'Lead-capture fields without labels add friction for keyboard users and can trim completions on gated content.',
+		channelAllow: ['email', 'linkedin', 'leave_behind'],
+		mediaKind: 'evidence_card',
+		copyHooks: {
+			subjectHint: 'A lead form on {host} ships without a tied label',
+			bodyLine: 'Assistive tech cannot name the control, so the demo-request or PDF gate is harder to finish.',
+			cta: 'Use the report list to label each field on the main conversion form.',
+		},
+		confidenceMin: 0.5,
+	},
+	{
+		scenarioId: 'warm-b2b-geo-entity',
+		vertical: 'b2b-lead-gen',
+		findingIds: ['geo-entity'],
+		tier: 'warm_only',
+		consequence:
+			'An incomplete Organization entity makes AI summaries and rich results less sure which brand owns the offer.',
+		channelAllow: ['email', 'linkedin', 'landing'],
+		mediaKind: 'skit',
+		copyHooks: {
+			subjectHint: 'Structured data on {host} does not fully name the business',
+			bodyLine: 'The entity block is missing fields or linked profiles that answer engines expect in sameAs.',
+			cta: 'Fill the gaps from the fix-kit draft and re-run the GEO check.',
+		},
+		confidenceMin: 0.55,
+	},
 ];
 
 const BY_FINDING = new Map();
@@ -247,14 +394,46 @@ function scenariosForOffer(findings, options) {
 }
 
 function pickColdScenario(findings) {
-	const list = scenariosForOffer(findings, { channel: 'email' }).filter((item) => item.tier === 'cold_safe');
+	const list = scenariosForOffer(findings, { channel: 'email' }).filter(
+		(item) => item.tier === 'cold_safe' && !item.vertical
+	);
+	return list.length ? list[0] : null;
+}
+
+function scenariosForVertical(vertical, findings, options) {
+	const v = String(vertical || '');
+	if (!VERTICALS.includes(v)) return [];
+	const opts = options || {};
+	const channel = opts.channel;
+	const maxConfidenceMissing = opts.maxConfidenceMissing === true;
+	const normalized = normalizeFindings(findings, maxConfidenceMissing);
+	const confidenceById = new Map(normalized.map((row) => [row.id, row.confidence]));
+
+	return SCENARIOS.filter((scenario) => {
+		if (scenario.vertical !== v) return false;
+		const matchedIds = scenario.findingIds.filter((id) => confidenceById.has(id));
+		if (!matchedIds.length) return false;
+		const confident = matchedIds.some((id) => confidenceById.get(id) >= scenario.confidenceMin);
+		if (!confident) return false;
+		if (channel && !scenario.channelAllow.includes(channel)) return false;
+		return true;
+	});
+}
+
+function pickColdScenarioForVertical(vertical, findings) {
+	const list = scenariosForVertical(vertical, findings, { channel: 'email' }).filter(
+		(item) => item.tier === 'cold_safe'
+	);
 	return list.length ? list[0] : null;
 }
 
 module.exports = {
 	SCENARIOS,
+	VERTICALS,
 	FORBIDDEN_COLD,
 	scenarioForFinding,
 	scenariosForOffer,
+	scenariosForVertical,
 	pickColdScenario,
+	pickColdScenarioForVertical,
 };
