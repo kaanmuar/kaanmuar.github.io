@@ -46,8 +46,10 @@ test('a push renders added sources and new skits, and only names the new posts o
 		'scripts/skits-studio/skits.js': ['friday-release'],
 		'scripts/tips-studio/evergreen.js': ['a', 'b', 'c'],
 	};
+	const takeAssets = ['friday-release-en.mp4', 'friday-release-es.mp4', 'other-en.mp4'];
 	const changes = {
 		ticket: '1981',
+		takeAssets,
 		files: [
 			{ status: 'A', file: 'scripts/tips-studio/horror-headers.js' },
 			{ status: 'M', file: 'scripts/tips-studio/evergreen.js' },
@@ -66,6 +68,26 @@ test('a push renders added sources and new skits, and only names the new posts o
 		s.planPush({ before: 'abc' }, changes).jobs.map((j) => j.kind + ' ' + j.name),
 		['tips horror-headers', 'skit friday-release']
 	);
+	assert.equal(s.planPush({ before: 'abc' }, changes).jobs.find((j) => j.kind === 'skit').langs, 'en,es');
+});
+
+test('a new skit without takes in skit-takes is noted, not scheduled on merge', () => {
+	const ids = { 'scripts/skits-studio/skits.js': [] };
+	const now = { 'scripts/skits-studio/skits.js': ['avoidable-geo', 'avoidable-a11y-form'] };
+	const { jobs, notes } = s.planPush(
+		{ before: 'abc' },
+		{
+			ticket: '4279',
+			takeAssets: ['friday-release-en.mp4'],
+			files: [{ status: 'M', file: 'scripts/skits-studio/skits.js' }],
+			idsAt: (rev, file) => ids[file],
+			idsNow: (file) => now[file],
+		}
+	);
+	assert.equal(jobs.length, 0);
+	assert.equal(notes.length, 2);
+	notes.forEach((note) => assert.match(note, /skit-takes.*\/render skit /));
+	assert.deepEqual(s.skitTakeLangs('friday-release', ['friday-release-en.mp4', 'friday-release-xx.mp4']), ['en']);
 });
 
 test('a clip whose peak is not above -30 dB stops the delivery', () => {
