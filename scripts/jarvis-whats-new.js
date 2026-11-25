@@ -9,7 +9,8 @@ const MAX = 6;
 // Merges and pipeline-only changes mean nothing to someone using the app.
 const SKIP = /^(merge|revert|ci|tests?|docs?|chore|deps|build|lint|refactor)\b|\bworkflows?\b/i;
 const REFS = /\s*\((?:[\w.-]+\/[\w.-]+)?#\d+\)\s*$/;
-const AREA = /^(?:jarvis|admin|apps?|android|mac|windows|be|fe)(?: v?[\d.]+)?:\s*/i;
+// Also strip "<area> app:" (kaanmuar/kaanmuar.github.io#2270), not only "<area>:".
+const AREA = /^(?:jarvis|admin|apps?|android|mac|windows|be|fe)(?:\s+app)?(?:\s+v?[\d.]+)?:\s*/i;
 
 function line(subject) {
 	let s = subject.trim();

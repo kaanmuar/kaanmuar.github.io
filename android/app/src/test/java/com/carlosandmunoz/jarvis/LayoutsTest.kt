@@ -86,6 +86,16 @@ class LayoutsTest {
         assertEquals(ids, Layouts.move(ids, emptyList(), "zz", 1))
     }
 
+    @Test fun placePutsAShownPanelBeforeOrAfterAnother() {
+        assertEquals(listOf("c", "a", "b", "d"), Layouts.place(ids, emptyList(), "c", "a", true))
+        assertEquals(listOf("a", "c", "b", "d"), Layouts.place(ids, emptyList(), "c", "a", false))
+        assertEquals(listOf("d", "a", "b", "c"), Layouts.place(ids, emptyList(), "d", "a", true))
+        assertEquals(listOf("a", "b", "d", "c"), Layouts.place(ids, listOf("c"), "d", "b", false))
+        assertEquals(ids, Layouts.place(ids, emptyList(), "a", "a", true))
+        assertEquals(ids, Layouts.place(ids, emptyList(), "a", "zz", true))
+        assertEquals(ids, Layouts.place(ids, listOf("c"), "a", "c", true))
+    }
+
     @Test fun keepHoldsTheOtherSidesIds() {
         val prev = Saved(listOf("web-x", "b", "web-y", "a"), listOf("web-z", "a"))
         val next = Layouts.keep(prev, listOf("a", "b", "c"), listOf("c"), listOf("a", "b", "c"))
