@@ -317,7 +317,7 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                         if (shownTab == Tab.Products) ProductChips(product, pickProduct)
                         if (s.snapshot != null) {
                             val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
-                            LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
+                            LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout, canUndo = s.layoutUndoDepth > 0, onUndo = vm::undoLayout)
                         }
                     }
                     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {

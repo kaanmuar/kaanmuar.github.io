@@ -59,6 +59,7 @@ data class UiState(
     val briefBusy: Boolean = false,
     val chat: List<Chat> = emptyList(),
     val toast: String? = null,
+    val layoutUndoDepth: Int = 0,
     val running: Set<String> = emptySet(),
     val push: Map<String, Boolean> = emptyMap(),
     val ongoing: Boolean = true,
@@ -95,6 +96,16 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState(signedIn = auth.signedIn, email = auth.email, days = jarvis.vault.get("days")?.toIntOrNull() ?: 7, push = Push.kinds(app as JarvisApp), ongoing = Ongoing.enabled(app), ongoingParts = Ongoing.parts(app), ongoingSlots = Ongoing.slots(app), speak = Voice.speakOn(app),
         voiceLang = Voice.langChoice(app as JarvisApp), voices = voices(app), rate = Voice.rate(app)))
     val state: StateFlow<UiState> = _state
+
+    // #4351: undo recent tab layout size / order / hidden / stretch.
+    private val layoutUndo = ArrayDeque<Pair<String, Layouts.Saved?>>()
+    private val layoutUndoMax = 20
+    private fun pushLayoutUndo(tab: String, prev: Layouts.Saved?) {
+        layoutUndo.addLast(tab to prev)
+        while (layoutUndo.size > layoutUndoMax) layoutUndo.removeFirst()
+        _state.update { it.copy(layoutUndoDepth = layoutUndo.size) }
+    }
+
     private val listener = Listener(app) { ask(it, spoken = true) }
     private val speaker = jarvis.speaker
     private val handsFree = jarvis.handsFree
@@ -328,16 +339,38 @@ class JarvisViewModel(app: Application) : AndroidViewModel(app) {
         saveLayout(tab, next)
     }
 
-    fun saveLayout(tab: String, layout: Layouts.Saved?) {
+    fun saveLayout(tab: String, layout: Layouts.Saved?, recordUndo: Boolean = true, okToast: String = "Layout saved. The web shows it too.") {
         val before = Layouts.read(_state.value.snapshot, tab)
+        if (recordUndo) pushLayoutUndo(tab, before)
         _state.update { it.copy(snapshot = Layouts.patch(it.snapshot, tab, layout)) }
-        if (fixture != null) return
+        if (fixture != null) {
+            if (!recordUndo) _state.update { it.copy(toast = okToast) }
+            return
+        }
         keep("Saving the layout") {
             runCatching { api.call("settings-save", _state.value.days, mapOf("layout" to JsonObject(mapOf(tab to Layouts.json(layout))))) }
-                .onSuccess { out -> _state.update { s -> s.copy(snapshot = out.obj("layout")?.let { Layouts.withLayout(s.snapshot, it) } ?: s.snapshot, toast = "Layout saved. The web shows it too.") } }
-                .onFailure { e -> fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") } }
+                .onSuccess { out -> _state.update { s -> s.copy(snapshot = out.obj("layout")?.let { Layouts.withLayout(s.snapshot, it) } ?: s.snapshot, toast = okToast) } }
+                .onFailure { e ->
+                    if (recordUndo && layoutUndo.isNotEmpty()) {
+                        layoutUndo.removeLast()
+                        _state.update { it.copy(layoutUndoDepth = layoutUndo.size) }
+                    }
+                    fail(e) { it.copy(snapshot = Layouts.patch(it.snapshot, tab, before), toast = "The layout did not save: ${e.message ?: "failed"}. It is back as it was.") }
+                }
             told()
         }
+    }
+
+    /** Restore the previous tab layout (#4351). */
+    fun undoLayout() {
+        if (layoutUndo.isEmpty()) {
+            _state.update { it.copy(toast = "Nothing to undo", layoutUndoDepth = 0) }
+            return
+        }
+        val entry = layoutUndo.removeLast()
+        _state.update { it.copy(layoutUndoDepth = layoutUndo.size) }
+        val (tab, prev) = entry
+        saveLayout(tab, prev, recordUndo = false, okToast = "Layout change undone")
     }
 
     /** Continuous panel size (#3611): updates layout[tab].size[id] and keeps order/hidden/stretch. */
