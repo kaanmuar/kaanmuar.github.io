@@ -100,7 +100,9 @@ function templateFor(scenarioId) {
 
 /** Every cold_safe Instantly template, in scenario table order. */
 function listColdTemplates() {
-	const coldIds = scenarios.SCENARIOS.filter((row) => row.tier === 'cold_safe').map((row) => row.scenarioId);
+	const coldIds = scenarios.SCENARIOS.filter((row) => row.tier === 'cold_safe' && !row.vertical).map(
+		(row) => row.scenarioId
+	);
 	return coldIds.map((id) => templateFor(id)).filter(Boolean);
 }
 

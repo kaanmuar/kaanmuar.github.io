@@ -15,7 +15,7 @@ const OUTCOMES = [
 		outcomeId: 'commerce',
 		label: 'Commerce and speed',
 		findingAreas: ['Performance', 'SEO'],
-		scenarioIds: ['cold-seo-broken-links', 'cold-pf-lcp', 'cold-pf-slow'],
+		scenarioIds: ['cold-seo-broken-links', 'cold-pf-lcp', 'cold-pf-slow', 'cold-b2b-pf-cls'],
 		primaryCta: {
 			text: 'Fix slow templates and broken shop links',
 			actionType: 'fix_package',
@@ -26,7 +26,13 @@ const OUTCOMES = [
 		outcomeId: 'marketing',
 		label: 'Discovery and AI summaries',
 		findingAreas: ['SEO', 'GEO'],
-		scenarioIds: ['social-geo-llms', 'warm-geo-entity'],
+		scenarioIds: [
+			'social-geo-llms',
+			'warm-geo-entity',
+			'cold-saas-seo-title-missing',
+			'social-saas-geo-llms',
+			'warm-b2b-geo-entity',
+		],
 		primaryCta: {
 			text: 'Ship meta, schema, and llms.txt',
 			actionType: 'fix_package',
@@ -37,7 +43,7 @@ const OUTCOMES = [
 		outcomeId: 'engagement',
 		label: 'Forms and inclusive UX',
 		findingAreas: ['Accessibility'],
-		scenarioIds: ['cold-a11y-labels', 'cold-a11y-alt'],
+		scenarioIds: ['cold-a11y-labels', 'cold-a11y-alt', 'cold-legal-a11y-labels', 'cold-b2b-a11y-labels'],
 		primaryCta: {
 			text: 'Fix labels and image alt text',
 			actionType: 'fix_package',
@@ -48,7 +54,15 @@ const OUTCOMES = [
 		outcomeId: 'security',
 		label: 'Trust, mail, and consent',
 		findingAreas: ['Security', 'Analytics'],
-		scenarioIds: ['warm-sec-csp', 'warm-sec-dmarc', 'warm-an-consent', 'warm-an-privacy'],
+		scenarioIds: [
+			'warm-sec-csp',
+			'warm-sec-dmarc',
+			'warm-an-consent',
+			'warm-an-privacy',
+			'warm-saas-an-consent',
+			'warm-legal-an-privacy',
+			'warm-legal-sec-hsts',
+		],
 		primaryCta: {
 			text: 'Harden headers and email authentication',
 			actionType: 'fix_package',
