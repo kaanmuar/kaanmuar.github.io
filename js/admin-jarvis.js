@@ -1794,10 +1794,14 @@ export function mountJarvis({
 	const panelSizeOf = (id) => C.clampSize(((layoutOf(S.product) || {}).size || {})[id]);
 	const resizeHandles = () =>
 		['n', 'e', 's', 'w']
-			.map(
-				(edge) =>
-					`<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${edge === 'n' || edge === 's' ? 'height' : 'width'}" title="Long-press the panel to resize · drag edges or pinch · double-click to reset"></button>`
-			)
+			.map((edge) => {
+				const dim = edge === 'n' || edge === 's' ? 'height' : 'width';
+				return `<div class="jv-edge" data-edge="${edge}">
+					<button type="button" class="jv-resize-step" data-resize-step="${edge}-" aria-label="Contract ${dim}" title="Contract">−</button>
+					<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${dim}" title="Long-press the panel to resize · drag edges or pinch · double-click to reset"></button>
+					<button type="button" class="jv-resize-step" data-resize-step="${edge}+" aria-label="Expand ${dim}" title="Expand">+</button>
+				</div>`;
+			})
 			.join('');
 	function sizeAttrs(id, wide) {
 		const sz = panelSizeOf(id);
@@ -1809,7 +1813,8 @@ export function mountJarvis({
 			resized,
 			span,
 			style,
-			className: (resized ? ' is-resized' : '') + (span >= 3 ? ' is-size-wide' : span === 2 ? ' is-size-mid' : ''),
+			// 2-col grid (#4338): span 2 is full-bleed; keep is-size-mid for older saved mid widths.
+			className: (resized ? ' is-resized' : '') + (span >= 2 ? ' is-size-wide' : ''),
 		};
 	}
 	function applySizeDom(sec, sz) {
@@ -1821,8 +1826,8 @@ export function mountJarvis({
 		sec.style.setProperty('--jv-size-w', String(next.w));
 		sec.style.setProperty('--jv-span', String(span));
 		sec.classList.toggle('is-resized', next.h !== 1 || next.w !== 1);
-		sec.classList.toggle('is-size-mid', span === 2);
-		sec.classList.toggle('is-size-wide', span >= 3);
+		sec.classList.toggle('is-size-mid', false);
+		sec.classList.toggle('is-size-wide', span >= 2);
 		sec.dataset.sizeH = String(next.h);
 		sec.dataset.sizeW = String(next.w);
 	}
@@ -12395,8 +12400,14 @@ export function mountJarvis({
 	root.addEventListener('pointerdown', (event) => {
 		const touch = event.pointerType === 'touch' || event.pointerType === 'pen';
 		const armedHit = event.target.closest?.('.jv-panel.is-resize-armed');
-		if (!armedHit && !event.target.closest?.('.jv-resize')) disarmResize();
-		if (event.target.closest('a, button:not(.jv-resize), input, textarea, select, [data-lay], .jv-lay-drag')) return;
+		if (!armedHit && !event.target.closest?.('.jv-resize, .jv-resize-step, .jv-edge')) disarmResize();
+		if (
+			event.target.closest(
+				'a, button:not(.jv-resize):not(.jv-resize-step), input, textarea, select, [data-lay], .jv-lay-drag'
+			)
+		)
+			return;
+		if (event.target.closest('.jv-resize-step')) return;
 		const handle = event.target.closest('.jv-resize');
 		const sec = (handle || event.target).closest?.('.jv-panel[data-panel-id]');
 		if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) return;
@@ -12451,6 +12462,20 @@ export function mountJarvis({
 			}
 			pinch.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 		}
+	});
+	root.addEventListener('click', (event) => {
+		const btn = event.target.closest?.('.jv-resize-step');
+		if (!btn) return;
+		const sec = btn.closest('.jv-panel[data-panel-id]');
+		if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) return;
+		const raw = btn.dataset.resizeStep || '';
+		const edge = raw.charAt(0);
+		const expand = raw.endsWith('+');
+		if (!'nesw'.includes(edge)) return;
+		event.preventDefault();
+		const next = C.stepSize(panelSizeOf(sec.dataset.panelId), edge, expand);
+		applySizeDom(sec, next);
+		savePanelSize(sec.dataset.panelId, next.h, next.w);
 	});
 	root.addEventListener('dblclick', (event) => {
 		const handle = event.target.closest('.jv-resize');

@@ -970,8 +970,10 @@ test('panel size multipliers are cleaned and kept with stretch (#3611)', () => {
 	});
 	assert.equal(core.cleanSize({ a: { h: 1, w: 1 } }), undefined);
 	assert.equal(core.sizeSpan(1.4, false), 2);
-	assert.equal(core.sizeSpan(1.9, false), 3);
-	assert.equal(core.sizeSpan(1, true), 3);
+	assert.equal(core.sizeSpan(1.9, false), 2);
+	assert.equal(core.sizeSpan(1, true), 2);
+	assert.deepEqual(core.stepSize({ h: 1, w: 1 }, 'n', true), { h: 1.15, w: 1 });
+	assert.deepEqual(core.stepSize({ h: 1, w: 1 }, 'e', false), { h: 1, w: 0.85 });
 	assert.deepEqual(
 		core.cleanLayout({
 			geo: {

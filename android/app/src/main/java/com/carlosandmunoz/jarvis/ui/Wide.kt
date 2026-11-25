@@ -73,10 +73,10 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Smaller cards when a foldable's inner screen or a tablet holds three columns (#2139). */
+/** Smaller cards on a foldable's inner screen or a tablet (#2139, #4338). */
 val LocalDense = compositionLocalOf { false }
 
-/** How many panel columns the tabs have; two or more gets the command deck and list-detail Products. */
+/** How many panel columns the tabs have (max 2, #4338); two gets the command deck and list-detail Products. */
 val LocalColumns = compositionLocalOf { 1 }
 
 /** The web's SLICES, so a series has the same colour on both. */

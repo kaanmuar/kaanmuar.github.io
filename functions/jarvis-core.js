@@ -873,12 +873,20 @@
 		});
 		return Object.keys(out).length ? out : undefined;
 	}
-	/** Grid column span for a width factor (3-col grid); wide panels stay full-bleed when w is near default. */
+	/** Grid column span for a width factor on the 2-col grid (#4338); mid/full both fill the row so neighbors reflow. */
 	function sizeSpan(w, wide) {
 		const n = clampFactor(w, SIZE_W, 1);
-		if (n >= 1.85 || (wide && n >= 0.95)) return 3;
-		if (n >= 1.35) return 2;
+		if (n >= 1.35 || (wide && n >= 0.95)) return 2;
 		return 1;
+	}
+	const SIZE_STEP = 0.15;
+	/** One expand/contract step on edge n/e/s/w (#4338). */
+	function stepSize(sz, edge, expand) {
+		const d = expand ? SIZE_STEP : -SIZE_STEP;
+		const cur = clampSize(sz);
+		if (edge === 'n' || edge === 's') return clampSize({ h: cur.h + d, w: cur.w });
+		if (edge === 'e' || edge === 'w') return clampSize({ h: cur.h, w: cur.w + d });
+		return cur;
 	}
 	function cleanLayout(input) {
 		const out = {};
@@ -4252,6 +4260,8 @@
 		plateWrap,
 		clampSize,
 		sizeSpan,
+		stepSize,
+		SIZE_STEP,
 		SIZE_H,
 		SIZE_W,
 		layoutWeave,
