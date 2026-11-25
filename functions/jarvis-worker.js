@@ -41,6 +41,13 @@ const PRICES = [[/lite/i, { in: 0.1, out: 0.4 }], [/flash/i, { in: 0.5, out: 3 }
 const LABEL = "jarvis";
 const DIAG_CATEGORIES = ["code", "test", "config"];
 const DIAG_DAYS = 2;
+// Posting pipelines (#4354): diagnose and the hourly worker fix these before other red CI, so a down open-social
+// (or Buffer / Facebook / Reddit / social-inbox / Live Reports) is not starved by the 3/pass and 1/hour caps.
+const POSTING_CI =
+	/live reports|buffer batch|facebook|bluesky|mastodon|threads|instagram|telegram|reddit|social inbox/i;
+function isPostingCi(name) {
+	return POSTING_CI.test(String(name || ""));
+}
 // A run is cut off at 75 minutes (jarvis-worker.yml), so a queued or running row older than this never reported.
 const ACTIVE_MS = 2 * 3600000;
 const REASONS = ["quota"];
@@ -511,7 +518,8 @@ async function report(ctx, body, token) {
 /* What the hourly pass may hand the worker on its own -> [{ target, task }]: code, test or config diagnoses from the last
    two days at or over the confidence bar, and URL review bugs the Cursor fix agent left waiting (needs-agent).
    failing: the workflows whose newest run on main in the last day failed; a diagnosis on main of any other workflow is
-   already fixed or not run lately, so it is left out (#2958). Without the list, every diagnosis counts. */
+   already fixed or not run lately, so it is left out (#2958). Without the list, every diagnosis counts.
+   Posting pipelines (#4354) are sorted first so the one worker task per hour heals open-social and peers before other red CI. */
 async function candidates(db, { now, confidence, github, failing }) {
   const stillFailing = Array.isArray(failing) ? new Set(failing) : null;
   const out = [];
@@ -524,17 +532,18 @@ async function candidates(db, { now, confidence, github, failing }) {
     const own = /^jarvis\//.test(String(d.branch || ""));
     if (d.pr ? !own : d.branch && d.branch !== "main") continue;
     if (!d.pr && stillFailing && !stillFailing.has(d.workflow)) continue;
-    out.push({ target: "run " + d.run, why: text(d.workflow, 80) + " failed: " + text(d.cause, 160),
+    out.push({ target: "run " + d.run, workflow: d.workflow || "", why: text(d.workflow, 80) + " failed: " + text(d.cause, 160),
       task: { prompt: d.prompt, title: "Fix " + text(d.workflow, 60) + " (run " + d.run + ")", branch: "main", pr: d.pr || undefined, category: d.category, key: "gh:diag:" + d.run, by: "jarvis (diagnosis)" } });
   }
   for (const bug of ((github || {}).needsAgent || []).slice(0, 10)) {
-    out.push({ target: "#" + bug.number, why: "URL review bug left for the fix agent: " + text(bug.title, 160),
+    out.push({ target: "#" + bug.number, workflow: "", why: "URL review bug left for the fix agent: " + text(bug.title, 160),
       task: { issue: bug.number, title: "Fix #" + bug.number + " " + text(bug.title, 60), key: "issue:" + bug.number, by: "jarvis (needs-agent)",
         prompt: "Fix GitHub issue #" + bug.number + " (" + text(bug.title, 200) + "), a failure the daily check of URL reviews filed. Find the root cause, fix it, add a test that fails without the fix, and add a row to FIXES in functions/url-review-failures.js naming the cause." } });
   }
+  out.sort((a, b) => Number(isPostingCi(b.workflow)) - Number(isPostingCi(a.workflow)));
   return out;
 }
 
-module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, MERGE_LABEL, GATE_LABEL, priceOf, cost, slug, monthOf, spend, active, route, crossed, budgetMessage, view,
+module.exports = { REPO, WORKFLOW, WORKFLOW_REF, OIDC_AUDIENCE, COLLECTION, SPEND, CAP_USD, WARN_USD, LABEL, MERGE_LABEL, GATE_LABEL, POSTING_CI, isPostingCi, priceOf, cost, slug, monthOf, spend, active, route, crossed, budgetMessage, view,
   dispatch, verifyOidc, report, candidates, gate, gateMessage, healed, mergeCheck, decide,
   _reset: () => { jwks = { at: 0, keys: [] }; } };

@@ -11703,9 +11703,10 @@ async function jarvisGithubJob() {
 		const failedSnap = await failedRef.get().catch(() => null);
 		const failed = (failedSnap && failedSnap.exists && failedSnap.data().ids) || [];
 		const gw = snapshot || {};
-		const fresh = ((gw.ci || {}).failing || []).filter(
-			(r) => r.id && !r.diag && (r.branch === 'main' || r.pr) && !failed.includes(String(r.id))
-		);
+		// Posting pipelines first (#4354): the 3/pass diagnose room heals open-social and peers before other red CI.
+		const fresh = ((gw.ci || {}).failing || [])
+			.filter((r) => r.id && !r.diag && (r.branch === 'main' || r.pr) && !failed.includes(String(r.id)))
+			.sort((a, b) => Number(jarvisWorker.isPostingCi(b.name)) - Number(jarvisWorker.isPostingCi(a.name)));
 		let done = 0;
 		for (const r of fresh) {
 			if (done >= room) break;

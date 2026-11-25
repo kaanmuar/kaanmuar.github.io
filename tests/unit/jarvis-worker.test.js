@@ -470,6 +470,48 @@ test('candidates leave out diagnoses on main of workflows that are no longer fai
 	assert.equal((await worker.candidates(db, { now: NOW, confidence: 0.8, github: {} })).length, 3);
 });
 
+test('candidates put posting-pipeline diagnoses ahead of other red CI (#4354)', async () => {
+	assert.equal(worker.isPostingCi('Bluesky, Mastodon, Threads, Instagram and Telegram'), true);
+	assert.equal(worker.isPostingCi('Buffer batch queue'), true);
+	assert.equal(worker.isPostingCi('E2E and Visual Tests'), false);
+	const db = fakeDb();
+	const diag = (run, workflow) =>
+		db
+			.collection('jarvis_github_diag')
+			.doc(String(run))
+			.set({
+				run,
+				repo: worker.REPO,
+				workflow,
+				branch: 'main',
+				pr: null,
+				category: 'config',
+				confidence: 0.9,
+				cause: 'a step failed',
+				prompt: 'Fix ' + workflow + '.',
+				at: new Date(NOW - 3600000).toISOString(),
+			});
+	await diag(1, 'E2E and Visual Tests');
+	await diag(2, 'Bluesky, Mastodon, Threads, Instagram and Telegram');
+	await diag(3, 'Pages');
+	const out = await worker.candidates(db, {
+		now: NOW,
+		confidence: 0.8,
+		github: { needsAgent: [{ number: 2950, title: 'BE: a null MX record' }] },
+		failing: [
+			'E2E and Visual Tests',
+			'Bluesky, Mastodon, Threads, Instagram and Telegram',
+			'Pages',
+		],
+	});
+	assert.equal(out[0].target, 'run 2');
+	assert.ok(worker.isPostingCi(out[0].workflow));
+	assert.deepEqual(
+		out.slice(1).map((c) => c.target).sort(),
+		['#2950', 'run 1', 'run 3']
+	);
+});
+
 test('the hourly pass hands candidates to the worker once each, and waits while the budget is used', async () => {
 	const MONDAY_10 = Date.parse('2026-10-26T15:00:00Z');
 	const started = [];
