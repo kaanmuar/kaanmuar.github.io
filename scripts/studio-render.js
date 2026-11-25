@@ -176,11 +176,27 @@ function idsNow(file) {
 	return (mod.SKITS || mod.TIPS || []).map((t) => t.id);
 }
 
+function skitTakeAssets() {
+	return (tryGh(['release', 'view', TAKES, '--json', 'assets', '-q', '.assets[].name']) || '').split('\n').filter(Boolean);
+}
+
+function skitTakeLangs(id, assets) {
+	const prefix = id + '-';
+	const langs = [];
+	assets.forEach((name) => {
+		if (!name.startsWith(prefix) || !name.endsWith('.mp4')) return;
+		const lang = name.slice(prefix.length, -4);
+		if (LANGS.includes(lang)) langs.push(lang);
+	});
+	return langs;
+}
+
 // What a push to main asks for: every tips-studio source it adds and every skit it adds to skits.js.
 function planPush(payload, changes) {
 	const jobs = [];
 	const notes = [];
 	const ticket = changes.ticket || '';
+	const takeAssets = changes.takeAssets || skitTakeAssets();
 	for (const { status, file } of changes.files) {
 		const source = file.match(/^scripts\/tips-studio\/([a-z0-9-]+)\.js$/);
 		if (source && isSource(source[1])) {
@@ -205,7 +221,23 @@ function planPush(payload, changes) {
 			changes
 				.idsNow(file)
 				.filter((id) => !before.includes(id))
-				.forEach((id) => jobs.push(job({ kind: 'skit', name: id, ticket, by: 'merge' })));
+				.forEach((id) => {
+					const langs = skitTakeLangs(id, takeAssets);
+					if (langs.length)
+						jobs.push(job({ kind: 'skit', name: id, ticket, by: 'merge', langs: langs.join(',') }));
+					else
+						notes.push(
+							'`' +
+								id +
+								'` has no Gemini takes in the `' +
+								TAKES +
+								'` release; upload them as ' +
+								id +
+								'-<lang>.mp4, then `/render skit ' +
+								id +
+								'`.'
+						);
+				});
 		}
 	}
 	return { jobs, notes };
@@ -859,4 +891,16 @@ if (require.main === module) {
 		});
 }
 
-module.exports = { job, parseCommand, planPush, checkPeaks, offsetOf, prBody, bugBody, marker, isSource, LANGS };
+module.exports = {
+	job,
+	parseCommand,
+	planPush,
+	skitTakeLangs,
+	checkPeaks,
+	offsetOf,
+	prBody,
+	bugBody,
+	marker,
+	isSource,
+	LANGS,
+};
