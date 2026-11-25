@@ -5,9 +5,165 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Tue, 24 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 25 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>Scored 46 of 100. The gap: page titles.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/07-u-aeropuertosargentina-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/07-u-aeropuertosargentina-com</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 7 pages have no title.
+
+Apply this: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-aeropuertosargentina-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #QA #Titles #SERP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/07-u-aeropuertosargentina-com.jpg" length="232677" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/07-u-aeropuertosargentina-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alemaq.cl: 63. The gap: framing.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/06-u-alemaq-cl.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/06-u-alemaq-cl</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But other sites can frame the page.
+
+Takeaway: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A first look, not a judgment.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-alemaq-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/06-u-alemaq-cl.jpg" length="229450" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/06-u-alemaq-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alodontologo.com: 60. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/23-u-alodontologo-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/23-u-alodontologo-com</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-alodontologo-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/23-u-alodontologo-com.jpg" length="238514" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/23-u-alodontologo-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>artisan-emmanuel.fr: 69. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/05-u-artisan-emmanuel-fr.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/05-u-artisan-emmanuel-fr</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 21 form controls have no label.
+
+The lesson for every team: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-artisan-emmanuel-fr
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/05-u-artisan-emmanuel-fr.jpg" length="245501" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/05-u-artisan-emmanuel-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>baltbet.ru: 34. The gap: button names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/04-u-baltbet-ru.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/04-u-baltbet-ru</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.
+
+What to change: Give every button text or an aria-label, so a screen reader can announce it.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-baltbet-ru
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #WebAssembly #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/04-u-baltbet-ru.jpg" length="227694" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/04-u-baltbet-ru.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>opinautos.com: 52. The gap: framing.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/03-u-opinautos-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/03-u-opinautos-com</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and model-training crawlers are blocked by choice. But other sites can frame the page.
+
+What to change: Send frame-ancestors 'self' in the CSP, or X-Frame-Options: SAMEORIGIN, so other sites cannot frame your pages.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-opinautos-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #Outage #SupplyChainSecurity #QA #Clickjacking #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/03-u-opinautos-com.jpg" length="231284" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/03-u-opinautos-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>The Rijksmuseum's HSTS lasts 30 days.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/30-rijksmuseum.html</link>
+      <guid isPermaLink="false">runs-100/30-rijksmuseum</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>A Permissions-Policy, a Referrer-Policy, nosniff, and a sitemap named in robots.txt. But Strict-Transport-Security sets max-age to 30 days, and http:// reaches https through a temporary 307.
+
+The lesson for every team: Raise HSTS max-age to at least a year, ideally two, and make the http redirect permanent with a 301.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=rijksmuseum
+
+#WebSecurity #HSTS #Museums #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/30-rijksmuseum.jpg" length="246718" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/30-rijksmuseum.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Lonely Planet's home is 1.8 MB of HTML.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/31-lonelyplanet.html</link>
+      <guid isPermaLink="false">runs-100/31-lonelyplanet</guid>
+      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>robots.txt blocks GPTBot from training but lets answer crawlers in, and sitemaps are listed. But every page analyzed ships over 500 KB of HTML, and the home page is 1.8 MB before compression, ahead of any image.
+
+The lesson for every team: Move bulky inline data out of the HTML and load it when needed. Smaller documents parse and paint sooner.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=lonelyplanet
+
+#WebPerformance #PageWeight #Travel #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg" length="249208" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/31-lonelyplanet.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>allservicecyc.com: 56. The gap: broken links.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-19/17-u-allservicecyc-com.html</link>
@@ -783,118 +939,6 @@ Via GitHub Advisories, by GitHub Advisory, 2026-11-20. Credit: GitHub Advisory D
 
 https://github.com/advisories/GHSA-6499-jgj4-2wpf</description>
       <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-132277: Inscriptis: Quadratic memory growth from sibling elements in get_text()</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-132277-inscriptis-quadratic-memory-growth-from-sibl.html</link>
-      <guid isPermaLink="false">pick/cve-2026-132277-inscriptis-quadratic-memory-growth-from-sibl</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description># Summary Every sibling ` ` adds another level of the parent's indentation, so the size of `get_text()` output grows quadratically with the number of tables. In the measurements below, a 240 KB HTML document produces about 1 billion characters and uses about 1 GB of memory. # Details `table_end_handler()` (`model/tag/table_tag.py`) writes the rendered table into the parent element with…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-20. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-q87h-c5m7-659j</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-63341: Aedes has Uncaught Exception and Uncontrolled Resource Consumption</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-63341-aedes-has-uncaught-exception-and-uncontrolled.html</link>
-      <guid isPermaLink="false">pick/cve-2026-63341-aedes-has-uncaught-exception-and-uncontrolled</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>### Summary A remote Denial of Service (DoS) vulnerability, allows any remote client to cause a complete crash of the Aedes MQTT broker process. This is achieved by sending a specially crafted MQTT message (via PUBLISH or SUBSCRIBE), or by setting a Will message with such a topic, containing a highly recursive topic string (e.g., with thousands of '/' delimiters). The lack of input validation…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-20. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-xxqp-5qx8-gj5q</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-77309: AIT-GUI route chain allows unauthenticated Python execution in server process</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-77309-ait-gui-route-chain-allows-unauthenticated-py.html</link>
-      <guid isPermaLink="false">pick/cve-2026-77309-ait-gui-route-chain-allows-unauthenticated-py</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>## Summary A security issue exists where unauthenticated callers can instruct the AIT-GUI server to execute arbitrary Python scripts. The attack vector involves obtaining a session cookie through GET /, followed by a malicious POST /script/run request containing an absolute file path that bypasses the configured script directory restrictions. ### Patches * 2.5.1 ### Impact This vulnerability…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-20. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-jrjx-9jjw-747m</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>GEO oder SEO? Was Daten von 1.200 B2B-Unternehmen über den wahren Wert von KI-Traffic verraten</title>
-      <link>https://carlosandmunoz.com/social/pick/geo-oder-seo-was-daten-von-1-200-b2b-unternehmen-uber-den-wa.html</link>
-      <guid isPermaLink="false">pick/geo-oder-seo-was-daten-von-1-200-b2b-unternehmen-uber-den-wa</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>GEO</category>
-      <description>Eine neue Studie zeigt: KI-Assistenten wie ChatGPT bringen zwar mehr Besucher als je zuvor – doch Google schickt immer noch 50-mal so viele. Wer sein Budget jetzt vorschnell verschiebt, könnte einen entscheidenden Fehler machen. Die KI-Suche gilt als einer der wichtigsten Wachstumstreiber im digitalen Marketing. Immer mehr Unternehmen investieren in Generative Engine Optimization (GEO), um […]…
-
-Via t3n, by Karsten Zunke, 2026-11-21.
-
-https://t3n.de/news/geo-seo-ki-traffic-studie-b2b-1773367/</description>
-      <media:content url="https://cdn.t3n.de/news/wp-content/uploads/2026/11/KI-Suche-Kanal.png?class=content" medium="image"/>
-    </item>
-    <item>
-      <title>Google Told CMOs To Stop ‘Top 10’ Listicles. Here’s Its Example via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/google-told-cmos-to-stop-top-10-listicles-here-s-its-example.html</link>
-      <guid isPermaLink="false">pick/google-told-cmos-to-stop-top-10-listicles-here-s-its-example</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Google's marketing account told CMOs to replace generic tips posts with content grounded in first-hand expertise. The post Google Told CMOs To Stop ‘Top 10’ Listicles. Here’s Its Example appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-20.
-
-https://www.searchenginejournal.com/google-told-cmos-to-stop-top-10-listicles/598310/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/google-listicle-guidance-featured.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>How AI agents read web pages: the accessibility tree, 19 of 20 clicks in a simulation</title>
-      <link>https://carlosandmunoz.com/social/pick/how-ai-agents-read-web-pages-the-accessibility-tree-19-of-20.html</link>
-      <guid isPermaLink="false">pick/how-ai-agents-read-web-pages-the-accessibility-tree-19-of-20</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>How AI agents read web pages: roles and names from the accessibility tree. In a simulation, role and name clicks hit 19 of 20 layouts; saved pixel spots hit 4.
-
-Via DEV, by System Design Simple, 2026-11-21.
-
-https://systemdesignsimple.com/how-ai-agents-read-web-pages-accessibility-tree/</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto/https%3A%2F%2Fsystemdesignsimple.com%2Fimg%2Fcovers%2Fhow-ai-agents-read-web-pages-accessibility-tree.webp" medium="image"/>
-    </item>
-    <item>
-      <title>Inside the AI software factory: Where accessibility is won or lost</title>
-      <link>https://carlosandmunoz.com/social/pick/inside-the-ai-software-factory-where-accessibility-is-won-or.html</link>
-      <guid isPermaLink="false">pick/inside-the-ai-software-factory-where-accessibility-is-won-or</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>As your organization moves development into AI software factories, you must fully embed digital accessibility, just as you must integrate privacy and security. Get it right, and your products, services, and experiences become and stay accessible. Get it wrong, and you increase risk, cost, and technical debt. The post Inside the AI software factory: Where accessibility is won or lost appeared…
-
-Via Deque, by Dylan Barrell, 2026-11-19.
-
-https://www.deque.com/blog/inside-the-ai-software-factory-where-accessibility-is-won-or-lost/</description>
-      <media:content url="https://www.deque.com/wp-content/uploads/2026/11/11.17.2026-Inside-the-AI-software-factory-V3-scaled.png" medium="image"/>
-    </item>
-    <item>
-      <title>linggan121/visual-fidelity: Numeric visual verification for frontend reconstruction: pixel diff, box pairing, diff attribution, and a two-axis verdict.</title>
-      <link>https://carlosandmunoz.com/social/pick/linggan121-visual-fidelity-numeric-visual-verification-for-f.html</link>
-      <guid isPermaLink="false">pick/linggan121-visual-fidelity-numeric-visual-verification-for-f</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Analytics</category>
-      <description>Numeric visual verification for frontend reconstruction: pixel diff, box pairing, diff attribution, and a two-axis verdict.
-
-Via GitHub, by linggan121, 2026-11-11.
-
-https://github.com/linggan121/visual-fidelity</description>
-      <media:content url="https://opengraph.githubassets.com/1/linggan121/visual-fidelity" medium="image"/>
     </item>
   </channel>
 </rss>
