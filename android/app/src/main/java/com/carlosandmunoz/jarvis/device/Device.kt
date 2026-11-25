@@ -73,10 +73,11 @@ object Device {
     private val FOLD_MODEL = Regex("SM-F9\\d\\d|Fold|OnePlus Open|CPH2551", RegexOption.IGNORE_CASE)
     private const val SEEN_FOLD = "device.foldable"
 
-    /** Panel columns for the width the tabs get. [dense] (an unfolded inner screen or a tablet) fits three smaller columns sooner (#2139). */
-    fun columns(contentDp: Int, dense: Boolean = false) = when { contentDp >= 1100 -> 3; dense && contentDp >= 720 -> 3; contentDp >= 640 -> 2; else -> 1 }
+    /** Panel columns for the width the tabs get. Cap is two (#4338); [dense] is unused for the count but kept for callers. */
+    @Suppress("UNUSED_PARAMETER")
+    fun columns(contentDp: Int, dense: Boolean = false) = if (contentDp >= 640) 2 else 1
 
-    /** Smaller cards for three columns on a big screen that is not yet desktop-wide; never across a book-posture fold. */
+    /** Smaller cards on an unfolded inner screen or tablet; never across a book-posture fold (#2139, #4338). */
     fun dense(form: Form) = (form.kind == Kind.FoldableOpen || form.kind == Kind.Tablet) && form.posture != Posture.Book
 
     /**

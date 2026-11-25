@@ -83,8 +83,8 @@ object Github {
     val WIP = setOf("Dev", "QA", "Stg")
     const val PROMPT_MAX = 600
 
-    /** Panel columns for the width the tab gets: one on a folded cover screen, two on an unfolded inner screen (~600-880 dp less the rail). */
-    fun columnsFor(widthDp: Int): Int = when { widthDp >= 1100 -> 3; widthDp >= 560 -> 2; else -> 1 }
+    /** Panel columns for the width the tab gets: one on a folded cover, two on an unfolded / wide screen (#4338 caps at 2). */
+    fun columnsFor(widthDp: Int): Int = if (widthDp >= 560) 2 else 1
 
     const val STAGE_MIN_DP = 50
     const val ARROW_DP = 16

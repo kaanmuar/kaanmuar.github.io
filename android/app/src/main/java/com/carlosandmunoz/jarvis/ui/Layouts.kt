@@ -105,16 +105,36 @@ object Layouts {
     /** The next stretch after [current] when cycling 1..[max]. */
     fun nextStretch(current: Int, max: Int) = (current.coerceIn(1, max) % max) + 1
 
-    /** Grid column span for a width factor (matches web sizeSpan). */
-    fun sizeSpan(w: Float, alreadyWide: Boolean = false): Int {
+    /** Live grid column cap (#4338): foldable / desktop presentation stays at most two. */
+    const val MAX_COLUMNS = 2
+    /** One tap on an edge expand/contract control (#4338). */
+    const val SIZE_STEP = 0.15f
+
+    /**
+     * Grid column span for a width factor (matches web sizeSpan). [columns] is the live grid (≤ [MAX_COLUMNS]);
+     * mid and full both fill a 2-column row so neighbors reflow when a panel expands.
+     */
+    fun sizeSpan(w: Float, alreadyWide: Boolean = false, columns: Int = MAX_COLUMNS): Int {
+        val cols = columns.coerceIn(1, MAX_COLUMNS)
+        if (cols <= 1) return 1
         val n = clampSize(1f, w).w
-        if (n >= 1.85f || (alreadyWide && n >= 0.95f)) return 3
-        if (n >= 1.35f) return 2
+        if (n >= 1.35f || (alreadyWide && n >= 0.95f)) return cols
         return 1
     }
 
-    /** Width factor → full-bleed in Masonry when span is 3 (matches web is-size-wide). */
-    fun isWideSize(w: Float, alreadyWide: Boolean = false) = sizeSpan(w, alreadyWide) >= 3
+    /** Width factor → full-bleed in Masonry when the span takes every column (matches web is-size-wide). */
+    fun isWideSize(w: Float, alreadyWide: Boolean = false, columns: Int = MAX_COLUMNS) =
+        sizeSpan(w, alreadyWide, columns) >= columns && columns > 1
+
+    /** One expand (+) or contract (−) step on edge n/e/s/w (#4338). */
+    fun stepSize(size: Size, edge: Char, expand: Boolean): Size {
+        val d = if (expand) SIZE_STEP else -SIZE_STEP
+        return when (edge) {
+            'n', 's' -> clampSize(size.h + d, size.w)
+            'e', 'w' -> clampSize(size.h, size.w + d)
+            else -> size
+        }
+    }
 
     /** base, then each id of ref that base lacks, right after the nearest id before it in ref that is already placed (first when none is). */
     fun weave(base: List<String>, ref: List<String>): List<String> {

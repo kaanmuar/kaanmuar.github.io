@@ -47,13 +47,14 @@ class DeviceTest {
         assertEquals(2, Device.columns(832 - 90))
     }
 
-    @Test fun theInnerScreenFitsThreeDenseColumnsButNotAcrossABookFold() {
+    @Test fun theInnerScreenStaysAtTwoColumnsAndDenseExceptAcrossABookFold() {
         val open = Form(Kind.FoldableOpen, Posture.Flat, 832, 750, hinge = flat)
         assertTrue(Device.dense(open))
-        assertEquals(3, Device.columns(832 - 90, Device.dense(open)))
+        assertEquals(2, Device.columns(832 - 90, Device.dense(open)))
         assertFalse(Device.dense(Form(Kind.FoldableOpen, Posture.Book, 832, 750, hinge = book)))
         assertFalse(Device.dense(Form(Kind.Phone, null, 412, 900)))
         assertEquals(2, Device.columns(700, dense = true))
+        assertEquals(2, Device.columns(1280))
     }
 
     @Test fun bookPostureOpensAskAndTabletopPutsItBelowTheFold() {
@@ -69,7 +70,7 @@ class DeviceTest {
         val dex = Form(Kind.Desktop, null, 1600, 900, dex = true)
         assertTrue(dex.askOpen)
         assertEquals(400, dex.askWidthDp)
-        assertEquals(3, Device.columns(1600 - 90 - 400 + 10))
+        assertEquals(2, Device.columns(1600 - 90 - 400 + 10))
     }
 
     @Test fun labelsAndSendsTheSameFieldsAsTheWeb() {
