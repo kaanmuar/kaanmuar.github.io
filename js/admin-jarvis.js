@@ -12406,7 +12406,12 @@ export function mountJarvis({
 		const touch = event.pointerType === 'touch' || event.pointerType === 'pen';
 		const armedHit = event.target.closest?.('.jv-panel.is-resize-armed');
 		if (!armedHit && !event.target.closest?.('.jv-resize, .jv-resize-step, .jv-edge')) disarmResize();
-		if (event.target.closest('a, button:not(.jv-resize):not(.jv-resize-step), input, textarea, select, [data-lay], .jv-lay-drag')) return;
+		if (
+			event.target.closest(
+				'a, button:not(.jv-resize):not(.jv-resize-step), input, textarea, select, [data-lay], .jv-lay-drag'
+			)
+		)
+			return;
 		if (event.target.closest('.jv-resize-step')) return;
 		const handle = event.target.closest('.jv-resize');
 		const sec = (handle || event.target).closest?.('.jv-panel[data-panel-id]');
