@@ -39,6 +39,26 @@ test('the price table is one row per package with a price, days, and a name and 
 	}
 });
 
+test('rival anchor copy is on three packages in six languages while launch prices hold (#4309)', () => {
+	for (const lang of LANGS) {
+		assert.ok(fixOffers.RIVAL.accessibility[lang]);
+		assert.ok(fixOffers.RIVAL['seo-meta'][lang]);
+		assert.ok(fixOffers.RIVAL.performance[lang]);
+	}
+	const during = fixOffers.publicPackages(NOW);
+	const seo = during.find((p) => p.id === 'seo-meta');
+	const perf = during.find((p) => p.id === 'performance');
+	const sec = during.find((p) => p.id === 'security-headers');
+	assert.ok(seo.rival.en.includes('Semrush'));
+	assert.ok(perf.rival.en.includes('GTmetrix'));
+	assert.equal(sec.rival, undefined);
+	assert.equal(fixOffers.rivalOn('performance', '2026-12-02T23:59:59.000Z'), true);
+	assert.equal(fixOffers.rivalOn('performance', '2026-12-03T00:00:00.000Z'), false);
+	assert.equal(fixOffers.rivalOn('seo-meta', '2026-12-10T23:59:59.000Z'), true);
+	const after = fixOffers.publicPackages('2026-12-11T05:00:00.000Z');
+	assert.equal(after.find((p) => p.id === 'seo-meta').rival, undefined);
+});
+
 test("offers cover only the report's open findings, in table order", () => {
 	const offers = fixOffers.offersFor(sample.insights.findings);
 	assert.deepEqual(
