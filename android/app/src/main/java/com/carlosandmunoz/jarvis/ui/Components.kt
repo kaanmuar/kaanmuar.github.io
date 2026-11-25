@@ -13,8 +13,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -53,6 +57,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -167,7 +172,12 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
         if (live != stored) saveSize(id, live)
     }
     val editing = Arrange.movable(tab, id)
+    val dragging = Arrange.dragging.value == id
     val canResize = !folded && !editing && saveSize != null
+    DisposableEffect(editing, id) {
+        if (!editing) Arrange.bounds.remove(id)
+        onDispose { Arrange.bounds.remove(id) }
+    }
     Box(
         Modifier.then(PanelIdElement(id)).then(modifier).then(if (plate) Modifier.layoutId(WIDE) else Modifier)
             // #3709: continuous width on the card itself (east/west was a no-op when only scaleY ran).
@@ -183,8 +193,40 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             .reveal()
             .glass()
             .animateContentSize(tween(320, easing = FastOutSlowInEasing))
+            .then(if (dragging) Modifier.border(1.dp, J.cyan.copy(alpha = 0.75f), RoundedCornerShape(12.dp)) else Modifier)
+            .graphicsLayer {
+                if (dragging) {
+                    alpha = 0.92f
+                    scaleX = 1.02f
+                    scaleY = 1.02f
+                }
+            }
+            .then(
+                if (!editing) Modifier
+                else Modifier.onGloballyPositioned { coords ->
+                    Arrange.bounds[id] = coords.boundsInWindow()
+                }
+            )
             .then(
                 when {
+                    // #4350: while Edit layout is on, long-press the section and drag to reorder (resize stays off).
+                    editing -> Modifier.pointerInput(id) {
+                        var finger = Offset.Zero
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { start ->
+                                val origin = Arrange.bounds[id]?.topLeft ?: Offset.Zero
+                                finger = origin + start
+                                Arrange.dragStart(id)
+                            },
+                            onDragEnd = { Arrange.dragEnd() },
+                            onDragCancel = { Arrange.dragEnd() },
+                            onDrag = { change, amount ->
+                                change.consume()
+                                finger += amount
+                                Arrange.dragAt(id, finger)
+                            }
+                        )
+                    }
                     !canResize -> Modifier
                     !armed -> Modifier.pointerInput(id) {
                         detectTapGestures(onLongPress = { armed = true })

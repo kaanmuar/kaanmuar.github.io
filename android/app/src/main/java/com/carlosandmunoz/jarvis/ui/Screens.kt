@@ -192,13 +192,22 @@ fun Goals(goals: List<JsonObject>) {
 
 // ---------------------------------------------------------------- Products
 
+/** Product sub-tabs, pinned above the scroll with Edit layout (#4350). */
 @Composable
-fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String, pick: (String) -> Unit) {
+fun ProductChips(product: String, pick: (String) -> Unit) {
     val chips = rememberScrollState()
-    LaunchedEffect(product, chips.maxValue) { chips.animateScrollTo(chips.maxValue * CHIPS.indexOfFirst { it.first == product }.coerceAtLeast(0) / (CHIPS.size - 1)) }
-    Row(Modifier.layoutId(WIDE).horizontalScroll(chips).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LaunchedEffect(product, chips.maxValue) {
+        val i = CHIPS.indexOfFirst { it.first == product }.coerceAtLeast(0)
+        val n = (CHIPS.size - 1).coerceAtLeast(1)
+        chips.animateScrollTo(chips.maxValue * i / n)
+    }
+    Row(Modifier.fillMaxWidth().horizontalScroll(chips).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CHIPS.forEach { (key, name) -> GlassChip(name, key == product) { pick(key) } }
     }
+}
+
+@Composable
+fun ProductsScreen(s: UiState, vm: JarvisViewModel, product: String) {
     key(product) { ProductBody(s, vm, product) }
 }
 
