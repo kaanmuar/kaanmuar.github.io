@@ -308,38 +308,47 @@ private fun Tabs(s: UiState, vm: JarvisViewModel, tab: Tab, product: String, mod
                 (fadeIn(tween(300)) + slideInHorizontally(tween(450, easing = FastOutSlowInEasing)) { dir * it / 5 } + scaleIn(tween(450), 0.96f)) togetherWith
                     (fadeOut(tween(200)) + slideOutHorizontally(tween(450, easing = FastOutSlowInEasing)) { -dir * it / 6 } + scaleOut(tween(450), 0.97f))
             }, label = "tab") { shownTab ->
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
+                // #4350: keep range chips, in-section tabs (Products chips) and Edit layout pinned under the sticky top bar.
+                Column(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(J.bg.copy(alpha = 0.98f), J.bg.copy(alpha = 0.92f))))) {
+                        Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            RANGES.forEach { (d, label) -> GlassChip(label, s.days == d) { vm.setDays(d) } }
+                        }
+                        if (shownTab == Tab.Products) ProductChips(product, pickProduct)
+                        if (s.snapshot != null) {
+                            val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
+                            LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
+                        }
                     }
-                    s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
-                    if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
-                    }
-                    if (s.snapshot != null) {
-                        val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
-                        val saved = Layouts.read(s.snapshot, layoutTab)
-                        LayoutBar(layoutTab, { Layouts.read(s.snapshot, it) }, vm::saveLayout)
-                        val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
-                        CompositionLocalProvider(
-                            LocalLayoutTab provides layoutTab,
-                            LocalLayout provides saved,
-                            LocalChartPrefs provides chartPrefs,
-                            LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) },
-                            LocalCycleStretch provides { id, current, max -> vm.cycleChartStretch(layoutTab, id, current, max) }
-                        ) {
-                            Masonry(columns, Modifier.fillMaxWidth()) {
-                                when (shownTab) {
-                                    Tab.Overview -> OverviewScreen(s, vm, open)
-                                    Tab.Products -> ProductsScreen(s, vm, product, pickProduct)
-                                    Tab.Business -> BusinessScreen(s, vm)
-                                    Tab.Traffic -> TrafficScreen(s)
-                                    Tab.Systems -> SystemsScreen(s, vm)
+                    Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
+                        s.error?.let { e -> Panel("Could not refresh") { Text(e, color = J.amber, fontSize = 13.sp); if (s.snapshot != null) Muted("Showing the last saved numbers.") } }
+                        if (s.snapshot == null && s.loading) Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) { Reactor(null, "LOADING"); Spacer(Modifier.height(12.dp)); Muted("Jarvis is gathering every number. The first load takes up to a minute.") }
+                        }
+                        if (s.snapshot != null) {
+                            val layoutTab = if (shownTab == Tab.Products) product else shownTab.name.lowercase()
+                            val saved = Layouts.read(s.snapshot, layoutTab)
+                            val chartPrefs = ChartPrefs.clean(s.snapshot.obj("settings").obj("charts"))
+                            CompositionLocalProvider(
+                                LocalLayoutTab provides layoutTab,
+                                LocalLayout provides saved,
+                                LocalChartPrefs provides chartPrefs,
+                                LocalSavePanelSize provides { id, size -> vm.savePanelSize(layoutTab, id, size) },
+                                LocalCycleStretch provides { id, current, max -> vm.cycleChartStretch(layoutTab, id, current, max) }
+                            ) {
+                                Masonry(columns, Modifier.fillMaxWidth()) {
+                                    when (shownTab) {
+                                        Tab.Overview -> OverviewScreen(s, vm, open)
+                                        Tab.Products -> ProductsScreen(s, vm, product)
+                                        Tab.Business -> BusinessScreen(s, vm)
+                                        Tab.Traffic -> TrafficScreen(s)
+                                        Tab.Systems -> SystemsScreen(s, vm)
+                                    }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(24.dp))
                     }
-                    Spacer(Modifier.height(24.dp))
                 }
             }
             }

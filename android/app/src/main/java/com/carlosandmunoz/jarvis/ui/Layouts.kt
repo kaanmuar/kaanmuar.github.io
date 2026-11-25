@@ -179,6 +179,22 @@ object Layouts {
         return out
     }
 
+    /**
+     * Put [id] before [target] (or after when [before] is false) among shown panels (#4350).
+     * Hidden panels keep their slots, matching the web's drag insert.
+     */
+    fun place(all: List<String>, hidden: List<String>, id: String, target: String, before: Boolean): List<String> {
+        if (id == target) return all
+        val hide = hidden.toSet()
+        val shown = all.filter { it == id || it !in hide }
+        if (id !in shown || target !in shown) return all
+        val out = all.filter { it != id }.toMutableList()
+        val j = out.indexOf(target)
+        if (j < 0) return all
+        out.add(if (before) j else j + 1, id)
+        return out
+    }
+
     /** What to save after an edit: this side's order and hidden panels, with the ids it did not show (the web's, or empty panels) kept. */
     fun keep(prev: Saved?, all: List<String>, hidden: List<String>, shown: List<String>): Saved {
         val mine = shown.toSet()
@@ -255,7 +271,11 @@ object Arrange {
     data class Edit(val tab: String, val all: List<String>, val hidden: List<String>, val dirty: Boolean = false, val reset: Boolean = false)
 
     val edit = mutableStateOf<Edit?>(null)
+    /** The panel id being long-press dragged while Edit layout is on (#4350). */
+    val dragging = mutableStateOf<String?>(null)
     val defaults = mutableStateMapOf<String, List<String>>()
+    /** Window bounds of each shown panel, so a drag can find which section is under the finger. */
+    val bounds = mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>()
     internal val titles = HashMap<String, String>()
     private val legacy = HashMap<String, HashMap<String, String>>()
 
@@ -275,25 +295,49 @@ object Arrange {
     fun start(tab: String, saved: Layouts.Saved?) {
         val l = Layouts.apply(defaults[tab].orEmpty(), aliased(tab, saved))
         edit.value = Edit(tab, l.all, l.hidden)
+        dragging.value = null
+        bounds.clear()
     }
 
-    fun change(act: String, id: String = "") {
+    fun change(act: String, id: String = "", over: String = "", before: Boolean = true) {
         val e = edit.value ?: return
         val ids = defaults[e.tab].orEmpty()
         val all = Layouts.apply(ids, Layouts.Saved(e.all)).all
         edit.value = when (act) {
             "reset" -> e.copy(all = ids, hidden = emptyList(), reset = true, dirty = true)
             "up", "down" -> e.copy(all = Layouts.move(all, e.hidden, id, if (act == "up") -1 else 1), dirty = true)
+            "place" -> {
+                val next = Layouts.place(all, e.hidden, id, over, before)
+                if (next == e.all) e else e.copy(all = next, dirty = true)
+            }
             "hide" -> e.copy(all = all, hidden = e.hidden + id, dirty = true)
             "show" -> e.copy(all = all, hidden = e.hidden - id, dirty = true)
             else -> e
         }
     }
 
+    fun dragStart(id: String) { dragging.value = id }
+    fun dragEnd() { dragging.value = null }
+
+    /** Reorder toward the section under [at] (window coords), same before/after rule as the web drag. */
+    fun dragAt(id: String, at: androidx.compose.ui.geometry.Offset) {
+        if (dragging.value != id) return
+        val hit = bounds.entries.firstOrNull { (other, r) ->
+            other != id && at.x >= r.left && at.x <= r.right && at.y >= r.top && at.y <= r.bottom
+        } ?: return
+        val r = hit.value
+        val h = r.height.coerceAtLeast(1f)
+        val w = r.width.coerceAtLeast(1f)
+        val before = (at.y - r.top) / h + (at.x - r.left) / w < 1f
+        change("place", id, hit.key, before)
+    }
+
     /** Ends the edit and hands a changed layout to [save]; a reset that is still the default saves null. */
     fun done(saved: Layouts.Saved?, save: (Layouts.Saved?) -> Unit) {
         val e = edit.value ?: return
         edit.value = null
+        dragging.value = null
+        bounds.clear()
         if (!e.dirty) return
         val ids = defaults[e.tab].orEmpty()
         save(if (e.reset && e.hidden.isEmpty() && e.all == ids) null else Layouts.keep(if (e.reset) null else aliased(e.tab, saved), e.all, e.hidden, ids))
@@ -349,7 +393,7 @@ fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, L
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp).border(1.dp, J.cyan.copy(alpha = 0.7f), RoundedCornerShape(14.dp)).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Muted("Editing this tab: ↑ ↓ move a section, Hide puts it away.")
+        Muted("Editing this tab: press and hold a section, drag it, then release. ↑ ↓ still move one step; Hide puts it away.")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { Arrange.change("reset") }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Reset to default") }
             Button(onClick = finish, modifier = Modifier.heightIn(min = 48.dp), colors = ButtonDefaults.buttonColors(containerColor = J.cyan)) { Text("Done") }
@@ -368,13 +412,14 @@ fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, L
     }
 }
 
-/** ↑ ↓ Hide under a panel's header while its tab is edited. */
+/** ⠿ ↑ ↓ Hide under a panel's header while its tab is edited (#4350: long-press the section to drag). */
 @Composable
 internal fun PanelTools(tab: String, id: String, title: String) {
     val e = Arrange.editing(tab) ?: return
     val shown = e.all.filter { it !in e.hidden && Arrange.defaults[tab]?.contains(it) == true }
     val at = shown.indexOf(id)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+        Text("⠿", color = J.cyan, fontSize = 18.sp, modifier = Modifier.padding(horizontal = 6.dp).semantics { contentDescription = "Move $title: press and hold the section, then drag" })
         OutlinedButton(onClick = { Arrange.change("up", id) }, enabled = at > 0, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "Move $title up" }) { Text("↑") }
         OutlinedButton(onClick = { Arrange.change("down", id) }, enabled = at in 0 until shown.size - 1, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "Move $title down" }) { Text("↓") }
         OutlinedButton(onClick = { Arrange.change("hide", id) }, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "Hide $title" }) { Text("Hide") }
