@@ -8020,6 +8020,12 @@
 		}
 	}
 
+	function reportTreatedAsLocal(report) {
+		return ((report && report.insights && report.insights.findings) || []).some(
+			(row) => row && String(row.key || '').indexOf('local-') === 0
+		);
+	}
+
 	// Soft-gate unlock (#3478 / #29B), or the two paid ways to read an unpaid stored report.
 	function paintOffer(host, show) {
 		if (!host) return;
@@ -8049,25 +8055,40 @@
 			return;
 		}
 		const fixed = hasFixList(report.id);
-		host.innerHTML =
-			(fixed ? '<p class="offer-note">' + esc(rc.t('offerFixOpen')) + '</p>' : '') +
-			'<div class="offer-row">' +
-			(fixed
-				? ''
-				: '<a class="offer" data-offer="fixlist" href="' +
-					esc(payPage() + '?purpose=fixlist&reportId=' + encodeURIComponent(report.id)) +
-					'"><b>' +
-					esc(rc.t('offerFix', { usd: FIXLIST_USD })) +
-					'</b><span>' +
-					esc(rc.t('offerFixBody')) +
-					'</span></a>') +
-			'<a class="offer offer-full" data-offer="report" href="' +
-			esc(payQuery('report')) +
+		if (fixed) {
+			host.innerHTML =
+				'<p class="offer-note">' +
+				esc(rc.t('offerFixOpen')) +
+				'</p><div class="offer-row"><a class="offer offer-full" data-offer="report" href="' +
+				esc(payQuery('report')) +
+				'"><b>' +
+				esc(rc.t('offerFull', { usd: formatUsd(reportUsd(current)) })) +
+				'</b><span>' +
+				esc(rc.t('offerFullBody') + ' ' + rc.t('offerCredit')) +
+				'</span></a></div>';
+			return;
+		}
+		let html =
+			'<div class="offer-row"><a class="offer offer-full" data-offer="fixlist" href="' +
+			esc(payPage() + '?purpose=fixlist&reportId=' + encodeURIComponent(report.id)) +
 			'"><b>' +
-			esc(rc.t('offerFull', { usd: formatUsd(reportUsd(current)) })) +
+			esc(rc.t('offerFix', { usd: FIXLIST_USD })) +
 			'</b><span>' +
-			esc(rc.t('offerFullBody') + (fixed ? ' ' + rc.t('offerCredit') : '')) +
-			'</span></a></div>';
+			esc(rc.t('offerFixBody')) +
+			'</span></a></div><p class="offer-secondary"><a data-offer="report" href="' +
+			esc(payQuery('report')) +
+			'">' +
+			esc(rc.t('offerFullLine')) +
+			'</a></p>';
+		if (reportTreatedAsLocal(report)) {
+			html +=
+				'<p class="offer-secondary offer-local-compare"><a href="#compare" data-offer="compare">' +
+				esc(rc.t('offerLocalCompareLead')) +
+				'</a> ' +
+				esc(rc.t('offerLocalCompareNote')) +
+				'</p>';
+		}
+		host.innerHTML = html;
 	}
 
 	function openPay(body) {
