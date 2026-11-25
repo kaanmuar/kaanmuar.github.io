@@ -88,22 +88,27 @@ function cost(models) {
   return { usd: round(usd), input, output };
 }
 
-async function gh(ctx, path, { method, body } = {}) {
+async function gh(ctx, path, { method, body, tries = 1 } = {}) {
   const token = await ctx.github("repo");
   if (!token) throw new Error("No GitHub token is set (GITHUB_APP_ID with GITHUB_APP_PRIVATE_KEY), so Jarvis cannot reach GitHub.");
-  const res = await ctx.fetch(API + path, {
-    method: method || "GET",
-    headers: Object.assign({ Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" },
-      body === undefined ? {} : { "Content-Type": "application/json" }),
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
-  const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const error = new Error("GitHub " + path.split("?")[0] + " answered " + res.status + ": " + text(data && data.message, 240));
-    error.status = res.status;
-    throw error;
+  const max = Math.max(1, Math.min(5, Number(tries) || 1));
+  let last;
+  for (let n = 1; n <= max; n++) {
+    const res = await ctx.fetch(API + path, {
+      method: method || "GET",
+      headers: Object.assign({ Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "User-Agent": "qa-lab-jarvis", "X-GitHub-Api-Version": "2022-11-28" },
+        body === undefined ? {} : { "Content-Type": "application/json" }),
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+    const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
+    if (res.ok) return data;
+    last = new Error("GitHub " + path.split("?")[0] + " answered " + res.status + ": " + text(data && data.message, 240));
+    last.status = res.status;
+    // Workflow dispatches flake with 502/503/504; retry a few times before marking the task failed.
+    if (n === max || ![502, 503, 504].includes(res.status)) throw last;
+    await new Promise((resolve) => setTimeout(resolve, 250 * n));
   }
-  return data;
+  throw last;
 }
 
 async function spend(db, now) {
@@ -185,7 +190,7 @@ async function dispatch(ctx, task) {
     escalatedFrom: text(t.escalatedFrom, 40) || null, at: new Date(now).toISOString(), updatedAt: new Date(now).toISOString() };
   await ctx.db.collection(COLLECTION).doc(id).set(row);
   try {
-    await gh(ctx, "/repos/" + REPO + "/actions/workflows/" + WORKFLOW + "/dispatches", { method: "POST",
+    await gh(ctx, "/repos/" + REPO + "/actions/workflows/" + WORKFLOW + "/dispatches", { method: "POST", tries: 3,
       body: { ref: "main", inputs: { id, title, tier, branch, pr: pr ? String(pr) : "", issue: issue ? String(issue) : "", prompt } } });
   } catch (error) {
     await ctx.db.collection(COLLECTION).doc(id).set({ state: "failed", error: text(error.message, 300), updatedAt: new Date(now).toISOString() }, { merge: true });

@@ -126,6 +126,27 @@ test('a dispatch GitHub refuses marks the task failed and names the grant', asyn
 	assert.equal(db.docs('jarvis_worker')[0].state, 'failed');
 });
 
+test('dispatch retries GitHub 502/504 on workflow_dispatch then succeeds', async () => {
+	const db = fakeDb();
+	let hits = 0;
+	const f = fakeFetch([
+		[
+			'POST',
+			'/dispatches',
+			() => {
+				hits += 1;
+				return hits < 3
+					? { _status: hits === 1 ? 502 : 504, message: 'Bad Gateway' }
+					: { _status: 204 };
+			},
+		],
+	]);
+	const out = await worker.dispatch(ctxOf(f, db), { prompt: 'A task long enough to pass the length check.' });
+	assert.equal(out.ok, true);
+	assert.equal(hits, 3);
+	assert.equal(db.doc('jarvis_worker', out.id).state, 'queued');
+});
+
 test('verifyOidc takes only jarvis-worker.yml on main of this repo, signed by GitHub', async () => {
 	const f = fakeFetch([]);
 	assert.equal((await worker.verifyOidc(f, jwt(), NOW)).run_id, '777');

@@ -932,7 +932,8 @@ test("quarantine files 'CI: <workflow> is flaky' as a Backlog bug in area:ci wit
 		),
 		{ workflow: 'E2E and Visual Tests', pct: 12, runs: 150 }
 	);
-	assert.deepEqual([again.ok, again.number], [false, 2900]);
+	assert.deepEqual([again.ok, again.number], [true, 2900]);
+	assert.match(again.message, /already tracks/);
 	assert.equal(filed.length, 1);
 	await assert.rejects(fix.quarantine(ctxOf(f), {}), /Which workflow/);
 });
@@ -993,6 +994,26 @@ test('securityTicket files a Backlog bug whose area comes from the manifest path
 		),
 		['area:be', 'area:ci', 'area:tooling', 'area:fe']
 	);
+	const again = await fix.securityTicket(
+		ctxOf(
+			fakeFetch([
+				[
+					'GET',
+					/\/issues\?state=open&labels=bug/,
+					() => [
+						{
+							number: 4247,
+							title: 'Security: a leaked Google API Key (high)',
+							html_url: 'https://github.com/i/4247',
+						},
+					],
+				],
+			])
+		),
+		{ kind: 'secrets', number: 5, type: 'Google API Key', severity: 'high', url: 'u' }
+	);
+	assert.deepEqual([again.ok, again.number], [true, 4247]);
+	assert.match(again.message, /already tracks this alert/);
 });
 
 test("clearCache drops github-work in every range, and draftFlaky builds its prompt from the run's diagnosis (#2808)", async () => {
