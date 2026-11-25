@@ -82,6 +82,22 @@ We send a short free report link when it helps; this note is only about the alt 
 	},
 ];
 
+/** Sequence T company leads: Instantly custom vars filled by company-prospects.js (#4299). */
+const INSTANTLY_LEAD_VARS = [
+	'firstName',
+	'host',
+	'finding_1',
+	'scenario_id',
+	'scenario_subject',
+	'scenario_body_line',
+	'scenario_consequence',
+	'scenario_cta',
+	'scenario_card_url',
+];
+
+const INSTANTLY_SEQUENCE = 'T';
+const PLACEHOLDER_RE = /\{\{([a-zA-Z0-9_]+)\}\}/g;
+
 const BY_ID = new Map(COLD_TEMPLATES.map((row) => [row.scenarioId, row]));
 
 function bareHost(host) {
@@ -110,9 +126,61 @@ function renderSubject(scenario, host) {
 	return String(scenario.copyHooks.subjectHint).replace(/\{host\}/g, bareHost(host));
 }
 
+/** Distinct {{var}} names in an Instantly subject/body. */
+function placeholdersIn(text) {
+	const out = new Set();
+	for (const m of String(text || '').matchAll(PLACEHOLDER_RE)) out.add(m[1]);
+	return [...out].sort();
+}
+
+/** Placeholders that are not on the sequence T lead allowlist (empty when safe). */
+function unknownPlaceholders(text) {
+	const allow = new Set(INSTANTLY_LEAD_VARS);
+	return placeholdersIn(text).filter((name) => !allow.has(name));
+}
+
+/** Markdown paste pack for Instantly sequence T step 1 (#4321). */
+function formatMarkdownPastePack() {
+	const lines = [
+		'# Instantly paste — sequence T, cold_safe scenarios (#4321)',
+		'',
+		'Ops checklist (no API key required):',
+		'1. In Instantly, open the live **sequence T** campaign used by `outreach-weekly.js companies`.',
+		'2. Lead import: use `week*-companies.csv` from the private outreach folder. Custom variables must match:',
+		'   `' + INSTANTLY_LEAD_VARS.join('`, `') + '`.',
+		'3. For step 1, either paste each variant below **or** set Subject = `{{scenario_subject}}` and Body = the shared',
+		'   body for that `scenario_id` (one email step with per-lead subject from CSV is fine).',
+		'4. Keep **one variant per scenario_id**; do not paste warm_only or social_generic copy.',
+		'5. After paste, send yourself a test lead row and confirm every `{{…}}` resolves.',
+		'',
+		'Regenerate this file: `node scripts/instantly-scenario-paste.js --out <path>`',
+		'',
+	];
+	for (const row of listColdTemplates()) {
+		lines.push('## ' + row.scenarioId, '', '**Subject**', '```', row.subject, '```', '', '**Body**', '```', row.body, '```', '');
+	}
+	return lines.join('\n');
+}
+
+/** JSON export for QA or diffing against Instantly. */
+function formatJsonPastePack() {
+	return {
+		sequence: INSTANTLY_SEQUENCE,
+		tier: 'cold_safe',
+		leadVars: INSTANTLY_LEAD_VARS.slice(),
+		templates: listColdTemplates(),
+	};
+}
+
 module.exports = {
 	COLD_TEMPLATES,
+	INSTANTLY_LEAD_VARS,
+	INSTANTLY_SEQUENCE,
 	templateFor,
 	listColdTemplates,
 	renderSubject,
+	placeholdersIn,
+	unknownPlaceholders,
+	formatMarkdownPastePack,
+	formatJsonPastePack,
 };

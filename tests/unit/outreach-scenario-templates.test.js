@@ -14,6 +14,8 @@ const PLACEHOLDERS = [
 	'{{firstName}}',
 ];
 
+const SCENARIO_CUSTOM = ['scenario_body_line', 'scenario_consequence', 'scenario_cta'];
+
 function wordCount(text) {
 	return String(text)
 		.trim()
@@ -36,6 +38,41 @@ test('every cold_safe scenario has an Instantly template with required placehold
 		assert.ok(!scenarios.FORBIDDEN_COLD.test(blob), row.scenarioId);
 	}
 	assert.equal(templates.templateFor('warm-sec-csp'), null);
+});
+
+test('templates use only Instantly-safe placeholders', () => {
+	for (const row of templates.listColdTemplates()) {
+		const blob = row.subject + '\n' + row.body;
+		assert.deepEqual(templates.unknownPlaceholders(blob), [], row.scenarioId);
+		assert.ok(!/\{[a-z_]+\}/.test(blob.replace(/\{\{[a-zA-Z0-9_]+\}\}/g, '')), row.scenarioId + ' single-brace');
+		for (const name of SCENARIO_CUSTOM) {
+			assert.ok(blob.includes('{{' + name + '}}'), row.scenarioId + ' missing scenario var ' + name);
+		}
+	}
+	assert.deepEqual(templates.INSTANTLY_LEAD_VARS.slice().sort(), [
+		'finding_1',
+		'firstName',
+		'host',
+		'scenario_body_line',
+		'scenario_card_url',
+		'scenario_consequence',
+		'scenario_cta',
+		'scenario_id',
+		'scenario_subject',
+	]);
+});
+
+test('paste pack documents sequence T and every cold template', () => {
+	const md = templates.formatMarkdownPastePack();
+	assert.match(md, /sequence T/);
+	assert.match(md, /Regenerate this file/);
+	for (const row of templates.listColdTemplates()) {
+		assert.match(md, new RegExp('## ' + row.scenarioId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+	}
+	const pack = templates.formatJsonPastePack();
+	assert.equal(pack.sequence, templates.INSTANTLY_SEQUENCE);
+	assert.equal(pack.tier, 'cold_safe');
+	assert.equal(pack.templates.length, templates.listColdTemplates().length);
 });
 
 test('renderSubject fills subjectHint with the bare host', () => {
