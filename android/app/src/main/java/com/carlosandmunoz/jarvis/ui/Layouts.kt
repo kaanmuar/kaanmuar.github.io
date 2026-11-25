@@ -333,7 +333,13 @@ internal fun arranged(items: List<Measurable>, tab: String?, saved: Layouts.Save
 /** Above a tab's panels: Edit layout, and while editing the help line, Reset, Done and the hidden sections with Add back. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, Layouts.Saved?) -> Unit) {
+fun LayoutBar(
+    tab: String,
+    savedOf: (String) -> Layouts.Saved?,
+    save: (String, Layouts.Saved?) -> Unit,
+    canUndo: Boolean = false,
+    onUndo: (() -> Unit)? = null,
+) {
     val edit = Arrange.editing(tab)
     val saved = savedOf(tab)
     val finish = { Arrange.done(saved) { save(tab, it) } }
@@ -343,6 +349,9 @@ fun LayoutBar(tab: String, savedOf: (String) -> Layouts.Saved?, save: (String, L
     if (edit == null) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             if (hidden.isNotEmpty()) Muted("${hidden.size} hidden")
+            if (canUndo && onUndo != null) {
+                TextButton(onClick = onUndo, modifier = Modifier.heightIn(min = 48.dp)) { Text("Undo layout", color = J.cyan) }
+            }
             TextButton(onClick = { Arrange.start(tab, saved) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("Edit layout", color = J.cyan) }
         }
         return

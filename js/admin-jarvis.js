@@ -1673,7 +1673,7 @@ export function mountJarvis({
 		bar.innerHTML = edit
 			? `<p class="jv-lay-help">Editing this tab: drag ⠿ or use ↑ ↓ to move a section, Hide to put it away.</p><div class="jv-actions"><button type="button" class="jv-btn small" data-lay="reset">Reset to default</button><button type="button" class="jv-btn small is-primary" data-lay="done">Done</button></div>
               <div class="jv-lay-tray"><h4>Hidden sections${L.hidden.length ? ` (${L.hidden.length})` : ''}</h4>${L.hidden.length ? `<ul>${L.hidden.map((id) => `<li><span>${esc(title(id))}</span><button type="button" class="jv-btn small" data-lay="show" data-id="${esc(id)}" aria-label="Add back ${esc(title(id))}">Add back</button></li>`).join('')}</ul>` : '<p class="jv-note">None. Hide a section to keep it here.</p>'}</div>`
-			: `<button type="button" class="jv-link" data-lay="edit">Edit layout</button>${L.hidden.length ? `<span class="jv-note">${L.hidden.length} hidden</span>` : ''}`;
+			: `<button type="button" class="jv-link" data-lay="edit">Edit layout</button>${layoutUndo.length ? `<button type="button" class="jv-link" data-lay="undo" title="Undo last size or position change (Ctrl/⌘Z)">Undo layout</button>` : ''}${L.hidden.length ? `<span class="jv-note">${L.hidden.length} hidden</span>` : ''}`;
 		view.prepend(bar);
 	}
 
@@ -1689,6 +1689,10 @@ export function mountJarvis({
 		const tab = S.product;
 		const view = $(`[data-view="${tab}"]`);
 		const ids = defaultIds(view);
+		if (act === 'undo') {
+			undoLayout();
+			return;
+		}
 		if (act === 'edit') {
 			const L = C.applyLayout(ids, layoutOf(tab));
 			S.layoutEdit = { tab, all: L.all, hidden: L.hidden, dirty: false, reset: false };
@@ -1733,7 +1737,10 @@ export function mountJarvis({
 			E.reset && !E.hidden.length && E.all.join() === ids.join()
 				? null
 				: C.keepLayout(E.reset ? null : prev, E.all, E.hidden, ids);
-		if (E.dirty) put(next);
+		if (E.dirty) {
+			pushLayoutUndo(E.tab, prev);
+			put(next);
+		}
 		arrange(view, E.tab);
 		if (S.product === E.tab) focusLay('edit');
 		if (!E.dirty) return;
@@ -1742,6 +1749,8 @@ export function mountJarvis({
 			error: error.message,
 		}));
 		if (out.ok === false) {
+			layoutUndo.pop();
+			refreshLayUndoUi(E.tab);
 			put(prev);
 			arrange(view, E.tab);
 			toast('The layout did not save: ' + (out.error || 'failed') + '. It is back as it was.', 6000);
@@ -1798,7 +1807,7 @@ export function mountJarvis({
 				const dim = edge === 'n' || edge === 's' ? 'height' : 'width';
 				return `<div class="jv-edge" data-edge="${edge}">
 					<button type="button" class="jv-resize-step" data-resize-step="${edge}-" aria-label="Contract ${dim}" title="Contract">−</button>
-					<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${dim}" title="Long-press the panel to resize · drag edges or pinch · double-click to reset"></button>
+					<button type="button" class="jv-resize" data-resize="${edge}" aria-label="Resize ${dim}" title="Long-press (~2s) a panel to show ± · long-press elsewhere to save · drag edges or pinch · double-click to reset"></button>
 					<button type="button" class="jv-resize-step" data-resize-step="${edge}+" aria-label="Expand ${dim}" title="Expand">+</button>
 				</div>`;
 			})
@@ -1837,9 +1846,85 @@ export function mountJarvis({
 		else delete all[tab];
 		S.settings = Object.assign({}, S.settings, { layout: all });
 	}
+	// #4351: short undo stack for size + order/hidden (and stretch) per tab.
+	const LAYOUT_UNDO_MAX = 20;
+	const layoutUndo = [];
+	function cloneLayout(l) {
+		if (!l) return null;
+		return JSON.parse(JSON.stringify(l));
+	}
+	function layoutWorthKeeping(l) {
+		return !!(l && ((l.order && l.order.length) || (l.hidden && l.hidden.length) || l.size || l.stretch));
+	}
+	function refreshLayUndoUi(tab) {
+		const view = $(`[data-view="${tab || S.product}"]`);
+		if (!view) return;
+		const bar = view.querySelector('.jv-lay-bar:not(.is-on)');
+		if (!bar) return;
+		let btn = bar.querySelector('[data-lay="undo"]');
+		if (layoutUndo.length) {
+			if (!btn) {
+				btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'jv-link';
+				btn.dataset.lay = 'undo';
+				btn.title = 'Undo last size or position change (Ctrl/⌘Z)';
+				btn.textContent = 'Undo layout';
+				const edit = bar.querySelector('[data-lay="edit"]');
+				if (edit) edit.insertAdjacentElement('afterend', btn);
+				else bar.prepend(btn);
+			}
+		} else if (btn) btn.remove();
+	}
+	function pushLayoutUndo(tab, prev) {
+		layoutUndo.push({ tab, layout: layoutWorthKeeping(prev) ? cloneLayout(prev) : null });
+		if (layoutUndo.length > LAYOUT_UNDO_MAX) layoutUndo.shift();
+		refreshLayUndoUi(tab);
+	}
+	function applyTabSizes(tab) {
+		const view = $(`[data-view="${tab}"]`);
+		if (!view) return;
+		const sizes = (layoutOf(tab) || {}).size || {};
+		view.querySelectorAll('.jv-panel[data-panel-id]').forEach((sec) => {
+			applySizeDom(sec, C.clampSize(sizes[sec.dataset.panelId]));
+		});
+	}
+	async function undoLayout() {
+		const entry = layoutUndo.pop();
+		if (!entry) {
+			toast('Nothing to undo');
+			return false;
+		}
+		const prev = layoutOf(entry.tab);
+		putLayoutTab(entry.tab, entry.layout);
+		const view = $(`[data-view="${entry.tab}"]`);
+		if (view) {
+			arrange(view, entry.tab);
+			applyTabSizes(entry.tab);
+		}
+		const out = await call('settings-save', { layout: { [entry.tab]: entry.layout } }).catch((error) => ({
+			ok: false,
+			error: error.message,
+		}));
+		if (!out.ok) {
+			putLayoutTab(entry.tab, layoutWorthKeeping(prev) ? prev : null);
+			if (view) {
+				arrange(view, entry.tab);
+				applyTabSizes(entry.tab);
+			}
+			layoutUndo.push(entry);
+			toast('Undo did not save: ' + (out.error || 'offline'), 5000);
+			return false;
+		}
+		if (out.layout) S.settings = Object.assign({}, S.settings, { layout: out.layout });
+		toast('Layout change undone');
+		return true;
+	}
+
 	async function savePanelSize(id, h, w) {
 		const tab = S.product;
 		const prev = layoutOf(tab) || { order: [], hidden: [] };
+		pushLayoutUndo(tab, prev);
 		const view = $(`[data-view="${tab}"]`);
 		const ids = view ? defaultIds(view) : [];
 		const size = Object.assign({}, prev.size || {});
@@ -1858,6 +1943,8 @@ export function mountJarvis({
 			error: error.message,
 		}));
 		if (!out.ok) {
+			layoutUndo.pop();
+			refreshLayUndoUi(tab);
 			putLayoutTab(tab, prev.order || prev.hidden || prev.size || prev.stretch ? prev : null);
 			toast('Size not saved: ' + (out.error || 'offline'), 5000);
 			return false;
@@ -12204,6 +12291,11 @@ export function mountJarvis({
 			palette($('.jv-palette').hidden);
 			return;
 		}
+		if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && !event.shiftKey && !typing) {
+			event.preventDefault();
+			undoLayout();
+			return;
+		}
 		if (event.key === 'Escape') {
 			palette(false);
 			closeSettings();
@@ -12278,13 +12370,14 @@ export function mountJarvis({
 	document.addEventListener('pointerup', dragEnd);
 	document.addEventListener('pointercancel', dragEnd);
 
-	// Continuous panel resize (#3611, #3673): long-press arms a panel; then edge drag or pinch. Mouse keeps hover handles.
+	// Continuous panel resize (#3611, #3673, #4349): ~2s long-press arms a panel (± + drag); ~2s long-press elsewhere saves and disarms.
 	let resizing = null;
 	let pinch = null;
 	let edgeHold = null;
 	let armHold = null;
+	let disarmHold = null;
 	const EDGE_PX = 22;
-	const ARM_MS = 420;
+	const ARM_MS = 2000;
 	function edgeAt(sec, x, y) {
 		const r = sec.getBoundingClientRect();
 		const near = (a, b) => Math.abs(a - b) <= EDGE_PX;
@@ -12299,6 +12392,13 @@ export function mountJarvis({
 			if (el !== except) el.classList.remove('is-resize-armed');
 		});
 	}
+	function commitArmedSizes() {
+		root.querySelectorAll('.jv-panel.is-resize-armed[data-panel-id]').forEach((sec) => {
+			const id = sec.dataset.panelId;
+			if (!id) return;
+			savePanelSize(id, Number(sec.dataset.sizeH) || 1, Number(sec.dataset.sizeW) || 1);
+		});
+	}
 	function armResize(sec) {
 		if (!sec || sec.classList.contains('is-folded') || S.layoutEdit) return;
 		disarmResize(sec);
@@ -12308,6 +12408,11 @@ export function mountJarvis({
 		if (!armHold) return;
 		clearTimeout(armHold.timer);
 		armHold = null;
+	}
+	function clearDisarmHold() {
+		if (!disarmHold) return;
+		clearTimeout(disarmHold.timer);
+		disarmHold = null;
 	}
 	function startResize(sec, edge, event) {
 		if (!sec || sec.classList.contains('is-folded') || S.layoutEdit) return;
@@ -12336,6 +12441,9 @@ export function mountJarvis({
 	function resizeMove(event) {
 		if (armHold && event.pointerId === armHold.pointer) {
 			if (Math.hypot(event.clientX - armHold.x, event.clientY - armHold.y) > 10) clearArmHold();
+		}
+		if (disarmHold && event.pointerId === disarmHold.pointer) {
+			if (Math.hypot(event.clientX - disarmHold.x, event.clientY - disarmHold.y) > 10) clearDisarmHold();
 		}
 		if (edgeHold && event.pointerId === edgeHold.pointer) {
 			if (Math.hypot(event.clientX - edgeHold.x, event.clientY - edgeHold.y) > 10) {
@@ -12375,6 +12483,7 @@ export function mountJarvis({
 	}
 	async function resizeEnd(event) {
 		if (armHold && event.pointerId === armHold.pointer) clearArmHold();
+		if (disarmHold && event.pointerId === disarmHold.pointer) clearDisarmHold();
 		if (edgeHold && event.pointerId === edgeHold.pointer) {
 			clearTimeout(edgeHold.timer);
 			edgeHold = null;
@@ -12400,7 +12509,22 @@ export function mountJarvis({
 	root.addEventListener('pointerdown', (event) => {
 		const touch = event.pointerType === 'touch' || event.pointerType === 'pen';
 		const armedHit = event.target.closest?.('.jv-panel.is-resize-armed');
-		if (!armedHit && !event.target.closest?.('.jv-resize, .jv-resize-step, .jv-edge')) disarmResize();
+		const onResizeChrome = event.target.closest?.('.jv-resize, .jv-resize-step, .jv-edge');
+		// #4349: short taps elsewhere leave ± up; ~2s hold elsewhere saves and disarms.
+		if (!armedHit && !onResizeChrome && root.querySelector('.jv-panel.is-resize-armed')) {
+			clearDisarmHold();
+			disarmHold = {
+				pointer: event.pointerId,
+				x: event.clientX,
+				y: event.clientY,
+				timer: setTimeout(() => {
+					if (!disarmHold || disarmHold.pointer !== event.pointerId) return;
+					disarmHold = null;
+					commitArmedSizes();
+					disarmResize();
+				}, ARM_MS),
+			};
+		}
 		if (
 			event.target.closest(
 				'a, button:not(.jv-resize):not(.jv-resize-step), input, textarea, select, [data-lay], .jv-lay-drag'
@@ -12410,18 +12534,20 @@ export function mountJarvis({
 		if (event.target.closest('.jv-resize-step')) return;
 		const handle = event.target.closest('.jv-resize');
 		const sec = (handle || event.target).closest?.('.jv-panel[data-panel-id]');
-		if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) return;
+		if (!sec || sec.hidden || S.layoutEdit || sec.classList.contains('is-folded')) {
+			return;
+		}
+		clearDisarmHold();
 		if (handle) {
 			if (event.pointerType === 'mouse' && event.button !== 0) return;
-			// Touch: handles only work after long-press armed the panel (#3673).
-			if (touch && !sec.classList.contains('is-resize-armed')) return;
+			// Edge drag only after the panel is armed (#3673 / #4349).
+			if (!sec.classList.contains('is-resize-armed')) return;
 			event.preventDefault();
 			startResize(sec, handle.dataset.resize, event);
 			return;
 		}
-		if (!touch) return;
 		const edge = edgeAt(sec, event.clientX, event.clientY);
-		if (edge && sec.classList.contains('is-resize-armed')) {
+		if (edge && sec.classList.contains('is-resize-armed') && touch) {
 			// Already armed: a short hold on an edge starts the drag without a second long-press.
 			edgeHold = {
 				pointer: event.pointerId,
@@ -12435,7 +12561,7 @@ export function mountJarvis({
 			};
 			return;
 		}
-		// Long-press arms resize; finger move beyond slop cancels so scroll still wins.
+		// ~2s long-press arms (±); long-press the armed panel again saves and disarms (#4349).
 		clearArmHold();
 		armHold = {
 			pointer: event.pointerId,
@@ -12446,10 +12572,16 @@ export function mountJarvis({
 				if (!armHold || armHold.pointer !== event.pointerId) return;
 				const target = armHold.sec;
 				armHold = null;
+				// Armed panel again, or any other section while armed: save + disarm (#4349).
+				if (target.classList.contains('is-resize-armed') || root.querySelector('.jv-panel.is-resize-armed')) {
+					commitArmedSizes();
+					disarmResize();
+					return;
+				}
 				armResize(target);
 			}, ARM_MS),
 		};
-		if (sec.classList.contains('is-resize-armed')) {
+		if (sec.classList.contains('is-resize-armed') && touch) {
 			if (!pinch || pinch.sec !== sec) {
 				pinch = {
 					sec,

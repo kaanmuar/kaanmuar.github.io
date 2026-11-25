@@ -15,6 +15,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -120,6 +125,43 @@ object Folds {
     private fun save() { prefs?.edit()?.putStringSet("folded", shut.keys.toSet())?.apply() }
 }
 
+/** #4349: shared arm so ± show after ~2s hold; another ~2s hold elsewhere saves and clears. */
+object ResizeArm {
+    private val _id = mutableStateOf<String?>(null)
+    var id: String?
+        get() = _id.value
+        private set(v) { _id.value = v }
+    fun arm(panelId: String) { id = panelId }
+    fun disarm() { id = null }
+}
+
+private const val RESIZE_ARM_MS = 2000L
+
+/** Still hold for [ms]; invokes [onHold] then waits for lift. Move beyond slop cancels. */
+suspend fun androidx.compose.ui.input.pointer.PointerInputScope.detectArmHold(
+    ms: Long = RESIZE_ARM_MS,
+    onHold: () -> Unit
+) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        val slop = viewConfiguration.touchSlop
+        val finished = withTimeoutOrNull(ms) {
+            while (true) {
+                val event = awaitPointerEvent(PointerEventPass.Main)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull false
+                if (!change.pressed) return@withTimeoutOrNull false
+                if ((change.position - down.position).getDistance() > slop) return@withTimeoutOrNull false
+            }
+            @Suppress("UNREACHABLE_CODE")
+            false
+        }
+        if (finished == null) {
+            onHold()
+            waitForUpOrCancellation()
+        }
+    }
+}
+
 /** An icon, so the Briefing header keeps room for its own action in a phone-wide column. */
 @Composable
 fun FoldAllButton() {
@@ -156,10 +198,10 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
     if (tab != null) Arrange.seen(tab, id, title)
     val stored = saved?.size?.get(id) ?: Layouts.Size()
     var live by remember(id, stored) { mutableStateOf(stored) }
-    // #3673: resize stays off until a long-press, so scroll and tab taps are free.
-    var armed by remember(id) { mutableStateOf(false) }
+    // #3673 / #4349: resize ± stay off until a ~2s hold; another ~2s hold saves and disarms.
+    val armed = ResizeArm.id == id
     LaunchedEffect(stored) { live = stored }
-    LaunchedEffect(tab) { armed = false }
+    LaunchedEffect(tab) { ResizeArm.disarm() }
     // Pinch has no drag-end; debounce a save when the live size settles away from the stored one.
     LaunchedEffect(live, saveSize) {
         if (saveSize == null || live == stored) return@LaunchedEffect
@@ -187,10 +229,20 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                 when {
                     !canResize -> Modifier
                     !armed -> Modifier.pointerInput(id) {
-                        detectTapGestures(onLongPress = { armed = true })
+                        detectArmHold {
+                            // Another panel already armed: this hold is "elsewhere" → save already flushed; disarm.
+                            if (ResizeArm.id != null) ResizeArm.disarm()
+                            else ResizeArm.arm(id)
+                        }
                     }
                     else -> Modifier
                         .border(1.dp, J.cyan.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+                        .pointerInput(id, live) {
+                            detectArmHold {
+                                saveSize?.invoke(id, live)
+                                ResizeArm.disarm()
+                            }
+                        }
                         .pointerInput(id, live) {
                             detectTransformGestures { _, _, zoom, _ ->
                                 if (zoom == 1f) return@detectTransformGestures
@@ -231,15 +283,6 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
                 Text("▾", color = J.cyan, fontSize = 13.sp, modifier = Modifier.rotate(turn))
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.weight(1f).height(1.dp).background(Brush.horizontalGradient(listOf(J.cyan.copy(alpha = 0.45f), Color.Transparent))))
-                if (armed) {
-                    TextButton(
-                        onClick = {
-                            saveSize?.invoke(id, live)
-                            armed = false
-                        },
-                        modifier = Modifier.heightIn(min = 40.dp)
-                    ) { Text("Done", color = J.cyan, fontFamily = Mono, fontSize = 12.sp) }
-                }
                 if ((plate || charts || chartSeen.value) && cycle != null) {
                     TextButton(onClick = cycle, modifier = Modifier.heightIn(min = 40.dp).semantics { contentDescription = if (plate) "Panel size 3 by $stretch" else "Chart height $stretch of 3" }) {
                         Text(if (plate) "3×$stretch" else "↕$stretch", color = J.cyan, fontFamily = Mono, fontSize = 12.sp)
@@ -250,76 +293,73 @@ fun Panel(title: String, modifier: Modifier = Modifier, trailing: (@Composable (
             if (tab != null && Arrange.movable(tab, id)) PanelTools(tab, id, title)
             if (!folded) androidx.compose.runtime.CompositionLocalProvider(LocalPanelStretch provides stretch, LocalChartFlag provides markChart) { content() }
         }
-        // Edge expand/contract (#4338): always-on ± so a section can grow without long-press; neighbors reflow via Masonry.
-        // Drag strips still appear while armed (#3673).
-        if (canResize) {
+        // Edge expand/contract (#4338 / #4349): ± + drag after ~2s arm; neighbors reflow via Masonry.
+        if (canResize && armed) {
             val commit = { next: Layouts.Size -> live = next; saveSize!!(id, next) }
             val step = { edge: Char, expand: Boolean -> commit(Layouts.stepSize(live, edge, expand)) }
             PanelEdgeSteps(Alignment.TopCenter, horizontal = true, onContract = { step('n', false) }, onExpand = { step('n', true) }, label = title)
             PanelEdgeSteps(Alignment.BottomCenter, horizontal = true, onContract = { step('s', false) }, onExpand = { step('s', true) }, label = title)
             PanelEdgeSteps(Alignment.CenterStart, horizontal = false, onContract = { step('w', false) }, onExpand = { step('w', true) }, label = title)
             PanelEdgeSteps(Alignment.CenterEnd, horizontal = false, onContract = { step('e', false) }, onExpand = { step('e', true) }, label = title)
-            if (armed) {
-                val edge = 14.dp
-                val strip = J.cyan.copy(alpha = 0.22f)
-                val dragCommit = { saveSize!!(id, live) }
-                Box(
-                    Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
-                        .pointerInput(id, live) {
-                            detectDragGestures(
-                                onDragEnd = dragCommit,
-                                onDragCancel = dragCommit,
-                                onDrag = { change, drag ->
-                                    change.consume()
-                                    live = Layouts.clampSize(live.h - drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
-                                }
-                            )
-                        }
-                        .background(strip)
-                )
-                Box(
-                    Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
-                        .pointerInput(id, live) {
-                            detectDragGestures(
-                                onDragEnd = dragCommit,
-                                onDragCancel = dragCommit,
-                                onDrag = { change, drag ->
-                                    change.consume()
-                                    live = Layouts.clampSize(live.h + drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
-                                }
-                            )
-                        }
-                        .background(strip)
-                )
-                Box(
-                    Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
-                        .pointerInput(id, live) {
-                            detectDragGestures(
-                                onDragEnd = dragCommit,
-                                onDragCancel = dragCommit,
-                                onDrag = { change, drag ->
-                                    change.consume()
-                                    live = Layouts.clampSize(live.h, live.w - drag.x / size.width.coerceAtLeast(1).toFloat())
-                                }
-                            )
-                        }
-                        .background(strip)
-                )
-                Box(
-                    Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
-                        .pointerInput(id, live) {
-                            detectDragGestures(
-                                onDragEnd = dragCommit,
-                                onDragCancel = dragCommit,
-                                onDrag = { change, drag ->
-                                    change.consume()
-                                    live = Layouts.clampSize(live.h, live.w + drag.x / size.width.coerceAtLeast(1).toFloat())
-                                }
-                            )
-                        }
-                        .background(strip)
-                )
-            }
+            val edge = 14.dp
+            val strip = J.cyan.copy(alpha = 0.22f)
+            val dragCommit = { saveSize!!(id, live) }
+            Box(
+                Modifier.align(Alignment.TopCenter).fillMaxWidth(0.64f).height(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = dragCommit,
+                            onDragCancel = dragCommit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h - drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                            }
+                        )
+                    }
+                    .background(strip)
+            )
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth(0.64f).height(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = dragCommit,
+                            onDragCancel = dragCommit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h + drag.y / size.height.coerceAtLeast(1).toFloat(), live.w)
+                            }
+                        )
+                    }
+                    .background(strip)
+            )
+            Box(
+                Modifier.align(Alignment.CenterStart).fillMaxHeight(0.64f).width(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = dragCommit,
+                            onDragCancel = dragCommit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h, live.w - drag.x / size.width.coerceAtLeast(1).toFloat())
+                            }
+                        )
+                    }
+                    .background(strip)
+            )
+            Box(
+                Modifier.align(Alignment.CenterEnd).fillMaxHeight(0.64f).width(edge)
+                    .pointerInput(id, live) {
+                        detectDragGestures(
+                            onDragEnd = dragCommit,
+                            onDragCancel = dragCommit,
+                            onDrag = { change, drag ->
+                                change.consume()
+                                live = Layouts.clampSize(live.h, live.w + drag.x / size.width.coerceAtLeast(1).toFloat())
+                            }
+                        )
+                    }
+                    .background(strip)
+            )
         }
     }
 }
