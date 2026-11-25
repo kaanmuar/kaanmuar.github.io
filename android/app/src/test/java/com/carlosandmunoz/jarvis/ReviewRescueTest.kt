@@ -69,5 +69,17 @@ class ReviewRescueTest {
         )
         assertTrue(ReviewRescue.cyberFill(20.0, 20.0).alpha > ReviewRescue.cyberFill(2.0, 20.0).alpha)
         assertEquals(4, ReviewRescue.RANGES.size)
+        assertEquals("none read", ReviewRescue.radarLine(emptyList()))
+        // Whole shares: fmt is locale-aware (comma vs dot), so avoid decimals in the assertion.
+        assertEquals(
+            "United States 25% · Brazil 13%",
+            ReviewRescue.radarLine(
+                listOf(
+                    json("""{"name":"United States","cc":"US","share":25}"""),
+                    json("""{"name":"Brazil","cc":"BR","share":13}""")
+                )
+            )
+        )
+        assertEquals("US 1%", ReviewRescue.radarLine(listOf(json("""{"cc":"US","share":1}"""))))
     }
 }

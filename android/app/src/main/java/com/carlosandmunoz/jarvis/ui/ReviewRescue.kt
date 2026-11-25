@@ -1,7 +1,10 @@
 package com.carlosandmunoz.jarvis.ui
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -15,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlosandmunoz.jarvis.UiState
 import com.carlosandmunoz.jarvis.data.ago
@@ -144,6 +148,11 @@ object ReviewRescue {
     fun findings(x: JsonObject): String = x.objs("findings").take(3).joinToString(" | ") { f ->
         listOfNotNull(f.str("kind"), f.str("source")?.ifEmpty { null }, f.str("delistStatus")?.takeIf { it.isNotEmpty() && it != "none" }?.let { "delist $it" }).joinToString(" · ")
     }
+
+    /** Cloudflare Radar top list as "United States 24.6% · Brazil 12.9%" (#4336); empty → "none read". */
+    fun radarLine(rows: List<JsonObject>): String =
+        if (rows.isEmpty()) "none read"
+        else rows.joinToString(" · ") { (it.str("name") ?: it.str("cc").orEmpty()) + " " + fmt(it.num("share")) + "%" }
 }
 
 @Composable
@@ -379,9 +388,12 @@ fun CyberMapPanel(s: UiState) {
         val rd = c.obj("radar")
         Text("Attack traffic, last 24 h · Cloudflare Radar", color = J.amber, fontSize = 12.sp)
         if (rd == null) Muted("Not read yet. The threat feeds job reads it every 30 minutes.") else {
+            // KeyRow caps the value at 190 dp / one line (#4336); wrap the full top-10 list under the label instead.
             listOf("layer3Origin" to "Network attacks from", "layer3Target" to "Network attacks to", "layer7Origin" to "Web attacks from", "layer7Target" to "Web attacks to").forEach { (k, label) ->
-                val rows = rd.objs(k).take(5)
-                KeyRow(label, if (rows.isEmpty()) "none read" else rows.joinToString(" · ") { (it.str("name") ?: it.str("cc").orEmpty()) + " " + fmt(it.num("share")) + "%" })
+                Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                    Text(label, fontSize = 13.sp, color = J.text)
+                    Text(ReviewRescue.radarLine(rd.objs(k)), fontSize = 13.sp, fontFamily = Mono, color = J.muted)
+                }
             }
             Muted("Share of each attack type's traffic, data as of ${ago(rd.str("asOf")).orEmpty()}. ${rd.str("attribution").orEmpty()} Not for customers, reports or the public map.")
         }
