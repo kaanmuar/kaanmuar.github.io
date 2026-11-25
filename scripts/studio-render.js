@@ -176,11 +176,20 @@ function idsNow(file) {
 	return (mod.SKITS || mod.TIPS || []).map((t) => t.id);
 }
 
+function skitTakeAssets(fetch = tryGh) {
+	return (fetch(['release', 'view', TAKES, '--json', 'assets', '-q', '.assets[].name']) || '').split('\n').filter(Boolean);
+}
+
+function langsWithTakes(skitId, assets, langs) {
+	return langs.filter((lang) => assets.includes(skitId + '-' + lang + '.mp4'));
+}
+
 // What a push to main asks for: every tips-studio source it adds and every skit it adds to skits.js.
 function planPush(payload, changes) {
 	const jobs = [];
 	const notes = [];
 	const ticket = changes.ticket || '';
+	const takeAssets = changes.takeAssets || (() => skitTakeAssets());
 	for (const { status, file } of changes.files) {
 		const source = file.match(/^scripts\/tips-studio\/([a-z0-9-]+)\.js$/);
 		if (source && isSource(source[1])) {
@@ -202,10 +211,26 @@ function planPush(payload, changes) {
 		}
 		if (file === 'scripts/skits-studio/skits.js' && (status === 'A' || status === 'M')) {
 			const before = status === 'A' ? [] : changes.idsAt(payload.before, file) || [];
+			const assets = takeAssets();
 			changes
 				.idsNow(file)
 				.filter((id) => !before.includes(id))
-				.forEach((id) => jobs.push(job({ kind: 'skit', name: id, ticket, by: 'merge' })));
+				.forEach((id) => {
+					if (langsWithTakes(id, assets, LANGS).length)
+						jobs.push(job({ kind: 'skit', name: id, ticket, by: 'merge' }));
+					else
+						notes.push(
+							'`' +
+								id +
+								'` has no Gemini takes in `' +
+								TAKES +
+								'` yet; upload `' +
+								id +
+								'-<lang>.mp4`, then `/render skit ' +
+								id +
+								'`'
+						);
+				});
 		}
 	}
 	return { jobs, notes };
@@ -342,8 +367,8 @@ function renderSkit(j, batch) {
 		return run([build, j.name, '--captions-only', '--batch', batch, '--start', startOf(j, batch)]);
 	const raw = path.join(ROOT, 'media/skits/raw');
 	fs.mkdirSync(raw, { recursive: true });
-	const assets = (tryGh(['release', 'view', TAKES, '--json', 'assets', '-q', '.assets[].name']) || '').split('\n');
-	const langs = (j.langs ? j.langs.split(',') : LANGS).filter((lang) => assets.includes(j.name + '-' + lang + '.mp4'));
+	const assets = skitTakeAssets();
+	const langs = langsWithTakes(j.name, assets, j.langs ? j.langs.split(',') : LANGS);
 	if (!langs.length)
 		throw new Error(
 			'the ' + TAKES + ' release has no take for ' + j.name + ': upload them as ' + j.name + '-<lang>.mp4'
@@ -859,4 +884,17 @@ if (require.main === module) {
 		});
 }
 
-module.exports = { job, parseCommand, planPush, checkPeaks, offsetOf, prBody, bugBody, marker, isSource, LANGS };
+module.exports = {
+	job,
+	parseCommand,
+	planPush,
+	checkPeaks,
+	offsetOf,
+	prBody,
+	bugBody,
+	marker,
+	isSource,
+	LANGS,
+	skitTakeAssets,
+	langsWithTakes,
+};

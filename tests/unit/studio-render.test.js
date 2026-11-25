@@ -48,6 +48,7 @@ test('a push renders added sources and new skits, and only names the new posts o
 	};
 	const changes = {
 		ticket: '1981',
+		takeAssets: () => ['friday-release-en.mp4'],
 		files: [
 			{ status: 'A', file: 'scripts/tips-studio/horror-headers.js' },
 			{ status: 'M', file: 'scripts/tips-studio/evergreen.js' },
@@ -66,6 +67,20 @@ test('a push renders added sources and new skits, and only names the new posts o
 		s.planPush({ before: 'abc' }, changes).jobs.map((j) => j.kind + ' ' + j.name),
 		['tips horror-headers', 'skit friday-release']
 	);
+});
+
+test('a merge does not render a new skit until its Gemini take is in skit-takes (#4292)', () => {
+	const changes = {
+		ticket: '4279',
+		takeAssets: () => [],
+		files: [{ status: 'M', file: 'scripts/skits-studio/skits.js' }],
+		idsAt: () => ['friday-release'],
+		idsNow: () => ['friday-release', 'avoidable-404'],
+	};
+	const { jobs, notes } = s.planPush({ before: 'abc' }, changes);
+	assert.deepEqual(jobs, []);
+	assert.equal(notes.length, 1);
+	assert.match(notes[0], /avoidable-404.*skit-takes.*\/render skit avoidable-404/);
 });
 
 test('a clip whose peak is not above -30 dB stops the delivery', () => {
