@@ -1527,15 +1527,9 @@ async function sendReviewPeriodReport(period) {
 	const reviews = askedFor(allReviews);
 	const ourRuns = jarvisCore.splitReviews(allReviews);
 	const ours = { total: ourRuns.ours.length, kinds: ourRuns.kinds };
-	if (
-		period === 'quarter' &&
-		!opens.length &&
-		!reviews.length &&
-		!captures.length &&
-		!alerts.length &&
-		!pageEvents.length
-	)
-		return null;
+	// Quarter-hour: only when a real person ran a review. Opens, captures, alerts,
+	// page events and our sweeps/tests alone must not mail (#4234).
+	if (period === 'quarter' && !reviews.length) return null;
 	const ref = getFirestore().collection('url_review_reports').doc(id);
 	const claimed = await getFirestore().runTransaction(async (tx) => {
 		const snap = await tx.get(ref);

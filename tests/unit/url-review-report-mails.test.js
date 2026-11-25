@@ -438,3 +438,15 @@ test('the period report counts fix requests by package and promised reports by w
 	assert.ok(rows.some((row) => row.label === 'Fix requests' && /security-headers 1/.test(row.value)));
 	assert.ok(rows.some((row) => row.label === 'Promised reports' && row.value === '1 promised (apologized 1)'));
 });
+
+test('the quarter-hour URL review report mails only when a real person ran a review (#4234)', () => {
+	const fs = require('fs');
+	const path = require('path');
+	const ops = require('../../functions/ops-schedule.js');
+	const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
+	const fn = index.slice(index.indexOf('async function sendReviewPeriodReport'), index.indexOf('const withReviewReport'));
+	assert.match(fn, /period === 'quarter' && !reviews\.length\) return null/);
+	assert.doesNotMatch(fn, /!opens\.length/);
+	assert.match(ops.job('emailQuarterReviewReport').what, /real person ran a review/);
+	assert.equal(ops.cron('emailQuarterReviewReport'), '*/15 * * * *');
+});
