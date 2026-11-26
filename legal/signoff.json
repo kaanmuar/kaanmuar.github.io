@@ -846,13 +846,6 @@
 			"note": "Fixes #4015: legal page says retention sweep is still a dry run",
 			"counselReviewedOn": null
 		},
-		"national.contact.1b": {
-			"sha256": "3f6cb2a3efdc219bb928f3c93254185e062520fad2fb87d1160c49d61d2ffe62",
-			"signedOffBy": "Carlos Muñoz",
-			"signedOffOn": "2026-11-26",
-			"note": "CV download/export/share email gate and lead reports (#4356)",
-			"counselReviewedOn": null
-		},
 		"national.contact.2": {
 			"sha256": "786b444bbb434169880b7739955e67af32235f0c7593429cb88bc7580a97ea3b",
 			"signedOffBy": "Carlos Muñoz",

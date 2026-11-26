@@ -39,8 +39,6 @@ function keepUntil() {
 	return new Date(Date.now() + KEEP_MS);
 }
 const siteReport = require('./site-report-mail');
-const cvTraffic = require('./cv-traffic');
-const cvLeadEmail = require('./cv-lead-email');
 const ownerLayout = require('./owner-mail');
 const ops = require('./ops-schedule');
 const retention = require('./retention');
@@ -489,7 +487,6 @@ exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(as
 	}
 	const body = req.body || {};
 	const query = /^[A-Za-z0-9=&%_.?+-]{0,120}$/.test(String(body.query || '')) ? String(body.query || '') : '';
-	const userAgent = clip(req.get('user-agent'), 300);
 	const record = {
 		source: 'cv',
 		site: 'cv',
@@ -503,14 +500,12 @@ exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(as
 		title: clip(body.title || '', 120),
 		label: siteReport.linkFromQuery(query) || 'cv',
 		ip: clip(req.ip || '', 80),
-		userAgent: userAgent,
+		userAgent: clip(req.get('user-agent'), 300),
 		acceptLanguage: clip(req.get('accept-language'), 120),
 		country: clip(req.get('x-appengine-country') || '', 8),
 		region: clip(decodePlace(req.get('x-appengine-region') || ''), 80),
 		city: clip(decodePlace(req.get('x-appengine-city') || ''), 80),
 	};
-	const testing = cvTraffic.isTestTraffic(record);
-	if (testing) record.test = true;
 	const stamp = FieldValue.serverTimestamp();
 	const batch = getFirestore().batch();
 	batch.set(getFirestore().collection('visits').doc(), Object.assign({}, record, { createdAt: stamp }));
@@ -533,7 +528,6 @@ exports.noteCvVisit = functions.runWith({ maxInstances: 10 }).https.onRequest(as
 		country: record.country,
 		region: record.region,
 		city: record.city,
-		test: testing || undefined,
 		createdAt: stamp,
 	});
 	try {
@@ -974,28 +968,6 @@ function previousQuarter(current) {
 	};
 }
 
-// URL-review period reports still use a 15-minute window (#4234). CV site reports use one hour (#4356).
-function hourWindow(now) {
-	const endMs = now.getTime();
-	const end = new Date(endMs - (endMs % (60 * 60 * 1000)));
-	const start = new Date(end.getTime() - 60 * 60 * 1000);
-	const clock = new Intl.DateTimeFormat('en-GB', {
-		timeZone: 'America/Bogota',
-		hour: '2-digit',
-		minute: '2-digit',
-		hourCycle: 'h23',
-	}).format(end);
-	return { start: start, end: end, label: dateStamp(bogotaParts(end)) + ' ' + clock };
-}
-
-function previousHour(current) {
-	return {
-		start: new Date(current.start.getTime() - 60 * 60 * 1000),
-		end: current.start,
-		phrase: 'previous hour',
-	};
-}
-
 function reportWindow(period, now) {
 	const today = bogotaParts(now);
 	if (period === 'daily') {
@@ -1300,14 +1272,11 @@ async function countCreated(name, start, end) {
 }
 
 async function sendPeriodReport(period) {
-	const hourly = period === 'quarter';
-	const window = hourly ? hourWindow(new Date()) : reportWindow(period, new Date());
-	const earlier = hourly ? previousHour(window) : previousWindow(period, window);
-	const id = hourly ? 'cv-1h-' + window.label.replace(/[\s:]/g, '-') : period + '-' + window.label;
+	const window = period === 'quarter' ? quarterWindow(new Date()) : reportWindow(period, new Date());
+	const earlier = period === 'quarter' ? previousQuarter(window) : previousWindow(period, window);
+	const id = period === 'quarter' ? 'cv-15-' + window.label.replace(/[\s:]/g, '-') : period + '-' + window.label;
 	const events = (await loadEvents(window.start, window.end)).filter((row) => row.site !== 'review');
 	const previousEvents = (await loadEvents(earlier.start, earlier.end)).filter((row) => row.site !== 'review');
-	const split = cvTraffic.splitTraffic(events);
-	const previousSplit = cvTraffic.splitTraffic(previousEvents);
 	let messageRows = [];
 	let ratingRows = [];
 	try {
@@ -1318,10 +1287,7 @@ async function sendPeriodReport(period) {
 	} catch (countError) {
 		console.error(period + ' inbox load skipped:', countError);
 	}
-	const realMessages = messageRows.filter((row) => !cvTraffic.isTestTraffic(row));
-	const realRatings = ratingRows.filter((row) => !cvTraffic.isTestTraffic(row));
-	// Hourly: skip when no real person activity (#4356). Testing-only windows stay silent.
-	if (hourly && !split.real.length && !realMessages.length && !realRatings.length) return null;
+	if (period === 'quarter' && !events.length && !messageRows.length && !ratingRows.length) return null;
 	const ref = getFirestore().collection('site_reports').doc(id);
 	const claimed = await getFirestore().runTransaction(async (tx) => {
 		const snap = await tx.get(ref);
@@ -1332,11 +1298,10 @@ async function sendPeriodReport(period) {
 	});
 	if (!claimed) return null;
 	try {
-		const summary = summarizeEvents(split.real);
-		const previous = summarizeEvents(previousSplit.real);
-		const testSummary = summarizeEvents(split.testing);
-		const messages = realMessages.length;
-		const ratings = realRatings.length;
+		const summary = summarizeEvents(events);
+		const previous = summarizeEvents(previousEvents);
+		const messages = messageRows.length;
+		const ratings = ratingRows.length;
 		const siteLine = (name) => {
 			const row = summary.sites[name];
 			return row.opens + ' opens, ' + row.clicks + ' clicks, ' + row.exports + ' exports, ' + row.runs + ' runs';
@@ -1351,12 +1316,6 @@ async function sendPeriodReport(period) {
 				clicks: summary.clicks,
 				exports: summary.exports,
 				runs: summary.runs,
-				testing: {
-					opens: testSummary.opens,
-					clicks: testSummary.clicks,
-					exports: testSummary.exports,
-					runs: testSummary.runs,
-				},
 				sites: summary.sites,
 				exportsBy: summary.exportsBy,
 				actions: summary.actions,
@@ -1379,26 +1338,14 @@ async function sendPeriodReport(period) {
 			},
 			{ merge: true }
 		);
-		const title = hourly ? 'Hourly' : period.charAt(0).toUpperCase() + period.slice(1);
+		const title = period === 'quarter' ? '15-minute' : period.charAt(0).toUpperCase() + period.slice(1);
 		const rows = [
-			{ label: 'Real opens', value: String(summary.opens) },
-			{ label: 'Real clicks', value: String(summary.clicks) },
-			{ label: 'Real exports', value: String(summary.exports) },
-			{ label: 'Real lab runs', value: String(summary.runs) },
-			{
-				label: 'Testing',
-				value:
-					'test opens ' +
-					testSummary.opens +
-					', clicks ' +
-					testSummary.clicks +
-					', exports ' +
-					testSummary.exports +
-					', runs ' +
-					testSummary.runs,
-			},
+			{ label: 'Opens', value: String(summary.opens) },
 			{ label: 'Link opens', value: linkLine(summary.linkOpens) },
-			{ label: 'Versus (real)', value: compareLine(summary, previous, earlier.phrase) },
+			{ label: 'Clicks', value: String(summary.clicks) },
+			{ label: 'Exports', value: String(summary.exports) },
+			{ label: 'Lab runs', value: String(summary.runs) },
+			{ label: 'Versus', value: compareLine(summary, previous, earlier.phrase) },
 			{ label: 'CV', value: siteLine('cv') },
 			{ label: 'Studio', value: siteLine('studio') },
 			{ label: 'Lab', value: siteLine('lab') },
@@ -1422,10 +1369,7 @@ async function sendPeriodReport(period) {
 			subject: title + ' CV site — ' + window.label,
 			intro: title + ' CV site report for ' + window.label,
 			rows: rows,
-			body: [
-				siteReport.splitReportBody(split.real, split.testing, actionTitle),
-				siteReport.inboxBody(realMessages, realRatings),
-			]
+			body: [siteReport.reportBody(events, actionTitle), siteReport.inboxBody(messageRows, ratingRows)]
 				.filter(Boolean)
 				.join('\n\n'),
 			respondUrl: 'https://carlosandmunoz.com/admin.html',
@@ -1449,174 +1393,6 @@ exports.emailMonthlySiteReport = scheduled(withMail, 'emailMonthlySiteReport', (
 exports.emailQuarterSiteReport = scheduled(withMail, 'emailQuarterSiteReport', async () =>
 	(await mailOn('siteQuarter')) ? sendPeriodReport('quarter') : 'mail off in Jarvis settings'
 );
-
-async function loadCvLeads(start, end) {
-	return loadBound('cv_leads', 'createdAt', Timestamp.fromDate(start), Timestamp.fromDate(end));
-}
-
-async function sendCvLeadsReport(period) {
-	const window = reportWindow(period, new Date());
-	const id = 'cv-leads-' + period + '-' + window.label;
-	const leads = (await loadCvLeads(window.start, window.end)).filter((row) => !row.test && !cvTraffic.isTestTraffic(row));
-	if (!leads.length) return null;
-	const ref = getFirestore().collection('site_reports').doc(id);
-	const claimed = await getFirestore().runTransaction(async (tx) => {
-		const snap = await tx.get(ref);
-		const data = snap.exists ? snap.data() || {} : {};
-		if (data.emailedAt) return false;
-		tx.set(ref, { period: 'cv-leads-' + period, label: window.label, sending: true }, { merge: true });
-		return true;
-	});
-	if (!claimed) return null;
-	try {
-		const byAction = {};
-		leads.forEach((row) => {
-			const key = String(row.action || row.name || 'lead').slice(0, 40);
-			byAction[key] = (byAction[key] || 0) + 1;
-		});
-		const title = period.charAt(0).toUpperCase() + period.slice(1);
-		await ref.set(
-			{
-				period: 'cv-leads-' + period,
-				label: window.label,
-				start: Timestamp.fromDate(window.start),
-				end: Timestamp.fromDate(window.end),
-				leads: leads.length,
-				byAction: byAction,
-				createdAt: FieldValue.serverTimestamp(),
-			},
-			{ merge: true }
-		);
-		const sent = await sendOwnerEmail({
-			subject: title + ' CV downloads — ' + window.label,
-			intro: title + ' real CV downloads, exports, and shares for ' + window.label,
-			rows: [
-				{ label: 'People actions', value: String(leads.length) },
-				{ label: 'By action', value: tallyLine(byAction) },
-			],
-			body: siteReport.leadReportBody(leads),
-			respondUrl: 'https://carlosandmunoz.com/admin.html',
-			buttonLabel: 'Open statistics',
-		});
-		if (!sent) throw new Error('CV leads report email was not sent.');
-		await ref.set({ emailedAt: FieldValue.serverTimestamp(), sending: false }, { merge: true });
-	} catch (error) {
-		await ref.set({ sending: false }, { merge: true });
-		console.error(period + ' CV leads report failed:', error);
-		throw error;
-	}
-	return null;
-}
-
-exports.emailDailyCvLeadsReport = scheduled(withMail, 'emailDailyCvLeadsReport', async () =>
-	(await mailOn('cvLeadsDaily')) ? sendCvLeadsReport('daily') : 'mail off in Jarvis settings'
-);
-exports.emailWeeklyCvLeadsReport = scheduled(withMail, 'emailWeeklyCvLeadsReport', async () =>
-	(await mailOn('cvLeadsWeekly')) ? sendCvLeadsReport('weekly') : 'mail off in Jarvis settings'
-);
-exports.emailMonthlyCvLeadsReport = scheduled(withMail, 'emailMonthlyCvLeadsReport', async () =>
-	(await mailOn('cvLeadsMonthly')) ? sendCvLeadsReport('monthly') : 'mail off in Jarvis settings'
-);
-
-exports.noteCvLead = functions.runWith({ maxInstances: 10, secrets: SECRETS.mail }).https.onRequest(async (req, res) => {
-	const origin = String(req.get('origin') || '');
-	const allowed = CV_ORIGINS.has(origin);
-	res.set('Access-Control-Allow-Origin', allowed ? origin : 'https://carlosandmunoz.com');
-	res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-	res.set('Access-Control-Allow-Headers', 'Content-Type');
-	res.set('Cache-Control', 'no-store');
-	if (req.method === 'OPTIONS') {
-		res.status(204).send('');
-		return;
-	}
-	if (!allowed || req.method !== 'POST') {
-		res.status(allowed ? 405 : 403).json({ ok: false, error: 'This page cannot note a CV lead.' });
-		return;
-	}
-	const body = req.body || {};
-	const check = cvLeadEmail.isAcceptableLeadEmail(body.email);
-	if (!check.ok) {
-		res.status(400).json({ ok: false, error: 'Enter a real email address.', reason: check.reason });
-		return;
-	}
-	const action = /^(export|share|download)$/.test(String(body.action || '')) ? String(body.action) : 'export';
-	const record = {
-		email: check.email,
-		action: action,
-		name: clip(body.name || (action === 'share' ? 'share_cv' : 'export_cv'), 40),
-		label: clip(body.label || '', 80),
-		lang: clip(body.lang || 'en', 12) || 'en',
-		page: clip(body.page || 'index.html', 80) || 'index.html',
-		title: clip(body.title || '', 120),
-		referrerHost: clip(body.referrerHost || '', 80),
-		screen: body.screen === 'phone' ? 'phone' : 'desktop',
-		timezone: clip(body.timezone || '', 60),
-		languages: clip(body.languages || '', 80),
-		ip: clip(req.ip || '', 80),
-		userAgent: clip(req.get('user-agent'), 300),
-		acceptLanguage: clip(req.get('accept-language'), 120),
-		country: clip(req.get('x-appengine-country') || '', 8),
-		region: clip(decodePlace(req.get('x-appengine-region') || ''), 80),
-		city: clip(decodePlace(req.get('x-appengine-city') || ''), 80),
-		test: false,
-		createdAt: FieldValue.serverTimestamp(),
-	};
-	if (cvTraffic.isTestTraffic(record)) {
-		res.status(204).send('');
-		return;
-	}
-	try {
-		await getFirestore().collection('cv_leads').add(record);
-	} catch (error) {
-		console.error('CV lead note failed:', error);
-		res.status(500).json({ ok: false, error: 'The lead was not saved.' });
-		return;
-	}
-	res.status(204).send('');
-});
-
-exports.notifyOwnerOnCvLead = withMail.firestore.document('cv_leads/{leadId}').onCreate(async (snap) => {
-	const data = snap.data() || {};
-	if (data.test || cvTraffic.isTestTraffic(data)) return null;
-	const email = cvLeadEmail.normalize(data.email);
-	if (!email) return null;
-	try {
-		if (!(await mailOn('cvLeadInstant'))) return null;
-		const key = crypto.createHash('sha256').update(email).digest('hex').slice(0, 32);
-		const pingRef = getFirestore().collection('cv_lead_pings').doc(key);
-		const now = Date.now();
-		const claimed = await getFirestore().runTransaction(async (tx) => {
-			const ping = await tx.get(pingRef);
-			const prev = ping.exists ? ping.data() || {} : {};
-			const last = prev.at && typeof prev.at.toMillis === 'function' ? prev.at.toMillis() : 0;
-			if (last && now - last < 15 * 60 * 1000) return false;
-			tx.set(pingRef, { email: email, at: Timestamp.fromMillis(now), leadId: snap.id }, { merge: true });
-			return true;
-		});
-		if (!claimed) return null;
-		const place = [data.city, data.region, data.country].filter(Boolean).join(', ');
-		await sendOwnerEmail({
-			subject: 'CV ' + clip(data.action || 'download', 40) + ' — ' + clip(email, 60),
-			intro: 'Someone downloaded, exported, or shared your CV',
-			rows: [
-				{ label: 'Email', value: clip(email, 120) },
-				{ label: 'Action', value: clip(data.action || data.name, 40) },
-				{ label: 'Detail', value: clip(data.label, 80) },
-				{ label: 'Page', value: clip(data.page, 80) },
-				{ label: 'Place', value: clip(place, 120) },
-				{ label: 'Referrer', value: clip(data.referrerHost || 'Direct', 80) },
-				{ label: 'Screen', value: data.screen === 'phone' || data.screen === 'desktop' ? data.screen : '' },
-				{ label: 'Time zone', value: clip(data.timezone, 60) },
-				{ label: 'Browser', value: clip(data.userAgent, 300) },
-			],
-			respondUrl: 'https://carlosandmunoz.com/admin.html',
-			buttonLabel: 'Open statistics',
-		});
-	} catch (error) {
-		console.error('CV lead notification failed:', error);
-	}
-	return null;
-});
 
 const reviewMail = require('./url-review-mail');
 const webhookIdem = require('./webhook-idempotency');

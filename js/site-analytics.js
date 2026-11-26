@@ -2,7 +2,6 @@
 	const MEASUREMENT_ID = 'G-J8GNF5380F';
 	const seen = new Set();
 	let site = 'cv';
-	let leadEmail = '';
 	let dbPromise = null;
 	const firebaseConfig = {
 		apiKey: 'AIzaSyA2-6WkecV3GoAK4qlsdGtH3jisjk3bK0w',
@@ -205,13 +204,7 @@
 	}
 
 	function record(kind, name, label) {
-		if (
-			root.top !== root.self ||
-			navigator.webdriver ||
-			/Chrome-Lighthouse|Lighthouse|HeadlessChrome|Cypress|Electron\/|PhantomJS|Puppeteer|Playwright/i.test(
-				navigator.userAgent
-			)
-		)
+		if (root.top !== root.self || navigator.webdriver || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent))
 			return;
 		const host = root.location.hostname;
 		if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return;
@@ -237,20 +230,12 @@
 			languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
 		};
 		if (kind === 'visit') row.query = pageQuery();
-		if (leadEmail && (kind === 'export' || name === 'share_cv')) row.email = leadEmail.slice(0, 120);
 		database()
 			.then(({ fs, db }) => {
 				row.createdAt = fs.serverTimestamp();
 				return fs.addDoc(fs.collection(db, 'site_events'), row);
 			})
 			.catch(() => {});
-	}
-
-	function setLeadEmail(email) {
-		leadEmail = String(email || '')
-			.trim()
-			.toLowerCase()
-			.slice(0, 120);
 	}
 
 	function event(eventName, category, label, extra) {
@@ -384,7 +369,6 @@
 		page,
 		bind,
 		noteVisit,
-		setLeadEmail,
 	};
 	queued.forEach(([name, args]) => root.SiteAnalytics[name].apply(null, args));
 })(window);
