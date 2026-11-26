@@ -10,18 +10,28 @@ const DEFAULT_CLICK_DROP = 0.3; // 30% fewer clicks vs prior window
 const DEFAULT_POS_SLIP = 3; // average position worse by this many places
 const DEFAULT_MIN_IMPRESSIONS = 50;
 
+function trimSlashes(path) {
+	let out = String(path || '');
+	while (out.length > 1 && out.endsWith('/')) out = out.slice(0, -1);
+	while (out.startsWith('//')) out = out.slice(1);
+	return out || '/';
+}
+
 function pageKey(urlOrPath) {
 	if (!urlOrPath) return '';
 	try {
 		if (/^https?:\/\//i.test(urlOrPath)) {
 			const u = new URL(urlOrPath);
-			return (u.pathname.replace(/\/index\.html$|\.html$/, '').replace(/(?<!\/)\/+$/, '') || '/') + (u.search || '');
+			let path = u.pathname.replace(/\/index\.html$|\.html$/, '');
+			path = trimSlashes(path);
+			return path + (u.search || '');
 		}
 	} catch (_) {
 		/* fall through */
 	}
-	const s = String(urlOrPath);
-	return s.startsWith('/') ? s.replace(/(?<!\/)\/+$/, '') || '/' : '/' + s.replace(/^\/+/, '');
+	let s = String(urlOrPath);
+	if (!s.startsWith('/')) s = '/' + s.replace(/^\/+/, '');
+	return trimSlashes(s);
 }
 
 function num(v) {
