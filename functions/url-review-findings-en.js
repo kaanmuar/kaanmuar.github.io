@@ -504,6 +504,15 @@ const EN = {
 	'seo-near-duplicates.fix':
 		'Merge each group, or point the canonical tags at one page, so search engines pick a single version.',
 
+	'seo-content-gap.pass.title': 'Content gap matrix: no merge, redirect or rewrite actions among indexable crawl pages',
+	'seo-content-gap.pass.evidence': '{n} indexable pages were classified; all are keep.',
+	'seo-content-gap.title':
+		'Content gap matrix recommends {merge} merges, {redirect} redirects and {write} rewrites',
+	'seo-content-gap.evidence': '{list} (of {n} indexable pages). Audit-only briefs from crawl fields.',
+	'seo-content-gap.fix':
+		'Work through the matrix: merge duplicates, redirect thin orphans, and expand thin or headless pages.',
+	'seo-content-gap.row': '{path}: {action} — {reason}',
+
 	'sec-typed.title': 'Typed text is sent before the form is submitted',
 	'sec-typed.evidence':
 		'The review typed a test address into the "{field}" field and did not submit. {sent} The review blocked those requests, so the test address did not leave the browser.{listening}',
