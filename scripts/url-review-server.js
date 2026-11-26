@@ -22,6 +22,7 @@ const fixOffers = require('../functions/url-review-fix-offers');
 const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
 const threats = require('../functions/url-review-threats');
+const fixDiffDesk = require('../functions/url-review-fix-diff-desk');
 const reviewMap = require('../functions/url-review-map');
 const localSoftQuota = softQuota.memoryStore();
 
@@ -197,6 +198,27 @@ function readThreatsLocal() {
 			});
 	} catch (error) { /* empty */ }
 	return Array.from(map.values());
+}
+
+const fixDiffLocal = new Map();
+
+function readFixDiffLocal() {
+	if (!fixDiffLocal.size) {
+		const sample = fixDiffDesk.recordFromBody(
+			{
+				kind: 'git',
+				findingId: 'F-sec-hsts',
+				path: 'public/_headers',
+				before: '',
+				after: 'Strict-Transport-Security: max-age=31536000\n',
+				host: 'desk-smoke.example',
+				reportId: 'deadbeef',
+			},
+			Date.now()
+		);
+		fixDiffLocal.set('smoke1', sample);
+	}
+	return [...fixDiffLocal.entries()].map(([id, row]) => fixDiffDesk.deskRow(id, row));
 }
 
 function writeRecord(record) {
@@ -611,6 +633,40 @@ const server = http.createServer(async (req, res) => {
 		fs.mkdirSync(path.dirname(THREAT_FILE), { recursive: true });
 		fs.appendFileSync(THREAT_FILE, JSON.stringify(next) + '\n');
 		sendJson(res, 200, { ok: true, item: next }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'GET' && url.pathname === '/desk/fix-diff/data') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		const items = readFixDiffLocal();
+		sendJson(res, 200, { summary: fixDiffDesk.summarize(items), items }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/fix-diff') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let fdBody = {};
+		try {
+			fdBody = await readBody(req);
+		} catch (error) {
+			fdBody = {};
+		}
+		const prev = fixDiffLocal.get(fdBody.id);
+		if (!prev) {
+			sendJson(res, 404, { error: 'That fix pack is not saved.' }, origin, deviceHint);
+			return;
+		}
+		const patch = fixDiffDesk.decisionPatch(prev, fdBody, 'local-desk', Date.now());
+		if (patch.error) {
+			sendJson(res, 400, { error: patch.error }, origin, deviceHint);
+			return;
+		}
+		fixDiffLocal.set(fdBody.id, Object.assign({}, prev, patch));
+		sendJson(res, 200, { ok: true, pack: fixDiffDesk.deskRow(fdBody.id, fixDiffLocal.get(fdBody.id)) }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'GET' && url.pathname === '/desk/data') {

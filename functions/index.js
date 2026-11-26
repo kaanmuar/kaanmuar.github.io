@@ -2824,6 +2824,7 @@ const domainOffer = require('./url-review-domain-offer');
 const outreachTrials = require('./outreach-trials');
 const outreachSend = require('./outreach-send');
 const fixRequests = require('./url-review-fix-requests');
+const fixDiffDesk = require('./url-review-fix-diff-desk');
 const fixCheckout = require('./url-review-fix-checkout');
 const fixRereview = require('./url-review-fix-rereview');
 const watchCases = require('./url-review-watch');
@@ -7101,6 +7102,8 @@ exports.reviewUrl = functions
 			['/desk/notice', 'notice'],
 			['/desk/proof', 'proof'],
 			['/desk/fix', 'fix'],
+			['/desk/fix-diff/data', 'fix-diff-data'],
+			['/desk/fix-diff', 'fix-diff'],
 		];
 		const routed = deskRoutes.find(([part]) => pathName.indexOf(part) !== -1);
 		const deskName = routed
@@ -7263,6 +7266,20 @@ exports.reviewUrl = functions
 			}
 			if (deskName === 'fix' && req.method === 'POST') {
 				await fixRequests.deskUpdate(req, res, operator, fixDeps());
+				return;
+			}
+			if (deskName === 'fix-diff-data' && req.method === 'GET') {
+				try {
+					const items = await fixDiffDesk.deskRows(getFirestore());
+					res.status(200).json({ summary: fixDiffDesk.summarize(items), items });
+				} catch (error) {
+					console.error('Desk fix-diff read failed:', error);
+					res.status(500).json({ error: 'Could not read fix packs.' });
+				}
+				return;
+			}
+			if (deskName === 'fix-diff' && req.method === 'POST') {
+				await fixDiffDesk.deskDecide(req, res, operator, { db: getFirestore(), nowMs: Date.now() });
 				return;
 			}
 			if (deskName === 'proof' && req.method === 'POST') {
