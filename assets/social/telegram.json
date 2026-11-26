@@ -144,6 +144,17 @@
     "checked": "2026-11-25T23:02:16.283Z"
    }
   ],
+  "auto-2026-10-26/02-u-thekeyinmobiliaria-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "139",
+    "at": "2026-11-26T23:37:26.598Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/139",
+    "checked": "2026-11-26T23:37:30.540Z"
+   }
+  ],
   "auto-2026-11-03/02-u-iteso-mx": [
    {
     "channel": "telegram",
@@ -496,6 +507,17 @@
     "checked": "2026-11-20T17:19:19.240Z"
    }
   ],
+  "auto-2026-11-19/29-u-altoga-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "140",
+    "at": "2026-11-26T23:37:30.540Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/140",
+    "checked": "2026-11-26T23:37:34.976Z"
+   }
+  ],
   "auto-2026-11-20/01-u-artedentalmvd-com": [
    {
     "channel": "telegram",
@@ -692,6 +714,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/137",
     "checked": "2026-11-26T04:25:02.672Z"
+   }
+  ],
+  "evergreen-2026-11/16-skip-link": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "138",
+    "at": "2026-11-26T23:37:20.301Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/138",
+    "checked": "2026-11-26T23:37:26.598Z"
    }
   ],
   "evergreen-2026-11/18-myth-keywords": [
@@ -1094,6 +1127,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/133",
     "checked": "2026-11-25T23:02:12.542Z"
+   }
+  ],
+  "runs-100/11-guardian": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "141",
+    "at": "2026-11-26T23:37:34.976Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/141",
+    "checked": "2026-11-26T23:37:39.653Z"
    }
   ],
   "runs-2026-10/01-govuk": [

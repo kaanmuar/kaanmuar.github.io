@@ -421,6 +421,17 @@
     "checked": "2026-10-28T05:42:44.460Z"
    }
   ],
+  "auto-2026-10-26/02-u-thekeyinmobiliaria-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3atia5jgb27",
+    "at": "2026-11-26T23:32:37.400Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3atia5jgb27",
+    "checked": "2026-11-26T23:32:46.958Z"
+   }
+  ],
   "auto-2026-10-27/01-u-ciedi-edu-co": [
    {
     "channel": "bluesky",
@@ -1561,6 +1572,72 @@
     "checked": "2026-11-25T22:59:32.536Z"
    }
   ],
+  "auto-2026-11-19/29-u-altoga-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3atiwetmo2l",
+    "at": "2026-11-26T23:32:46.958Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3atiwetmo2l",
+    "checked": "2026-11-26T23:33:10.464Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18457951009120551",
+    "at": "2026-11-26T23:37:01.169Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4039250653458002922",
+    "checked": "2026-11-26T23:37:12.429Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "at": "2026-11-26T23:36:10.992Z",
+    "result": "failed",
+    "error": "Instagram media_publish 403: Application request limit reached",
+    "checked": "2026-11-26T23:37:00.892Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18647467891007039",
+    "at": "2026-11-26T23:33:28.476Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DgOS8CEEzXt",
+    "checked": "2026-11-26T23:34:23.844Z"
+   }
+  ],
+  "auto-2026-11-19/35-u-amforaproperty-com": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18390222190228907",
+    "at": "2026-11-26T23:37:12.429Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4039250747443948165",
+    "checked": "2026-11-26T23:37:19.642Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17960101392273244",
+    "at": "2026-11-26T23:35:22.018Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DgOTIaRIBia/",
+    "checked": "2026-11-26T23:36:10.992Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18658946719048993",
+    "at": "2026-11-26T23:34:23.844Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DgOTDGTgo6e",
+    "checked": "2026-11-26T23:35:20.399Z"
+   }
+  ],
   "auto-2026-11-20/01-u-artedentalmvd-com": [
    {
     "channel": "bluesky",
@@ -2186,6 +2263,17 @@
     "checked": "2026-11-26T04:24:50.117Z"
    }
   ],
+  "evergreen-2026-11/16-skip-link": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3athwpxuy2r",
+    "at": "2026-11-26T23:32:17.521Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3athwpxuy2r",
+    "checked": "2026-11-26T23:32:37.400Z"
+   }
+  ],
   "evergreen-2026-11/18-myth-keywords": [
    {
     "channel": "bluesky",
@@ -2526,6 +2614,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n36b26ddkq2n",
     "checked": "2026-11-25T22:57:28.953Z"
+   }
+  ],
+  "runs-100/11-guardian": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3atjggeqb27",
+    "at": "2026-11-26T23:33:10.464Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3atjggeqb27",
+    "checked": "2026-11-26T23:33:27.255Z"
    }
   ],
   "runs-2026-10/01-govuk": [
