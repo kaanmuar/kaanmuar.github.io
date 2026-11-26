@@ -1550,6 +1550,7 @@
       "sec-cert-anomaly.fix": "Vérifiez votre chaîne de certification et les émissions récentes auprès de votre AC ou des journaux Certificate Transparency.",
       "sec-targeted.pass.title": "Aucune attaque ciblée ni exploit actif détecté dans les sources vérifiées",
       "sec-targeted.pass.evidence": "{host} ne correspond à aucune faille exploitée connue, liste C2, préfixe détourné ni article de fuite dans {sources}.",
+<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} page perd des clics ou de la position dans Search Console",
       "seo-gsc-decay.title_other": "{n} pages perdent des clics ou de la position dans Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -1560,6 +1561,13 @@
       "seo-gsc-cannibal.title_other": "{n} requêtes ont des pages en concurrence dans Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Choisissez une URL propriétaire par requête, fusionnez ou redirigez les rivales, et pointez les liens internes vers la propriétaire pour que le classement cesse de se diviser.",
+=======
+      "geo-citation.pass.title": "Une réponse IA fondée cite {host}",
+      "geo-citation.pass.evidence": "Pour \"{topic}\", {share}% des sources fondées étaient {host} ({total} sites distincts dans le contrôle).",
+      "geo-citation.miss.title": "Une réponse IA fondée pour \"{topic}\" ne cite pas {host}",
+      "geo-citation.miss.evidence": "Le contrôle a nommé {total} autres sites, dont {peers}, et a omis {host}.",
+      "geo-citation.miss.fix": "Publiez des pages d’entité plus claires, un llms.txt et des faits crawlables sur le sujet pour que les moteurs de réponse puissent citer la marque.",
+>>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matrice des lacunes de contenu : aucune fusion, redirection ou réécriture parmi les pages crawlées indexables",
       "seo-content-gap.pass.evidence": "{n} pages indexables ont été classées ; toutes sont keep.",
       "seo-content-gap.title": "La matrice des lacunes recommande {merge} fusions, {redirect} redirections et {write} réécritures",

@@ -1550,6 +1550,7 @@
       "sec-cert-anomaly.fix": "Prüfen Sie Zertifikatskette und jüngste Ausstellungen bei Ihrer CA oder in Certificate-Transparency-Logs.",
       "sec-targeted.pass.title": "Kein Treffer für gezielte Angriffe oder aktive Exploits in geprüften Quellen",
       "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf.",
+<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} Seite verliert Search-Console-Klicks oder Position",
       "seo-gsc-decay.title_other": "{n} Seiten verlieren Search-Console-Klicks oder Position",
       "seo-gsc-decay.evidence": "{list}",
@@ -1560,6 +1561,13 @@
       "seo-gsc-cannibal.title_other": "{n} Suchanfragen haben konkurrierende Seiten in der Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Wählen Sie pro Suchanfrage eine Eigentümer-URL, führen Sie Rivalen zusammen oder leiten Sie um, und zeigen Sie interne Links auf den Eigentümer, damit sich das Ranking nicht weiter teilt.",
+=======
+      "geo-citation.pass.title": "Eine fundierte KI-Antwort zitiert {host}",
+      "geo-citation.pass.evidence": "Zu \"{topic}\" stammten {share}% der fundierten Quellen von {host} ({total} verschiedene Sites in der Prüfung).",
+      "geo-citation.miss.title": "Eine fundierte KI-Antwort zu \"{topic}\" zitiert {host} nicht",
+      "geo-citation.miss.evidence": "Die Prüfung nannte {total} andere Sites, darunter {peers}, und ließ {host} aus.",
+      "geo-citation.miss.fix": "Veröffentlichen Sie klarere Entity-Seiten, llms.txt und crawlbare Fakten zum Thema, damit Antwortmaschinen die Marke zitieren können.",
+>>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Content-Gap-Matrix: keine Merge-, Redirect- oder Rewrite-Aktionen unter indexierbaren Crawl-Seiten",
       "seo-content-gap.pass.evidence": "{n} indexierbare Seiten wurden klassifiziert; alle sind keep.",
       "seo-content-gap.title": "Die Content-Gap-Matrix empfiehlt {merge} Merges, {redirect} Redirects und {write} Rewrites",

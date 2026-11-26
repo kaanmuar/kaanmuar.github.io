@@ -1550,6 +1550,7 @@
       "sec-cert-anomaly.fix": "Verifica la cadena del certificado y las emisiones recientes en tu autoridad certificadora o registros de Certificate Transparency.",
       "sec-targeted.pass.title": "Sin coincidencias de ataques dirigidos o exploits activos en las fuentes revisadas",
       "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}.",
+<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} página está perdiendo clics o posición en Search Console",
       "seo-gsc-decay.title_other": "{n} páginas están perdiendo clics o posición en Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -1560,6 +1561,13 @@
       "seo-gsc-cannibal.title_other": "{n} consultas tienen páginas en competencia en Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Elige una URL propietaria por consulta, fusiona o redirige las rivales y apunta los enlaces internos a la propietaria para que el ranking deje de repartirse.",
+=======
+      "geo-citation.pass.title": "Una respuesta de IA fundamentada cita a {host}",
+      "geo-citation.pass.evidence": "Para \"{topic}\", el {share}% de las fuentes fundamentadas eran {host} ({total} sitios distintos en la revisión).",
+      "geo-citation.miss.title": "Una respuesta de IA fundamentada para \"{topic}\" no cita a {host}",
+      "geo-citation.miss.evidence": "La revisión nombró {total} otros sitios, entre ellos {peers}, y dejó fuera a {host}.",
+      "geo-citation.miss.fix": "Publique páginas de entidad más claras, llms.txt y hechos rastreables sobre el tema para que los motores de respuesta puedan citar la marca.",
+>>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matriz de huecos de contenido: sin fusiones, redirecciones ni reescrituras entre páginas rastreables indexables",
       "seo-content-gap.pass.evidence": "Se clasificaron {n} páginas indexables; todas son keep.",
       "seo-content-gap.title": "La matriz de huecos recomienda {merge} fusiones, {redirect} redirecciones y {write} reescrituras",
