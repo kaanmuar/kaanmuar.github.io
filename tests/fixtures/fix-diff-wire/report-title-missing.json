@@ -1,0 +1,18 @@
+{
+  "id": "bbccddeeff00112233445566778899aa",
+  "status": "complete",
+  "host": "blog.example.com",
+  "finalUrl": "https://blog.example.com/",
+  "insights": {
+    "findings": [
+      {
+        "key": "seo-title-missing",
+        "area": "SEO",
+        "verdict": "fail",
+        "severity": "high",
+        "pages": ["/about", "/contact"]
+      }
+    ],
+    "fixkit": {}
+  }
+}

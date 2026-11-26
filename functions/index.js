@@ -2754,6 +2754,7 @@ async function mailBatchFinished(id, doc, meta) {
 }
 
 const urlReview = require('./url-review-core');
+const fixDiffWire = require('./url-review-fix-diff-wire');
 const softQuota = require('./url-review-soft-quota');
 const lookalikes = require('./url-review-lookalikes');
 const newsWire = require('./news-wire');
@@ -9516,6 +9517,13 @@ async function saveReviewThreats(record) {
 		await reviewThreats.recordThreats(getFirestore(), record);
 	} catch (error) {
 		console.error('Review threats update failed:', error);
+	}
+	try {
+		await fixDiffWire.enqueueFromRecord(getFirestore(), record, {
+			passive: !!(record.report && record.report.limits && record.report.limits.passive),
+		});
+	} catch (error) {
+		console.error('Fix-diff desk enqueue failed:', error);
 	}
 }
 
