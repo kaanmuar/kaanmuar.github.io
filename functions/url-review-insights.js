@@ -25,6 +25,7 @@ const waterfall = require('./url-review-har');
 const pageGraph = require('./url-review-page-graph');
 const cyberPassive = require('./url-review-cyber-passive');
 const trustGrade = require('./url-review-trust-grade');
+const contentGap = require('./url-review-content-gap');
 const outcomes = require('./url-review-outcomes');
 
 const BROWSER_READ_NOTE = english(say('warn.browserRead'));
@@ -2765,6 +2766,7 @@ function analyze(input) {
 			{ pages: thin.map((page) => page.path), effort: 'days' }
 		);
 	}
+	const contentGapReport = contentGap.findings(read, add, { indexablePaths });
 
 	// Sitemap compared with the crawl.
 	const sitemap = extras.sitemap || {};
@@ -5012,6 +5014,9 @@ function analyze(input) {
 		sitemap: sitemapReport,
 		duplicates: { titles: dupTitles.slice(0, 10), descriptions: dupDescriptions.slice(0, 10) },
 		schemaTypes: [...schemaTypes].slice(0, 20),
+		contentGap: contentGapReport
+			? { summary: contentGapReport.summary, rows: contentGapReport.rows.slice(0, 100) }
+			: null,
 	};
 	const findingState = (key) => (findings.find((item) => item.key === key) || {}).verdict || 'unknown';
 	const security = {
@@ -5168,6 +5173,7 @@ function analyze(input) {
 		axtree: axtreeReport,
 		waterfall: waterfallReport,
 		pageGraph: graphReport,
+		contentGap: contentGapReport,
 		graph: { nodes: nodes.slice(0, 120), edges: edges.filter((edge) => edge.s < 120 && edge.t < 120) },
 		fixkit: fixKit({
 			home,

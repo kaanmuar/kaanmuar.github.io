@@ -3,6 +3,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const gap = require('../../functions/url-review-content-gap');
+const insights = require('../../functions/url-review-insights');
 const { english } = require('../../functions/url-review-findings-en');
 
 const SITE = 'https://shop.example';
@@ -135,6 +136,23 @@ test('findings emits seo-content-gap info finding with actionable rows', () => {
 	assert.match(rows[0].title, /redirect/);
 	assert.match(rows[0].evidence, /\/orphan: redirect/);
 	assert.ok(rows[0].meta.pages.includes('/orphan'));
+});
+
+test('insights.analyze wires content-gap matrix and seo-content-gap finding', () => {
+	const orphan = page(
+		'/orphan',
+		'<html><head><title>Orphan</title></head><body><h1>O</h1> a b c</body></html>',
+		2
+	);
+	const report = insights.analyze({ pages: [HOME, orphan], robotsText: '' });
+	const finding = report.findings.find((item) => item.key === 'seo-content-gap');
+	assert.ok(finding);
+	assert.equal(finding.area, 'SEO');
+	assert.equal(finding.verdict, 'pass');
+	assert.match(finding.title, /redirect/);
+	assert.ok(report.contentGap && report.contentGap.summary);
+	assert.equal(report.seo.contentGap.summary.pages, report.contentGap.summary.pages);
+	assert.ok(report.contentGap.rows.some((row) => row.path === '/orphan' && row.action === 'redirect'));
 });
 
 test('findings pass row when every page is keep', () => {
