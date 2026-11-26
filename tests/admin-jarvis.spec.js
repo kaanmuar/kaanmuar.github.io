@@ -2910,11 +2910,13 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Dates ahead');
 		await expect(geo.locator('.jv-geo-scale')).toContainText('today');
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
+		// inDays: 0 → today, 1 → tomorrow, else "in N days" (Black Friday eve flakes "in \d+ days").
+		const inDaysRe = '(?:today|tomorrow|in \\d+ days)';
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute(
 			'aria-label',
-			new RegExp(brLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' in \\d+ days')
+			new RegExp(brLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ' + inDaysRe)
 		);
-		await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*in \d+ days/);
+		await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(new RegExp('Brazil.*' + inDaysRe));
 		const dates = geo.locator('[data-panel-id="geo-dates"]');
 		await expect(dates).toContainText('Upcoming dates');
 		await expect(dates).toContainText('Republic Day');
@@ -4631,7 +4633,10 @@ test.describe('admin statistics (Jarvis)', () => {
 			await expect(lines.first()).toContainText('mail retry failed');
 			await expect(lines.last()).toContainText('E2E and Visual Tests #881 failure');
 			await expect(lines.last()).toHaveClass(/lv-error/);
-			await expect(lines.first().locator('time')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
+			// Same Bogotá day → HH:MM:SS; just after Bogotá midnight a 1-minute-old stamp still shows "Mon D HH:MM:SS".
+			await expect(lines.first().locator('time')).toHaveText(
+				/^(?:\d{2}:\d{2}:\d{2}|[A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2})$/
+			);
 			expect(calls.filter((c) => c.op === 'log')[0].body).toMatchObject({ limit: 300 });
 			await expect(page.locator('.jv-con-fab')).toBeHidden();
 

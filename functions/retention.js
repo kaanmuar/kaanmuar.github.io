@@ -9,6 +9,7 @@
  *   engagement_posts  12 months after the latest of seenAt, decidedAt, postedAt, updatedAt.
  *   messages          24 months after createdAt (contact-form and CV messages).
  *   ratings           24 months after createdAt.
+ *   cv_leads          24 months after createdAt (email collected before CV download/export/share, #4356).
  *   bookings          24 months after the latest of createdAt, start and end (the call and its follow-up).
  *   url_review_fix_requests  unpaid: 12 months after the last change; paid: until January 1 of the sixth year
  *                     after the payment (same tax period as the payment record), unless taxHold is set.
@@ -88,6 +89,7 @@ const POLICY = [
 	{ collection: 'engagement_posts', months: 12, dates: (d) => [d.seenAt, d.decidedAt, d.postedAt, d.updatedAt] },
 	{ collection: 'messages', months: 24, dates: (d) => [d.createdAt] },
 	{ collection: 'ratings', months: 24, dates: (d) => [d.createdAt] },
+	{ collection: 'cv_leads', months: 24, dates: (d) => [d.createdAt] },
 	{ collection: 'bookings', months: 24, dates: (d) => [d.createdAt, d.start, d.end] },
 	{
 		collection: 'url_review_fix_requests',
