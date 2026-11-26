@@ -943,7 +943,7 @@ function boot() {
 				profilePhoto: document.getElementById('profile-photo'),
 				imageModal: document.getElementById('image-modal'),
 				modalImage: document.getElementById('modal-image'),
-				modalClose: document.querySelector('.modal-close'),
+				modalClose: document.getElementById('image-modal-close'),
 				filterStatus: document.getElementById('filter-status'),
 				themeToggle: document.getElementById('theme-toggle'),
 				mainContent: document.querySelector('.main-content'),
@@ -2588,7 +2588,7 @@ function boot() {
 					this._toggleTheme();
 					break;
 			}
-			if (button.classList.contains('modal-close')) {
+			if (button.id === 'image-modal-close' || button.classList.contains('modal-close')) {
 				this._closeModal();
 			}
 		},

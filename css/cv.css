@@ -461,7 +461,7 @@
         .modal-content { background: var(--bg-secondary); padding: 10px; border-radius: 12px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-content img { max-width: 80vw; max-height: 80vh; border-radius: 8px; }
-        .modal-close { position: absolute; top: -15px; right: -15px; background: white; color: #333; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc; }
+        .modal-close, .cv-lead-gate-close { position: absolute; top: -15px; right: -15px; background: white; color: #333; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; line-height: 1; border: 1px solid #ccc; }
         .cv-lead-gate-panel { width: min(92vw, 420px); padding: 1.5rem 1.35rem 1.25rem; box-shadow: 0 24px 48px -28px rgba(18, 24, 31, 0.55); }
         .cv-lead-gate-panel h2 { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: 1.35rem; color: var(--text-primary); }
         .cv-lead-gate-lead { margin: 0 0 1rem; font-size: 0.92rem; line-height: 1.45; color: var(--text-secondary); }
