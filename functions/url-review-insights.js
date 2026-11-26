@@ -16,6 +16,7 @@ const hackSigns = require('./url-review-hack-signs');
 const targeted = require('./url-review-targeted');
 const geoAgent = require('./url-review-geo-agent');
 const carbonModel = require('./url-review-carbon');
+const gscOutcomes = require('./url-review-gsc-outcomes');
 const headOrder = require('./url-review-head-order');
 const linkText = require('./url-review-link-text');
 const focusOrder = require('./url-review-focus-order');
@@ -4856,6 +4857,8 @@ function analyze(input) {
 		? carbonEstimate(pageBytes, 'browser')
 		: carbonEstimate(input.pagespeed && input.pagespeed.bytes, 'lighthouse');
 	carbonModel.findings(carbon, add);
+	// Opt-in customer Search Console decay + cannibalization (#4361, #4362).
+	gscOutcomes.findings(extras.gsc || input.gsc || null, add);
 	const headReport = headOrder.findings(face.headOrder, add);
 	linkText.findings(face.linkText, add);
 	// Static keyboard-order smells in the start page's HTML (#3831); no browser needed.
