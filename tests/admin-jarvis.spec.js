@@ -2910,11 +2910,13 @@ test.describe('admin statistics (Jarvis)', () => {
 		await expect(geo.locator('[data-panel-id="geo-map"] header')).toContainText('Dates ahead');
 		await expect(geo.locator('.jv-geo-scale')).toContainText('today');
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute('fill', /^rgba/);
+		// inDays: 0 → today, 1 → tomorrow, else "in N days" (Black Friday eve flakes "in \d+ days").
+		const inDaysRe = '(?:today|tomorrow|in \\d+ days)';
 		await expect(geo.locator('path[data-geo-cc="BR"]')).toHaveAttribute(
 			'aria-label',
-			new RegExp(brLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' in \\d+ days')
+			new RegExp(brLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ' + inDaysRe)
 		);
-		await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(/Brazil.*in \d+ days/);
+		await expect(geo.locator('[data-panel-id="geo-ranking"]')).toContainText(new RegExp('Brazil.*' + inDaysRe));
 		const dates = geo.locator('[data-panel-id="geo-dates"]');
 		await expect(dates).toContainText('Upcoming dates');
 		await expect(dates).toContainText('Republic Day');
