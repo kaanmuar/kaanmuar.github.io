@@ -1,6 +1,53 @@
 {
  "runs": [
   {
+   "at": "2026-11-26T17:02:28.761Z",
+   "run": {
+    "id": 45854245650,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/45854245650"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2831,
+   "scored": 2812,
+   "failed": 19,
+   "below": 972,
+   "avg": {
+    "mobile": 90,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "4 fixes were dropped: the pages are generated, and their builder (scripts/regen-generated.sh) wrote them again. Those fixes belong in the builder.",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-25T17:28:34.294Z",
    "run": {
     "id": 45653425142,
