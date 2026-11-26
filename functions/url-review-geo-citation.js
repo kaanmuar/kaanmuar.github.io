@@ -14,10 +14,12 @@ function brandKey(host) {
 }
 
 function clipUrl(url) {
-	return String(url || '')
-		.replace(/#.*$/, '')
-		.replace(/\?$/, '')
-		.replace(/\/$/, '');
+	let out = String(url || '');
+	const hash = out.indexOf('#');
+	if (hash !== -1) out = out.slice(0, hash);
+	if (out.endsWith('?')) out = out.slice(0, -1);
+	if (out.endsWith('/') && out.length > 1) out = out.slice(0, -1);
+	return out;
 }
 
 function normalizeCitationItem(raw) {
