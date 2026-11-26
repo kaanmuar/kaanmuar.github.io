@@ -2,7 +2,12 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { diffSnapshots, AREAS } = require('../../functions/url-review-watch-delta');
+const {
+	diffSnapshots,
+	AREAS,
+	formatDeltaMarkdown,
+	formatDeltaText,
+} = require('../../functions/url-review-watch-delta');
 
 test('diffSnapshots reads compact live-report snapshots (#4366)', () => {
 	const a = { overall: 62, areas: { SEO: 75, GEO: 88, Security: 46 } };
@@ -57,4 +62,22 @@ test('diffSnapshots keeps canonical area keys when only one side has a score (#4
 test('diffSnapshots returns null overall delta when a side is missing (#4366)', () => {
 	assert.equal(diffSnapshots({ overall: 60 }, {}).overall, null);
 	assert.equal(diffSnapshots({}, { overall: 60 }).before, null);
+});
+
+test('formatDeltaMarkdown renders overall and area movement (#4380)', () => {
+	const diff = diffSnapshots(
+		{ overall: 62, areas: { SEO: 75, Security: 46 } },
+		{ overall: 64, areas: { SEO: 62, Security: 53 } }
+	);
+	const md = formatDeltaMarkdown(diff);
+	assert.match(md, /Overall:\*\* 62 → 64 \(\+2\)/);
+	assert.match(md, /SEO:\*\* 75 → 62 \(-13\)/);
+	assert.match(md, /Security:\*\* 46 → 53 \(\+7\)/);
+	const text = formatDeltaText(diff);
+	assert.match(text, /Overall: 62 → 64/);
+	assert.doesNotMatch(text, /\*\*/);
+});
+
+test('formatDeltaMarkdown returns empty when diff is missing (#4380)', () => {
+	assert.equal(formatDeltaMarkdown(null), '');
 });

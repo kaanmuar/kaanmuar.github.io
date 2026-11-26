@@ -79,4 +79,40 @@ function diffSnapshots(a, b) {
 	};
 }
 
-module.exports = { diffSnapshots, AREAS };
+function signDelta(value) {
+	if (value == null) return '';
+	return (value > 0 ? '+' : '') + value;
+}
+
+function dash(value) {
+	return value == null ? '—' : String(value);
+}
+
+/** Markdown bullets for mail text / handoff previews (#4380). */
+function formatDeltaMarkdown(diff, options) {
+	const opts = options || {};
+	if (!diff) return '';
+	const title = opts.title || 'Since last watch';
+	const lines = ['### ' + title];
+	if (diff.before != null || diff.now != null) {
+		const move = diff.overall != null ? ' (' + signDelta(diff.overall) + ')' : '';
+		lines.push('- **Overall:** ' + dash(diff.before) + ' → ' + dash(diff.now) + move);
+	}
+	const order = opts.areas || AREAS;
+	order.forEach((name) => {
+		const row = (diff.areas || {})[name];
+		if (!row) return;
+		const move = row.delta != null ? ' (' + signDelta(row.delta) + ')' : '';
+		lines.push('- **' + name + ':** ' + dash(row.before) + ' → ' + dash(row.now) + move);
+	});
+	return lines.length > 1 ? lines.join('\n') : '';
+}
+
+/** Plain lines for reportMail text part (#4380). */
+function formatDeltaText(diff, options) {
+	const md = formatDeltaMarkdown(diff, options);
+	if (!md) return '';
+	return md.replace(/^### .+\n/, '').replace(/\*\*/g, '');
+}
+
+module.exports = { diffSnapshots, AREAS, formatDeltaMarkdown, formatDeltaText, signDelta };
