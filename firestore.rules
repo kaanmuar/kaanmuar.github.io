@@ -57,7 +57,7 @@ service cloud.firestore {
     match /site_events/{id} {
       allow get, list: if isOwner();
       allow update, delete: if false;
-      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'query', 'screen', 'page', 'title', 'timezone', 'languages', 'createdAt'])
+      allow create: if only(['site', 'kind', 'name', 'label', 'lang', 'referrerHost', 'query', 'screen', 'page', 'title', 'timezone', 'languages', 'email', 'createdAt'])
         && request.resource.data.site in ['cv', 'studio', 'lab', 'review']
         && (
           (request.resource.data.kind == 'visit' && request.resource.data.name in ['visit', 'sim_loaded'])
@@ -105,7 +105,19 @@ service cloud.firestore {
         && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 120))
         && (!('timezone' in request.resource.data) || (request.resource.data.timezone is string && request.resource.data.timezone.size() <= 60))
         && (!('languages' in request.resource.data) || (request.resource.data.languages is string && request.resource.data.languages.size() <= 80))
+        && (!('email' in request.resource.data) || (request.resource.data.email is string && request.resource.data.email.size() <= 120 && request.resource.data.email.matches('(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$')))
         && request.resource.data.createdAt == request.time;
+    }
+
+    // Written only by noteCvLead / Cloud Functions (#4356).
+    match /cv_leads/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
+    }
+
+    match /cv_lead_pings/{id} {
+      allow get, list: if isOwner();
+      allow create, update, delete: if false;
     }
 
     match /site_reports/{id} {

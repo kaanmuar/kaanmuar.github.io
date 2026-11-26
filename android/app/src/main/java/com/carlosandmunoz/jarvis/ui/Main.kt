@@ -809,7 +809,9 @@ private fun withCountdown(actions: JsonObject?, hours: Double): JsonObject =
 // The owner emails Jarvis also pushes (#1672), as in Admin › Statistics › Settings.
 private val MAIL_LABELS = linkedMapOf(
     "digest" to "Evening digest email (20:00)", "daily" to "Daily briefing email (07:40)", "gemini" to "Gemini summary in the daily email", "watch" to "Alert email",
-    "messages" to "New CV messages", "ratings" to "New CV feedback", "siteDaily" to "Daily CV site report", "siteQuarter" to "Quarter-hour CV site report",
+    "messages" to "New CV messages", "ratings" to "New CV feedback", "siteDaily" to "Daily CV site report", "siteQuarter" to "Hourly CV site report",
+    "cvLeadInstant" to "Instant CV download / export / share", "cvLeadsDaily" to "Daily CV downloads report",
+    "cvLeadsWeekly" to "Weekly CV downloads report", "cvLeadsMonthly" to "Monthly CV downloads report",
     "reviewDaily" to "Daily URL review report", "reviewQuarter" to "Quarter-hour URL review report", "reruns" to "Held URL review re-runs",
     "reviewOpened" to "URL Review was opened", "comparisons" to "Comparison saved", "reviewEvents" to "URL review events (refunds and disputes always email)",
     "ops" to "Ops: jobs missed or failed", "ownerReplies" to "Owner replies", "ownerRemind" to "Owner replies still waiting"

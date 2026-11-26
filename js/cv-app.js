@@ -48,7 +48,11 @@ function firebase() {
 
 // Test browsers load the CV all day; their Firestore reads alone ran past the free quota, so they get the CV from the file.
 // Cypress's default Electron browser leaves navigator.webdriver false.
-const AUTOMATED = navigator.webdriver === true || /HeadlessChrome|Cypress|Electron\//.test(navigator.userAgent);
+const AUTOMATED =
+	navigator.webdriver === true ||
+	/Chrome-Lighthouse|Lighthouse|HeadlessChrome|Cypress|Electron\/|PhantomJS|Puppeteer|Playwright/i.test(
+		navigator.userAgent
+	);
 
 // Cloudflare's always-pass test key on local hosts; the live widget only accepts carlosandmunoz.com.
 const TURNSTILE_SITEKEY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
@@ -2873,8 +2877,141 @@ function boot() {
 			};
 			if (!Object.prototype.hasOwnProperty.call(runs, kind)) return;
 			const run = runs[kind];
-			this._trackEvent('export_cv', 'Export', 'link:' + kind);
-			run();
+			this._withLeadEmail('download', 'link:' + kind, () => {
+				this._trackEvent('export_cv', 'Export', 'link:' + kind);
+				run();
+			});
+		},
+
+		_leadGateBypass() {
+			if (AUTOMATED) return true;
+			try {
+				return new URLSearchParams(window.location.search).get('cvpreview') === '1';
+			} catch (e) {
+				return false;
+			}
+		},
+
+		_withLeadEmail(action, label, next) {
+			if (typeof next !== 'function') return;
+			if (this._leadGateBypass()) {
+				next();
+				return;
+			}
+			let stored = '';
+			try {
+				stored = sessionStorage.getItem('cv-lead-email') || '';
+			} catch (e) {}
+			const check = window.CvLeadEmail && CvLeadEmail.isAcceptableLeadEmail(stored);
+			if (check && check.ok) {
+				this._commitLead(check.email, action, label).finally(() => next());
+				return;
+			}
+			this._openLeadGate(action, label, next);
+		},
+
+		_openLeadGate(action, label, next) {
+			const gate = document.getElementById('cv-lead-gate');
+			const input = document.getElementById('cv-lead-email');
+			const err = document.getElementById('cv-lead-gate-error');
+			if (!gate || !input) {
+				next();
+				return;
+			}
+			this._leadGatePending = { action, label, next };
+			if (err) {
+				err.hidden = true;
+				err.textContent = '';
+			}
+			gate.classList.add('visible');
+			gate.setAttribute('aria-hidden', 'false');
+			setTimeout(() => input.focus(), 40);
+		},
+
+		_closeLeadGate() {
+			const gate = document.getElementById('cv-lead-gate');
+			if (!gate) return;
+			gate.classList.remove('visible');
+			gate.setAttribute('aria-hidden', 'true');
+			this._leadGatePending = null;
+		},
+
+		_commitLead(email, action, label) {
+			try {
+				sessionStorage.setItem('cv-lead-email', email);
+			} catch (e) {}
+			if (window.SiteAnalytics && SiteAnalytics.setLeadEmail) SiteAnalytics.setLeadEmail(email);
+			let referrerHost = '';
+			try {
+				referrerHost = document.referrer ? new URL(document.referrer).host : '';
+			} catch (e) {}
+			const payload = {
+				email: email,
+				action: action === 'share' ? 'share' : action === 'download' ? 'download' : 'export',
+				name: action === 'share' ? 'share_cv' : 'export_cv',
+				label: String(label || '').slice(0, 80),
+				lang: String(document.documentElement.lang || 'en').slice(0, 12),
+				page: ((window.location.pathname || '').split('/').pop() || 'index.html').slice(0, 80),
+				title: String(document.title || '').slice(0, 120),
+				referrerHost: referrerHost.slice(0, 80),
+				screen: (window.innerWidth || 0) < 768 ? 'phone' : 'desktop',
+				timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 60),
+				languages: (navigator.languages || []).slice(0, 6).join(',').slice(0, 80),
+			};
+			return fetch('https://us-central1-carlosm-interactive-cv.cloudfunctions.net/noteCvLead', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'omit',
+				keepalive: true,
+				body: JSON.stringify(payload),
+			}).catch(() => {});
+		},
+
+		_setupLeadGate() {
+			const form = document.getElementById('cv-lead-gate-form');
+			const close = document.getElementById('cv-lead-gate-close');
+			const gate = document.getElementById('cv-lead-gate');
+			if (close)
+				close.addEventListener('click', () => {
+					this._closeLeadGate();
+				});
+			if (gate)
+				gate.addEventListener('click', (event) => {
+					if (event.target === gate) this._closeLeadGate();
+				});
+			if (!form) return;
+			form.addEventListener('submit', (event) => {
+				event.preventDefault();
+				const input = document.getElementById('cv-lead-email');
+				const err = document.getElementById('cv-lead-gate-error');
+				const raw = input ? input.value : '';
+				const check = window.CvLeadEmail
+					? CvLeadEmail.isAcceptableLeadEmail(raw)
+					: {
+							ok: /^\S+@\S+\.\S+$/.test(String(raw || '').trim()),
+							email: String(raw || '')
+								.trim()
+								.toLowerCase(),
+						};
+				if (!check.ok) {
+					if (err) {
+						err.hidden = false;
+						err.textContent =
+							(this._t() && (this._t().cv_lead_error_junk || this._t().error_email)) || 'Enter a real email address.';
+					}
+					if (input) input.focus();
+					return;
+				}
+				const pending = this._leadGatePending;
+				this._closeLeadGate();
+				this._commitLead(
+					check.email,
+					(pending && pending.action) || 'export',
+					(pending && pending.label) || ''
+				).finally(() => {
+					if (pending && typeof pending.next === 'function') pending.next();
+				});
+			});
 		},
 
 		async _bootLanguage() {
@@ -3729,7 +3866,17 @@ function boot() {
 						element.href = net.url;
 						element.target = '_blank';
 						element.rel = 'noopener noreferrer';
-						element.addEventListener('click', () => this._trackEvent('share_cv', 'Share', net.name));
+						element.addEventListener('click', (event) => {
+							if (this._leadGateBypass()) {
+								this._trackEvent('share_cv', 'Share', net.name);
+								return;
+							}
+							event.preventDefault();
+							this._withLeadEmail('share', net.name, () => {
+								this._trackEvent('share_cv', 'Share', net.name);
+								window.open(net.url, '_blank', 'noopener,noreferrer');
+							});
+						});
 					} else {
 						element.id = isMobile ? 'copy-link-btn-mobile' : 'copy-link-btn-desktop';
 						if (!isMobile) {
@@ -3752,13 +3899,15 @@ function boot() {
 				if (!textElement) return;
 				copyBtn.addEventListener('click', (e) => {
 					e.preventDefault();
-					this._trackEvent('share_cv', 'Share', 'Copy Link');
-					navigator.clipboard.writeText(window.location.href.split('?')[0]).then(() => {
-						const originalText = textElement.textContent;
-						textElement.textContent = translations.copied || 'Copied!';
-						setTimeout(() => {
-							textElement.textContent = originalText;
-						}, 2000);
+					this._withLeadEmail('share', 'Copy Link', () => {
+						this._trackEvent('share_cv', 'Share', 'Copy Link');
+						navigator.clipboard.writeText(window.location.href.split('?')[0]).then(() => {
+							const originalText = textElement.textContent;
+							textElement.textContent = translations.copied || 'Copied!';
+							setTimeout(() => {
+								textElement.textContent = originalText;
+							}, 2000);
+						});
 					});
 				});
 			};
@@ -3834,8 +3983,10 @@ function boot() {
 					const buttonText = opt.label || translations[opt.nameKey] || opt.nameKey;
 					button.innerHTML = `<div class="w-5 h-5 export-icon-${opt.nameKey}">${opt.icon}</div><span class="text-sm">${buttonText}</span>`;
 					button.addEventListener('click', () => {
-						opt.handler();
-						this._trackEvent('export_cv', 'Export', opt.nameKey || opt.name);
+						this._withLeadEmail('export', opt.nameKey || opt.name || opt.label || 'export', () => {
+							opt.handler();
+							this._trackEvent('export_cv', 'Export', opt.nameKey || opt.name);
+						});
 					});
 					container.appendChild(button);
 				});
@@ -5116,6 +5267,7 @@ function boot() {
 			this._initScrollAnimations();
 			this._initUrlHighlighting();
 			this._initContactWidget();
+			this._setupLeadGate();
 			this._initScrollTrigger();
 			this._noteCvAccess();
 
