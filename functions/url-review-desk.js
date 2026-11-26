@@ -6,6 +6,7 @@ const publish = require('./url-review-publish');
 const fixOffers = require('./url-review-fix-offers');
 const reviewPromise = require('./url-review-promise');
 const threats = require('./url-review-threats');
+const fixDiffDesk = require('./url-review-fix-diff-desk');
 const jarvisCore = require('./jarvis-core');
 const resilience = require('./http-resilience');
 
@@ -474,6 +475,10 @@ const STYLE = `
     .fix-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
     .fix-edit input { min-width: 0; width: 120px; }
     .fix-edit input[type="url"] { width: min(320px, 100%); }
+    .fix-diff-st { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #e3f5f6; color: var(--teal); font: bold 12px Arial, sans-serif; }
+    .fix-diff-st[data-status="pending"] { background: #fff1d6; color: #7a4d00; }
+    .fix-diff-st[data-status="rejected"] { background: #fde2e2; color: #8c1d1d; }
+    pre.log { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1418; color: #d6ecef; padding: 10px 12px; border-radius: 8px; }
     .threat-lvl { display: inline-block; padding: 2px 8px; border-radius: 999px; font: bold 11px Arial, sans-serif; text-transform: uppercase; letter-spacing: .04em; background: #e3f5f6; color: var(--teal); }
     .threat-lvl[data-level="critical"] { background: #fde2e2; color: #8c1d1d; }
     .threat-lvl[data-level="high"] { background: #ffe8d6; color: #8a3c00; }
@@ -789,6 +794,29 @@ const PAGE = `<!DOCTYPE html>
       <p class="empty">Clients who asked from their report for us to fix what it found: a fixed-price package or a quote. Set the status as the work moves. Saving a quoted request with a price or a pay link mails the client the quote in their language, once per price or link. A package paid through checkout turns accepted by itself. Setting a request to done runs the free re-review of the same address and mails the client the before/after.</p>
       <div id="fix-requests"></div>
     </section>
+    <section id="fix-diff-block">
+      <h2>Surgical fix packs</h2>
+      <p class="empty">Git diffs and CMS draft payloads queued from outcome fix packs (#4364). Preview only — Approve or Reject records your decision; nothing is merged or published automatically.</p>
+      <div class="stats" id="fix-diff-stats"></div>
+      <div class="tools">
+        <select id="fix-diff-status" aria-label="Fix pack status">
+          <option value="">Every status</option>
+        </select>
+        <select id="fix-diff-kind" aria-label="Fix pack kind">
+          <option value="">Every kind</option>
+        </select>
+        <input id="fix-diff-q" type="search" placeholder="Host, finding, report, or path" aria-label="Filter fix packs">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>When</th><th>Status</th><th>Kind</th><th>Host</th><th>Finding</th><th>Report</th><th>Target</th></tr>
+          </thead>
+          <tbody id="fix-diff-rows"></tbody>
+        </table>
+      </div>
+      <div class="detail" id="fix-diff-detail" hidden></div>
+    </section>
     <section>
       <h2>Free runs</h2>
       <p class="empty">An address on this list runs as many reviews as it likes, at any size, with the full report open. Nothing is charged.</p>
@@ -943,6 +971,12 @@ const PAGE = `<!DOCTYPE html>
     const rerunsEl = document.getElementById("reruns");
     const noticesEl = document.getElementById("owner-notices");
     const fixesEl = document.getElementById("fix-requests");
+    const fixDiffStatsEl = document.getElementById("fix-diff-stats");
+    const fixDiffRowsEl = document.getElementById("fix-diff-rows");
+    const fixDiffDetailEl = document.getElementById("fix-diff-detail");
+    const fixDiffStatusEl = document.getElementById("fix-diff-status");
+    const fixDiffKindEl = document.getElementById("fix-diff-kind");
+    const fixDiffQEl = document.getElementById("fix-diff-q");
     const threatStatsEl = document.getElementById("threat-stats");
     const threatRowsEl = document.getElementById("threat-rows");
     const threatDetailEl = document.getElementById("threat-detail");
@@ -971,10 +1005,15 @@ const PAGE = `<!DOCTYPE html>
     const PROMISE_STATES = ${JSON.stringify(reviewPromise.STATE_LABELS)};
     const THREAT_KINDS = ${JSON.stringify(threats.KINDS)};
     const THREAT_DELIST = ${JSON.stringify(threats.DELIST_STATUSES)};
+    const FIX_DIFF_STATUSES = ${JSON.stringify(fixDiffDesk.STATUSES)};
+    const FIX_DIFF_KINDS = ${JSON.stringify(fixDiffDesk.KINDS)};
     let fixesShown = "";
     let threatsData = { summary: {}, items: [] };
     let selectedThreat = "";
     let lastThreatsAt = 0;
+    let fixDiffData = { summary: { total: 0, byStatus: {} }, items: [] };
+    let selectedFixDiff = "";
+    let lastFixDiffAt = 0;
     let mapMode = "global";
     let mapWorld = null;
     let mapGlobalData = null;
@@ -984,6 +1023,12 @@ const PAGE = `<!DOCTYPE html>
     THREAT_KINDS.forEach((kind) => {
       threatKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
       mapKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
+    });
+    FIX_DIFF_STATUSES.forEach((status) => {
+      fixDiffStatusEl.appendChild(Object.assign(document.createElement("option"), { value: status, textContent: status }));
+    });
+    FIX_DIFF_KINDS.forEach((kind) => {
+      fixDiffKindEl.appendChild(Object.assign(document.createElement("option"), { value: kind, textContent: kind }));
     });
     const freeEmailEl = document.getElementById("free-email");
     const freeNoteEl = document.getElementById("free-note");
@@ -1531,6 +1576,7 @@ const PAGE = `<!DOCTYPE html>
       data = body;
       render();
       if (!lastThreatsAt || Date.now() - lastThreatsAt > 30000) loadThreats();
+      if (!lastFixDiffAt || Date.now() - lastFixDiffAt > 30000) loadFixDiffPacks();
       if (!lastMapAt || Date.now() - lastMapAt > 60000) loadDeskMaps();
     }
 
@@ -1655,6 +1701,137 @@ const PAGE = `<!DOCTYPE html>
         loadThreats();
       });
       threatDetailEl.appendChild(form);
+    }
+
+    function fixDiffTarget(item) {
+      if (item.kind === "cms") return item.title || "—";
+      return item.path || "—";
+    }
+
+    function renderFixDiffPacks() {
+      const sum = fixDiffData.summary || {};
+      const by = (sum.byStatus || {});
+      const chips = [
+        ["Total", sum.total || 0],
+        ["Pending", by.pending || 0],
+        ["Approved", by.approved || 0],
+        ["Rejected", by.rejected || 0]
+      ];
+      fixDiffStatsEl.replaceChildren();
+      chips.forEach((chip) => {
+        const el = document.createElement("span");
+        el.className = "stat";
+        el.appendChild(node("b", chip[1] + " "));
+        el.appendChild(document.createTextNode(chip[0]));
+        fixDiffStatsEl.appendChild(el);
+      });
+      const q = fixDiffQEl.value.trim().toLowerCase();
+      const st = fixDiffStatusEl.value;
+      const kind = fixDiffKindEl.value;
+      const list = (fixDiffData.items || []).filter((item) => {
+        if (st && item.status !== st) return false;
+        if (kind && item.kind !== kind) return false;
+        if (!q) return true;
+        return [item.host, item.findingId, item.reportId, item.path, item.title, item.id].join(" ").toLowerCase().indexOf(q) !== -1;
+      });
+      fixDiffRowsEl.replaceChildren();
+      list.slice(0, 80).forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("aria-selected", item.id === selectedFixDiff ? "true" : "false");
+        tr.appendChild(node("td", when(item.createdAt)));
+        const stTd = document.createElement("td");
+        const badge = node("span", item.status);
+        badge.className = "fix-diff-st";
+        badge.dataset.status = item.status;
+        stTd.appendChild(badge);
+        tr.appendChild(stTd);
+        [item.kind, item.host, item.findingId, item.reportId, fixDiffTarget(item)].forEach((val) => {
+          tr.appendChild(node("td", text(val)));
+        });
+        tr.addEventListener("click", () => { selectedFixDiff = item.id; renderFixDiffPacks(); });
+        fixDiffRowsEl.appendChild(tr);
+      });
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        const td = node("td", "No fix pack matches.");
+        td.colSpan = 7;
+        tr.appendChild(td);
+        fixDiffRowsEl.appendChild(tr);
+      }
+      if (fixDiffDetailEl.contains(document.activeElement)) return;
+      const picked = (fixDiffData.items || []).find((item) => item.id === selectedFixDiff);
+      if (!picked) { fixDiffDetailEl.hidden = true; fixDiffDetailEl.replaceChildren(); return; }
+      fixDiffDetailEl.hidden = false;
+      fixDiffDetailEl.replaceChildren();
+      const dl = document.createElement("dl");
+      [
+        ["ID", picked.id],
+        ["Status", picked.status],
+        ["Kind", picked.kind],
+        ["Finding", picked.findingId],
+        ["Host", picked.host],
+        ["Report", picked.reportId],
+        ["Path", picked.path],
+        ["Title", picked.title],
+        ["Queued", when(picked.createdAt)],
+        ["Decided", picked.decidedAt ? when(picked.decidedAt) + " by " + picked.decidedBy : "—"],
+        ["Note", picked.note]
+      ].forEach(([k, v]) => line(dl, k, v));
+      fixDiffDetailEl.appendChild(dl);
+      if (picked.kind === "git" && picked.patch) {
+        fixDiffDetailEl.appendChild(node("h2", "Patch preview"));
+        fixDiffDetailEl.appendChild(Object.assign(node("pre", picked.patch), { className: "log" }));
+      }
+      if (picked.kind === "cms" && picked.cmsPayload) {
+        fixDiffDetailEl.appendChild(node("h2", "CMS draft preview"));
+        fixDiffDetailEl.appendChild(Object.assign(node("pre", JSON.stringify(picked.cmsPayload, null, 2)), { className: "log" }));
+      }
+      if (picked.reportId) {
+        const open = document.createElement("a");
+        open.href = "https://carlosandmunoz.com/qa-review.html?report=" + encodeURIComponent(picked.reportId);
+        open.target = "_blank";
+        open.rel = "noopener";
+        open.textContent = "Open the report";
+        fixDiffDetailEl.appendChild(open);
+      }
+      if (picked.status === "pending") {
+        const form = document.createElement("form");
+        form.className = "fix-edit";
+        const noteIn = Object.assign(document.createElement("input"), { type: "text", placeholder: "Operator note (optional)", value: picked.note || "" });
+        noteIn.setAttribute("aria-label", "Operator note");
+        noteIn.style.width = "min(320px, 100%)";
+        const approveBtn = Object.assign(document.createElement("button"), { type: "button", textContent: "Approve" });
+        const rejectBtn = Object.assign(document.createElement("button"), { type: "button", textContent: "Reject", className: "quiet" });
+        const msg = Object.assign(document.createElement("span"), { className: "meta" });
+        approveBtn.addEventListener("click", () => decideFixDiff(picked.id, "approve", noteIn.value.trim(), approveBtn, msg));
+        rejectBtn.addEventListener("click", () => decideFixDiff(picked.id, "reject", noteIn.value.trim(), rejectBtn, msg));
+        [noteIn, approveBtn, rejectBtn, msg].forEach((el) => form.appendChild(el));
+        fixDiffDetailEl.appendChild(form);
+      }
+    }
+
+    async function decideFixDiff(id, decision, note, button, said) {
+      button.disabled = true;
+      said.textContent = "";
+      const res = await fetch(deskBase() + "/desk/fix-diff", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ id: id, decision: decision, note: note })
+      });
+      button.disabled = false;
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { said.textContent = out.error || "Could not save."; return; }
+      said.textContent = decision === "approve" ? "Approved (not published)" : "Rejected";
+      loadFixDiffPacks();
+    }
+
+    async function loadFixDiffPacks() {
+      const body = await deskFetch("/desk/fix-diff/data");
+      if (!body) return;
+      lastFixDiffAt = Date.now();
+      fixDiffData = body;
+      renderFixDiffPacks();
     }
 
     async function loadThreats() {
@@ -1961,6 +2138,9 @@ ${SIGN_IN}
     threatLevelEl.addEventListener("change", renderThreats);
     threatKindEl.addEventListener("change", renderThreats);
     threatDelistEl.addEventListener("change", renderThreats);
+    fixDiffQEl.addEventListener("input", renderFixDiffPacks);
+    fixDiffStatusEl.addEventListener("change", renderFixDiffPacks);
+    fixDiffKindEl.addEventListener("change", renderFixDiffPacks);
     mapTabGlobalBtn.addEventListener("click", () => { mapMode = "global"; mapSelectedCc = ""; renderDeskMap(); });
     mapTabOursBtn.addEventListener("click", () => { mapMode = "ours"; mapSelectedCc = ""; renderDeskMap(); });
     mapRangeEl.addEventListener("change", loadDeskMaps);
