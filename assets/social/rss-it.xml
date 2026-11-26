@@ -5,9 +5,185 @@
     <link>https://carlosandmunoz.com/qa-review-social-it.html</link>
     <description>Ogni post di QA-lab URL Review: consigli, revisioni reali di siti e clip brevi.</description>
     <language>it</language>
-    <lastBuildDate>Wed, 25 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 26 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-it.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-it.html</link></image>
+    <item>
+      <title>aeurus.cl: 47. La lacuna: le label dei form.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/08-u-aeurus-cl-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/08-u-aeurus-cl-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni pagina ha un titolo, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 110 controlli dei form non hanno label.
+
+Conclusione: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Consulta il report completo: https://carlosandmunoz.com/qa-review.html?live=u-aeurus-cl
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/08-u-aeurus-cl.jpg" length="225129" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/08-u-aeurus-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alexshop.me: 64. La lacuna: le label dei form.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/07-u-alexshop-me-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/07-u-alexshop-me-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 17 controlli dei form non hanno label.
+
+Lezione: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un'analisi automatizzata delle pagine pubbliche il 19 novembre 2026, richiesta tramite QA-lab URL Review. Uno snapshot di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-alexshop-me
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #AI #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/07-u-alexshop-me.jpg" length="236926" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/07-u-alexshop-me.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>altoga.com: 67. La lacuna: il contrasto del testo.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/29-u-altoga-com-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/29-u-altoga-com-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.
+
+Applica questo: Mantieni il testo con un rapporto di contrasto di almeno 4.5:1 rispetto allo sfondo.
+
+Un'analisi automatizzata delle pagine pubbliche il 19 novembre 2026, richiesta tramite QA-lab URL Review. Una linea di base, non un verdetto.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-altoga-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/29-u-altoga-com.jpg" length="231604" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/29-u-altoga-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>amforaproperty.com: 63. La lacuna: le label dei form.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/35-u-amforaproperty-com-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/35-u-amforaproperty-com-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 194 controlli dei form non hanno label.
+
+Porta avanti questo: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
+
+Un'analisi automatizzata delle pagine pubbliche il 19 novembre 2026, richiesta tramite QA-lab URL Review. Un’analisi iniziale, non una decisione finale.
+Rapporto completo: https://carlosandmunoz.com/qa-review.html?live=u-amforaproperty-com
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/35-u-amforaproperty-com.jpg" length="244496" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/35-u-amforaproperty-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>artisan-plombier.paris: 63. La lacuna: il contrasto del testo.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/06-u-artisan-plombier-paris-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/06-u-artisan-plombier-paris-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.
+
+Lezione: Mantieni il testo con un rapporto di contrasto di almeno 4.5:1 rispetto allo sfondo.
+
+Un'analisi automatizzata delle pagine pubbliche il 20 novembre 2026, richiesta tramite QA-lab URL Review. Un’analisi iniziale, non una decisione finale.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-artisan-plombier-paris
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/06-u-artisan-plombier-paris.jpg" length="244830" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/06-u-artisan-plombier-paris.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>baltensperger.ch: 72. La lacuna: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/05-u-baltensperger-ch-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/05-u-baltensperger-ch-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma HSTS non viene inviato.
+
+La lezione per ogni team: Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano mai su http in chiaro.
+
+Un'analisi automatizzata delle pagine pubbliche il 21 novembre 2026, richiesta tramite QA-lab URL Review. Uno snapshot di partenza, non un verdetto.
+Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-baltensperger-ch
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/05-u-baltensperger-ch.jpg" length="234027" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/05-u-baltensperger-ch.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bigbuda.cl: 85. La lacuna: i nomi dei link.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/04-u-bigbuda-cl-it.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/04-u-bigbuda-cl-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Requested</category>
+      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma i link devono avere un testo riconoscibile.
+
+Applica questo: Dai a ogni link un testo che dica dove porta. Un’icona da sola ha bisogno di un aria-label.
+
+Un'analisi automatizzata delle pagine pubbliche il 22 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
+Apri il report completo: https://carlosandmunoz.com/qa-review.html?live=u-bigbuda-cl
+
+Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #Programming #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/04-u-bigbuda-cl.jpg" length="232668" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/04-u-bigbuda-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>La home di IKEA pesa 1.9 MB di HTML.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/32-ikea-it.html</link>
+      <guid isPermaLink="false">runs-100/32-ikea-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Worldwide</category>
+      <description>security.txt, HSTS, nosniff, una sitemap e robots.txt aperto ai crawler di risposta AI nella root. Ma tutte le 19 pagine analizzate inviano più di 500 KB di HTML, e la home page USA pesa 1.9 MB prima della compressione.
+
+La lezione per ogni team: Misura il peso dell’HTML in CI con un budget. Stato inline e markup ripetuto sono i soliti colpevoli.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=ikea
+
+#WebPerformance #PageWeight #Ecommerce #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg" length="247584" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>75,000 libri gratis, nessun markup Book.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/33-gutenberg-it.html</link>
+      <guid isPermaLink="false">runs-100/33-gutenberg-it</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Revisione di sito</category>
+      <category>Worldwide</category>
+      <description>Ogni pagina ebook ha titolo, descrizione e card di condivisione propri, e le pagine passano i Core Web Vitals per i visitatori reali. Ma nessuna pagina analizzata ha JSON-LD, quindi niente dice alla ricerca o all’AI quali pagine sono libri.
+
+La lezione per ogni team: Aggiungi JSON-LD Book alla pagina di ogni titolo: name, author, inLanguage e url. Le risposte AI citano ciò che riescono a interpretare.
+
+Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
+Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=gutenberg
+
+#StructuredData #GEO #OpenKnowledge #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg" length="245923" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>alemaq.cl: 63. La lacuna: i frame.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-19/06-u-alemaq-cl-it.html</link>
@@ -814,192 +990,6 @@ Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #DevOps #SoftwareTesting #QA #Cookies #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" length="238495" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-04/feed/16-u-ispgaya-pt.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 concorrenti naturali. myarubaguide.com è in testa: 76.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-05/15-vs-myarubaguide-com-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-05/15-vs-myarubaguide-com-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Versus</category>
-      <description>myarubaguide.com lead in SEO, GEO, sicurezza, accessibilità; visitaruba.com lead in Analytics; airportaruba.com è leader in termini di prestazioni.
-
-La lezione per ogni team: Confrontati con i siti a cui i tuoi visitatori ti paragonano, non con un punteggio perfetto: il divario che ti costa è quello che un concorrente ha già colmato.
-
-Analisi automatizzate delle pagine pubbliche il 5 novembre 2026 di myarubaguide.com, visitaruba.com, boardwalkaruba.com, airportaruba.com, concorrenti naturali trovati sul web aperto dallo screening rivale di QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-myarubaguide-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-myarubaguide-com
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #QA #WebPerf #TechCommunity #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg" length="264177" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-05/feed/15-vs-myarubaguide-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>4 concorrenti naturali. byamica.com è in testa: 68.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-16/04-vs-byamica-com-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-16/04-vs-byamica-com-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Versus</category>
-      <description>scamadviser.com lead in SEO, accessibilità; sachadrake.com lead in GEO; amazon.com lead in Analytics, Performance; byamica.com leader nella sicurezza.
-
-La lezione per ogni team: Confrontati con i siti a cui i tuoi visitatori ti paragonano, non con un punteggio perfetto: il divario che ti costa è quello che un concorrente ha già colmato.
-
-Analisi automatizzate delle pagine pubbliche il 16 novembre 2026 di byamica.com, scamadviser.com, sachadrake.com, amazon.com, concorrenti naturali trovati sul web aperto dallo screening rivale di QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-byamica-com&amp;utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=natural-competitors&amp;utm_content=vs-byamica-com
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#SEO #Outage #SoftwareTesting #QA #WebPerf #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/04-vs-byamica-com.jpg" length="266161" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-16/feed/04-vs-byamica-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>accounts.google.com: 68. Il divario: intestazioni irregolari.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/31-u-accounts-google-com-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/31-u-accounts-google-com-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma nelle altre pagine mancano le intestazioni di sicurezza nella pagina iniziale.
-
-La lezione per ogni team: Imposta le intestazioni di sicurezza sul perimetro, una volta, in modo che ogni pagina e percorso invii le stesse.
-
-Un'analisi automatizzata delle pagine pubbliche il 17 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-accounts-google-com
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #Outage #SoftwareTesting #QA #HTTPHeaders #QAlab
-
-https://www.youtube.com/shorts/4FTI39rz_3Y</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/31-u-accounts-google-com.jpg" length="250633" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/31-u-accounts-google-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Segnato 61 su 100. La lacuna: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/37-u-abogadosdiazyasociados-com-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/37-u-abogadosdiazyasociados-com-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma HSTS non viene inviato.
-
-La lezione per ogni team: Invia Strict-Transport-Security con un max-age di almeno un anno, così i browser non tornano mai su http in chiaro.
-
-Un'analisi automatizzata delle pagine pubbliche il 17 novembre 2026, richiesta tramite QA-lab URL Review. Un punto di partenza, non un verdetto.
-Il report completo: https://carlosandmunoz.com/qa-review.html?live=u-abogadosdiazyasociados-com
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #DevOps #QA #HSTS #QAlab
-
-https://www.youtube.com/shorts/Q1d6xdy-9LU</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/37-u-abogadosdiazyasociados-com.jpg" length="231025" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/37-u-abogadosdiazyasociados-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>advancedplumbing.ca: 74. La lacuna: il contrasto del testo.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/02-u-advancedplumbing-ca-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/02-u-advancedplumbing-ca-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma gli elementi devono rispettare le soglie minime di contrasto dei colori.
-
-Lezione: Mantieni il testo con un rapporto di contrasto di almeno 4.5:1 rispetto allo sfondo.
-
-Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Uno sguardo iniziale, non un giudizio.
-Consulta il report completo: https://carlosandmunoz.com/qa-review.html?live=u-advancedplumbing-ca
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/02-u-advancedplumbing-ca.jpg" length="245606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/02-u-advancedplumbing-ca.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aijabogados.cl: 74. La lacuna: le label dei form.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/30-u-aijabogados-cl-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/30-u-aijabogados-cl-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma 25 controlli dei form non hanno label.
-
-Cosa cambiare: Dai a ogni input una label visibile, collegata con for e id. Gli screen reader la annunciano e l’area di tocco cresce.
-
-Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Un’analisi iniziale, non una decisione finale.
-Rapporto completo: https://carlosandmunoz.com/qa-review.html?live=u-aijabogados-cl
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #Automation #QA #Forms #A11y #QAlab
-
-https://www.youtube.com/shorts/A6DNNICqGZk</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg" length="240408" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/30-u-aijabogados-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aire-plus.com: 79. La lacuna: i frame.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/36-u-aire-plus-com-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/36-u-aire-plus-com-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma altri siti possono mettere la pagina in un frame.
-
-La lezione per ogni team: Invia frame-ancestors 'self' nella CSP, o X-Frame-Options: SAMEORIGIN, così altri siti non possono mettere le tue pagine in un frame.
-
-Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Uno snapshot di partenza, non un verdetto.
-Report: https://carlosandmunoz.com/qa-review.html?live=u-aire-plus-com
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #CyberSecurity #SoftwareTesting #QA #Clickjacking #QAlab
-
-https://www.youtube.com/shorts/9ADHvMpIutM</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg" length="234126" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/36-u-aire-plus-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>almazangourmet.cl: 57. La lacuna: i frame.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-19/01-u-almazangourmet-cl-it.html</link>
-      <guid isPermaLink="false">auto-2026-11-19/01-u-almazangourmet-cl-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Requested</category>
-      <description>Ogni link interno aperto ha risposto, e i crawler di ricerca e delle risposte AI possono leggere la pagina iniziale. Ma altri siti possono mettere la pagina in un frame.
-
-Lezione: Invia frame-ancestors 'self' nella CSP, o X-Frame-Options: SAMEORIGIN, così altri siti non possono mettere le tue pagine in un frame.
-
-Un'analisi automatizzata delle pagine pubbliche il 18 novembre 2026, richiesta tramite QA-lab URL Review. Un’analisi iniziale, non una decisione finale.
-Rapporto completo: https://carlosandmunoz.com/qa-review.html?live=u-almazangourmet-cl
-
-Analizza il tuo sito: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #CyberSecurity #DevOps #QA #Clickjacking #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/01-u-almazangourmet-cl.jpg" length="239190" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/01-u-almazangourmet-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Le pagine di Rust non indicano un canonical.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/20-rust-it.html</link>
-      <guid isPermaLink="false">runs-100/20-rust-it</guid>
-      <pubDate>Fri, 20 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Revisione di sito</category>
-      <category>Worldwide</category>
-      <description>Le pagine dichiarano la loro lingua, un security.txt è pubblicato e i Core Web Vitals passano per i visitatori reali. Ma nessuna delle 20 pagine analizzate ha un link canonical, e tutte condividono la stessa meta description.
-
-La lezione per ogni team: Aggiungi un canonical autoreferenziale a ogni pagina. Dice alla ricerca quale indirizzo posizionare quando più indirizzi portano alla pagina.
-
-Un’analisi automatica di pagine pubbliche: 19 ott. 2026. Un punto di partenza, non un verdetto.
-Come funziona la review, passo dopo passo: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=rust
-
-#SEO #Canonical #OpenSource #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/20-rust.jpg" length="247500" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/20-rust.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>

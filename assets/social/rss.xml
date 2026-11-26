@@ -5,9 +5,185 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Wed, 25 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 26 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>aeurus.cl: 47. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/08-u-aeurus-cl.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/08-u-aeurus-cl</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every page has a title, and AI answer and search crawlers may read the start page. But 110 form controls have no label.
+
+Takeaway: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-aeurus-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/08-u-aeurus-cl.jpg" length="225129" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/08-u-aeurus-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alexshop.me: 64. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/07-u-alexshop-me.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/07-u-alexshop-me</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 17 form controls have no label.
+
+Lesson: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-alexshop-me
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Automation #AI #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/07-u-alexshop-me.jpg" length="236926" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/07-u-alexshop-me.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>altoga.com: 67. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/29-u-altoga-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/29-u-altoga-com</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Apply this: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-altoga-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/29-u-altoga-com.jpg" length="231604" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/29-u-altoga-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>amforaproperty.com: 63. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/35-u-amforaproperty-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/35-u-amforaproperty-com</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 194 form controls have no label.
+
+Carry this forward: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-amforaproperty-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/35-u-amforaproperty-com.jpg" length="244496" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/35-u-amforaproperty-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>artisan-plombier.paris: 63. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/06-u-artisan-plombier-paris.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/06-u-artisan-plombier-paris</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Lesson: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-artisan-plombier-paris
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #QA #Contrast #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/06-u-artisan-plombier-paris.jpg" length="244830" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/06-u-artisan-plombier-paris.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>baltensperger.ch: 72. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/05-u-baltensperger-ch.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/05-u-baltensperger-ch</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+The lesson for every team: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-baltensperger-ch
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/05-u-baltensperger-ch.jpg" length="234027" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/05-u-baltensperger-ch.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bigbuda.cl: 85. The gap: link names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/04-u-bigbuda-cl.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/04-u-bigbuda-cl</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+Apply this: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 22 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-bigbuda-cl
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebDev #Programming #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/04-u-bigbuda-cl.jpg" length="232668" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/04-u-bigbuda-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>IKEA's home page is 1.9 MB of HTML.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/32-ikea.html</link>
+      <guid isPermaLink="false">runs-100/32-ikea</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>security.txt, HSTS, nosniff, a sitemap, and robots.txt open to AI answer crawlers at the root. But all 19 pages analyzed ship more than 500 KB of HTML, and the US home page is 1.9 MB before compression.
+
+The lesson for every team: Measure HTML weight in CI with a budget. Inline state and repeated markup are the usual culprits.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=ikea
+
+#WebPerformance #PageWeight #Ecommerce #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg" length="247584" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/32-ikea.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>75,000 free books, no Book markup.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/33-gutenberg.html</link>
+      <guid isPermaLink="false">runs-100/33-gutenberg</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Every ebook page has its own title, description, and share card, and pages pass Core Web Vitals for real visitors. But no page analyzed carries JSON-LD, so nothing tells search or AI which pages are books.
+
+The lesson for every team: Add Book JSON-LD to each title page: name, author, inLanguage, and url. AI answers cite what they can parse.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=gutenberg
+
+#StructuredData #GEO #OpenKnowledge #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg" length="245923" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/33-gutenberg.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>Scored 46 of 100. The gap: page titles.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/07-u-aeropuertosargentina-com.html</link>
@@ -800,145 +976,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" length="235201" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>alpenverein.li: 57. The gap: form labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-19/02-u-alpenverein-li.html</link>
-      <guid isPermaLink="false">auto-2026-11-19/02-u-alpenverein-li</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 31 form controls have no label.
-
-Takeaway: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
-
-One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.
-Report: https://carlosandmunoz.com/qa-review.html?live=u-alpenverein-li
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #SoftwareTesting #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" length="236984" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>artedentalmvd.com: 54. The gap: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-20/01-u-artedentalmvd-com.html</link>
-      <guid isPermaLink="false">auto-2026-11-20/01-u-artedentalmvd-com</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Requested</category>
-      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
-
-Takeaway: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
-
-One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
-Report: https://carlosandmunoz.com/qa-review.html?live=u-artedentalmvd-com
-
-Review your own site: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" length="233433" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>AI Citations: What To Check Before Reacting To A Lost One via @sejournal, @MattGSouthern</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-citations-what-to-check-before-reacting-to-a-lost-one-via.html</link>
-      <guid isPermaLink="false">pick/ai-citations-what-to-check-before-reacting-to-a-lost-one-via</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>Most AI citations that disappear later come back. Here are four things to check about a lost citation before you decide to change a page. The post AI Citations: What To Check Before Reacting To A Lost One appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Matt G. Southern, 2026-11-20.
-
-https://www.searchenginejournal.com/ai-citations-what-to-check-before-reacting-to-a-lost-one/598166/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/ai-citations-missing-puzzle-piece.jpg" medium="image"/>
-    </item>
-    <item>
-      <title>avivgerz-hue/ghost-qa: Autonomous headless Playwright QA agent &amp; MCP server. Crawl localhost or staging URLs across Desktop, Tablet &amp; Mobile to catch broken flows, console errors &amp; layout bugs.</title>
-      <link>https://carlosandmunoz.com/social/pick/avivgerz-hue-ghost-qa-autonomous-headless-playwright-qa-agen.html</link>
-      <guid isPermaLink="false">pick/avivgerz-hue-ghost-qa-autonomous-headless-playwright-qa-agen</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Autonomous headless Playwright QA agent &amp; MCP server. Crawl localhost or staging URLs across Desktop, Tablet &amp; Mobile to catch broken flows, console errors &amp; layout bugs.
-
-Via GitHub, by avivgerz-hue, 2026-11-07.
-
-https://github.com/avivgerz-hue/ghost-qa</description>
-      <media:content url="https://opengraph.githubassets.com/1/avivgerz-hue/ghost-qa" medium="image"/>
-    </item>
-    <item>
-      <title>Axe-con 2027: Agenda reveal!</title>
-      <link>https://carlosandmunoz.com/social/pick/axe-con-2027-agenda-reveal.html</link>
-      <guid isPermaLink="false">pick/axe-con-2027-agenda-reveal</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Axe-con is the world’s largest digital accessibility event. This year’s live virtual event takes place February 23-24, 2027, and you can register for free today! The post Axe-con 2027: Agenda reveal! appeared first on Deque .
-
-Via Deque, by Deque Systems, 2026-11-17.
-
-https://www.deque.com/blog/axe-con-2027-agenda-reveal/</description>
-      <media:content url="https://www.deque.com/wp-content/uploads/2026/11/Axe-con-2027-Key-speaker_Blog-Image.png" medium="image"/>
-    </item>
-    <item>
-      <title>Building an Accessible Colour System for Data-Heavy Dashboards</title>
-      <link>https://carlosandmunoz.com/social/pick/building-an-accessible-colour-system-for-data-heavy-dashboar.html</link>
-      <guid isPermaLink="false">pick/building-an-accessible-colour-system-for-data-heavy-dashboar</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Accessibility</category>
-      <description>Data dashboards lean hard on colour to encode meaning — green for up, red for down, blue for neutral....
-
-Via DEV, by desgh white, 2026-11-19.
-
-https://dev.to/desgh_white_7e4c654897816/building-an-accessible-colour-system-for-data-heavy-dashboards-3o1</description>
-      <media:content url="https://media2.dev.to/dynamic/image/width=1200,height=627,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fqn8x1ankz3bszot2a5br.png" medium="image"/>
-    </item>
-    <item>
-      <title>Create High-Impact Content Using Backward Design — Whiteboard Friday</title>
-      <link>https://carlosandmunoz.com/social/pick/create-high-impact-content-using-backward-design-whiteboard-.html</link>
-      <guid isPermaLink="false">pick/create-high-impact-content-using-backward-design-whiteboard-</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Analytics</category>
-      <description>Join Purna in this week’s episode of Whiteboard Friday as she reveals how to create high-impact content using backward design, a strategic approach that prioritizes measurement to achieve better marketing results.
-
-Via Moz, by Purna Virji, 2026-11-20.
-
-https://moz.com/blog/high-impact-content-using-backward-design-whiteboard-friday</description>
-      <media:content url="https://moz.com/images/blog/Blog-OG-images/WBF_CreateHighImpactContent_PurnaV_SocialCard_v1.png?w=1200&amp;h=630&amp;q=82&amp;auto=format&amp;fit=crop&amp;dm=1738167869&amp;s=30460c49e3b6ed3ca77b7d3915f8f2dd" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2024-10441: DiskStation Manager (DSM) — Synology DiskStation Manager (DSM) Improper Encoding or Escaping of Output Vulnerability</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2024-10441-diskstation-manager-dsm-synology-diskstation-.html</link>
-      <guid isPermaLink="false">pick/cve-2024-10441-diskstation-manager-dsm-synology-diskstation-</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>Synology DSM contains an improper encoding or escaping of output vulnerability in the system plugin daemon in Synology BeeStation OS (BSM) that could allow a remote attacker to execute arbitrary code via unspecified vectors.
-
-Via CISA KEV, by Synology, 2026-11-18.
-
-https://www.cve.org/CVERecord?id=CVE-2024-10441</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>CVE-2026-104773: CKAN: Session Fixation in Registration View</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-104773-ckan-session-fixation-in-registration-view.html</link>
-      <guid isPermaLink="false">pick/cve-2026-104773-ckan-session-fixation-in-registration-view</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>## Description Web user registration form is vulnerable to session fixation if the site is configured with server-side session storage (CKAN uses cookie-based session storage by default). The attacker would need to either set a cookie on the victim's browser or steal the victim's currently valid session. Session identifiers are now regenerated after registration. ## Patches This vulnerability…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-20. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-6499-jgj4-2wpf</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
     </item>
   </channel>
 </rss>
