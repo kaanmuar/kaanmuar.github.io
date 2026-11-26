@@ -2019,6 +2019,9 @@ async function rerunFailure(group) {
 				section: options.section === true,
 				targeted: options.targeted === false ? false : undefined,
 				passive: !!(group.intake && group.intake.reasonCode === 'compare'),
+				indexNowKey: (group.intake && group.intake.indexNowKey) || '',
+				indexNow:
+					group.intake && group.intake.indexNowKey ? { key: group.intake.indexNowKey } : undefined,
 				customer: true,
 				browse: browseForReview,
 				pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
@@ -9320,6 +9323,8 @@ async function runReview(req, res, placeOf) {
       section: intake.value.section,
       targeted: intake.value.targeted === false ? false : undefined,
       passive: !!intake.value.compareWith,
+      indexNowKey: intake.value.indexNowKey,
+      indexNow: intake.value.indexNowKey ? { key: intake.value.indexNowKey } : undefined,
       customer: true,
       browse: browseForReview,
       pagespeed: process.env.PAGESPEED_KEY ? (url) => urlReview.pageSpeed(url, process.env.PAGESPEED_KEY) : undefined,
@@ -10195,6 +10200,11 @@ exports.fixRereview = functions
 					siteToken: siteTokenFor(goal.email),
 					ownerReports: ownerReportsLoader(goal.email),
 				},
+				indexNowKey: (original.intake && original.intake.indexNowKey) || '',
+				indexNow:
+					original.intake && original.intake.indexNowKey
+						? { key: original.intake.indexNowKey }
+						: undefined,
 				customer: true,
 				browse: browseForReview,
 				pagespeed: process.env.PAGESPEED_KEY
