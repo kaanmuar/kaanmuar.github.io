@@ -1865,6 +1865,21 @@ const EN = {
 	'sec-targeted.pass.title': 'No targeted attack or active-exploit match in checked sources',
 	'sec-targeted.pass.evidence':
 		'{host} matched no known exploited vulnerability, C2 blocklist, hijacked prefix, or breach-news report across {sources}.',
+
+	// Customer Search Console outcomes (#4361 decay, #4362 cannibalization) — opt-in when extras.gsc is set.
+	'seo-gsc-decay.title_one': '{n} page is losing Search Console clicks or position',
+	'seo-gsc-decay.title_other': '{n} pages are losing Search Console clicks or position',
+	'seo-gsc-decay.evidence': '{list}',
+	'seo-gsc-decay.fix':
+		'Refresh or consolidate the page that used to win those queries: update content, fix internal links, and request indexing after the change. Do not publish unrelated filler posts.',
+	'seo-gsc-decay.pass.title': 'No Search Console decay on compared pages',
+	'seo-gsc-decay.pass.evidence':
+		'Compared current and prior Search Console page rows; clicks and average position held within the decay thresholds.',
+	'seo-gsc-cannibal.title_one': '{n} query has competing pages in Search Console',
+	'seo-gsc-cannibal.title_other': '{n} queries have competing pages in Search Console',
+	'seo-gsc-cannibal.evidence': '{list}',
+	'seo-gsc-cannibal.fix':
+		'Pick one owner URL per query, merge or redirect the rivals, and point internal links at the owner so rankings stop splitting.',
 };
 
 // Firestore refuses undefined, so a missing value is sent as an empty string.
