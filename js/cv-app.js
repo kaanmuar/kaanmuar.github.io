@@ -2865,18 +2865,13 @@ function boot() {
 
 		_offerSharedDownload() {
 			const kind = (new URLSearchParams(window.location.search).get('download') || '').toLowerCase();
-			const runs = {
-				pdf: () => this._exportAsPDF_jsPDF(),
-				jpg: () => this._exportAsJPG(),
-				jpeg: () => this._exportAsJPG(),
-				doc: () => this._exportAsATS(),
-				word: () => this._exportAsATS(),
-				txt: () => this._exportAsText(),
-				text: () => this._exportAsText(),
-				json: () => this._exportAsJSON(),
-			};
-			if (!Object.prototype.hasOwnProperty.call(runs, kind)) return;
-			const run = runs[kind];
+			let run = null;
+			if (kind === 'pdf') run = () => this._exportAsPDF_jsPDF();
+			else if (kind === 'jpg' || kind === 'jpeg') run = () => this._exportAsJPG();
+			else if (kind === 'doc' || kind === 'word') run = () => this._exportAsATS();
+			else if (kind === 'txt' || kind === 'text') run = () => this._exportAsText();
+			else if (kind === 'json') run = () => this._exportAsJSON();
+			else return;
 			this._withLeadEmail('download', 'link:' + kind, () => {
 				this._trackEvent('export_cv', 'Export', 'link:' + kind);
 				run();
