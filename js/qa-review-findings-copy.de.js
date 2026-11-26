@@ -1549,7 +1549,13 @@
       "sec-cert-anomaly.evidence": "Beobachtete Signale: {details}.",
       "sec-cert-anomaly.fix": "Prüfen Sie Zertifikatskette und jüngste Ausstellungen bei Ihrer CA oder in Certificate-Transparency-Logs.",
       "sec-targeted.pass.title": "Kein Treffer für gezielte Angriffe oder aktive Exploits in geprüften Quellen",
-      "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf."
+      "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf.",
+      "seo-content-gap.pass.title": "Content-Gap-Matrix: keine Merge-, Redirect- oder Rewrite-Aktionen unter indexierbaren Crawl-Seiten",
+      "seo-content-gap.pass.evidence": "{n} indexierbare Seiten wurden klassifiziert; alle sind keep.",
+      "seo-content-gap.title": "Die Content-Gap-Matrix empfiehlt {merge} Merges, {redirect} Redirects und {write} Rewrites",
+      "seo-content-gap.evidence": "{list} (von {n} indexierbaren Seiten). Nur Audit-Briefings aus Crawl-Feldern.",
+      "seo-content-gap.fix": "Arbeiten Sie die Matrix ab: Duplikate zusammenführen, dünne Orphans umleiten und dünne oder h1-lose Seiten ausbauen.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     }
   };
 
