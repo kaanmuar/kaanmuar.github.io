@@ -1561,6 +1561,17 @@
     "checked": "2026-11-25T22:59:32.536Z"
    }
   ],
+  "auto-2026-11-20/01-u-artedentalmvd-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n36tayjg4d2l",
+    "at": "2026-11-26T04:23:05.863Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n36tayjg4d2l",
+    "checked": "2026-11-26T04:23:24.965Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
@@ -2139,6 +2150,15 @@
   ],
   "evergreen-2026-11/15-dmarc": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n36tbkgneu25",
+    "at": "2026-11-26T04:23:24.966Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n36tbkgneu25",
+    "checked": "2026-11-26T04:23:43.618Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "18092741849280125",
@@ -2155,6 +2175,15 @@
     "result": "sent",
     "url": "https://www.instagram.com/reel/DgLqU69vuib/",
     "checked": "2026-11-25T23:01:24.882Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "17917406316428183",
+    "at": "2026-11-26T04:23:44.473Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DgMPXHcDWD9",
+    "checked": "2026-11-26T04:24:50.117Z"
    }
   ],
   "evergreen-2026-11/18-myth-keywords": [
@@ -2177,6 +2206,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n2kkhqmowy2h",
     "checked": "2026-11-18T02:52:52.853Z"
+   }
+  ],
+  "launch-2026-10/de/security": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n36tagmw4o2z",
+    "at": "2026-11-26T04:23:03.743Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n36tagmw4o2z",
+    "checked": "2026-11-26T04:23:05.862Z"
    }
   ],
   "launch-2026-10/es/a11y": [

@@ -496,6 +496,17 @@
     "checked": "2026-11-20T17:19:19.240Z"
    }
   ],
+  "auto-2026-11-20/01-u-artedentalmvd-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "136",
+    "at": "2026-11-26T04:24:52.772Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/136",
+    "checked": "2026-11-26T04:24:58.219Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",
@@ -672,6 +683,17 @@
     "checked": "2026-11-12T00:39:41.880Z"
    }
   ],
+  "evergreen-2026-11/15-dmarc": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "137",
+    "at": "2026-11-26T04:24:58.219Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/137",
+    "checked": "2026-11-26T04:25:02.672Z"
+   }
+  ],
   "evergreen-2026-11/18-myth-keywords": [
    {
     "channel": "telegram",
@@ -692,6 +714,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/99",
     "checked": "2026-11-18T02:53:02.518Z"
+   }
+  ],
+  "launch-2026-10/de/security": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "135",
+    "at": "2026-11-26T04:24:51.725Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/135",
+    "checked": "2026-11-26T04:24:52.772Z"
    }
   ],
   "launch-2026-10/es/a11y": [
