@@ -37,6 +37,7 @@ const lookalikes = require('./url-review-lookalikes');
 const { ipBlocked } = require('./url-review-ip');
 const hackSigns = require('./url-review-hack-signs');
 const watchCases = require('./url-review-watch');
+const indexnowWire = require('./url-review-indexnow-wire');
 const targeted = require('./url-review-targeted');
 /* Lazy: Live reports and other light importers only need iconData (#3713). verified-spec
    pulls htmlparser2/css-select, which those jobs do not install. */
@@ -702,6 +703,7 @@ function validateIntake(body) {
 						compareWith,
 						query: landing.query,
 						referrerHost: landing.referrerHost,
+						indexNowKey: clean(String(src.indexNowKey || '').replace(/[^a-f0-9]/gi, ''), 64),
 					}
 				: null,
 	};
@@ -7291,6 +7293,24 @@ async function reviewTarget(rawUrl, hooks) {
 		};
 	// Light DOM-verified Playwright sample (#3481): after the full crawl only, never soft preview.
 	if (!softPreview && !stopped) verifiedSpec().applyToReport(result, pages);
+	if (!softPreview && !stopped && result.status === 'complete') {
+		try {
+			const indexOut = await indexnowWire.attachAfterReview({
+				hooks: controls,
+				pages,
+				origin: origin.origin,
+				note,
+				env: process.env,
+			});
+			if (indexOut) {
+				if (!result.extras) result.extras = {};
+				result.extras.indexnow = indexOut;
+			}
+		} catch (error) {
+			console.error('URL review IndexNow wire failed:', error);
+			note('IndexNow: the optional ping did not finish (' + String((error && error.message) || error).slice(0, 120) + ').');
+		}
+	}
 	if (result.browser && result.browser.shots && JSON.stringify(result).length > 850000) delete result.browser.shots;
 	return result;
 }
@@ -7543,6 +7563,7 @@ function intakeRecord(value, report, meta) {
 		compareWith: value.compareWith || '',
 		query: value.query || '',
 		referrerHost: value.referrerHost || '',
+		...(value.indexNowKey ? { indexNowKey: value.indexNowKey } : {}),
 		local: localSummary(report),
 		checks: checksSummary(report),
 		report: kept,
