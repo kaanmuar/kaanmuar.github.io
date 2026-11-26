@@ -34,6 +34,7 @@ const mailAuth = require('./url-review-mail-auth');
 const blocklists = require('./url-review-blocklists');
 const { registrable, registryDomain } = require('./url-review-suffix');
 const lookalikes = require('./url-review-lookalikes');
+const geoCitation = require('./url-review-geo-citation');
 const { ipBlocked } = require('./url-review-ip');
 const hackSigns = require('./url-review-hack-signs');
 const watchCases = require('./url-review-watch');
@@ -4176,6 +4177,16 @@ function propose(pages, robotsBlocked, limits, dom) {
 			' with Accept: text/markdown and expects markdown or plain text, not only HTML. Agents that negotiate content type can skip conversion.',
 		fw: browser,
 	});
+	addCase(cases, {
+		id: 'GEO-10',
+		layer: 'GEO',
+		title: 'A Search-grounded AI answer cites ' + host + ' for its topic',
+		why:
+			'When Gemini is available, the review asks Google Search–grounded which public sites belong in an AI answer for the home page topic and checks whether ' +
+			host +
+			' appears in the grounded citations.',
+		fw: browser,
+	});
 	const budgetMs = Math.max(800, Math.ceil(((home.ms || 0) * 1.5) / 100) * 100);
 	addCase(cases, {
 		id: 'PF-01',
@@ -5864,6 +5875,22 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		lookups && lookups.inspect && lookups.inspect.social && /^https:\/\//i.test(lookups.inspect.social.ogImage || '')
 			? lookups.inspect.social.ogImage
 			: '';
+	const geoHost = registryDomain(origin.hostname);
+	const geoCitationJob = withTimeout(
+		geoCitation.geoCitationExtra({
+			url: first.url,
+			inspect: lookups && lookups.inspect,
+			softPreview: lookups && lookups.softPreview,
+			passive: lookups && lookups.passive,
+			env: (lookups && lookups.env) || process.env,
+			halt,
+			fetch: (lookups && lookups.fetch) || ((url) => fetchPublic(url, halt, null, false, acceptLanguage)),
+			generate: lookups && lookups.generate,
+			geminiReady: lookups && lookups.geminiReady,
+		}),
+		55000,
+		geoCitation.trimGeoCitationPayload({ ok: false, error: 'timeout', citations: [] }, geoHost, '', undefined)
+	).catch(() => geoCitation.trimGeoCitationPayload({ ok: false, error: 'job failed', citations: [] }, geoHost, '', undefined));
 	const catalogPath = '/.well-known/ai-catalog.json';
 	const homePath = pagePath(first.url);
 	const [
@@ -5882,6 +5909,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		local,
 		lists,
 		shareImage,
+		geoCitationBundle,
 	] = await Promise.all([
 		done(sitemapJob, (map) =>
 			map.urls && map.urls.length
@@ -6093,6 +6121,17 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 			.then(() => checkLists(first.url, { note: say, stop: halt }))
 			.catch(() => null),
 		shareImageUrl ? checkShareImage(shareImageUrl, halt).catch(() => null) : Promise.resolve(null),
+		done(geoCitationJob, (cite) => {
+			if (!cite) return '';
+			if (cite.skipped === 'soft-preview' || cite.skipped === 'passive' || cite.skipped === 'no-gemini') return '';
+			if (cite.skipped) return 'The grounded AI citation check was skipped (' + cite.skipped + ').';
+			if (!cite.ok)
+				return 'The grounded AI citation check did not finish' + (cite.error ? ' (' + cite.error + ')' : '') + '.';
+			const topic = cite.topic || geoHost;
+			return cite.cited
+				? 'For "' + topic + '", a grounded AI answer cited ' + cite.brandHost + ' (' + cite.share + '% of ' + cite.citations.length + ' sources).'
+				: 'For "' + topic + '", a grounded AI answer did not cite ' + cite.brandHost + ' (' + cite.citations.length + ' other sources named).';
+		}),
 	]);
 	const lookalikeFound = await lookalikeJob;
 	if (lookalikeFound !== undefined)
@@ -6142,6 +6181,7 @@ async function gatherExtras(first, robotsText, robotsGroups, halt, note, lookups
 		threatLists: lists,
 	};
 	if (shareImage) out.shareImage = shareImage;
+	if (geoCitationBundle) out.geoCitation = geoCitationBundle;
 	return out;
 }
 
