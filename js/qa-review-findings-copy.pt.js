@@ -1549,7 +1549,13 @@
       "sec-cert-anomaly.evidence": "Sinais observados: {details}.",
       "sec-cert-anomaly.fix": "Verifique a cadeia do certificado e as emissões recentes na sua autoridade certificadora ou nos logs de Certificate Transparency.",
       "sec-targeted.pass.title": "Nenhuma correspondência de ataque direcionado ou exploit ativo nas fontes verificadas",
-      "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}."
+      "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}.",
+      "seo-content-gap.pass.title": "Matriz de lacunas de conteúdo: sem merges, redirects ou reescritas entre páginas indexáveis do crawl",
+      "seo-content-gap.pass.evidence": "{n} páginas indexáveis foram classificadas; todas são keep.",
+      "seo-content-gap.title": "A matriz de lacunas recomenda {merge} merges, {redirect} redirects e {write} reescritas",
+      "seo-content-gap.evidence": "{list} (de {n} páginas indexáveis). Briefs só de auditoria a partir do crawl.",
+      "seo-content-gap.fix": "Siga a matriz: una duplicados, redirecione órfãos finos e expanda páginas finas ou sem H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     }
   };
 

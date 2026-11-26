@@ -1549,7 +1549,13 @@
       "sec-cert-anomaly.evidence": "Segnali osservati: {details}.",
       "sec-cert-anomaly.fix": "Verifica la catena dei certificati e le emissioni recenti presso la tua CA o nei log di Certificate Transparency.",
       "sec-targeted.pass.title": "Nessuna corrispondenza di attacco mirato o exploit attivo nelle fonti verificate",
-      "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}."
+      "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}.",
+      "seo-content-gap.pass.title": "Matrice dei content gap: nessuna azione di merge, redirect o rewrite tra pagine crawl indexabili",
+      "seo-content-gap.pass.evidence": "{n} pagine indexabili classificate; tutte sono keep.",
+      "seo-content-gap.title": "La matrice dei content gap raccomanda {merge} merge, {redirect} redirect e {write} riscritture",
+      "seo-content-gap.evidence": "{list} (su {n} pagine indexabili). Solo brief di audit dai campi del crawl.",
+      "seo-content-gap.fix": "Segui la matrice: unisci i duplicati, reindirizza gli orfani sottili e amplia le pagine sottili o senza H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     }
   };
 

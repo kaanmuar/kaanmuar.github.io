@@ -1548,7 +1548,13 @@
       "sec-cert-anomaly.evidence": "Señales observadas: {details}.",
       "sec-cert-anomaly.fix": "Verifica la cadena del certificado y las emisiones recientes en tu autoridad certificadora o registros de Certificate Transparency.",
       "sec-targeted.pass.title": "Sin coincidencias de ataques dirigidos o exploits activos en las fuentes revisadas",
-      "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}."
+      "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}.",
+      "seo-content-gap.pass.title": "Matriz de huecos de contenido: sin fusiones, redirecciones ni reescrituras entre páginas rastreables indexables",
+      "seo-content-gap.pass.evidence": "Se clasificaron {n} páginas indexables; todas son keep.",
+      "seo-content-gap.title": "La matriz de huecos recomienda {merge} fusiones, {redirect} redirecciones y {write} reescrituras",
+      "seo-content-gap.evidence": "{list} (de {n} páginas indexables). Briefs solo de auditoría a partir del crawl.",
+      "seo-content-gap.fix": "Siga la matriz: fusione duplicados, redirija huérfanos finos y amplíe páginas finas o sin H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     },
     pt: {
       "list.more": " e mais {n}",
@@ -3095,7 +3101,13 @@
       "sec-cert-anomaly.evidence": "Sinais observados: {details}.",
       "sec-cert-anomaly.fix": "Verifique a cadeia do certificado e as emissões recentes na sua autoridade certificadora ou nos logs de Certificate Transparency.",
       "sec-targeted.pass.title": "Nenhuma correspondência de ataque direcionado ou exploit ativo nas fontes verificadas",
-      "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}."
+      "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}.",
+      "seo-content-gap.pass.title": "Matriz de lacunas de conteúdo: sem merges, redirects ou reescritas entre páginas indexáveis do crawl",
+      "seo-content-gap.pass.evidence": "{n} páginas indexáveis foram classificadas; todas são keep.",
+      "seo-content-gap.title": "A matriz de lacunas recomenda {merge} merges, {redirect} redirects e {write} reescritas",
+      "seo-content-gap.evidence": "{list} (de {n} páginas indexáveis). Briefs só de auditoria a partir do crawl.",
+      "seo-content-gap.fix": "Siga a matriz: una duplicados, redirecione órfãos finos e expanda páginas finas ou sem H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     },
     de: {
       "list.more": " und {n} weitere",
@@ -4642,7 +4654,13 @@
       "sec-cert-anomaly.evidence": "Beobachtete Signale: {details}.",
       "sec-cert-anomaly.fix": "Prüfen Sie Zertifikatskette und jüngste Ausstellungen bei Ihrer CA oder in Certificate-Transparency-Logs.",
       "sec-targeted.pass.title": "Kein Treffer für gezielte Angriffe oder aktive Exploits in geprüften Quellen",
-      "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf."
+      "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf.",
+      "seo-content-gap.pass.title": "Content-Gap-Matrix: keine Merge-, Redirect- oder Rewrite-Aktionen unter indexierbaren Crawl-Seiten",
+      "seo-content-gap.pass.evidence": "{n} indexierbare Seiten wurden klassifiziert; alle sind keep.",
+      "seo-content-gap.title": "Die Content-Gap-Matrix empfiehlt {merge} Merges, {redirect} Redirects und {write} Rewrites",
+      "seo-content-gap.evidence": "{list} (von {n} indexierbaren Seiten). Nur Audit-Briefings aus Crawl-Feldern.",
+      "seo-content-gap.fix": "Arbeiten Sie die Matrix ab: Duplikate zusammenführen, dünne Orphans umleiten und dünne oder h1-lose Seiten ausbauen.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     },
     fr: {
       "list.more": " et {n} de plus",
@@ -6189,7 +6207,13 @@
       "sec-cert-anomaly.evidence": "Signaux observés : {details}.",
       "sec-cert-anomaly.fix": "Vérifiez votre chaîne de certification et les émissions récentes auprès de votre AC ou des journaux Certificate Transparency.",
       "sec-targeted.pass.title": "Aucune attaque ciblée ni exploit actif détecté dans les sources vérifiées",
-      "sec-targeted.pass.evidence": "{host} ne correspond à aucune faille exploitée connue, liste C2, préfixe détourné ni article de fuite dans {sources}."
+      "sec-targeted.pass.evidence": "{host} ne correspond à aucune faille exploitée connue, liste C2, préfixe détourné ni article de fuite dans {sources}.",
+      "seo-content-gap.pass.title": "Matrice des lacunes de contenu : aucune fusion, redirection ou réécriture parmi les pages crawlées indexables",
+      "seo-content-gap.pass.evidence": "{n} pages indexables ont été classées ; toutes sont keep.",
+      "seo-content-gap.title": "La matrice des lacunes recommande {merge} fusions, {redirect} redirections et {write} réécritures",
+      "seo-content-gap.evidence": "{list} (sur {n} pages indexables). Briefs d’audit uniquement à partir du crawl.",
+      "seo-content-gap.fix": "Parcourez la matrice : fusionnez les doublons, redirigez les orphelines fines, et enrichissez les pages fines ou sans H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     },
     it: {
       "list.more": " e altri {n}",
@@ -7736,7 +7760,13 @@
       "sec-cert-anomaly.evidence": "Segnali osservati: {details}.",
       "sec-cert-anomaly.fix": "Verifica la catena dei certificati e le emissioni recenti presso la tua CA o nei log di Certificate Transparency.",
       "sec-targeted.pass.title": "Nessuna corrispondenza di attacco mirato o exploit attivo nelle fonti verificate",
-      "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}."
+      "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}.",
+      "seo-content-gap.pass.title": "Matrice dei content gap: nessuna azione di merge, redirect o rewrite tra pagine crawl indexabili",
+      "seo-content-gap.pass.evidence": "{n} pagine indexabili classificate; tutte sono keep.",
+      "seo-content-gap.title": "La matrice dei content gap raccomanda {merge} merge, {redirect} redirect e {write} riscritture",
+      "seo-content-gap.evidence": "{list} (su {n} pagine indexabili). Solo brief di audit dai campi del crawl.",
+      "seo-content-gap.fix": "Segui la matrice: unisci i duplicati, reindirizza gli orfani sottili e amplia le pagine sottili o senza H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     }
   };
 

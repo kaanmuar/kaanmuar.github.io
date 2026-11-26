@@ -1549,7 +1549,13 @@
       "sec-cert-anomaly.evidence": "Señales observadas: {details}.",
       "sec-cert-anomaly.fix": "Verifica la cadena del certificado y las emisiones recientes en tu autoridad certificadora o registros de Certificate Transparency.",
       "sec-targeted.pass.title": "Sin coincidencias de ataques dirigidos o exploits activos en las fuentes revisadas",
-      "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}."
+      "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}.",
+      "seo-content-gap.pass.title": "Matriz de huecos de contenido: sin fusiones, redirecciones ni reescrituras entre páginas rastreables indexables",
+      "seo-content-gap.pass.evidence": "Se clasificaron {n} páginas indexables; todas son keep.",
+      "seo-content-gap.title": "La matriz de huecos recomienda {merge} fusiones, {redirect} redirecciones y {write} reescrituras",
+      "seo-content-gap.evidence": "{list} (de {n} páginas indexables). Briefs solo de auditoría a partir del crawl.",
+      "seo-content-gap.fix": "Siga la matriz: fusione duplicados, redirija huérfanos finos y amplíe páginas finas o sin H1.",
+      "seo-content-gap.row": "{path}: {action} — {reason}"
     }
   };
 
