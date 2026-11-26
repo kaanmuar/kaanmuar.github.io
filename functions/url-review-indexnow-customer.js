@@ -69,9 +69,9 @@ function filterIndexableUrls(pages) {
 }
 
 function normalizeOrigin(origin) {
-	return String(origin || '')
-		.trim()
-		.replace(/\/+$/, '');
+	let out = String(origin || '').trim();
+	while (out.length > 1 && out.endsWith('/')) out = out.slice(0, -1);
+	return out;
 }
 
 function hostFromOrigin(origin) {
