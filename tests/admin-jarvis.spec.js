@@ -4631,7 +4631,10 @@ test.describe('admin statistics (Jarvis)', () => {
 			await expect(lines.first()).toContainText('mail retry failed');
 			await expect(lines.last()).toContainText('E2E and Visual Tests #881 failure');
 			await expect(lines.last()).toHaveClass(/lv-error/);
-			await expect(lines.first().locator('time')).toHaveText(/^\d{2}:\d{2}:\d{2}$/);
+			// Same Bogotá day → HH:MM:SS; just after Bogotá midnight a 1-minute-old stamp still shows "Mon D HH:MM:SS".
+			await expect(lines.first().locator('time')).toHaveText(
+				/^(?:\d{2}:\d{2}:\d{2}|[A-Z][a-z]{2} \d{1,2} \d{2}:\d{2}:\d{2})$/
+			);
 			expect(calls.filter((c) => c.op === 'log')[0].body).toMatchObject({ limit: 300 });
 			await expect(page.locator('.jv-con-fab')).toBeHidden();
 
