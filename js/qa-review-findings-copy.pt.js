@@ -1550,7 +1550,6 @@
       "sec-cert-anomaly.fix": "Verifique a cadeia do certificado e as emissões recentes na sua autoridade certificadora ou nos logs de Certificate Transparency.",
       "sec-targeted.pass.title": "Nenhuma correspondência de ataque direcionado ou exploit ativo nas fontes verificadas",
       "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} página está a perder cliques ou posição no Search Console",
       "seo-gsc-decay.title_other": "{n} páginas estão a perder cliques ou posição no Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -1561,13 +1560,11 @@
       "seo-gsc-cannibal.title_other": "{n} pesquisas têm páginas a competir no Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Escolha um URL proprietário por pesquisa, una ou redirecione as rivais e aponte os links internos para o proprietário para o ranking deixar de se dividir.",
-=======
       "geo-citation.pass.title": "Uma resposta de IA fundamentada cita {host}",
       "geo-citation.pass.evidence": "Para \"{topic}\", {share}% das fontes fundamentadas eram {host} ({total} sites distintos na verificação).",
       "geo-citation.miss.title": "Uma resposta de IA fundamentada para \"{topic}\" não cita {host}",
       "geo-citation.miss.evidence": "A verificação nomeou {total} outros sites, incluindo {peers}, e deixou de fora {host}.",
       "geo-citation.miss.fix": "Publique páginas de entidade mais claras, llms.txt e factos rastreáveis sobre o tema para os motores de resposta citarem a marca.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matriz de lacunas de conteúdo: sem merges, redirects ou reescritas entre páginas indexáveis do crawl",
       "seo-content-gap.pass.evidence": "{n} páginas indexáveis foram classificadas; todas são keep.",
       "seo-content-gap.title": "A matriz de lacunas recomenda {merge} merges, {redirect} redirects e {write} reescritas",

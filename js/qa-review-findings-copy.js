@@ -1549,7 +1549,6 @@
       "sec-cert-anomaly.fix": "Verifica la cadena del certificado y las emisiones recientes en tu autoridad certificadora o registros de Certificate Transparency.",
       "sec-targeted.pass.title": "Sin coincidencias de ataques dirigidos o exploits activos en las fuentes revisadas",
       "sec-targeted.pass.evidence": "{host} no coincidió con vulnerabilidades explotadas conocidas, listas C2, prefijos secuestrados ni noticias de brechas en {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} página está perdiendo clics o posición en Search Console",
       "seo-gsc-decay.title_other": "{n} páginas están perdiendo clics o posición en Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -1560,13 +1559,11 @@
       "seo-gsc-cannibal.title_other": "{n} consultas tienen páginas en competencia en Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Elige una URL propietaria por consulta, fusiona o redirige las rivales y apunta los enlaces internos a la propietaria para que el ranking deje de repartirse.",
-=======
       "geo-citation.pass.title": "Una respuesta de IA fundamentada cita a {host}",
       "geo-citation.pass.evidence": "Para \"{topic}\", el {share}% de las fuentes fundamentadas eran {host} ({total} sitios distintos en la revisión).",
       "geo-citation.miss.title": "Una respuesta de IA fundamentada para \"{topic}\" no cita a {host}",
       "geo-citation.miss.evidence": "La revisión nombró {total} otros sitios, entre ellos {peers}, y dejó fuera a {host}.",
       "geo-citation.miss.fix": "Publique páginas de entidad más claras, llms.txt y hechos rastreables sobre el tema para que los motores de respuesta puedan citar la marca.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matriz de huecos de contenido: sin fusiones, redirecciones ni reescrituras entre páginas rastreables indexables",
       "seo-content-gap.pass.evidence": "Se clasificaron {n} páginas indexables; todas son keep.",
       "seo-content-gap.title": "La matriz de huecos recomienda {merge} fusiones, {redirect} redirecciones y {write} reescrituras",
@@ -3120,7 +3117,6 @@
       "sec-cert-anomaly.fix": "Verifique a cadeia do certificado e as emissões recentes na sua autoridade certificadora ou nos logs de Certificate Transparency.",
       "sec-targeted.pass.title": "Nenhuma correspondência de ataque direcionado ou exploit ativo nas fontes verificadas",
       "sec-targeted.pass.evidence": "{host} não correspondeu a vulnerabilidades exploradas conhecidas, listas C2, prefixos sequestrados nem notícias de vazamento em {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} página está a perder cliques ou posição no Search Console",
       "seo-gsc-decay.title_other": "{n} páginas estão a perder cliques ou posição no Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -3131,13 +3127,11 @@
       "seo-gsc-cannibal.title_other": "{n} pesquisas têm páginas a competir no Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Escolha um URL proprietário por pesquisa, una ou redirecione as rivais e aponte os links internos para o proprietário para o ranking deixar de se dividir.",
-=======
       "geo-citation.pass.title": "Uma resposta de IA fundamentada cita {host}",
       "geo-citation.pass.evidence": "Para \"{topic}\", {share}% das fontes fundamentadas eram {host} ({total} sites distintos na verificação).",
       "geo-citation.miss.title": "Uma resposta de IA fundamentada para \"{topic}\" não cita {host}",
       "geo-citation.miss.evidence": "A verificação nomeou {total} outros sites, incluindo {peers}, e deixou de fora {host}.",
       "geo-citation.miss.fix": "Publique páginas de entidade mais claras, llms.txt e factos rastreáveis sobre o tema para os motores de resposta citarem a marca.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matriz de lacunas de conteúdo: sem merges, redirects ou reescritas entre páginas indexáveis do crawl",
       "seo-content-gap.pass.evidence": "{n} páginas indexáveis foram classificadas; todas são keep.",
       "seo-content-gap.title": "A matriz de lacunas recomenda {merge} merges, {redirect} redirects e {write} reescritas",
@@ -4691,7 +4685,6 @@
       "sec-cert-anomaly.fix": "Prüfen Sie Zertifikatskette und jüngste Ausstellungen bei Ihrer CA oder in Certificate-Transparency-Logs.",
       "sec-targeted.pass.title": "Kein Treffer für gezielte Angriffe oder aktive Exploits in geprüften Quellen",
       "sec-targeted.pass.evidence": "{host} wies in {sources} keine bekannt ausgenutzten Lücken, C2-Listen, gekaperte Präfixe oder Vorfallsmeldungen auf.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} Seite verliert Search-Console-Klicks oder Position",
       "seo-gsc-decay.title_other": "{n} Seiten verlieren Search-Console-Klicks oder Position",
       "seo-gsc-decay.evidence": "{list}",
@@ -4702,13 +4695,11 @@
       "seo-gsc-cannibal.title_other": "{n} Suchanfragen haben konkurrierende Seiten in der Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Wählen Sie pro Suchanfrage eine Eigentümer-URL, führen Sie Rivalen zusammen oder leiten Sie um, und zeigen Sie interne Links auf den Eigentümer, damit sich das Ranking nicht weiter teilt.",
-=======
       "geo-citation.pass.title": "Eine fundierte KI-Antwort zitiert {host}",
       "geo-citation.pass.evidence": "Zu \"{topic}\" stammten {share}% der fundierten Quellen von {host} ({total} verschiedene Sites in der Prüfung).",
       "geo-citation.miss.title": "Eine fundierte KI-Antwort zu \"{topic}\" zitiert {host} nicht",
       "geo-citation.miss.evidence": "Die Prüfung nannte {total} andere Sites, darunter {peers}, und ließ {host} aus.",
       "geo-citation.miss.fix": "Veröffentlichen Sie klarere Entity-Seiten, llms.txt und crawlbare Fakten zum Thema, damit Antwortmaschinen die Marke zitieren können.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Content-Gap-Matrix: keine Merge-, Redirect- oder Rewrite-Aktionen unter indexierbaren Crawl-Seiten",
       "seo-content-gap.pass.evidence": "{n} indexierbare Seiten wurden klassifiziert; alle sind keep.",
       "seo-content-gap.title": "Die Content-Gap-Matrix empfiehlt {merge} Merges, {redirect} Redirects und {write} Rewrites",
@@ -6262,7 +6253,6 @@
       "sec-cert-anomaly.fix": "Vérifiez votre chaîne de certification et les émissions récentes auprès de votre AC ou des journaux Certificate Transparency.",
       "sec-targeted.pass.title": "Aucune attaque ciblée ni exploit actif détecté dans les sources vérifiées",
       "sec-targeted.pass.evidence": "{host} ne correspond à aucune faille exploitée connue, liste C2, préfixe détourné ni article de fuite dans {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} page perd des clics ou de la position dans Search Console",
       "seo-gsc-decay.title_other": "{n} pages perdent des clics ou de la position dans Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -6273,13 +6263,11 @@
       "seo-gsc-cannibal.title_other": "{n} requêtes ont des pages en concurrence dans Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Choisissez une URL propriétaire par requête, fusionnez ou redirigez les rivales, et pointez les liens internes vers la propriétaire pour que le classement cesse de se diviser.",
-=======
       "geo-citation.pass.title": "Une réponse IA fondée cite {host}",
       "geo-citation.pass.evidence": "Pour \"{topic}\", {share}% des sources fondées étaient {host} ({total} sites distincts dans le contrôle).",
       "geo-citation.miss.title": "Une réponse IA fondée pour \"{topic}\" ne cite pas {host}",
       "geo-citation.miss.evidence": "Le contrôle a nommé {total} autres sites, dont {peers}, et a omis {host}.",
       "geo-citation.miss.fix": "Publiez des pages d’entité plus claires, un llms.txt et des faits crawlables sur le sujet pour que les moteurs de réponse puissent citer la marque.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matrice des lacunes de contenu : aucune fusion, redirection ou réécriture parmi les pages crawlées indexables",
       "seo-content-gap.pass.evidence": "{n} pages indexables ont été classées ; toutes sont keep.",
       "seo-content-gap.title": "La matrice des lacunes recommande {merge} fusions, {redirect} redirections et {write} réécritures",
@@ -7833,7 +7821,6 @@
       "sec-cert-anomaly.fix": "Verifica la catena dei certificati e le emissioni recenti presso la tua CA o nei log di Certificate Transparency.",
       "sec-targeted.pass.title": "Nessuna corrispondenza di attacco mirato o exploit attivo nelle fonti verificate",
       "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} pagina sta perdendo clic o posizione in Search Console",
       "seo-gsc-decay.title_other": "{n} pagine stanno perdendo clic o posizione in Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -7844,13 +7831,11 @@
       "seo-gsc-cannibal.title_other": "{n} query hanno pagine in competizione in Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Scegli un URL proprietario per query, unisci o reindirizza le rivali e punta i link interni al proprietario così il ranking smette di dividersi.",
-=======
       "geo-citation.pass.title": "Una risposta IA fondata cita {host}",
       "geo-citation.pass.evidence": "Per \"{topic}\", il {share}% delle fonti fondate era {host} ({total} siti distinti nel controllo).",
       "geo-citation.miss.title": "Una risposta IA fondata per \"{topic}\" non cita {host}",
       "geo-citation.miss.evidence": "Il controllo ha nominato {total} altri siti, tra cui {peers}, e ha escluso {host}.",
       "geo-citation.miss.fix": "Pubblica pagine di entità più chiare, llms.txt e fatti crawabili sul tema così i motori di risposta possono citare il brand.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matrice dei content gap: nessuna azione di merge, redirect o rewrite tra pagine crawl indexabili",
       "seo-content-gap.pass.evidence": "{n} pagine indexabili classificate; tutte sono keep.",
       "seo-content-gap.title": "La matrice dei content gap raccomanda {merge} merge, {redirect} redirect e {write} riscritture",

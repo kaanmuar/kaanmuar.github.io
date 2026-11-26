@@ -1550,7 +1550,6 @@
       "sec-cert-anomaly.fix": "Verifica la catena dei certificati e le emissioni recenti presso la tua CA o nei log di Certificate Transparency.",
       "sec-targeted.pass.title": "Nessuna corrispondenza di attacco mirato o exploit attivo nelle fonti verificate",
       "sec-targeted.pass.evidence": "{host} non corrisponde ad alcuna vulnerabilità sfruttata nota, lista C2, prefisso dirottato o notizia di violazione in {sources}.",
-<<<<<<< HEAD
       "seo-gsc-decay.title_one": "{n} pagina sta perdendo clic o posizione in Search Console",
       "seo-gsc-decay.title_other": "{n} pagine stanno perdendo clic o posizione in Search Console",
       "seo-gsc-decay.evidence": "{list}",
@@ -1561,13 +1560,11 @@
       "seo-gsc-cannibal.title_other": "{n} query hanno pagine in competizione in Search Console",
       "seo-gsc-cannibal.evidence": "{list}",
       "seo-gsc-cannibal.fix": "Scegli un URL proprietario per query, unisci o reindirizza le rivali e punta i link interni al proprietario così il ranking smette di dividersi.",
-=======
       "geo-citation.pass.title": "Una risposta IA fondata cita {host}",
       "geo-citation.pass.evidence": "Per \"{topic}\", il {share}% delle fonti fondate era {host} ({total} siti distinti nel controllo).",
       "geo-citation.miss.title": "Una risposta IA fondata per \"{topic}\" non cita {host}",
       "geo-citation.miss.evidence": "Il controllo ha nominato {total} altri siti, tra cui {peers}, e ha escluso {host}.",
       "geo-citation.miss.fix": "Pubblica pagine di entità più chiare, llms.txt e fatti crawabili sul tema così i motori di risposta possono citare il brand.",
->>>>>>> e79c25fe10 (fix(#3553): locale findings copy for geo-citation)
       "seo-content-gap.pass.title": "Matrice dei content gap: nessuna azione di merge, redirect o rewrite tra pagine crawl indexabili",
       "seo-content-gap.pass.evidence": "{n} pagine indexabili classificate; tutte sono keep.",
       "seo-content-gap.title": "La matrice dei content gap raccomanda {merge} merge, {redirect} redirect e {write} riscritture",
