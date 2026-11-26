@@ -446,6 +446,15 @@ const EN = {
 	'geo-agent-markdown.skip.title': 'The markdown negotiation check did not run',
 	'geo-agent-markdown.skip.evidence': 'The start page with Accept: text/markdown returned {status}.',
 
+	'geo-citation.pass.title': 'A grounded AI answer cites {host}',
+	'geo-citation.pass.evidence':
+		'For "{topic}", {share}% of the grounded sources were {host} ({total} distinct sites in the check).',
+	'geo-citation.miss.title': 'A grounded AI answer for "{topic}" does not cite {host}',
+	'geo-citation.miss.evidence':
+		'The check named {total} other sites, including {peers}, and left out {host}.',
+	'geo-citation.miss.fix':
+		'Publish clearer entity pages, llms.txt, and crawlable facts on the topic so answer engines can cite the brand.',
+
 	'perf-carbon.pass.title':
 		'A first visit to the start page is light on carbon: about {grams} g CO₂e (rating {rating})',
 	'perf-carbon.title': 'A first visit to the start page emits about {grams} g CO₂e (rating {rating})',
