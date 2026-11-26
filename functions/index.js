@@ -6265,6 +6265,7 @@ const reviewAuth = require('./url-review-auth');
 const reviewVisits = require('./url-review-visits');
 const reviewPhrase = require('./url-review-phrase');
 const reviewOAuth = require('./url-review-oauth');
+const reviewGscOauth = require('./url-review-gsc-oauth');
 // Each OAuth provider registers exactly this address as its redirect URI.
 const REVIEW_OAUTH_PAGE = 'https://carlosandmunoz.com/qa-review.html';
 
@@ -6774,6 +6775,55 @@ async function reviewAccount(req, res, pathName) {
 			apiToken: Object.assign(reviewApiToken.publicToken({ apiToken: reviewApiToken.storedRow(made) }), { token: made.token })
 		});
 		return;
+	}
+	// Customer Search Console connect (#4389). Off until REVIEW_GSC_OAUTH_* secrets are set.
+	if (pathName.indexOf('/account/gsc/') !== -1) {
+		const store = reviewAuth.firestoreStore(db);
+		const body = req.body || {};
+		const gscInput = { email: signedIn.email, deviceKey: body.deviceKey, env: process.env };
+		const answerGsc = (result) => {
+			if (result.ok) res.status(200).json(result);
+			else res.status(result.status).json({ error: result.error, code: result.code || '' });
+		};
+		if (pathName.endsWith('/account/gsc/connect/start')) {
+			answerGsc(
+				await reviewGscOauth.startConnect(
+					store,
+					Object.assign(gscInput, { redirectUri: body.redirectUri || REVIEW_OAUTH_PAGE })
+				)
+			);
+			return;
+		}
+		if (pathName.endsWith('/account/gsc/connect/finish')) {
+			answerGsc(
+				await reviewGscOauth.finishConnect(
+					store,
+					Object.assign(gscInput, { state: body.state, code: body.code, error: body.error })
+				)
+			);
+			return;
+		}
+		if (pathName.endsWith('/account/gsc/status')) {
+			answerGsc(
+				await reviewGscOauth.connectStatus(
+					store,
+					Object.assign(gscInput, { reviewUrl: body.reviewUrl, reviewHost: body.reviewHost })
+				)
+			);
+			return;
+		}
+		if (pathName.endsWith('/account/gsc/sites')) {
+			answerGsc(await reviewGscOauth.listSites(store, gscInput));
+			return;
+		}
+		if (pathName.endsWith('/account/gsc/bind')) {
+			answerGsc(await reviewGscOauth.bindProperty(store, Object.assign(gscInput, { siteUrl: body.siteUrl })));
+			return;
+		}
+		if (pathName.endsWith('/account/gsc/disconnect')) {
+			answerGsc(await reviewGscOauth.disconnectConnect(store, gscInput));
+			return;
+		}
 	}
 	res.status(404).json({ error: 'Not found.' });
 }
