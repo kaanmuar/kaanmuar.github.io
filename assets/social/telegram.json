@@ -551,6 +551,17 @@
     "checked": "2026-11-26T04:24:58.219Z"
    }
   ],
+  "auto-2026-11-21/01-u-kfintech-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "146",
+    "at": "2026-11-27T05:21:54.636Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/146",
+    "checked": "2026-11-27T05:22:00.035Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",

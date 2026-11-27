@@ -1670,6 +1670,17 @@
     "checked": "2026-11-26T04:23:24.965Z"
    }
   ],
+  "auto-2026-11-21/01-u-kfintech-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3bgyhdaec24",
+    "at": "2026-11-27T05:21:38.047Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3bgyhdaec24",
+    "checked": "2026-11-27T05:21:52.574Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
