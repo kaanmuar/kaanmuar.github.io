@@ -181,7 +181,11 @@
 		document.body.classList.toggle('scard-mode', unpaid);
 		const folds = opts.folds || [];
 		folds.forEach((item) => paintButton(item, opts.report || null, unpaid));
-		if (unpaid && typeof window !== 'undefined' && window.matchMedia('(max-width: 699px)').matches) {
+		const narrow =
+			typeof window !== 'undefined' &&
+			typeof window.matchMedia === 'function' &&
+			window.matchMedia('(max-width: 699px)').matches;
+		if (unpaid && narrow) {
 			// Mobile spearhead: collapsed fold heads; glance/teaser sections stay readable (#4422).
 			folds.forEach((item) => {
 				if (!item || !item.panel || !item.button) return;
