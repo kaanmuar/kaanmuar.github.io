@@ -4859,8 +4859,18 @@ function analyze(input) {
 		? carbonEstimate(pageBytes, 'browser')
 		: carbonEstimate(input.pagespeed && input.pagespeed.bytes, 'lighthouse');
 	carbonModel.findings(carbon, add);
-	// Opt-in customer Search Console decay + cannibalization (#4361, #4362).
-	gscOutcomes.findings(extras.gsc || input.gsc || null, add);
+	// Opt-in customer Search Console decay + cannibalization (#4361, #4362, #4375).
+	const gscInput = extras.gsc || input.gsc || null;
+	if (gscInput) {
+		const reviewedPaths =
+			gscInput.reviewedPaths && gscInput.reviewedPaths.length
+				? gscInput.reviewedPaths
+				: indexable.map((row) => row.path).filter(Boolean);
+		gscOutcomes.findings(
+			reviewedPaths.length ? Object.assign({}, gscInput, { reviewedPaths }) : gscInput,
+			add
+		);
+	}
 	const headReport = headOrder.findings(face.headOrder, add);
 	linkText.findings(face.linkText, add);
 	// Static keyboard-order smells in the start page's HTML (#3831); no browser needed.
