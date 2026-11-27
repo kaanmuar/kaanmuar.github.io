@@ -799,6 +799,27 @@ test("the agent's owner-tag helpers: a draft cut at its mention tokens, the menu
 	);
 });
 
+test('an approved telegram-group-invite reply is a Mac say task to the public handle (#4481)', async () => {
+	const Invites = require('../../functions/telegram-invites.js');
+	const db = await paired();
+	const key = E.keyOf('telegram', 'brand_a/group-invite');
+	const doc = Invites.inviteDoc(
+		{ handle: 'brand_a', name: 'Brand A', host: 'brand-a.com', url: 'https://t.me/brand_a', reportId: 'r1' },
+		'https://t.me/+Invite',
+		NOW
+	);
+	doc.via = 'mac';
+	doc.actions.reply.status = 'approved';
+	await db.collection('engagement_posts').doc(key).set(doc);
+	const q = await M.handle(deps(db), { op: 'engagement-mac-queue', networks: ['telegram'] }, TOKEN);
+	const task = q.tasks.find((t) => t.key === key);
+	assert.ok(task, 'a Mac-carried invite is handed to the browser agent');
+	assert.equal(task.say, true);
+	assert.equal(task.id, 'brand_a');
+	assert.equal(task.action, 'reply');
+	assert.match(task.draft, /@brand_a/);
+});
+
 test('a network the last run had signed in that reads signed out pushes once, naming the restore (#3163)', async () => {
 	const db = await paired();
 	const pushed = [];

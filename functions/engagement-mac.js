@@ -71,6 +71,7 @@ const R = require('./engagement-reports');
 const Act = require('./engagement-act');
 const Joins = require('./engagement-joins');
 const TgBot = require('./telegram-join-bot');
+const TgInvite = require('./telegram-invites');
 const Communities = require('./student-communities');
 const Students = require('./student-outreach');
 const OwnerTags = require('./owner-tags');
@@ -574,15 +575,25 @@ async function queue(deps, body) {
 		if (extras && extras.gif) gifs[t.doc.network] -= 1;
 		const profileUrl = profileLatest ? (t.doc.report || {}).profile || t.doc.url : t.doc.url;
 		const drafts = t.action === 'reply' || t.action === 'edit';
-		const botAsk = t.doc.campaign === TgBot.CAMPAIGN && t.action === 'reply';
-		const groupId = botAsk ? String(((t.doc.join || {}).id || t.doc.id || '').split('/')[0]) : '';
+		const tgSay =
+			t.action === 'reply' &&
+			(t.doc.campaign === TgBot.CAMPAIGN || t.doc.campaign === TgInvite.CAMPAIGN);
+		const sayId = tgSay
+			? t.doc.campaign === TgInvite.CAMPAIGN
+				? String(
+						((t.doc.telegramInvite || {}).handle || (t.doc.author || {}).handle || '')
+							.replace(/^@/, '')
+							.split('/')[0]
+					)
+				: String(((t.doc.join || {}).id || t.doc.id || '').split('/')[0])
+			: '';
 		tasks.push(
 			Object.assign(
 				{
 					key: t.key,
 					network: t.doc.network,
 					action: t.action,
-					id: botAsk ? groupId : profileLatest ? '' : t.doc.id,
+					id: tgSay ? sayId : profileLatest ? '' : t.doc.id,
 					url: profileUrl,
 					author: { handle: (t.doc.author || {}).handle || '', id: (t.doc.author || {}).id || '' },
 					draft: drafts ? r.draft || '' : '',
@@ -601,7 +612,7 @@ async function queue(deps, body) {
 				card.error ? { cardError: card.error } : {},
 				extras ? { extras } : {},
 				student || {},
-				botAsk ? { say: true } : {}
+				tgSay ? { say: true } : {}
 			)
 		);
 	};
