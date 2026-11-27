@@ -7220,6 +7220,15 @@
 		paintMentions(report);
 		paintCredential(payload);
 		paintCall(report, sample);
+		// StatusCard glass fold heads on unpaid/preview (#4430 / #4422).
+		if (window.QAReviewStatusCard) {
+			QAReviewStatusCard.sync({
+				unpaid: !paid && !sample,
+				report: report,
+				folds: folds,
+				setFold: setFold,
+			});
+		}
 		const names = ['All'].concat(layers.map((pair) => pair[0]));
 		document.getElementById('layer-filters').innerHTML = names
 			.map(
