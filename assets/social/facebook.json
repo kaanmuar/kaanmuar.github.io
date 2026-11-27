@@ -1899,8 +1899,9 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122113547697532027",
     "at": "2026-11-27T17:56:00.000Z",
-    "result": "queued",
-    "checked": "2026-11-27T00:49:43.800Z"
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1182319770987261/",
+    "checked": "2026-11-27T19:00:47.003Z"
    }
   ],
   "auto-2026-11-22/02-u-aqicn-org": [
@@ -1911,6 +1912,16 @@
     "at": "2026-12-25T18:49:00.000Z",
     "result": "queued",
     "checked": "2026-11-27T00:49:43.800Z"
+   }
+  ],
+  "auto-2026-11-27/01-u-decathlon-com-py": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1127237506770183",
+    "at": "2026-11-28T19:32:00.000Z",
+    "result": "queued",
+    "checked": "2026-11-27T19:01:00.822Z"
    }
   ],
   "battle-vs-2026-11/01-vs-seo-scorecard": [
