@@ -153,7 +153,26 @@
 
 	section.stage:has(#stage-start) .stage-links {
 		order: 70;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+		margin-top: 10px;
+	}
+
+	section.stage:has(#stage-start) .stage-links > :not(#stage-sample-open) {
 		display: none;
+	}
+
+	section.stage:has(#stage-start) #stage-sample-open {
+		width: 100%;
+		padding: 10px 12px;
+		text-align: center;
+		border-radius: 10px;
+		border: 1px solid rgba(159, 214, 220, 0.28);
+		background: rgba(7, 17, 22, 0.45);
+		color: var(--muted);
+		text-decoration: none;
 	}
 }
 
