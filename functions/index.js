@@ -2543,14 +2543,14 @@ async function ensureLiveReportsBatch() {
 	const repo = '/repos/' + BUG_REPO;
 	const commits = await githubGet(repo + '/commits?sha=main&per_page=100&since=' + today + 'T00:00:00Z', token);
 	const hasCards = commits.some((c) => c.commit.message.includes('(auto-' + today + ')'));
-	let socialPending = false;
+	let state = {};
 	try {
 		const file = await githubGet(repo + '/contents/scripts/auto-live-reports.state.json?ref=main', token);
-		const state = JSON.parse(Buffer.from(file.content || '', 'base64').toString('utf8'));
-		socialPending = !!(state.socialPending && state.socialPending.count > 0);
+		state = JSON.parse(Buffer.from(file.content || '', 'base64').toString('utf8'));
 	} catch (error) {
-		socialPending = false;
+		state = {};
 	}
+	const socialPending = !!(state.socialPending && state.socialPending.count > 0);
 	const runs = await githubGet(
 		repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/runs?per_page=20&created=%3E%3D' + today,
 		token
@@ -2578,8 +2578,21 @@ async function ensureLiveReportsBatch() {
 		console.log('Live Reports watchdog: dispatched social_only for pending clips (auto-' + today + ').');
 		return null;
 	}
+	// Same-day catch-up when since is stale even though (auto-TODAY) already landed (#4483).
 	if (hasCards) {
-		console.log('Live Reports watchdog: batch auto-' + today + ' is on main.');
+		const catchUp = require('../scripts/auto-live-reports').needsSameDayCatchUp(state);
+		if (!catchUp) {
+			console.log('Live Reports watchdog: batch auto-' + today + ' is on main.');
+			return null;
+		}
+		console.log(
+			'Live Reports watchdog: auto-' + today + ' on main but since is stale; dispatching same-day catch-up (#4483).'
+		);
+		await github(
+			repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/dispatches',
+			{ ref: 'main', inputs: { backup: 'true', cards_only: 'false' } },
+			token
+		);
 		return null;
 	}
 	// When recent runs die at the 180m render timeout (conclusion cancelled), dispatch cards-only so
