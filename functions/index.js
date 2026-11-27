@@ -7204,6 +7204,7 @@ exports.reviewUrl = functions
 			['/desk/proof', 'proof'],
 			['/desk/fix', 'fix'],
 			['/desk/fix-diff/indexnow', 'fix-diff-indexnow'],
+			['/desk/fix-diff/rereview', 'fix-diff-rereview'],
 			['/desk/fix-diff/data', 'fix-diff-data'],
 			['/desk/fix-diff', 'fix-diff'],
 		];
@@ -7372,7 +7373,12 @@ exports.reviewUrl = functions
 			}
 			if (deskName === 'fix-diff-data' && req.method === 'GET') {
 				try {
-					const items = await fixDiffDesk.deskRows(getFirestore());
+					const db = getFirestore();
+					const items = await fixDiffDesk.deskRows(db, {
+						enrich: true,
+						env: process.env,
+						fixRequestForPack: (firestore, packId) => fixDiffDesk.findRereviewForPack(firestore, packId),
+					});
 					res.status(200).json({ summary: fixDiffDesk.summarize(items), items });
 				} catch (error) {
 					console.error('Desk fix-diff read failed:', error);
@@ -7389,8 +7395,20 @@ exports.reviewUrl = functions
 				});
 				return;
 			}
+			if (deskName === 'fix-diff-rereview' && req.method === 'POST') {
+				await fixDiffDesk.deskQueueRereview(req, res, operator, {
+					db: getFirestore(),
+					nowMs: Date.now(),
+					env: process.env,
+				});
+				return;
+			}
 			if (deskName === 'fix-diff' && req.method === 'POST') {
-				await fixDiffDesk.deskDecide(req, res, operator, { db: getFirestore(), nowMs: Date.now() });
+				await fixDiffDesk.deskDecide(req, res, operator, {
+					db: getFirestore(),
+					nowMs: Date.now(),
+					env: process.env,
+				});
 				return;
 			}
 			if (deskName === 'proof' && req.method === 'POST') {

@@ -81,6 +81,8 @@ test('deskDecide approves or rejects pending packs only', async () => {
 	assert.equal(ok.out.statusCode, 200);
 	assert.equal(ok.out.body.pack.status, 'approved');
 	assert.equal(ok.out.body.pack.note, 'looks good');
+	assert.equal(ok.out.body.outcomes.state, 'off');
+	assert.ok(ok.out.body.verify);
 	const again = response();
 	await fixDiffDesk.deskDecide({ body: { id: 'p1', decision: 'reject' } }, again, 'carlos@x', { db, nowMs: NOW + 2000 });
 	assert.equal(again.out.statusCode, 400);
