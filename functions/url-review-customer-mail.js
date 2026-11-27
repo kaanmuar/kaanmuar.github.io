@@ -1610,6 +1610,17 @@ function compareBlock(c, cf, baseUrl) {
 	);
 }
 
+function watchDeltaBlock(section) {
+	if (!section || !section.mailHtml) return '';
+	return (
+		bodyCell(
+			'14px 28px 4px',
+			false,
+			'font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:' + TEXT.body + ';'
+		) + section.mailHtml + '</td></tr>'
+	);
+}
+
 function compareText(c, cf) {
 	return [
 		c.title,
@@ -1735,6 +1746,7 @@ function reportMail(record, options) {
 				codeChip(promise.coupon) +
 				'</td></tr>'
 			: '') +
+		(opts.watchDelta ? watchDeltaBlock(opts.watchDelta) : '') +
 		(cf ? compareBlock(CMP_COPY[lang], cf, baseUrl) : '') +
 		findingsBlock(t, p, lang, facts) +
 		bodyCell('18px 28px 22px', true) +
@@ -1782,6 +1794,7 @@ function reportMail(record, options) {
 		'',
 		story.lead,
 		kept ? '\n' + kept : '',
+		opts.watchDelta && opts.watchDelta.text ? '\n' + opts.watchDelta.text : '',
 		cf ? '\n' + compareText(CMP_COPY[lang], cf) + (baseUrl ? '\n' + cf.own + ': ' + baseUrl : '') : '',
 		findingLines.length ? '\n' + t.findings + '\n' + findingLines.join('\n') : '',
 		facts.moreCount ? fill(t.more, { n: facts.moreCount }) : '',
@@ -2386,6 +2399,7 @@ function reportPdf(record, options) {
 		'</span></div>' +
 		'</div>' +
 		(areas ? '<div class="sec"><div class="areas">' + areas + '</div></div>' : '') +
+		(opts.watchDelta && opts.watchDelta.pdfHtml ? '<div class="sec watch-delta">' + opts.watchDelta.pdfHtml + '</div>' : '') +
 		(cf ? comparePdf(CMP_COPY[lang], cf, t, lineOf) : '') +
 		(findings
 			? '<div class="sec"><h2>' +

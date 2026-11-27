@@ -2829,6 +2829,7 @@ const fixDiffDesk = require('./url-review-fix-diff-desk');
 const fixCheckout = require('./url-review-fix-checkout');
 const fixRereview = require('./url-review-fix-rereview');
 const watchCases = require('./url-review-watch');
+const watchMailDelta = require('./url-review-watch-mail-delta');
 const fixMail = require('./url-review-fix-mail');
 // Review mail goes only to real users: no mail to a test account or its alias, nor a notice for its review (#3799).
 const reviewTest = require('./url-review-test-accounts');
@@ -3091,12 +3092,26 @@ async function mailReportToAsker(record, promise) {
 	if (!record || !record.email || !record.report) return false;
 	if (record.status !== 'complete' && record.status !== 'stopped') return false;
 	if (reviewTest.isTestRecord(record)) return false;
-	const [stopUrl, pdf, csatUrl] = await Promise.all([
+	const priorId = watchMailDelta.priorIdOf(record);
+	const priorFetch = priorId
+		? getFirestore()
+				.collection('url_reviews')
+				.doc(priorId)
+				.get()
+				.catch((error) => {
+					console.error('Watch prior report read failed:', error && error.message);
+					return null;
+				})
+		: null;
+	const [stopUrl, priorSnap, csatUrl] = await Promise.all([
 		stopLinkFor(record.email, record.lang),
-		reportPdfFor(record),
+		priorFetch,
 		csatLinkFor(record),
 	]);
-	const mail = customerMail.reportMail(record, { stopUrl, attached: !!pdf, promise, csatUrl });
+	const prior = priorSnap && priorSnap.exists ? priorSnap.data() : null;
+	const watchPayload = watchMailDelta.mailPayloadAttach(prior, record, record.lang);
+	const pdf = await reportPdfFor(record, watchPayload);
+	const mail = customerMail.reportMail(record, Object.assign({ stopUrl, attached: !!pdf, promise, csatUrl }, watchPayload));
 	const sent = await sendReportMail(
 		record.id,
 		() => sendAskerMail(record.email, mail, stopUrl, 'url-review-report', pdf ? [pdf] : []),
