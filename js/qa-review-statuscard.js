@@ -181,8 +181,8 @@
 		document.body.classList.toggle('scard-mode', unpaid);
 		const folds = opts.folds || [];
 		folds.forEach((item) => paintButton(item, opts.report || null, unpaid));
-		if (unpaid) {
-			// Free/scan shell: start collapsed (Prime Suspect / teaser sections stay readable via frost rules).
+		if (unpaid && typeof window !== 'undefined' && window.matchMedia('(max-width: 699px)').matches) {
+			// Mobile spearhead: collapsed fold heads; glance/teaser sections stay readable (#4422).
 			folds.forEach((item) => {
 				if (!item || !item.panel || !item.button) return;
 				const head = item.button.closest('h2, .fold-head');
