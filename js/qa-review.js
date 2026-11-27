@@ -5193,7 +5193,37 @@
 		);
 	}
 
-	function paintGeo(ins) {
+	function hasGscInsights(ins) {
+		const extras = (ins && ins.extras) || {};
+		if (extras.gsc) return true;
+		return (ins && ins.findings || []).some((row) => row && /^seo-gsc-/.test(row.key || ''));
+	}
+
+	function geoGscConnectCard(ins) {
+		if (hasGscInsights(ins)) return '';
+		return (
+			'<article class="card" data-part="gsc-connect" style="margin-top:12px"><h3>' +
+			esc(rc.t('geoGscTitle')) +
+			'</h3><p class="muted" data-note>' +
+			esc(rc.t('geoGscBody')) +
+			' <a href="qa-review-account.html">' +
+			esc(rc.t('geoGscCta')) +
+			'</a>.</p></article>'
+		);
+	}
+
+	function geoWatchNoteCard(report) {
+		if (report && report.watchOf) return '';
+		return (
+			'<p class="meta-line" data-note style="margin-top:12px">' +
+			esc(rc.t('geoWatchNote')) +
+			' <a href="qa-review-account.html">' +
+			esc(rc.t('geoWatchCta')) +
+			'</a>.</p>'
+		);
+	}
+
+	function paintGeo(ins, report) {
 		const geo = ins.geo || {};
 		const view = geo.aiView || {};
 		const roles = [
@@ -5308,7 +5338,9 @@
 			esc(rc.t(geo.robotsFound ? 'robotsFound' : 'robotsNone')) +
 			'</p>' +
 			bots +
-			'</article></div>';
+			'</article></div>' +
+			geoGscConnectCard(ins) +
+			geoWatchNoteCard(report);
 	}
 
 	function paintAnalytics(ins) {
@@ -6552,7 +6584,7 @@
 		paintFixFirst(ins, open);
 		paintBrowser(report);
 		paintPreviews(ins);
-		paintGeo(ins);
+		paintGeo(ins, report);
 		paintAnalytics(ins);
 		paintSeo(ins);
 		paintGraph(ins);
