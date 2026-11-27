@@ -33,3 +33,16 @@ test('the guide FAQ and tour mention the 48-hour inconclusive promise (#3365)', 
 	assert.match(guide, /48 hours/i);
 	assert.match(guide, /20% off your next review/i);
 });
+
+test('the guide names audit outcome paths after the crawl (#4417)', () => {
+	for (const needle of [
+		'id="outcomes"',
+		'Connect Search Console',
+		'Continuous watch',
+		'Since last watch',
+		'Fix packs on the desk',
+		'IndexNow notify',
+		'Content-gap matrix',
+		'audit-only',
+	]) assert.match(guide, new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), needle);
+});

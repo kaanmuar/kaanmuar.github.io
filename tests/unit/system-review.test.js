@@ -37,6 +37,14 @@ test('the cause of a failed job is read from its log, with the fix', () => {
 		"failed: Error: Cannot find module 'x'"
 	);
 	assert.equal(review.causeOf(''), 'failed with no readable cause in its log');
+	const liveTimeout = [
+		'read 1000, held {"timed-out":86} cards=733 social=328 restricted=6 batch=auto-2026-11-27 total=4745',
+		'##[error]The job has exceeded the maximum execution time of 180 minutes.',
+	].join('\n');
+	assert.match(
+		review.causeOf(liveTimeout),
+		/^Live Reports render timed out before commit .*cards_only=true.*SOCIAL_POSTS_PER_BATCH/
+	);
 });
 
 test('a new leaked secret and a critical Dependabot alert are problems; the rest are counts', () => {
@@ -105,6 +113,13 @@ test('run reads the newest finished run per workflow on main and names the faili
 					conclusion: 'failure',
 					updated_at: '2026-11-03T14:05:00Z',
 				},
+				{
+					id: 6,
+					name: 'Live reports from user reviews',
+					conclusion: 'cancelled',
+					updated_at: '2026-11-03T14:00:00Z',
+					html_url: 'https://github.com/r/6',
+				},
 			],
 		},
 		'/actions/runs/2/jobs?filter=latest': {
@@ -121,6 +136,18 @@ test('run reads the newest finished run per workflow on main and names the faili
 		},
 		'/actions/jobs/9/logs':
 			'broken: social/pick/a-es.html -> /social/pick/b-es.html\n##[error]Process completed with exit code 1.',
+		'/actions/runs/6/jobs?filter=latest': {
+			jobs: [
+				{
+					id: 11,
+					name: 'publish',
+					conclusion: 'cancelled',
+					steps: [{ name: 'Render cards, stories, and clips', conclusion: 'cancelled' }],
+				},
+			],
+		},
+		'/actions/jobs/11/logs':
+			'read 1000, held {} cards=733 social=328\n##[error]The job has exceeded the maximum execution time of 180 minutes.',
 		'/secret-scanning/alerts?state=open&per_page=100': [],
 		'/dependabot/alerts?state=open&per_page=100': [],
 		'/pulls?state=open&per_page=100': [],
@@ -132,16 +159,18 @@ test('run reads the newest finished run per workflow on main and names the faili
 		return { ok: true, status: 200, json: async () => body, text: async () => body };
 	};
 	const out = await review.run({ fetch, token: 't', now: NOW });
-	assert.equal(out.problems.length, 1);
+	assert.equal(out.problems.length, 2);
 	assert.equal(out.problems[0].job, 'Pages');
 	assert.match(
 		out.problems[0].why,
 		/^step "No forbidden paths, every local link resolves": 1 links point to pages that do not exist .* https:\/\/github.com\/r\/2$/
 	);
+	assert.equal(out.problems[1].job, 'Live reports from user reviews');
+	assert.match(out.problems[1].why, /Live Reports render timed out before commit.*cards_only=true/);
 	assert.deepEqual(
 		out.rows.map((r) => r.label + ': ' + r.value),
 		[
-			'Workflows on main: 3 seen, 1 failing',
+			'Workflows on main: 4 seen, 2 failing',
 			'Secret scanning: 0 open',
 			'Dependabot: none',
 			'Code scanning: not readable by the GitHub App (needs Code scanning alerts: read)',

@@ -152,6 +152,30 @@ Six scores from 0 to 100: SEO, GEO, analytics, security, accessibility, and perf
 
 #### Take the cases home — or ask us to fix it
 Export the proposed cases to a ZIP of automation scripts, Excel, TestRail, Xray, Zephyr Scale, Jira, Azure Test Plans, MantisBT, JSON, plain text, or PDF. The export also brings a GitHub Actions workflow and a fix kit with header files, a Report-Only content security policy, and drafts for structured data, llms.txt, security.txt, and DNS records. Need a single ticket? Ask the report turns one finding into a GitHub issue or a Jira draft. Prefer we do the work? Ask us to fix it: fix it yourself with one free re-check on a paid report, ask for a quote, order a fixed-price package, or book a call. The scripts are yours to run. The review never runs them against your site. Package codes do not apply; when a package finishes, a free re-review marks each finding fixed, still open, or needing a person.
+After the audit
+
+### Paths that turn a snapshot into upkeep
+The first review ends with six scores and a fix-first list. On a site you own—and when each path is turned on—you can add Search Console trends, scheduled watch, surgical fix packs, IndexNow pings, and a content-gap matrix. Nothing here auto-publishes pages or posts for you.
+
+#### Decay and cannibalization on your data
+Sign in, then connect Google Search Console read-only when Connect is offered. Pick the property that matches the site you reviewed. The next full analysis can read your page and query rows to flag pages that are losing clicks or position, and queries where several URLs compete. Without a connection, the crawl still runs; these checks stay off.
+Needs a signed-in account, Search Console connect when live, and a paid full report for the findings to open.
+
+#### Email what changed since last time
+On a verified site you own, you can opt into scheduled re-reviews when the service offers continuous watch. When a new run finishes, your email and PDF can carry a “Since last watch” summary: score move, what fixed, what is new, and what is still open.
+Needs site verification, an opt-in when watch is on for your domain, and a plan or pass that covers the rerun—not just the free soft preview.
+
+#### Surgical drafts, human approve first
+On a paid full report, selected SEO fixes can become fix packs: git patches or CMS drafts, not live edits. Each pack waits on the operator desk for approve or reject before anything ships. You can still fix it yourself, order a fixed-price package, or ask for a quote—the desk path is for precise, reviewable changes.
+Needs a paid full report and desk approval. Paid fix packages from the report are a separate, all-in path.
+
+#### Tell search engines a URL changed
+After an approved fix pack—or when you opt in on your own site—the service can submit changed URLs to IndexNow. We verify your IndexNow key file at your site before any ping. No valid key, no ping; we do not guess keys for you.
+Needs a public IndexNow key on the host and the feature turned on for that review. It speeds notice; it does not guarantee indexing.
+
+#### Audit-only briefs from the crawl
+The crawl classifies indexable pages as keep, merge, redirect, or write manually. The report shows a matrix with short briefs built from titles, headings, and links the review saw—not from Search Console or AI drafts. It recommends structure; it does not write articles or press publish.
+Included in the SEO area of a full review from the crawl. Deeper editorial work stays with your team or a fix package.
 Prices in plain numbers
 
 ### Unlock, bundles, and 30-day plans

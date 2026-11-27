@@ -37,6 +37,17 @@ const SWEEP_POSTS_PER_BATCH = 2;
 // Rival-sweep comparisons (functions/url-review-rivals.js): a site and its natural competitors in one
 // post. Each competitor's own review gets a card but no post of its own.
 const COMPARE_POSTS_PER_BATCH = 2;
+// Hard cap on every social post in one run (requested + sweep + versus). Render (~1h per ~16 clips)
+// past this hits the workflow's 180m timeout, commit never runs, and state.since freezes (#4444).
+const SOCIAL_POSTS_PER_BATCH = 12;
+
+// Recent auto-live-reports runs: two or more cancelled / timed_out means the render backlog is stuck
+// and the next dispatch should be cards-only so cards + state.since still advance (#4444).
+function needsCardsOnly(runs) {
+	const recent = (runs || []).filter((run) => run && run.status === 'completed').slice(0, 4);
+	const stuck = recent.filter((run) => run.conclusion === 'cancelled' || run.conclusion === 'timed_out');
+	return stuck.length >= 2;
+}
 
 // Top finding key: [the gap, in a few words; a lesson that is true for any site; hashtags].
 const LESSONS = {
@@ -708,6 +719,7 @@ async function main() {
 	const removed = live.existingItems().length - items.length;
 	const curated = new Set(items.filter((x) => x.card.series !== 'auto').map((x) => bare(x.card.host)));
 	const today = new Date().toISOString().slice(0, 10);
+	const cardsOnly = !!opts['cards-only'];
 	const batch = [];
 	let added = 0;
 	let held = 0;
@@ -741,6 +753,7 @@ async function main() {
 		if (at >= 0) items.splice(at, 1, built);
 		else items.push(built);
 		added += 1;
+		if (cardsOnly) continue;
 		const restricted = await siteKind(
 			host,
 			(report.pages || []).map((page) => page.title || '')
@@ -753,6 +766,7 @@ async function main() {
 		const last = (state.posted || {})[host];
 		if (last && (Date.parse(today) - Date.parse(last)) / 864e5 < POST_EVERY_DAYS) continue;
 		if (source === 'rivals' || source === 'outreach') continue;
+		if (batch.length >= SOCIAL_POSTS_PER_BATCH) continue;
 		if (swept && sweepPosts >= SWEEP_POSTS_PER_BATCH) continue;
 		if (swept) sweepPosts += 1;
 		const score = report.insights.score;
@@ -777,6 +791,8 @@ async function main() {
 
 	let comparePosts = 0;
 	for (const cmp of payload.comparisons || []) {
+		if (cardsOnly) break;
+		if (batch.length >= SOCIAL_POSTS_PER_BATCH) break;
 		if (comparePosts >= COMPARE_POSTS_PER_BATCH) break;
 		const host = bare(cmp.host);
 		const key = 'vs:' + host;
@@ -814,7 +830,13 @@ async function main() {
 	fs.writeFileSync(path.join(BATCH_DIR, 'batch.json'), JSON.stringify(batch, null, 1) + '\n');
 	if (!opts.from) state.since = payload.until || state.since;
 	fs.writeFileSync(STATE, JSON.stringify(state, null, 1) + '\n');
-	console.log('read ' + (payload.read || 0) + ', held ' + JSON.stringify(payload.held || {}));
+	console.log(
+		'read ' +
+			(payload.read || 0) +
+			', held ' +
+			JSON.stringify(payload.held || {}) +
+			(cardsOnly ? ', cards-only' : '')
+	);
 	output({
 		cards: added,
 		removed,
@@ -822,6 +844,7 @@ async function main() {
 		restricted: held,
 		batch: 'auto-' + today,
 		total: items.length,
+		cards_only: cardsOnly ? '1' : '0',
 	});
 }
 
@@ -831,4 +854,14 @@ if (require.main === module)
 		process.exit(1);
 	});
 
-module.exports = { fetchPublishable, mergePages, PAGE, copyFor, caseFix, fixLinesFor, playwrightCarouselLines };
+module.exports = {
+	fetchPublishable,
+	mergePages,
+	PAGE,
+	SOCIAL_POSTS_PER_BATCH,
+	needsCardsOnly,
+	copyFor,
+	caseFix,
+	fixLinesFor,
+	playwrightCarouselLines,
+};

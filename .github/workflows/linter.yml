@@ -19,7 +19,7 @@ jobs:
     name: gitleaks
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
+    # Blocking on PRs (#4446): allowlists in .gitleaks.toml are triaged; a new leak must fail the check.
     permissions:
       contents: read
     steps:

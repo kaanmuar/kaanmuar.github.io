@@ -15,7 +15,12 @@ const block = (rows, extra) => Object.assign({ ok: true, rows: rows || [] }, ext
 const GROWTH_LOCKS = [
 	{ id: 'soft-gate', topic: 'Soft gate', note: 'POST /review/preview; OAuth unlock for full crawl (#3478).' },
 	{ id: 'shared-links', topic: 'Shared links', note: 'Overall + 6 areas + top finding clear; rest frosted (#3477).' },
-	{ id: 'auto-live', topic: 'Auto Live', note: '4-slide carousel + LinkedIn PDF via tips-studio (#3476).' },
+	{
+		id: 'auto-live',
+		topic: 'Auto Live',
+		note:
+			'4-slide carousel + LinkedIn PDF via tips-studio (#3476). If the batch cancels at ~180m on render, dispatch cards_only so cards and state.since still commit; social ≤ 12/run (#4444).',
+	},
 	{ id: 'geo-llms', topic: 'GEO llms.txt', note: 'Check + fix-kit starter (#3479).' },
 	{ id: 'telegram', topic: 'Telegram', note: '@qalab_live is publish-only; drafts stay Jarvis Hub.' },
 	{ id: 'scout-learn', topic: 'Scout learn', note: 'Private Firestore; never auto-edit the arsenal (#4237).' },

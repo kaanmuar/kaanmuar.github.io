@@ -835,7 +835,8 @@ function logExcerpt(raw) {
 }
 
 function diagPrompt(run, job, excerpt) {
-	return [
+	const liveReports = /live reports/i.test(String(run.name || ''));
+	const lines = [
 		'A GitHub Actions run failed. Find the cause from the log excerpt and say what fixes it.',
 		'Repository ' +
 			run.repo +
@@ -854,16 +855,23 @@ function diagPrompt(run, job, excerpt) {
 			job.name +
 			'"; failed steps: ' +
 			(job.steps || [])
-				.filter((s) => s.conclusion === 'failure')
+				.filter((s) => s.conclusion === 'failure' || s.conclusion === 'cancelled' || s.conclusion === 'timed_out')
 				.map((s) => s.name)
 				.join(', '),
 		'Log excerpt:\n' + excerpt,
+	];
+	if (liveReports)
+		lines.push(
+			'Live Reports recipe (#4444): a cancelled/timed_out publish job after Render cards, stories, and clips usually means the social backlog exceeded the 180m timeout, so Commit never ran and scripts/auto-live-reports.state.json since is stuck (public index count stalls). Fix: cards_only=true / --cards-only catch-up to commit cards and advance since without clips; keep SOCIAL_POSTS_PER_BATCH ≤ 12; rival reviews still get cards. Do not treat this as a /publishable OOM (#2038) unless the log shows memory.'
+		);
+	lines.push(
 		'Answer only strict JSON: {"cause": one sentence, "category": "flaky"|"infra"|"code"|"test"|"config", "fix": one or two sentences, ' +
 			'"confidence": 0-1, "action": "rerun-ci" for flaky or infra, "gh-update-pr" when the branch only needs main merged in, "gh-agent" when code must change, else "none", ' +
 			'"prompt": for code, test or config a ready-to-run prompt for a Cursor coding agent working in this repository on branch ' +
 			run.branch +
-			' (what failed, the files and lines the log names, what to change, how to check it), else ""}.',
-	].join('\n');
+			' (what failed, the files and lines the log names, what to change, how to check it), else ""}.'
+	);
+	return lines.join('\n');
 }
 
 function parseDiag(raw) {
@@ -896,11 +904,17 @@ function parseDiag(raw) {
 }
 
 // A run, its first failed job (null when none failed) and that job's log excerpt ("" when it cannot be read).
+// Live Reports (#4444): the 180m job timeout marks the publish job cancelled, not failed — still diagnose it.
 async function failedLog(ctx, repo, id) {
 	const run = await call(ctx, '/repos/' + repo + '/actions/runs/' + id);
 	const jobs =
 		(await call(ctx, '/repos/' + repo + '/actions/runs/' + id + '/jobs?filter=latest&per_page=100')).jobs || [];
-	const job = jobs.find((j) => ['failure', 'timed_out', 'startup_failure'].includes(j.conclusion)) || null;
+	const hard = jobs.find((j) => ['failure', 'timed_out', 'startup_failure'].includes(j.conclusion));
+	const cancelled =
+		!hard &&
+		/live reports/i.test(String(run.name || '')) &&
+		jobs.find((j) => j.conclusion === 'cancelled' && String(j.name || '').toLowerCase() === 'publish');
+	const job = hard || cancelled || null;
 	let excerpt = '';
 	if (job)
 		try {
