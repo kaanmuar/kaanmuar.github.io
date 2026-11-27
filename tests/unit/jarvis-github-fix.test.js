@@ -204,6 +204,25 @@ test("diagnose reads the first failed job's log around its error, parses Gemini'
 	assert.equal(fix.parseDiag('{"cause":"Runner lost.","category":"infra","prompt":"x"}').prompt, '');
 });
 
+test('Live Reports diagnose prompt names the cards_only catch-up when the publish job times out (#4444)', () => {
+	const prompt = fix.diagPrompt(
+		{ repo: 'kaanmuar/kaanmuar.github.io', name: 'Live reports from user reviews', branch: 'main', event: 'schedule', attempt: 1, sha: 'abc123456789' },
+		{ name: 'publish', steps: [{ name: 'Render cards, stories, and clips', conclusion: 'cancelled' }] },
+		'The job has exceeded the maximum execution time of 180 minutes.'
+	);
+	assert.match(prompt, /cards_only/);
+	assert.match(prompt, /auto-live-reports\.state\.json since/);
+	assert.match(prompt, /SOCIAL_POSTS_PER_BATCH/);
+	assert.doesNotMatch(
+		fix.diagPrompt(
+			{ repo: 'kaanmuar/kaanmuar.github.io', name: 'Unit tests', branch: 'main', event: 'push', attempt: 1, sha: 'abc' },
+			{ name: 'test', steps: [{ name: 'Run', conclusion: 'failure' }] },
+			'Error'
+		),
+		/cards_only/
+	);
+});
+
 test('launchAgent asks @cursor on a PR, or opens an issue then comments when there is only a branch (#3536)', async () => {
 	const f = fakeFetch([
 		[

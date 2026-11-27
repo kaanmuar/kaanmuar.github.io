@@ -336,7 +336,7 @@ test.describe('Pass checkout', () => {
 		await expect(page.locator('#pay-heading')).toHaveText('The Team pass');
 		await expect(page.locator('#pay-item')).toHaveText('25 runs over 30 days');
 		await expect(page.locator('#pay-copy')).toHaveText(
-			'One payment of 79 USD for 25 runs over 30 days, up to 100 pages and 5 links deep, with up to 8 frameworks or tools in each run. Each run includes the full report, the fix list, the case export and alerts. It does not renew by itself.'
+			'One payment of 79 USD for 25 runs over 30 days, up to 100 pages and 5 links deep, with up to 8 frameworks or tools in each run. Each run includes the full report, the fix list, the case export, and alerts. On a verified site, opt-in watch emails can summarize what changed since your last review when continuous watch is offered. It does not renew by itself.'
 		);
 		await expect(page.locator('#charge')).toBeEnabled();
 		expect(seen.quotes[0]).toMatchObject({ purpose: 'pass', plan: 'team' });

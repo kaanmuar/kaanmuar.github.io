@@ -1,0 +1,66 @@
+{
+  "state": {
+    "snap": {
+      "skin": "lab",
+      "pose": "slow",
+      "anomaly": "slow",
+      "activeId": "robots",
+      "stages": {
+        "fields": "idle",
+        "https": "idle",
+        "dns": "idle",
+        "open": "idle",
+        "psi-ask": "idle",
+        "robots": "wip",
+        "crawl": "idle",
+        "pages": "idle",
+        "browser": "idle",
+        "axe": "idle",
+        "security": "idle",
+        "a11y": "idle",
+        "malware": "idle",
+        "webrisk": "idle",
+        "blocklist": "idle",
+        "lookalike": "idle",
+        "wordpress": "idle",
+        "mail": "idle",
+        "lighthouse": "idle",
+        "cases": "idle",
+        "score": "idle",
+        "sign": "idle",
+        "save": "idle"
+      },
+      "items": {
+        "dns": "idle",
+        "robots": "wip",
+        "crawl": "idle",
+        "browser": "idle",
+        "axe": "idle",
+        "security": "idle",
+        "a11y": "idle",
+        "malware": "idle",
+        "webrisk": "idle",
+        "blocklist": "idle",
+        "lookalike": "idle",
+        "wordpress": "idle",
+        "mail": "idle",
+        "lighthouse": "idle",
+        "cases": "idle",
+        "score": "idle",
+        "sign": "idle",
+        "save": "idle"
+      },
+      "ready": true
+    },
+    "raChild": [
+      "DIV.rc-host"
+    ],
+    "rpVisible": true,
+    "errorsHint": null
+  },
+  "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+  ]
+}
