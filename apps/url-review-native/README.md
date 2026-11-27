@@ -10,3 +10,15 @@ Native URL Review clients (#4505). Branch: `feat/4505-urlreview-native`.
 | Android | [`android/`](android/) | `com.carlosandmunoz.urlreview` |
 
 Platform-specific build and signing docs live in each subdirectory's README.
+
+## Arena sync (`scripts/sync-arena-assets.sh`)
+
+When repo-root arena files change (`js/qa-review-arena*.js`, `css/qa-review-*.css`, `assets/review-arena/v3/`, or `web/` shell/bridge), re-copy into both native bundles and commit:
+
+```bash
+apps/url-review-native/scripts/sync-arena-assets.sh
+git add apps/url-review-native/android/app/src/main/assets/arena \
+        apps/url-review-native/ios/URLReview/Arena
+```
+
+The script header lists exact source/destination paths (~1.5 MiB). Android loads `file:///android_asset/arena/index.html`; iOS uses the `Arena` folder reference in `URLReview.xcodeproj`.

@@ -33,7 +33,7 @@ xcodebuild -project URLReview.xcodeproj -scheme URLReview \
 
 ## Simulator notes
 
-- **Entry** (URL + prediction chips stub + Run), **Arena** (packaged Lab Tries canvas in `URLReview/Arena/`), **Report** (score hero stub).
+- **Entry** (URL + prediction chips stub + Run), **Arena** (packaged 2D Lab Tries canvas in `URLReview/Arena/`), **Report** (Wave 3 score hero + collapsible sections stub).
 - Refresh arena bundle from repo root: `../scripts/sync-arena-assets.sh` (see script header). Bridge: `webkit.messageHandlers.urlReview`.
 - Later waves will call `https://carlosandmunoz.com` APIs; **ATS** already allows that domain (see `URLReview/Info.plist`).
 
