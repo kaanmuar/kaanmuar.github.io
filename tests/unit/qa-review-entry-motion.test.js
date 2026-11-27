@@ -77,4 +77,12 @@ describe('qa-review-entry-motion', () => {
 		assert.doesNotMatch(SRC, /getElementById\(['"]stage-start['"]\)/);
 		assert.match(SRC, /Additive/);
 	});
+
+	it('Gemini A: no CSS orbit stage (Three.js owns 3D)', () => {
+		assert.doesNotMatch(SRC, /entry-orbit-stage/);
+		assert.doesNotMatch(SRC, /ensureOrbitDom/);
+		const css = fs.readFileSync(path.join(ROOT, 'css/qa-review-entry-motion.css'), 'utf8');
+		assert.doesNotMatch(css, /entry-orbit/);
+	});
 });
+

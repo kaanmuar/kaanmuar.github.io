@@ -1,5 +1,5 @@
-/* Entry soft-gate motion (#4442 / design #4440): 5s phrase fade + CSS orbits on still fallback.
-   Additive — does not touch soft-gate submit or qa-review.js run path. */
+/* Entry soft-gate motion (#4442 / design #4440): 5s phrase fade only.
+   3D stays on existing Three.js hero (Gemini option A). Additive — no soft-gate / qa-review.js changes. */
 (function (global) {
 	'use strict';
 
@@ -52,32 +52,6 @@
 			.join('');
 	}
 
-	function ensureOrbitDom(stage) {
-		if (stage.querySelector('.entry-orbit-stage')) return;
-		const wrap = document.createElement('div');
-		wrap.className = 'entry-orbit-stage';
-		wrap.setAttribute('aria-hidden', 'true');
-		wrap.innerHTML =
-			'<div class="entry-orbit-pivot"><div class="entry-orbit-rig">' +
-			'<div class="entry-orbiter mark"><div class="entry-orbiter-body"><img src="assets/qa-review-mark.svg" alt=""></div></div>' +
-			'<div class="entry-orbiter shield"><div class="entry-orbiter-body"><svg viewBox="0 0 28 28" class="entry-orbiter-glyph"><path d="M14 3l9 4v6c0 6-4 10-9 12-5-2-9-6-9-12V7z"/><path d="M10 14l2.5 2.5L18 11"/></svg></div></div>' +
-			'<div class="entry-orbiter warn"><div class="entry-orbiter-body"><svg viewBox="0 0 28 28" class="entry-orbiter-glyph"><path d="M14 5l10 18H4z"/><path d="M14 12v5"/><circle cx="14" cy="20" r="1.2" fill="currentColor" stroke="none"/></svg></div></div>' +
-			'<div class="entry-orbiter fail"><div class="entry-orbiter-body"><svg viewBox="0 0 28 28" class="entry-orbiter-glyph"><circle cx="14" cy="14" r="9"/><path d="M10 10l8 8M18 10l-8 8"/></svg></div></div>' +
-			'<div class="entry-orbiter speed"><div class="entry-orbiter-body"><svg viewBox="0 0 28 28" class="entry-orbiter-glyph"><path d="M5 15h10l-2 8 12-12H13l2-8z"/></svg></div></div>' +
-			'<div class="entry-spark s1"><i></i></div><div class="entry-spark s2"><i></i></div><div class="entry-spark s3"><i></i></div>' +
-			'</div></div>';
-		const copy = stage.querySelector('.stage-copy');
-		if (copy) stage.insertBefore(wrap, copy);
-		else stage.appendChild(wrap);
-	}
-
-	function syncOrbitMode(stage) {
-		const still = stage.classList.contains('stage-hero-still-on') || stage.classList.contains('fx-fallback');
-		const webgl = stage.classList.contains('stage-hero-on');
-		// CSS orbits when WebGL is off; Three.js scene already orbits when on.
-		stage.classList.toggle('entry-orbit-on', still || !webgl);
-	}
-
 	function boot(root) {
 		const doc = root || document;
 		const stage = doc.querySelector('section.stage');
@@ -87,16 +61,6 @@
 		if (!stage || !title) return null;
 
 		stage.classList.add('entry-motion');
-		ensureOrbitDom(stage);
-		syncOrbitMode(stage);
-
-		const obs =
-			typeof MutationObserver === 'function'
-				? new MutationObserver(function () {
-						syncOrbitMode(stage);
-					})
-				: null;
-		if (obs) obs.observe(stage, { attributes: true, attributeFilter: ['class'] });
 
 		let dots = stage.querySelector('.entry-phrase-dots');
 		if (!dots) {
@@ -191,7 +155,6 @@
 			},
 			destroy: function () {
 				global.clearInterval(timer);
-				if (obs) obs.disconnect();
 			},
 		};
 		stage._entryMotion = api;
