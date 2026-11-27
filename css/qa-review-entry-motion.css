@@ -1,0 +1,52 @@
+/* Entry soft-gate phrase fade (#4442 / design #4440). 3D = existing Three.js hero (Gemini A). */
+
+.stage.entry-motion .stage-copy > .eyebrow,
+.stage.entry-motion .stage-copy > .lede {
+	transition: opacity 0.7s ease;
+}
+
+.stage.entry-motion .stage-copy > .eyebrow.entry-fade,
+.stage.entry-motion .stage-copy > .lede.entry-fade {
+	opacity: 0;
+}
+
+.stage.entry-motion #studio-title.entry-phrase {
+	transition: opacity 0.9s ease;
+}
+
+.stage.entry-motion #studio-title.entry-phrase.is-out {
+	opacity: 0;
+}
+
+.stage.entry-motion #studio-title.entry-phrase.is-in {
+	opacity: 1;
+}
+
+.entry-phrase-dots {
+	display: flex;
+	gap: 6px;
+	margin: 10px 0 0;
+}
+
+.entry-phrase-dots button {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	border: 0;
+	padding: 0;
+	background: rgba(126, 214, 224, 0.28);
+	cursor: pointer;
+}
+
+.entry-phrase-dots button.on {
+	background: var(--cyan, #7ef6fb);
+	box-shadow: 0 0 10px rgba(126, 246, 251, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.stage.entry-motion #studio-title.entry-phrase,
+	.stage.entry-motion .stage-copy > .eyebrow,
+	.stage.entry-motion .stage-copy > .lede {
+		transition: none !important;
+	}
+}
