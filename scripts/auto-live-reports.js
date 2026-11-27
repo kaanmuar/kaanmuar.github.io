@@ -21,12 +21,13 @@ const live = require('./build-live-reports');
 const { siteKind } = require('./tips-studio/site-assets');
 const { tldCountry } = require('./live-report-countries');
 const QAReviewScripts = require('../js/qa-review-scripts');
+const { buildTrackedBatch, BATCH_FILE: SOCIAL_BATCH_TRACKED } = require('./live-reports-social-queue');
 
 const ROOT = path.resolve(__dirname, '..');
 const STATE = path.join(__dirname, 'auto-live-reports.state.json');
 const BATCH_DIR = path.join(ROOT, 'previews/auto-live-reports');
 // Tracked copy of the day's social batch so the social job (and a retry) can render without re-ingest (#4457).
-const SOCIAL_BATCH = path.join(ROOT, 'data/live-reports-social-batch.json');
+const SOCIAL_BATCH = SOCIAL_BATCH_TRACKED;
 const ENDPOINT =
 	process.env.PUBLISH_URL || 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable';
 const POST_EVERY_DAYS = 30;
@@ -850,7 +851,7 @@ async function main() {
 		fs.mkdirSync(path.dirname(SOCIAL_BATCH), { recursive: true });
 		fs.writeFileSync(
 			SOCIAL_BATCH,
-			JSON.stringify({ batch: batchId, posts: batch, at: new Date().toISOString() }, null, 1) + '\n'
+			JSON.stringify(buildTrackedBatch(batchId, batch), null, 1) + '\n'
 		);
 		state.socialPending = { batch: batchId, count: batch.length, at: new Date().toISOString() };
 	} else if (!cardsOnly) {

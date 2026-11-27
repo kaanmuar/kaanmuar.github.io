@@ -250,7 +250,7 @@ jobs:
           elif [ -f previews/auto-live-reports/batch.json ]; then
             BATCH="${{ needs.cards.outputs.batch }}"
             SOCIAL="${{ needs.cards.outputs.social }}"
-            node -e "const fs=require('fs');const posts=JSON.parse(fs.readFileSync('previews/auto-live-reports/batch.json','utf8'));fs.writeFileSync('data/live-reports-social-batch.json',JSON.stringify({batch:process.argv[1],posts,at:new Date().toISOString()},null,1)+'\n')" "$BATCH"
+            node -e "const fs=require('fs');const q=require('./scripts/live-reports-social-queue');const posts=JSON.parse(fs.readFileSync('previews/auto-live-reports/batch.json','utf8'));fs.writeFileSync('data/live-reports-social-batch.json',JSON.stringify(q.buildTrackedBatch(process.argv[1],posts),null,1)+'\n')" "$BATCH"
           else
             echo "::error::No social batch on main or in the artifact."
             exit 1
@@ -277,6 +277,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.batch.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
 
+      - name: Mark clips rendered in the social queue
+        run: node scripts/live-reports-social-status.js --rendered --batch "${{ steps.batch.outputs.batch }}"
+
       - name: Write the captions in six languages
         run: |
           BATCH="${{ steps.batch.outputs.batch }}"
@@ -295,6 +298,7 @@ jobs:
       - name: Clear social pending and commit clips
         id: commit
         run: |
+          node scripts/live-reports-social-status.js --posted --batch "${{ steps.batch.outputs.batch }}"
           node scripts/auto-live-reports.js --clear-social-pending
           chmod +x scripts/commit-live-reports.sh
           scripts/commit-live-reports.sh social "${{ steps.batch.outputs.batch }}" "0" "${{ steps.batch.outputs.social }}"
