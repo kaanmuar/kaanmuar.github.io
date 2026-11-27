@@ -1,12 +1,9 @@
-# #4377 — Customer GSC OAuth property bind (design)
+# #4377 / #4388 — Customer GSC OAuth property bind (design)
 
-**Branch:** `docs/4377-gsc-oauth`  
-**Worktree:** `.worktrees/docs-4377-gsc-oauth`  
+**Design ticket:** [#4388](https://github.com/kaanmuar/kaanmuar.github.io/issues/4388) (parent design for [#4389](https://github.com/kaanmuar/kaanmuar.github.io/issues/4389) / PR [#4393](https://github.com/kaanmuar/kaanmuar.github.io/pull/4393))  
+**Original:** [#4377](https://github.com/kaanmuar/kaanmuar.github.io/issues/4377) — handoff PR [#4387](https://github.com/kaanmuar/kaanmuar.github.io/pull/4387)  
 **Epic:** [#4360](https://github.com/kaanmuar/kaanmuar.github.io/issues/4360) — audit→outcomes loop  
-**Ticket:** [#4377](https://github.com/kaanmuar/kaanmuar.github.io/issues/4377)  
 **Feeds:** `url-review-gsc-outcomes` (#4361/#4362, #4375 wire-in) with real customer GSC rows instead of agency-only SA.
-
-**Session B (implementation):** `feat/4377-gsc-oauth-impl` — OAuth routes, token store, bind UI, GSC fetch in review path.
 
 ---
 
@@ -56,7 +53,25 @@ REVIEW_GSC_OAUTH_CLIENT_SECRET=
 REVIEW_GSC_OAUTH_REDIRECT_ORIGINS=https://carlosandmunoz.com,http://127.0.0.1:8765
 ```
 
-Google Cloud: OAuth consent screen **sensitive scope** verification for `webmasters.readonly`. Enable **Search Console API** on the same project as the OAuth client.
+### Google Cloud OAuth client + consent screen
+
+Use a **dedicated** OAuth web client (not `REVIEW_OAUTH_*` sign-in clients). Same Firebase/GCP project as `reviewUrl`.
+
+| Console step | Value |
+|--------------|--------|
+| APIs | Enable **Google Search Console API** (`webmasters.googleapis.com`) |
+| Consent screen type | External (production) or Internal (staff-only QA until verified) |
+| App name / support email | QA Lab URL Review / agency contact |
+| Authorized domains | `carlosandmunoz.com` |
+| Scopes (sensitive) | `…/auth/webmasters.readonly` only (+ `openid`, `email` via OAuth library) |
+| Test users | All QA testers while app status is **Testing**; publish only after Google sensitive-scope verification |
+| Credentials → OAuth client | **Web application** |
+| Authorized JavaScript origins | `https://carlosandmunoz.com`, `http://127.0.0.1:8765` |
+| Authorized redirect URIs | `https://carlosandmunoz.com/qa-review.html`, `http://127.0.0.1:8765/qa-review.html` |
+
+Consent UX copy should name **read-only Search Console** access for the signed-in review account; link to the public privacy policy. Google’s sensitive-scope review is required before non–test-user production traffic.
+
+Store `REVIEW_GSC_OAUTH_CLIENT_ID` in env; **`REVIEW_GSC_OAUTH_CLIENT_SECRET` in Secret Manager only** (never Hosting, never client).
 
 ### Flow (incremental auth)
 
@@ -98,7 +113,21 @@ sequenceDiagram
 | `url_review_gsc_tokens` | `email` | `refreshToken` (encrypted), `accessToken`, `accessExpiresAt`, `googleSub`, `scopes`, `connectedAt`, `revokedAt?` |
 | `url_review_accounts` | `email` | `gsc: { siteUrl, kind, host, boundAt, verified }` |
 
-Encryption: reuse pattern from other secrets at rest (KMS or app-level key in Secret Manager — **implementation ticket**). Never log tokens.
+**Encryption at rest (hard gate — [#4395](https://github.com/kaanmuar/kaanmuar.github.io/issues/4395)):** `refreshToken` must be **encrypted before Firestore write** (Cloud KMS or envelope key in Secret Manager) and decrypted only inside server code paths that call Google. PR [#4393](https://github.com/kaanmuar/kaanmuar.github.io/pull/4393) stores plaintext `refresh_token` until #4395 lands — **do not set production secrets or invite customers until encryption ships.** Never log tokens or ciphertext.
+
+### Feature flag (runtime)
+
+Routes and UI stay **closed** unless **both** `REVIEW_GSC_OAUTH_CLIENT_ID` and `REVIEW_GSC_OAUTH_CLIENT_SECRET` are set (`url-review-gsc-oauth.ready()` → 503 “not open yet”; `connectStatus.open === false`). Empty env is the default in all deployed environments.
+
+| Signal | Meaning for UI |
+|--------|----------------|
+| `open: false` | Hide Search Console connect affordances (no dead buttons) |
+| `open: true`, `connected: false` | Show “Connect Search Console” |
+| `connected: true`, `bound: null` | Show property picker (`GET /account/gsc/sites` → `POST /account/gsc/bind`) |
+| `bound` set, `coversReviewHost: false` | Warn: bound property does not cover URL under review; outcomes slice skipped |
+| `code: reconnect` | Prompt reconnect after `invalid_grant` |
+
+Do **not** add a separate public feature flag env; missing credentials **is** the flag until ops deliberately enables the slice.
 
 Refresh: before GSC calls, if `accessExpiresAt` < now + 60s, `POST https://oauth2.googleapis.com/token` with `refresh_token`. On `invalid_grant`, clear row and surface “Reconnect Search Console”.
 
@@ -127,6 +156,18 @@ Worker **only** refreshes access tokens; refresh ciphertext stays in D1/Firestor
 
 Downstream: #4375 / #4361 wire passes `ctx.gsc` into `url-review-gsc-outcomes.findings`.
 
+### Account / review UX (#4389 follow-up — not in PR #4393)
+
+Surface on **`qa-review-account.html`** (signed-in account) with status mirrored on **`qa-review.html`** when a URL is loaded:
+
+1. **Disconnected** — secondary button “Connect Google Search Console”; helper text: read-only, server-stored, disconnect anytime.
+2. **Connect** — `POST /account/gsc/connect/start` with `redirectUri` = current page origin + `/qa-review.html` (or account page if finish handler lives there). Full redirect to Google; on return, page reads `code` + `state` from query and calls `POST /account/gsc/connect/finish` with `deviceKey` (same as sign-in OAuth finish).
+3. **Connected, unbound** — list from `GET /account/gsc/sites`; radio/select per `siteUrl`. Pre-select entries where `propertyCoversSite(siteUrl, reviewUrl)` if review URL present. Primary “Use this property”.
+4. **Bound** — show `bound.siteUrl`, `coversReviewHost` badge, “Change property”, “Disconnect” (`POST /account/gsc/disconnect`).
+5. **Errors** — map `code`: `other-device`, `expired`, `reconnect`, `cancelled` to plain copy; never show tokens.
+
+MVP: one bound property per `url_review_accounts` email. No GSC UI on anonymous review runs.
+
 ---
 
 ## Route names (Workers / `reviewUrl` / local server)
@@ -144,10 +185,27 @@ Implement on **`reviewUrl`** (`functions/index.js` → `reviewAccount` or new `r
 
 **Workers (future):** if GSC fetch moves to edge, name handlers `gscConnectStart`, `gscConnectFinish`, `gscBind` on the same path prefix behind Hosting rewrite — keep path parity with CF.
 
-OAuth **redirect URI** (register in Google console):
+OAuth **redirect URI** (register in Google console; **decision for #4389**):
 
-- `https://carlosandmunoz.com/qa-review.html` (query finish, like sign-in OAuth), **or**
-- dedicated `https://carlosandmunoz.com/qa-account.html#gsc-callback` — pick one in impl; document in `.env.example`.
+- **`https://carlosandmunoz.com/qa-review.html`** and **`http://127.0.0.1:8765/qa-review.html`** — same query-param finish pattern as `url-review-oauth` (#4393 default `redirectUri`).
+- Origins allowed by server: `REVIEW_GSC_OAUTH_REDIRECT_ORIGINS=https://carlosandmunoz.com,http://127.0.0.1:8765` (full `redirect_uri` must be under those origins).
+
+---
+
+## Production enablement — do **not** yet
+
+Keep **all** of the following off in production until the row is checked:
+
+| Gate | Ticket / note |
+|------|----------------|
+| Secret Manager `REVIEW_GSC_OAUTH_CLIENT_SECRET` + non-empty `REVIEW_GSC_OAUTH_CLIENT_ID` | Ops |
+| Refresh token **encryption at rest** | [#4395](https://github.com/kaanmuar/kaanmuar.github.io/issues/4395) |
+| Google sensitive-scope verification (or Internal-only client) | Console |
+| Account UI + finish handler on review/account pages | #4389 (not in #4393) |
+| Review path fetch: customer GSC rows → `extras.gsc` / outcomes | #4375 wire-in |
+| Firestore rules: deny client read/write on `url_review_gsc_tokens` | Security review with #4395 |
+
+Safe to merge **#4393** (routes + unit tests): feature stays 503 until env is set. **Unsafe:** setting secrets in prod before #4395 and UI.
 
 ---
 
@@ -164,40 +222,31 @@ OAuth **redirect URI** (register in Google console):
 
 ---
 
-## Stub shipped in this PR
+## Implementation status
 
-| File | Role |
-|------|------|
-| `functions/url-review-gsc-property.js` | `normalizeGscProperty`, `gscPropertyCandidates`, `propertyCoversSite` |
-| `tests/unit/url-review-gsc-property.test.js` | Unit tests |
+| Slice | Status |
+|-------|--------|
+| `functions/url-review-gsc-property.js` + tests | Shipped ([#4387](https://github.com/kaanmuar/kaanmuar.github.io/pull/4387)) |
+| `functions/url-review-gsc-oauth.js` + routes + tests | PR [#4393](https://github.com/kaanmuar/kaanmuar.github.io/pull/4393) ([#4389](https://github.com/kaanmuar/kaanmuar.github.io/issues/4389)) |
+| Token encryption | [#4395](https://github.com/kaanmuar/kaanmuar.github.io/issues/4395) — blocks prod secrets |
+| Account UI + OAuth finish on page | #4389 — **not in #4393** |
+| Review run GSC fetch when bound | #4375 — **not in #4393** |
 
-No secrets, no routes, no Firebase deploy.
+### Gap vs PR #4393 (expected)
+
+- **Aligned:** scopes, `prompt=consent` + `access_type=offline`, device-bound state, redirect origin allowlist, env-gated `ready()`, collections `url_review_gsc_oauth` / `url_review_gsc_tokens`, bind validates `sites.list`, disconnect revokes.
+- **Gap (follow tickets):** plaintext `refreshToken` in Firestore (#4395); no HTML/JS for connect/bind; no `qa-review.html` GSC callback handler; no Firestore rules update documented; review path still agency SA only.
 
 ---
 
-## Verification (after implementation)
+## Verification
 
 ```bash
 node --test tests/unit/url-review-gsc-property.test.js
+node --test tests/unit/url-review-gsc-oauth.test.js      # after #4393
 node --test tests/unit/url-review-gsc-outcomes.test.js   # unchanged
-# Integration (manual): local server + test OAuth client + GSC test property
+# Integration (manual): local server + test OAuth client + GSC test property — only after #4395 in non-prod or encrypted store
 ```
-
----
-
-## Recommended next implementation ticket
-
-**Title:** `feat: GSC OAuth connect, token store, and review bind (#4377 impl)`  
-**Branch:** `feat/4377-gsc-oauth-impl`  
-**Scope:**
-
-1. `functions/url-review-gsc-oauth.js` (start/finish/refresh/list/bind) modeled on `url-review-oauth.js`
-2. Routes in `index.js` + `url-review-server.js`
-3. Firestore rules + encryption for `refreshToken`
-4. Account UI: connect button, property picker, status on review form
-5. Wire GSC fetch into review when `account.gsc` covers target (#4375)
-
-**Depends on:** Google OAuth client + consent screen approval for `webmasters.readonly`.
 
 ---
 
