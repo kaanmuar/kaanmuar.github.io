@@ -1,0 +1,29 @@
+---
+description: Cursor token habits, plan-% spend, and task→model strategy (#1970 / #4408)
+alwaysApply: true
+---
+# Cursor token habits (#1970)
+
+Apply in every repo and chat. Tool calls re-read the whole chat; cache reads dominate the bill.
+
+## Habits
+- One chat per ticket/task. After merge or half-context: hand off (ticket/task, PR/branch, what's left) and stop.
+- Prefer `gh`/`curl`/APIs/repo scripts over browser clicking. Unavoidable clicking, wide search, or CI digs → use a subagent and keep only its summary.
+- Keep tool output small: `rg`/`tail`, viewport screenshots, wait scripts — not poll loops.
+- Don't re-verify what was already confirmed. Put generated media/build output in `.gitignore` (`git status` is attached every turn).
+
+## Spend by Cursor plan %
+- Under 70%: normal models for the task size.
+- At/over 70%: prefer cheap models and subagents; Auto/Haiku/Composer for questions and small edits.
+- At/over 100% (on demand): every token is billed — short chats, early handoffs, no expensive models unless Carlos asks.
+
+## Task size → model
+- Question: Auto or Haiku/Composer-class; no worktree/ticket unless it becomes work.
+- Small edit: Auto or Composer/Sonnet-class; read only the named files.
+- Medium: Sonnet-class; named/likely files before searching; explore subagent for wider search.
+- Large: plan first; strong model for design; subagents for search and CI.
+
+## Enforcement (global hooks / CursorQuota)
+- Short asks `quota` / `usage` / `budget` are answered by the token-preflight hook with no model (prefix `agent:` to force the agent).
+- Past ~half context (~200 KB transcript): hand off once to a new chat; do not keep burning the long thread.
+- Over 70% plan + expensive model on a question/small ask: switch to a cheaper model (or resend to keep).
