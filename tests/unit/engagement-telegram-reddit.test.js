@@ -139,6 +139,7 @@ function telegram(opts) {
 			);
 		if (m[2] === 'getWebhookInfo') return ok({ url: '' });
 		if (m[2] === 'getChatMember') return ok({ status: o.status || 'administrator' });
+		if (m[2] === 'createChatInviteLink') return ok({ invite_link: 'https://t.me/+TestInvite' });
 		if (m[2] === 'getUpdates') return ok(UPDATES.filter((u) => !body.offset || u.update_id >= body.offset));
 		if (m[2] === 'setMessageReaction') return ok(true);
 		if (m[2] === 'sendMessage') return ok({ message_id: 900 });
@@ -197,12 +198,12 @@ test("the bot's token is checked before it is kept, and Jarvis says what the cha
 	assert.match(member.message, /Make @qalab_live_bot an admin of “QA-lab Live chat”/);
 
 	const ready = await A.saveTelegram(deps(db, telegram()), { token: TOKEN });
-	assert.equal(
-		ready.message,
-		"Telegram is connected as @qalab_live_bot. It reacts to and answers comments under @qalab_live's posts in “QA-lab Live chat”."
-	);
+	assert.match(ready.message, /Telegram is connected as @qalab_live_bot/);
+	assert.match(ready.message, /It reacts to and answers comments under @qalab_live's posts in “QA-lab Live chat”/);
+	assert.match(ready.message, /Discussion invite: https:\/\/t\.me\/\+TestInvite/);
 	const saved = db.data.get('engagement_private/telegram');
 	assert.equal(saved.group, GROUP);
+	assert.equal(saved.groupInviteLink, 'https://t.me/+TestInvite');
 	assert.equal(saved.error, '');
 	const row = (await A.connections(db)).find((c) => c.network === 'telegram');
 	assert.equal(row.connected, true);

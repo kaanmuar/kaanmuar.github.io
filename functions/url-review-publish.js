@@ -104,6 +104,7 @@ function slimCasesForGaps(report, findings) {
 }
 
 function publicReport(report) {
+	const Handles = require('./telegram-handles');
 	const ins = report.insights || {};
 	const geo = ins.geo || {};
 	const psi = report.pagespeed || {};
@@ -119,6 +120,7 @@ function publicReport(report) {
 		.map((f) =>
 			pick(f, ['key', 'verdict', 'area', 'severity', 'rank', 'title', 'evidence', 'fix', 'effort', 'msg', 'cases'])
 		);
+	const telegram = Handles.fromSocialLinks((report.observed && report.observed.socialLinks) || []);
 	return {
 		id: report.id,
 		fetchedAt: report.fetchedAt,
@@ -131,6 +133,7 @@ function publicReport(report) {
 			byLayer: (report.counts && report.counts.byLayer) || {},
 		},
 		cases: slimCasesForGaps(report, findings),
+		telegram,
 		observed: {
 			lang: (report.observed && report.observed.lang) || '',
 			signals: pick((report.observed && report.observed.signals) || {}, ['hreflang']),
