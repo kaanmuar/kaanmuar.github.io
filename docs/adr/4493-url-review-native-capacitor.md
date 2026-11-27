@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| **Status** | Accepted |
+| **Status** | Superseded → [ADR 4506](./4506-url-review-native-compose-swiftui.md) (Jetpack Compose + SwiftUI) |
 | **Date** | 2026-11-27 |
-| **Tickets** | Parent [#4491](https://github.com/kaanmuar/kaanmuar.github.io/issues/4491) · This ADR [#4493](https://github.com/kaanmuar/kaanmuar.github.io/issues/4493) · Children [#4492](https://github.com/kaanmuar/kaanmuar.github.io/issues/4492) design · [#4494](https://github.com/kaanmuar/kaanmuar.github.io/issues/4494) Android · [#4495](https://github.com/kaanmuar/kaanmuar.github.io/issues/4495) iOS · [#4496](https://github.com/kaanmuar/kaanmuar.github.io/issues/4496) auth/pay |
+| **Tickets** | Parent [#4491](https://github.com/kaanmuar/kaanmuar.github.io/issues/4491) · This ADR [#4493](https://github.com/kaanmuar/kaanmuar.github.io/issues/4493) · Superseded by [#4506](https://github.com/kaanmuar/kaanmuar.github.io/issues/4506) · Children [#4492](https://github.com/kaanmuar/kaanmuar.github.io/issues/4492) design · [#4494](https://github.com/kaanmuar/kaanmuar.github.io/issues/4494) Android · [#4495](https://github.com/kaanmuar/kaanmuar.github.io/issues/4495) iOS · [#4496](https://github.com/kaanmuar/kaanmuar.github.io/issues/4496) auth/pay |
 | **Related** | [#37](https://github.com/kaanmuar/kaanmuar.github.io/issues/37) installable/PWA · [#4422](https://github.com/kaanmuar/kaanmuar.github.io/issues/4422) mobile web spearhead (shipped) |
 
 ## Context
@@ -111,4 +111,4 @@ Rules:
 
 ---
 
-*Author: architecture ticket #4493. Supersedes informal lean in [#4491](https://github.com/kaanmuar/kaanmuar.github.io/issues/4491#issuecomment-7228841541).*
+*Author: architecture ticket #4493. Supersedes informal lean in [#4491](https://github.com/kaanmuar/kaanmuar.github.io/issues/4491#issuecomment-7228841541). **This ADR is superseded by [ADR 4506](./4506-url-review-native-compose-swiftui.md)** ([#4506](https://github.com/kaanmuar/kaanmuar.github.io/issues/4506)).*
