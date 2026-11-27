@@ -7,7 +7,10 @@
     "cap:sync": "cap sync",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
-    "cap:copy": "cap copy"
+    "cap:copy": "cap copy",
+    "cap:sync:android": "cap sync android",
+    "android:assembleDebug": "npm run cap:sync:android && cd android && ./gradlew assembleDebug",
+    "test": "node --test tests/"
   },
   "capabilities": {
     "ios": true,
