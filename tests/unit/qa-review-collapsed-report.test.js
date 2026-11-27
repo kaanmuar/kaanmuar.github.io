@@ -24,7 +24,7 @@ function mkItem(head, panel) {
 	return { button, panel, group: head.dataset.indexGroup || head.id };
 }
 
-test('unpaid keep-list keeps health, fix-first, glance, and cases (#4463)', () => {
+test('unpaid keep-list keeps health, fix-first, glance, cases, and compare (#4463)', () => {
 	const mod = loadCollapsed();
 	const q = (flags) => ({
 		querySelector(sel) {
@@ -33,6 +33,8 @@ test('unpaid keep-list keeps health, fix-first, glance, and cases (#4463)', () =
 			if (flags.visuals && sel.includes('report-visuals')) return {};
 			if (flags.cases && sel.includes('#cases')) return {};
 			if (flags.watch && sel.includes('watch-cases')) return {};
+			if (flags.rivals && sel.includes('#rivals')) return {};
+			if (flags.compare && sel.includes('#compare')) return {};
 			return null;
 		},
 	});
@@ -40,6 +42,8 @@ test('unpaid keep-list keeps health, fix-first, glance, and cases (#4463)', () =
 	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { face: 'fixfirst', indexGroup: 'summary' } }, q({ fix: true }))), true);
 	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { indexGroup: 'glance' } }, q({ visuals: true }))), true);
 	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { indexGroup: 'cases', face: 'cases' } }, q({ watch: true }))), true);
+	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { face: 'compare', indexGroup: 'summary' } }, q({}))), true);
+	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { face: 'sec', indexGroup: 'compare' } }, q({ rivals: true }))), true);
 	assert.equal(mod.shouldKeepOpen(mkItem({ dataset: { face: 'sec', indexGroup: 'checks' } }, q({}))), false);
 });
 
@@ -82,4 +86,6 @@ test('statuscard no longer owns collapse keep-list (#4430 watch-cases)', () => {
 	const collapsed = fs.readFileSync(path.join(__dirname, '../../js/qa-review-collapsed-report.js'), 'utf8');
 	assert.match(collapsed, /#watch-cases/);
 	assert.match(collapsed, /group === 'cases'/);
+	assert.match(collapsed, /face === 'compare'/);
+	assert.match(collapsed, /#rivals/);
 });
