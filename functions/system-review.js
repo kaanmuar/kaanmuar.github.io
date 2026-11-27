@@ -7,6 +7,8 @@ const REPO = 'kaanmuar/kaanmuar.github.io';
 const DAY = 864e5;
 const STALE_PR_DAYS = 7;
 const MAX_LOGS = 5;
+const LIVE_REPORTS_SINCE_LAG_DAYS = 2;
+const LIVE_REPORTS_STATE_PATH = '/contents/scripts/auto-live-reports.state.json?ref=main';
 
 const clip = (s, n) =>
 	String(s || '')
@@ -157,7 +159,52 @@ function stalePrs(prs, now) {
 	};
 }
 
-async function run({ fetch, token, now }) {
+const socialPendingCount = (state) => {
+	const pending = state && state.socialPending;
+	if (pending == null) return 0;
+	if (typeof pending === 'number') return pending;
+	if (typeof pending === 'object' && typeof pending.count === 'number') return pending.count;
+	return 0;
+};
+
+// Live Reports SLO on main state (#4458): stuck since cursor or social backlog between successful publishes (#4444).
+function liveReportsSlo(state, now) {
+	const problems = [];
+	const since = state && state.since;
+	const sinceMs = since ? Date.parse(since) : NaN;
+	const lagMs = Number.isFinite(sinceMs) ? now - sinceMs : NaN;
+	if (Number.isFinite(lagMs) && lagMs > LIVE_REPORTS_SINCE_LAG_DAYS * DAY) {
+		const days = Math.floor(lagMs / DAY);
+		problems.push({
+			job: 'Live Reports',
+			why:
+				'state.since is ' +
+				days +
+				' days behind (' +
+				clip(since, 24) +
+				'): dispatch auto-live-reports with cards_only=true (or --cards-only) so cards and since advance (#4458, #4444)',
+		});
+	}
+	const socialN = socialPendingCount(state);
+	if (socialN > 0)
+		problems.push({
+			job: 'Live Reports',
+			why:
+				'social backlog socialPending=' +
+				socialN +
+				': re-dispatch auto-live-reports to drain social posts; if publish keeps timing out at Render cards/stories/clips, use cards_only first (#4458, #4444)',
+		});
+	const parts = [];
+	if (Number.isFinite(sinceMs)) parts.push('since ' + clip(since, 24));
+	if (state && state.socialPending != null) parts.push('socialPending ' + socialN);
+	const row = {
+		label: 'Live Reports state',
+		value: parts.length ? parts.join(', ') : since ? clip(since, 24) : 'no since field',
+	};
+	return { problems, row };
+}
+
+async function run({ fetch, token, now, liveReportsState: stateOverride }) {
 	if (!token) return { problems: [], rows: [{ label: 'System review', value: 'no GitHub token' }] };
 	const headers = {
 		Authorization: 'Bearer ' + token,
@@ -235,7 +282,38 @@ async function run({ fetch, token, now }) {
 	problems.push(...sec.problems);
 	rows.push(...sec.rows);
 	if (prs) rows.push(stalePrs(prs, now));
+
+	let state = stateOverride;
+	if (state == null) {
+		const file = await orNull(get(LIVE_REPORTS_STATE_PATH));
+		if (!file)
+			rows.push({
+				label: 'Live Reports state',
+				value: 'not readable on main (missing, forbidden, or needs Contents: read)',
+			});
+		else {
+			try {
+				state = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+			} catch {
+				rows.push({ label: 'Live Reports state', value: 'on main but not valid JSON' });
+			}
+		}
+	}
+	if (state) {
+		const slo = liveReportsSlo(state, now);
+		problems.push(...slo.problems);
+		rows.push(slo.row);
+	}
 	return { problems, rows };
 }
 
-module.exports = { causeOf, security, stalePrs, run, STALE_PR_DAYS };
+module.exports = {
+	causeOf,
+	security,
+	stalePrs,
+	liveReportsSlo,
+	socialPendingCount,
+	run,
+	STALE_PR_DAYS,
+	LIVE_REPORTS_SINCE_LAG_DAYS,
+};

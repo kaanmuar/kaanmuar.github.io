@@ -92,6 +92,34 @@ test('PRs open over a week are listed, chats apart from Dependabot, drafts left 
 	assert.equal(review.stalePrs([], NOW).value, 'none');
 });
 
+test('Live Reports SLO: since lag and socialPending backlog (#4458)', () => {
+	const fresh = review.liveReportsSlo({ since: '2026-11-02T00:00:00Z' }, NOW);
+	assert.deepEqual(fresh.problems, []);
+	assert.match(fresh.row.value, /^since 2026-11-02/);
+
+	const stale = review.liveReportsSlo({ since: '2026-10-30T12:00:00Z' }, NOW);
+	assert.equal(stale.problems.length, 1);
+	assert.equal(stale.problems[0].job, 'Live Reports');
+	assert.match(stale.problems[0].why, /state\.since is \d+ days behind.*cards_only=true.*#4458, #4444/);
+
+	const backlog = review.liveReportsSlo(
+		{ since: '2026-11-02T00:00:00Z', socialPending: { count: 42 } },
+		NOW
+	);
+	assert.equal(backlog.problems.length, 1);
+	assert.match(backlog.problems[0].why, /social backlog socialPending=42.*re-dispatch auto-live-reports.*#4458, #4444/);
+	assert.match(backlog.row.value, /socialPending 42/);
+
+	const both = review.liveReportsSlo(
+		{ since: '2026-10-25T00:00:00Z', socialPending: 9 },
+		NOW
+	);
+	assert.equal(both.problems.length, 2);
+	assert.equal(review.socialPendingCount({ socialPending: 3 }), 3);
+	assert.equal(review.socialPendingCount({ socialPending: { count: 7 } }), 7);
+	assert.equal(review.socialPendingCount({ since: 'x' }), 0);
+});
+
 test('run reads the newest finished run per workflow on main and names the failing step and cause', async () => {
 	const replies = {
 		'/actions/runs?branch=main&status=completed&per_page=100': {
@@ -158,7 +186,12 @@ test('run reads the newest finished run per workflow on main and names the faili
 		const body = replies[path];
 		return { ok: true, status: 200, json: async () => body, text: async () => body };
 	};
-	const out = await review.run({ fetch, token: 't', now: NOW });
+	const out = await review.run({
+		fetch,
+		token: 't',
+		now: NOW,
+		liveReportsState: { since: '2026-11-02T00:00:00Z' },
+	});
 	assert.equal(out.problems.length, 2);
 	assert.equal(out.problems[0].job, 'Pages');
 	assert.match(
@@ -175,6 +208,57 @@ test('run reads the newest finished run per workflow on main and names the faili
 			'Dependabot: none',
 			'Code scanning: not readable by the GitHub App (needs Code scanning alerts: read)',
 			'PRs open over 7 days: none',
+			'Live Reports state: since 2026-11-02T00:00:00Z',
 		]
+	);
+});
+
+test('run reads Live Reports state from GitHub contents on main (#4458)', async () => {
+	const staleSince = '2026-10-25T00:00:00Z';
+	const replies = {
+		'/actions/runs?branch=main&status=completed&per_page=100': { workflow_runs: [] },
+		'/contents/scripts/auto-live-reports.state.json?ref=main': {
+			content: Buffer.from(JSON.stringify({ since: staleSince, socialPending: { count: 5 } }), 'utf8').toString(
+				'base64'
+			),
+		},
+		'/secret-scanning/alerts?state=open&per_page=100': [],
+		'/dependabot/alerts?state=open&per_page=100': [],
+		'/code-scanning/alerts?state=open&per_page=100': null,
+		'/pulls?state=open&per_page=100': [],
+	};
+	const fetch = async (url) => {
+		const path = url.replace('https://api.github.com/repos/kaanmuar/kaanmuar.github.io', '');
+		if (!(path in replies)) return { ok: false, status: 403, json: async () => ({}) };
+		const body = replies[path];
+		if (body === null) return { ok: false, status: 403, json: async () => ({}) };
+		return { ok: true, status: 200, json: async () => body, text: async () => body };
+	};
+	const out = await review.run({ fetch, token: 't', now: NOW });
+	assert.equal(out.problems.length, 2);
+	assert.ok(out.problems.every((p) => p.job === 'Live Reports'));
+	assert.match(out.rows.find((r) => r.label === 'Live Reports state').value, /socialPending 5/);
+});
+
+test('run adds a row, not a crash, when Live Reports state is missing on main', async () => {
+	const replies = {
+		'/actions/runs?branch=main&status=completed&per_page=100': { workflow_runs: [] },
+		'/secret-scanning/alerts?state=open&per_page=100': [],
+		'/dependabot/alerts?state=open&per_page=100': [],
+		'/pulls?state=open&per_page=100': [],
+	};
+	const fetch = async (url) => {
+		const path = url.replace('https://api.github.com/repos/kaanmuar/kaanmuar.github.io', '');
+		if (path === '/contents/scripts/auto-live-reports.state.json?ref=main')
+			return { ok: false, status: 404, json: async () => ({}) };
+		if (!(path in replies)) return { ok: false, status: 403, json: async () => ({}) };
+		const body = replies[path];
+		return { ok: true, status: 200, json: async () => body, text: async () => body };
+	};
+	const out = await review.run({ fetch, token: 't', now: NOW });
+	assert.deepEqual(out.problems, []);
+	assert.match(
+		out.rows.find((r) => r.label === 'Live Reports state').value,
+		/not readable on main/
 	);
 });
