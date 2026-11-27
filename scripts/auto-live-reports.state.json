@@ -1,5 +1,5 @@
 {
- "since": "2026-11-27T01:22:19.985Z",
+ "since": "2026-11-27T18:07:01.264Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -16,7 +16,7 @@
   "davibank.com": "2026-10-22",
   "confluence.com": "2026-10-22",
   "atlassian.com": "2026-10-22",
-  "co.computrabajo.com": "2026-10-22",
+  "co.computrabajo.com": "2026-11-27",
   "nice.com": "2026-10-22",
   "honda.com": "2026-10-22",
   "pirouline.com": "2026-10-23",
@@ -37,7 +37,7 @@
   "hubspot.com": "2026-10-26",
   "thekeyinmobiliaria.com": "2026-10-26",
   "millanenlinea.com": "2026-10-26",
-  "cng.edu": "2026-10-26",
+  "cng.edu": "2026-11-27",
   "montesofia.com": "2026-10-26",
   "montessori.edu.co": "2026-10-26",
   "cgb.edu.co": "2026-10-26",
@@ -557,13 +557,20 @@
   "buhomedia.com.ar": "2026-11-22",
   "bullcredtech.com": "2026-11-22",
   "bullerbrewingco.com": "2026-11-22",
-  "standardbank.co.mz": "2026-11-22"
+  "standardbank.co.mz": "2026-11-22",
+  "decathlon.com.py": "2026-11-27",
+  "transavia.com": "2026-11-27"
  },
  "recent": [
+  "ax-target-size",
+  "sec-http",
+  "ax-aria-required-parent",
   "a11y-labels",
-  "sec-frame",
-  "ax-color-contrast",
-  "seo-schema-parse",
   "a11y-labels"
- ]
+ ],
+ "socialPending": {
+  "batch": "auto-2026-11-27",
+  "count": 4,
+  "at": "2026-11-27T18:17:33.010Z"
+ }
 }

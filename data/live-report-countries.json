@@ -1246,6 +1246,19 @@
    ],
    "at": "2026-11-15"
   },
+  "arandupyahu.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +595 982 905632 (legal/contact page)",
+    "address names PY",
+    "address names PY (legal/contact page)",
+    "locale es-PY"
+   ],
+   "at": "2026-11-27"
+  },
   "aranjuezsteakhouse.com": {
    "country": "ES",
    "scope": "country",
@@ -1527,6 +1540,18 @@
    ],
    "at": "2026-11-10"
   },
+  "atom.bio": {
+   "country": "ES",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "CIF/NIF printed (legal/contact page)",
+    "RDAP registrant in ES",
+    "written in es, spoken in ES"
+   ],
+   "at": "2026-11-27"
+  },
   "auca.kg": {
    "country": "KG",
    "scope": "country",
@@ -1622,6 +1647,17 @@
     "address names VE"
    ],
    "at": "2026-11-20"
+  },
+  "autorentaslapaz.com": {
+   "country": "MX",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry MX",
+    "written in es, spoken in MX"
+   ],
+   "at": "2026-11-27"
   },
   "autoscout24.com": {
    "country": "",
@@ -2506,6 +2542,32 @@
     "written in es, spoken in ES"
    ],
    "at": "2026-11-09"
+  },
+  "calle11.net": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone +595 976 968585‬",
+    "phone +59521201446 (legal/contact page)",
+    "written in es, spoken in PY"
+   ],
+   "at": "2026-11-27"
+  },
+  "calleonce.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone +595 976 968585‬",
+    "phone +59521201446 (legal/contact page)",
+    "written in es, spoken in PY"
+   ],
+   "at": "2026-11-27"
   },
   "cambioseguro.com": {
    "country": "PE",
@@ -6263,6 +6325,19 @@
    ],
    "at": "2026-11-09"
   },
+  "elsolario.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.99,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "phone +591-73590997",
+    "address names BO",
+    "locale es-BO"
+   ],
+   "at": "2026-11-27"
+  },
   "eltallerdelpelo.com": {
    "country": "CO",
    "scope": "country",
@@ -6710,6 +6785,18 @@
     "RDAP registrant in EC"
    ],
    "at": "2026-11-19"
+  },
+  "estropical.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO (legal/contact page)",
+    "phone +59133170000 (legal/contact page)",
+    "address names BO (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "estudiokohon.com": {
    "country": "AR",
@@ -10164,6 +10251,19 @@
    ],
    "at": "2026-11-15"
   },
+  "kivocash.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +591) 754-74448 (legal/contact page)",
+    "address names BO",
+    "address names BO (legal/contact page)",
+    "locale es-BO"
+   ],
+   "at": "2026-11-27"
+  },
   "kiwi.no": {
    "country": "NO",
    "scope": "country",
@@ -10474,6 +10574,19 @@
     "written in es, spoken in PA"
    ],
    "at": "2026-11-09"
+  },
+  "lacasonahotelboutique.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.87,
+   "by": "signals",
+   "evidence": [
+    "phone +59122900505",
+    "phone tel:+59122900505 (legal/contact page)",
+    "address names BO",
+    "address names BO (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "ladentisterie.be": {
    "country": "BE",
@@ -10890,6 +11003,19 @@
    ],
    "at": "2026-11-10"
   },
+  "lodgy.app": {
+   "country": "AR",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "phone +54-9-351-664-2313",
+    "phone +54 9 351 664 (legal/contact page)",
+    "RDAP registrant in AR",
+    "locale es-AR"
+   ],
+   "at": "2026-11-27"
+  },
   "logiciel-ec.com": {
    "country": "EC",
    "scope": "country",
@@ -10981,6 +11107,18 @@
     "written in es, spoken in PR"
    ],
    "at": "2026-11-09"
+  },
+  "lphoteles.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +591) 78074196 (legal/contact page)",
+    "address names BO (legal/contact page)",
+    "RDAP registrant in BO"
+   ],
+   "at": "2026-11-27"
   },
   "lubera.com": {
    "country": "CH",
@@ -11180,6 +11318,18 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-16"
+  },
+  "marketingboliviadigital.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "phone +59160585799",
+    "written in es, spoken in BO"
+   ],
+   "at": "2026-11-27"
   },
   "martindepannage.be": {
    "country": "BE",
@@ -18332,6 +18482,18 @@
     "written in th"
    ],
    "at": "2026-11-09"
+  },
+  "theadventurebrewhostel.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "phone +591 2915896",
+    "address names BO"
+   ],
+   "at": "2026-11-27"
   },
   "thebridge.tech": {
    "country": "ES",
