@@ -1,13 +1,6 @@
 ---
-description: Pre-flight gatekeeper pack and token-saving habits
+description: Pre-flight gatekeeper pack (token habits live in token-habits.mdc)
 alwaysApply: true
 ---
 # Pre-flight (#1970)
-`.cursor/hooks/preflight.js` runs each turn: answers short scripted asks, writes a handoff past half-context, and after the first tool call returns a pack (size, rules, likely files, related tickets, open PRs/worktrees on those files). Read named rules/files before wider search. If "Open work on the same files" lists a PR or worktree on what you will change, build on it or tell Carlos—don't rewrite in parallel (#2969). Draft plan is a starting point; rules here win. Automations: `node .cursor/hooks/preflight.js plan "<prompt>"` first.
-
-## Save tokens
-Tool calls re-read the whole chat; cache reads dominate the bill.
-- One chat per ticket. After merge or half-context: hand off (ticket, PR, left) and stop.
-- Prefer `gh`/`curl`/APIs/repo scripts over browser clicking. Unavoidable clicking, wide search, CI digs → subagent; keep only its summary.
-- Small tool output: `rg`/`tail`, viewport screenshots, `scripts/ci-wait.sh` (not poll loops).
-- Don't re-verify the confirmed. Put generated media/build output in `.gitignore` (`git status` is attached every turn).
+`.cursor/hooks/preflight.js` runs each turn: answers short scripted asks, writes a handoff past half-context, and after the first tool call returns a pack (size, rules, likely files, related tickets, open PRs/worktrees on those files). Read named rules/files before wider search. If "Open work on the same files" lists a PR or worktree on what you will change, build on it or tell Carlos—don't rewrite in parallel (#2969). Draft plan is a starting point; rules here win. Automations: `node .cursor/hooks/preflight.js plan "<prompt>"` first. Token habits / plan-% / model strategy: `token-habits.mdc`.
