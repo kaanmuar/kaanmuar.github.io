@@ -1,0 +1,101 @@
+/* Call-your-shot chips, progress wager, Nailed it badge (#4472) */
+.qa-pred-entry { margin: 14px 0 0; max-width: 580px; }
+.qa-pred-prompt {
+	margin: 0 0 8px;
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 1.35;
+	color: var(--muted, #8ea8ae);
+}
+.qa-pred-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.qa-pred-chip {
+	border: 1px solid rgba(126, 214, 224, .28);
+	background: rgba(255, 255, 255, .04);
+	color: var(--muted, #8ea8ae);
+	border-radius: 999px;
+	padding: 7px 11px;
+	font: 600 11.5px/1.2 var(--font, system-ui, sans-serif);
+	cursor: pointer;
+	transition: color .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.qa-pred-chip:hover { color: var(--text, #e8f3f4); border-color: rgba(126, 246, 251, .45); }
+.qa-pred-chip:focus-visible {
+	outline: 2px solid var(--cyan, #7ef6fb);
+	outline-offset: 2px;
+}
+.qa-pred-chip.is-on {
+	color: #041014;
+	border-color: transparent;
+	background: linear-gradient(135deg, var(--cyan, #7ef6fb), #6fe3b1);
+	box-shadow: 0 0 0 1px rgba(126, 246, 251, .35);
+}
+.qa-pred-wager {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: 8px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	border: 1px solid rgba(126, 246, 251, .35);
+	background: rgba(126, 246, 251, .1);
+	color: var(--cyan, #7ef6fb);
+	font: 650 10px/1.1 var(--font, system-ui, sans-serif);
+	letter-spacing: .02em;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.qa-pred-wager::before {
+	content: "Call";
+	opacity: .75;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .08em;
+	font-size: 9px;
+}
+#health > .qa-pred-wager,
+#health .health > .qa-pred-wager {
+	margin: 0 0 10px;
+}
+.qa-pred-nailed {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: 6px;
+	padding: 3px 9px;
+	border-radius: 999px;
+	border: 1px solid rgba(93, 255, 154, .45);
+	background: linear-gradient(135deg, rgba(126, 246, 251, .22), rgba(93, 255, 154, .18));
+	color: #dffef0;
+	font: 700 10.5px/1.1 var(--font, system-ui, sans-serif);
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	vertical-align: middle;
+	box-shadow: 0 0 18px rgba(93, 255, 154, .15);
+}
+.qa-pred-nailed::before {
+	content: "✓";
+	color: var(--mint, #5dff9a);
+	font-size: 11px;
+}
+.health .ring { position: relative; }
+.health .ring .qa-pred-nailed {
+	position: absolute;
+	left: 50%;
+	bottom: -4px;
+	transform: translate(-50%, 100%);
+	margin: 0;
+	white-space: nowrap;
+	z-index: 2;
+}
+.area.is-pred-nailed {
+	box-shadow: 0 0 0 1px rgba(93, 255, 154, .35), inset 0 0 0 1px rgba(126, 246, 251, .12);
+}
+@media (max-width: 640px) {
+	.qa-pred-chips { gap: 5px; }
+	.qa-pred-chip { flex: 1 1 calc(50% - 5px); text-align: center; min-height: 36px; }
+	.rp-beat .qa-pred-wager {
+		display: flex;
+		margin: 4px 0 0;
+		width: fit-content;
+	}
+}

@@ -7203,6 +7203,9 @@
 		const paid = !!payload.paid;
 		paintVisuals(report, paid);
 		paintInsights(report, paid, fixed);
+		if (window.QAReviewPrediction) {
+			QAReviewPrediction.onReport({ report: report, paid: paid, ins: report.insights, sample: sample });
+		}
 		paintTargeted(report, paid, payload);
 		const offer = document.getElementById('unlock-offer');
 		paintOffer(offer, !paid && !sample);
