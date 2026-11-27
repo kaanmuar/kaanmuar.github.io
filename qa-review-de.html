@@ -1210,6 +1210,9 @@
         #pay.gate, #run-pay.gate, #run-total.gate, #case-export.gate, #case-formats.gate, #inconclusive.gate { z-index: 120; align-items: center; background: rgba(12, 17, 24, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .pay-card { width: min(460px, 100%); margin: 0; padding: 32px 28px 24px; border-radius: 28px; background: radial-gradient(420px 180px at 100% 0%, rgba(13, 110, 118, .28), transparent 62%), var(--card); box-shadow: 0 28px 70px rgba(8, 14, 18, .38); }
         .pay-card .actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
+        .pay-email-row { margin: 12px 0 0; }
+        .pay-email-row label { display: block; margin: 0 0 6px; font-size: 14px; }
+        .pay-email-row[hidden] { display: none; }
         .incon-card { position: relative; }
         .incon-card h2 { padding-right: 36px; }
         .incon-x { position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.8rem; line-height: 1; cursor: pointer; }
@@ -2345,6 +2348,7 @@
 <script src="js/qa-review-batch-copy.js?v=20261120-3999" defer></script>
 <script src="js/qa-review-batch.js?v=20261120-3999" defer></script>
 <script src="js/qa-review-report-copy.js?v=20261125-4329" defer></script>
+<script src="js/qa-review-unlock-gate.js?v=20261127-4432" defer></script>
 <script src="js/qa-review-findings-copy.de.js?v=20261118-3779" defer></script>
 <script src="js/qa-review-watch.js?v=20261119-3850" defer></script>
 <script src="js/qa-review-run.js?v=20261103a" defer></script>
