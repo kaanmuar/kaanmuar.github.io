@@ -6,6 +6,7 @@
 const crypto = require('crypto');
 const reviewAuth = require('./url-review-auth');
 const gscProp = require('./url-review-gsc-property');
+const gscCrypto = require('./url-review-gsc-token-crypto');
 
 const COL_OAUTH = 'url_review_gsc_oauth';
 const COL_TOKENS = 'url_review_gsc_tokens';
@@ -40,6 +41,15 @@ function credentials(env) {
 
 function ready(env) {
 	return !!credentials(env);
+}
+
+function assertEncryptionReady(env) {
+	try {
+		gscCrypto.requireEncryptionAtRest(env);
+	} catch (error) {
+		return fail(503, clip(error.message, 200));
+	}
+	return null;
 }
 
 function redirectOrigins(env) {
@@ -150,8 +160,9 @@ async function ensureAccess(store, email, env, fetcher, now) {
 	const row = await store.get(COL_TOKENS, email);
 	if (!row || row.revokedAt || !row.refreshToken) return fail(404, 'Search Console is not connected for this account.');
 	if (accessFresh(row, now)) return { ok: true, accessToken: row.accessToken, row };
+	const opened = gscCrypto.openTokenRow(row, env);
 	try {
-		const data = await refreshAccess(keys, row.refreshToken, fetcher);
+		const data = await refreshAccess(keys, opened.refreshToken, fetcher);
 		const next = {
 			accessToken: data.access_token,
 			accessExpiresAt: accessExpiry(now, data.expires_in),
@@ -187,6 +198,8 @@ function connectAuthorizeUrl(keys, redirectUri, state) {
 async function startConnect(store, input) {
 	const now = input.now || Date.now();
 	if (!ready(input.env)) return fail(503, 'Search Console connect is not open yet.');
+	const enc = assertEncryptionReady(input.env);
+	if (enc) return enc;
 	const email = reviewAuth.cleanEmail(input.email);
 	if (!email) return fail(401, 'Sign in first.');
 	const device = reviewAuth.deviceHash(input.deviceKey);
@@ -211,6 +224,8 @@ async function startConnect(store, input) {
 async function finishConnect(store, input) {
 	const now = input.now || Date.now();
 	if (!ready(input.env)) return fail(503, 'Search Console connect is not open yet.');
+	const enc = assertEncryptionReady(input.env);
+	if (enc) return enc;
 	const state = String(input.state || '')
 		.replace(/[^a-f0-9]/g, '')
 		.slice(0, 48);
@@ -254,7 +269,15 @@ async function finishConnect(store, input) {
 		connectedAt: new Date(now).toISOString(),
 		revokedAt: '',
 	};
-	await store.set(COL_TOKENS, email, row);
+	let sealed;
+	try {
+		gscCrypto.requireEncryptionAtRest(input.env);
+		sealed = gscCrypto.sealTokenRow(row, input.env, { strict: true });
+	} catch (error) {
+		console.error('GSC token seal failed:', error.message);
+		return fail(503, clip(error.message, 200));
+	}
+	await store.set(COL_TOKENS, email, sealed);
 	return { ok: true, connected: publicTokenRow(row) };
 }
 
@@ -346,12 +369,13 @@ async function disconnectConnect(store, input) {
 	if (!email) return fail(401, 'Sign in first.');
 	const token = await store.get(COL_TOKENS, email);
 	if (token && token.refreshToken) {
+		const opened = gscCrypto.openTokenRow(token, input.env || {});
 		const fetcher = input.fetch || fetch;
 		try {
 			await fetcher(REVOKE_URL, {
 				method: 'POST',
 				headers: { 'content-type': 'application/x-www-form-urlencoded' },
-				body: 'token=' + encodeURIComponent(token.refreshToken),
+				body: 'token=' + encodeURIComponent(opened.refreshToken),
 				signal: AbortSignal.timeout(10000),
 			});
 		} catch (_) {
