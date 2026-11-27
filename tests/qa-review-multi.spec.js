@@ -1519,7 +1519,7 @@ test('"What AI sees" keeps its boxes in one order and lined up in every column, 
 		})
 	);
 	for (const cell of cells) {
-		expect(cell.parts, cell.host).toEqual(['facts', 'excerpt', 'headings', 'crawlers']);
+		expect(cell.parts, cell.host).toEqual(['facts', 'excerpt', 'headings', 'crawlers', 'gsc-connect']);
 		expect(cell.spill, cell.host).toEqual([]);
 		expect(cell.wide, cell.host).toEqual([]);
 		expect(cell.chip, cell.host).toBeLessThan(30);
@@ -2308,6 +2308,8 @@ test('a note every column words the same shows once under the section title, and
 	await expect(sec('fix').locator('.multi-cell [data-note]:visible')).toHaveCount(0);
 	await expect(sec('geo').locator('> .multi-note')).toHaveText([
 		'From the rules in robots.txt, checked for each crawler.',
+		'Connect Google Search Console in your account to unlock decay and cannibalization checks from your real search data—not only what this crawl measured. Connect Search Console.',
+		'With continuous watch turned on in your account, later reruns can email you score and outcome deltas. Watch stays off until you enable it. Open your account.',
 	]);
 	await expect(sec('geo').locator('.multi-cell [data-part="excerpt"] [data-note]:visible')).toHaveCount(3);
 	await expect(sec('geo').locator('.multi-cell[data-col="1"] [data-part="excerpt"] [data-note]')).toContainText(
