@@ -124,6 +124,13 @@ jobs:
           PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
         run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions
 
+      # cards_only (#4444/#4446): social=0 skips the full renderer, but Commit still runs build-social-hub.js, which needs sharp.
+      - name: Install sharp for the hub
+        if: steps.reports.outputs.social == '0' && steps.reports.outputs.cards != '0'
+        run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts sharp@"$(locked sharp)"
+
       - name: Install the renderer
         if: steps.reports.outputs.social != '0'
         # sharp writes the social hub thumbnails for the new posts.
