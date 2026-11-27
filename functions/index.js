@@ -2826,6 +2826,7 @@ const outreachTrials = require('./outreach-trials');
 const outreachSend = require('./outreach-send');
 const fixRequests = require('./url-review-fix-requests');
 const fixDiffDesk = require('./url-review-fix-diff-desk');
+const indexnowDeskWire = require('./url-review-indexnow-desk-wire');
 const fixCheckout = require('./url-review-fix-checkout');
 const fixRereview = require('./url-review-fix-rereview');
 const watchCases = require('./url-review-watch');
@@ -7103,6 +7104,7 @@ exports.reviewUrl = functions
 			['/desk/notice', 'notice'],
 			['/desk/proof', 'proof'],
 			['/desk/fix', 'fix'],
+			['/desk/fix-diff/indexnow', 'fix-diff-indexnow'],
 			['/desk/fix-diff/data', 'fix-diff-data'],
 			['/desk/fix-diff', 'fix-diff'],
 		];
@@ -7277,6 +7279,15 @@ exports.reviewUrl = functions
 					console.error('Desk fix-diff read failed:', error);
 					res.status(500).json({ error: 'Could not read fix packs.' });
 				}
+				return;
+			}
+			if (deskName === 'fix-diff-indexnow' && req.method === 'POST') {
+				await indexnowDeskWire.handleFixDiffIndexNow(req, res, operator, {
+					db: getFirestore(),
+					fetch,
+					env: process.env,
+					nowMs: Date.now(),
+				});
 				return;
 			}
 			if (deskName === 'fix-diff' && req.method === 'POST') {

@@ -1808,6 +1808,34 @@ const PAGE = `<!DOCTYPE html>
         [noteIn, approveBtn, rejectBtn, msg].forEach((el) => form.appendChild(el));
         fixDiffDetailEl.appendChild(form);
       }
+      if (picked.status === "approved") {
+        const ixForm = document.createElement("form");
+        ixForm.className = "fix-edit";
+        const keyIn = Object.assign(document.createElement("input"), { type: "text", placeholder: "Customer IndexNow key (hex)", autocomplete: "off" });
+        keyIn.setAttribute("aria-label", "Customer IndexNow key");
+        keyIn.style.width = "min(280px, 100%)";
+        const pingBtn = Object.assign(document.createElement("button"), { type: "button", textContent: "Ping IndexNow" });
+        const ixMsg = Object.assign(document.createElement("span"), { className: "meta" });
+        pingBtn.addEventListener("click", () => pingFixDiffIndexNow(picked.id, keyIn.value.trim(), pingBtn, ixMsg));
+        [keyIn, pingBtn, ixMsg].forEach((el) => ixForm.appendChild(el));
+        fixDiffDetailEl.appendChild(ixForm);
+      }
+    }
+
+    async function pingFixDiffIndexNow(id, key, button, said) {
+      if (!key) { said.textContent = "Enter the customer IndexNow key."; return; }
+      button.disabled = true;
+      said.textContent = "";
+      const res = await fetch(deskBase() + "/desk/fix-diff/indexnow", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ id: id, key: key })
+      });
+      button.disabled = false;
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { said.textContent = out.error || out.note || "IndexNow ping failed."; return; }
+      said.textContent = out.note || (out.deduped ? "Already pinged (deduped)." : "IndexNow ping sent.");
     }
 
     async function decideFixDiff(id, decision, note, button, said) {
