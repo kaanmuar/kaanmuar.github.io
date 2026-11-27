@@ -1,0 +1,31 @@
+{
+	"reportId": "abc123def4567890abc123def4567890",
+	"host": "shop.example.com",
+	"fetchedAt": "2026-11-26T12:00:00.000Z",
+	"insights": {
+		"score": {
+			"overall": 62,
+			"areas": {
+				"SEO": { "score": 75 },
+				"GEO": { "score": 88 }
+			}
+		},
+		"extras": {
+			"gsc": {
+				"current": [
+					{ "page": "/", "clicks": 120, "impressions": 2400, "position": 8.2 },
+					{ "page": "/pricing", "clicks": 40, "impressions": 900, "position": 11.5 }
+				]
+			},
+			"geoCitation": {
+				"brandHost": "shop.example.com",
+				"share": 12.5,
+				"cited": false,
+				"citations": [
+					{ "host": "rival.example", "url": "https://rival.example/" },
+					{ "host": "wiki.example", "url": "https://wiki.example/" }
+				]
+			}
+		}
+	}
+}
