@@ -52,6 +52,21 @@ function needsCardsOnly(runs) {
 	return stuck.length >= 2;
 }
 
+// Hours since state.since. Missing/invalid since → Infinity so catch-up still runs (#4483).
+function sinceLagHours(state, now = Date.now()) {
+	const t = Date.parse(state && state.since);
+	if (!Number.isFinite(t)) return Infinity;
+	return (now - t) / 36e5;
+}
+
+// After (auto-TODAY) lands, schedule/backup used to skip the rest of the UTC day even when
+// more reviews arrived after state.since. Re-run cards when the cursor is older than lagHours.
+const SAME_DAY_CATCHUP_HOURS = 4;
+function needsSameDayCatchUp(state, { lagHours = SAME_DAY_CATCHUP_HOURS, now = Date.now() } = {}) {
+	if (state && state.socialPending && state.socialPending.count > 0) return false;
+	return sinceLagHours(state, now) > lagHours;
+}
+
 function clearSocialPending(state) {
 	const next = state && typeof state === 'object' ? Object.assign({}, state) : {};
 	next.socialPending = null;
@@ -891,7 +906,10 @@ module.exports = {
 	PAGE,
 	SOCIAL_POSTS_PER_BATCH,
 	SOCIAL_BATCH,
+	SAME_DAY_CATCHUP_HOURS,
 	needsCardsOnly,
+	sinceLagHours,
+	needsSameDayCatchUp,
 	clearSocialPending,
 	copyFor,
 	caseFix,

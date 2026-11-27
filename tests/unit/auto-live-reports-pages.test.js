@@ -73,6 +73,20 @@ test('two cancelled Live Reports runs mean the next dispatch should be cards-onl
 	);
 });
 
+test('needsSameDayCatchUp when since is older than 4h and no social pending (#4483)', () => {
+	const { needsSameDayCatchUp, sinceLagHours, SAME_DAY_CATCHUP_HOURS } = require('../../scripts/auto-live-reports.js');
+	const now = Date.parse('2026-11-27T18:00:00Z');
+	assert.equal(SAME_DAY_CATCHUP_HOURS, 4);
+	assert.equal(sinceLagHours({ since: '2026-11-27T01:22:00Z' }, now) > 4, true);
+	assert.equal(needsSameDayCatchUp({ since: '2026-11-27T01:22:00Z' }, { now }), true);
+	assert.equal(needsSameDayCatchUp({ since: '2026-11-27T16:00:00Z' }, { now }), false);
+	assert.equal(
+		needsSameDayCatchUp({ since: '2026-11-27T01:22:00Z', socialPending: { count: 3 } }, { now }),
+		false
+	);
+	assert.equal(needsSameDayCatchUp({}, { now }), true);
+});
+
 test('clearSocialPending drops the pending marker and the tracked batch file (#4457)', () => {
 	const fs = require('fs');
 	const path = require('path');

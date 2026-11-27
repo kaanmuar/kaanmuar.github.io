@@ -54,11 +54,18 @@ jobs:
           SCHEDULE: ${{ github.event.schedule }}
           BACKUP: ${{ inputs.backup }}
           SOCIAL_ONLY_IN: ${{ inputs.social_only }}
+          CARDS_ONLY_IN: ${{ inputs.cards_only }}
           REPO: ${{ github.repository }}
         run: |
           if [ "$SOCIAL_ONLY_IN" = "true" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
             echo "social_only=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # cards_only catch-up must not be blocked by the (auto-TODAY) skip (#4483).
+          if [ "$CARDS_ONLY_IN" = "true" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "social_only=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ "$EVENT_NAME" != "schedule" ] && [ "$BACKUP" != "true" ]; then
@@ -69,11 +76,20 @@ jobs:
           TODAY=$(date -u +%F)
           DONE=$(gh api --paginate "repos/$REPO/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
             --jq ".[] | select(.commit.message | contains(\"(auto-$TODAY)\")) | .sha" | wc -l | tr -d ' ')
-          PENDING=$(gh api "repos/$REPO/contents/scripts/auto-live-reports.state.json?ref=main" --jq .content 2>/dev/null \
-            | tr -d '\n' | base64 -d 2>/dev/null \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log((j.socialPending&&j.socialPending.count)||0)}catch(e){console.log(0)}})" \
-            || echo 0)
+          STATE_JSON=$(gh api "repos/$REPO/contents/scripts/auto-live-reports.state.json?ref=main" --jq .content 2>/dev/null \
+            | tr -d '\n' | base64 -d 2>/dev/null || echo '{}')
+          PENDING=$(printf '%s' "$STATE_JSON" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log((j.socialPending&&j.socialPending.count)||0)}catch(e){console.log(0)}})")
+          # Inline lag check (gate has no checkout). Keep in sync with needsSameDayCatchUp (#4483).
+          CATCHUP=$(printf '%s' "$STATE_JSON" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);const t=Date.parse(j.since);const lag=!Number.isFinite(t)?Infinity:(Date.now()-t)/36e5;const pending=j.socialPending&&j.socialPending.count>0;console.log(!pending&&lag>4?'1':'0')}catch(e){console.log('1')}})")
           if [ "$DONE" != "0" ] && [ "${PENDING:-0}" = "0" ]; then
+            if [ "$CATCHUP" = "1" ]; then
+              echo "Batch auto-$TODAY is on main but state.since is stale; running same-day catch-up (#4483)."
+              echo "go=true" >> "$GITHUB_OUTPUT"
+              echo "social_only=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "Batch auto-$TODAY is already on main with no social pending; this slot has nothing to do."
             echo "go=false" >> "$GITHUB_OUTPUT"
             echo "social_only=false" >> "$GITHUB_OUTPUT"
