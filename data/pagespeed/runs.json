@@ -1,6 +1,76 @@
 {
  "runs": [
   {
+   "at": "2026-11-27T16:54:11.622Z",
+   "run": {
+    "id": 46027890428,
+    "url": "https://github.com/kaanmuar/kaanmuar.github.io/actions/runs/46027890428"
+   },
+   "status": "ok",
+   "error": "",
+   "pages": 2873,
+   "scored": 2848,
+   "failed": 25,
+   "below": 1204,
+   "avg": {
+    "mobile": 89,
+    "desktop": 97
+   },
+   "safe": {
+    "branch": "pagespeed/safe-2026-11-27",
+    "files": [
+     "index.html"
+    ],
+    "fixes": [
+     {
+      "page": "index.html",
+      "kind": "lazy",
+      "detail": "Lazy-loaded 4 images or frames that start below 1.5 screens on phone and desktop."
+     }
+    ],
+    "pages": [
+     {
+      "file": "index.html",
+      "mobile": {
+       "before": 70,
+       "after": 71,
+       "runs": 5
+      },
+      "desktop": {
+       "before": 96,
+       "after": 96,
+       "runs": 5
+      },
+      "url": "https://carlosandmunoz.com/"
+     }
+    ],
+    "verdict": {
+     "up": false,
+     "reason": "No page rose 3 points or more.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   },
+   "ai": {
+    "branch": null,
+    "files": [],
+    "fixes": [],
+    "pages": [],
+    "verdict": {
+     "up": false,
+     "reason": "Nothing to change.",
+     "drops": 0,
+     "rises": 0,
+     "missing": 0
+    },
+    "note": "",
+    "error": ""
+   }
+  },
+  {
    "at": "2026-11-26T17:02:28.761Z",
    "run": {
     "id": 45854245650,
