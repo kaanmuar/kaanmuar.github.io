@@ -384,4 +384,21 @@ test.describe('Fix what the report found (#3082, #3102)', () => {
 		});
 		await shot(page, 'fix-recheck-es.png');
 	});
+
+	test('a paid report shows after-report outcomes and does not call IndexNow from the browser (#4416)', async ({
+		page,
+	}) => {
+		let indexNowHit = false;
+		await page.route(/indexnow/i, () => {
+			indexNowHit = true;
+		});
+		await open(page);
+		const outcomes = page.locator('#fix-outcomes');
+		await expect(outcomes).toBeVisible();
+		await expect(outcomes.locator('[data-outcome="watch"]')).toContainText(/Continuous watch/);
+		await expect(outcomes.locator('[data-outcome="indexnow"]')).toContainText(/never from this browser/i);
+		await expect(outcomes.locator('[data-fix-outcome-index]')).toHaveAttribute('href', /indexnow\.org\/documentation/);
+		await expect(outcomes.locator('[data-fix-outcome-watch]')).toHaveAttribute('href', 'qa-review-account.html');
+		expect(indexNowHit).toBe(false);
+	});
 });
