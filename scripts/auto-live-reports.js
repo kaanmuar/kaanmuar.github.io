@@ -25,6 +25,8 @@ const QAReviewScripts = require('../js/qa-review-scripts');
 const ROOT = path.resolve(__dirname, '..');
 const STATE = path.join(__dirname, 'auto-live-reports.state.json');
 const BATCH_DIR = path.join(ROOT, 'previews/auto-live-reports');
+// Tracked copy of the day's social batch so the social job (and a retry) can render without re-ingest (#4457).
+const SOCIAL_BATCH = path.join(ROOT, 'data/live-reports-social-batch.json');
 const ENDPOINT =
 	process.env.PUBLISH_URL || 'https://us-central1-carlosm-interactive-cv.cloudfunctions.net/reviewUrl/publishable';
 const POST_EVERY_DAYS = 30;
@@ -47,6 +49,13 @@ function needsCardsOnly(runs) {
 	const recent = (runs || []).filter((run) => run && run.status === 'completed').slice(0, 4);
 	const stuck = recent.filter((run) => run.conclusion === 'cancelled' || run.conclusion === 'timed_out');
 	return stuck.length >= 2;
+}
+
+function clearSocialPending(state) {
+	const next = state && typeof state === 'object' ? Object.assign({}, state) : {};
+	next.socialPending = null;
+	if (fs.existsSync(SOCIAL_BATCH)) fs.unlinkSync(SOCIAL_BATCH);
+	return next;
 }
 
 // Top finding key: [the gap, in a few words; a lesson that is true for any site; hashtags].
@@ -706,6 +715,14 @@ function output(values) {
 
 async function main() {
 	const opts = args();
+	if (opts['clear-social-pending']) {
+		const cleared = clearSocialPending(
+			fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {}
+		);
+		fs.writeFileSync(STATE, JSON.stringify(cleared, null, 1) + '\n');
+		output({ social_pending: '0', batch: '' });
+		return;
+	}
 	const state = fs.existsSync(STATE)
 		? JSON.parse(fs.readFileSync(STATE, 'utf8'))
 		: { since: new Date(Date.now() - 864e5).toISOString(), posted: {}, recent: [] };
@@ -828,6 +845,17 @@ async function main() {
 	if (added || removed) live.writeAll(items);
 	fs.mkdirSync(BATCH_DIR, { recursive: true });
 	fs.writeFileSync(path.join(BATCH_DIR, 'batch.json'), JSON.stringify(batch, null, 1) + '\n');
+	const batchId = 'auto-' + today;
+	if (!cardsOnly && batch.length) {
+		fs.mkdirSync(path.dirname(SOCIAL_BATCH), { recursive: true });
+		fs.writeFileSync(
+			SOCIAL_BATCH,
+			JSON.stringify({ batch: batchId, posts: batch, at: new Date().toISOString() }, null, 1) + '\n'
+		);
+		state.socialPending = { batch: batchId, count: batch.length, at: new Date().toISOString() };
+	} else if (!cardsOnly) {
+		Object.assign(state, clearSocialPending(state));
+	}
 	if (!opts.from) state.since = payload.until || state.since;
 	fs.writeFileSync(STATE, JSON.stringify(state, null, 1) + '\n');
 	console.log(
@@ -835,16 +863,18 @@ async function main() {
 			(payload.read || 0) +
 			', held ' +
 			JSON.stringify(payload.held || {}) +
-			(cardsOnly ? ', cards-only' : '')
+			(cardsOnly ? ', cards-only' : '') +
+			(state.socialPending ? ', socialPending=' + state.socialPending.count : '')
 	);
 	output({
 		cards: added,
 		removed,
 		social: batch.length,
 		restricted: held,
-		batch: 'auto-' + today,
+		batch: batchId,
 		total: items.length,
 		cards_only: cardsOnly ? '1' : '0',
+		social_pending: state.socialPending ? String(state.socialPending.count) : '0',
 	});
 }
 
@@ -859,7 +889,9 @@ module.exports = {
 	mergePages,
 	PAGE,
 	SOCIAL_POSTS_PER_BATCH,
+	SOCIAL_BATCH,
 	needsCardsOnly,
+	clearSocialPending,
 	copyFor,
 	caseFix,
 	fixLinesFor,

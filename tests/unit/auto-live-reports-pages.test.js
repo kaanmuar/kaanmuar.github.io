@@ -72,3 +72,20 @@ test('two cancelled Live Reports runs mean the next dispatch should be cards-onl
 		true
 	);
 });
+
+test('clearSocialPending drops the pending marker and the tracked batch file (#4457)', () => {
+	const fs = require('fs');
+	const path = require('path');
+	const os = require('os');
+	const { clearSocialPending, SOCIAL_BATCH } = require('../../scripts/auto-live-reports.js');
+	const dir = path.dirname(SOCIAL_BATCH);
+	fs.mkdirSync(dir, { recursive: true });
+	const existed = fs.existsSync(SOCIAL_BATCH);
+	const prior = existed ? fs.readFileSync(SOCIAL_BATCH, 'utf8') : null;
+	fs.writeFileSync(SOCIAL_BATCH, '{"batch":"auto-test","posts":[1]}\n');
+	const out = clearSocialPending({ since: 'x', socialPending: { batch: 'auto-test', count: 1 } });
+	assert.equal(out.socialPending, null);
+	assert.equal(fs.existsSync(SOCIAL_BATCH), false);
+	if (prior != null) fs.writeFileSync(SOCIAL_BATCH, prior);
+	else if (existed) {/* restored */}
+});

@@ -2542,9 +2542,14 @@ async function ensureLiveReportsBatch() {
 	const today = new Date().toISOString().slice(0, 10);
 	const repo = '/repos/' + BUG_REPO;
 	const commits = await githubGet(repo + '/commits?sha=main&per_page=100&since=' + today + 'T00:00:00Z', token);
-	if (commits.some((c) => c.commit.message.includes('(auto-' + today + ')'))) {
-		console.log('Live Reports watchdog: batch auto-' + today + ' is on main.');
-		return null;
+	const hasCards = commits.some((c) => c.commit.message.includes('(auto-' + today + ')'));
+	let socialPending = false;
+	try {
+		const file = await githubGet(repo + '/contents/scripts/auto-live-reports.state.json?ref=main', token);
+		const state = JSON.parse(Buffer.from(file.content || '', 'base64').toString('utf8'));
+		socialPending = !!(state.socialPending && state.socialPending.count > 0);
+	} catch (error) {
+		socialPending = false;
 	}
 	const runs = await githubGet(
 		repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/runs?per_page=20&created=%3E%3D' + today,
@@ -2563,13 +2568,34 @@ async function ensureLiveReportsBatch() {
 		);
 		return null;
 	}
+	// Cards on main but clips still pending: finish social without re-ingest (#4457).
+	if (hasCards && socialPending) {
+		await github(
+			repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/dispatches',
+			{ ref: 'main', inputs: { social_only: 'true' } },
+			token
+		);
+		console.log('Live Reports watchdog: dispatched social_only for pending clips (auto-' + today + ').');
+		return null;
+	}
+	if (hasCards) {
+		console.log('Live Reports watchdog: batch auto-' + today + ' is on main.');
+		return null;
+	}
 	// When recent runs die at the 180m render timeout (conclusion cancelled), dispatch cards-only so
 	// assets/live-reports and state.since still commit; social catches up once the cursor is small again (#4444).
 	const recent = await githubGet(repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/runs?per_page=10', token);
 	const cardsOnly = require('../scripts/auto-live-reports').needsCardsOnly(recent.workflow_runs || []);
 	await github(
 		repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/dispatches',
-		{ ref: 'main', inputs: { backup: 'true', cards_only: cardsOnly ? 'true' : 'false' } },
+		{
+			ref: 'main',
+			inputs: {
+				backup: 'true',
+				cards_only: cardsOnly ? 'true' : 'false',
+				social_only: 'false',
+			},
+		},
 		token
 	);
 	const finished = runs.workflow_runs.map((run) => run.event + ' ' + run.conclusion).join(', ') || 'none';
