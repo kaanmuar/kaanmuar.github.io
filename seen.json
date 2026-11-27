@@ -1,0 +1,702 @@
+{
+	"producthunt.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"betalist.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"uneed.best": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"peerlist.io": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"fazier.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"microlaunch.net": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"devhunt.org": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"launchingnext.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"toolfound.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"startupaccelerator.dev": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"saashub.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"alternativeto.net": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"g2.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"capterra.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"saasworthy.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"startupstash.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"theresanaiforthat.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"futurepedia.io": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"dang.ai": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"awwwards.com": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"cssdesignawards.com": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"thefwa.com": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"csswinner.com": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"designcreme.com": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"land-book.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"lapa.ninja": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"landing.gallery": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"siteinspire.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"godly.website": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"httpster.net": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"saaslandingpage.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"onepagelove.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"cssmozaic.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "fr",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"italianwebgallery.it": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "it",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"webdesignawards.ru": {
+		"first": "2026-11-27",
+		"kind": "awards",
+		"lang": "ru",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"indiehackers.com": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"news.ycombinator.com": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"reddit.com": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"wellfound.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"crunchbase.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"eu-startups.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"startupitalia.eu": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "it",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"maddyness.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "fr",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"gruenderszene.de": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "de",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"startups.com.br": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "pt",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"contxto.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"larepublica.co": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"nomansite.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"webdesignerdepot.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"smashingmagazine.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"css-tricks.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"sidebar.io": {
+		"first": "2026-11-27",
+		"kind": "newsletter",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"tlrd.me": {
+		"first": "2026-11-27",
+		"kind": "newsletter",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"beehiiv.com": {
+		"first": "2026-11-27",
+		"kind": "newsletter",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"launchllama.com": {
+		"first": "2026-11-27",
+		"kind": "newsletter",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"mexsaas.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"saasguia.es": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"freesaaslist.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"comparasoftware.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"appvizer.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "fr",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"appvizer.es": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"getapp.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"softwareadvice.com": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"capterra.com.co": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "es",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"capterra.com.br": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "pt",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"capterra.de": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "de",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"capterra.fr": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "fr",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"capterra.it": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "it",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"designspiration.net": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"muz.li": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"landingfolio.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"refero.design": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"mobbin.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"dribbble.com": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"behance.net": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"webflow.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"madewithvuejs.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"saaspo.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"pageflows.com": {
+		"first": "2026-11-27",
+		"kind": "gallery",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"startupblink.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"f6s.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"angel.co": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"stackshare.io": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"toolify.ai": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"topai.tools": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"tinylaunch.com": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "no_contact",
+		"at": "2026-11-27"
+	},
+	"launchigniter.co": {
+		"first": "2026-11-27",
+		"kind": "launch",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"indiepage.co": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"startupranking.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"ycombinator.com": {
+		"first": "2026-11-27",
+		"kind": "accelerator",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"techstars.com": {
+		"first": "2026-11-27",
+		"kind": "accelerator",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"seedcamp.com": {
+		"first": "2026-11-27",
+		"kind": "accelerator",
+		"lang": "en",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"startupchile.org": {
+		"first": "2026-11-27",
+		"kind": "accelerator",
+		"lang": "es",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"startbase.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "de",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"siliconcanals.com": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "en",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"mamstartup.pl": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "pl",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"startuppolska.org": {
+		"first": "2026-11-27",
+		"kind": "community",
+		"lang": "pl",
+		"status": "dead",
+		"at": "2026-11-27"
+	},
+	"boxil.jp": {
+		"first": "2026-11-27",
+		"kind": "review",
+		"lang": "ja",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"startup-db.com": {
+		"first": "2026-11-27",
+		"kind": "directory",
+		"lang": "ja",
+		"status": "reachable",
+		"at": "2026-11-27"
+	},
+	"platum.kr": {
+		"first": "2026-11-27",
+		"kind": "roundup",
+		"lang": "ko",
+		"status": "reachable",
+		"at": "2026-11-27"
+	}
+}
