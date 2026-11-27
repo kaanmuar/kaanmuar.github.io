@@ -562,6 +562,17 @@
     "checked": "2026-11-27T05:22:00.035Z"
    }
   ],
+  "auto-2026-11-22/01-u-haj-gov-bh": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "147",
+    "at": "2026-11-27T15:35:15.245Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/147",
+    "checked": "2026-11-27T15:35:20.472Z"
+   }
+  ],
   "compare-2026-11/11-cities": [
    {
     "channel": "telegram",

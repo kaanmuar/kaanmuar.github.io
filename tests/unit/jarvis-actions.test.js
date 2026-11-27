@@ -434,22 +434,25 @@ test('a push run on main that main has moved past starts again on main, and a sc
 			},
 		],
 		mainSha: async () => 'new',
-		dispatch: async (p) => {
-			dispatched.push(p);
+		dispatch: async (p, inputs) => {
+			dispatched.push(inputs ? { path: p, inputs } : p);
 		},
 	});
 	const out = await actions.autoRun({ db, now: MONDAY_10, settings: {}, ops });
 	assert.deepEqual(calls.reruns, [12]);
 	const live = out.queued.find((r) => r.target === 'Live reports from user reviews #11');
 	assert.equal(live.payload.workflow, '.github/workflows/auto-live-reports.yml');
-	assert.match(live.why, /moved past the commit that failed/);
+	assert.equal(live.payload.cards_only, true);
+	assert.match(live.why, /cards-only catch-up/);
 	assert.ok(
 		out.queued.some((r) => r.target === 'Bluesky and Mastodon #13' && !r.payload.workflow),
 		'a risky scheduled run keeps its re-run'
 	);
 	const res = await countdown.execute(live, ops, MONDAY_10);
-	assert.deepEqual(dispatched, ['.github/workflows/auto-live-reports.yml']);
-	assert.match(res.detail, /^Started Live reports from user reviews on main's newest commit/);
+	assert.deepEqual(dispatched, [
+		{ path: '.github/workflows/auto-live-reports.yml', inputs: { cards_only: 'true', backup: 'true' } },
+	]);
+	assert.match(res.detail, /^Started Live reports from user reviews cards-only on main's newest commit/);
 });
 
 test("Pages on main's newest commit runs again at once; other risky runs go on the countdown with their commit (#2893)", async () => {
@@ -474,8 +477,8 @@ test("Pages on main's newest commit runs again at once; other risky runs go on t
 	assert.deepEqual(out.queued.find((r) => r.target === 'Live reports from user reviews #22').payload, {
 		run: 22,
 		name: 'Live reports from user reviews',
-		sha: 'head',
-		path: '.github/workflows/auto-live-reports.yml',
+		workflow: '.github/workflows/auto-live-reports.yml',
+		cards_only: true,
 	});
 
 	const behind = autoAt([run(23, 'Pages', 'old', '.github/workflows/pages.yml')]);

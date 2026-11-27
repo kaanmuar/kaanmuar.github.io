@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode" data-look>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web report · collapsed teaser preview (#4425)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@450;550;650;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #5ec8d4;
+    --cyan-bright: #7ef6fb;
+    --teal: #4db3bb;
+    --mint: #6fe3b1;
+    --amber: #e2c48a;
+    --red: #f39a8b;
+    --bg: #10161d;
+    --panel: #161d26;
+    --card: #1a2430;
+    --line: #2a3440;
+    --text: #e8eef2;
+    --muted: #9aa5b1;
+    --look-edge: rgba(126, 246, 251, .14);
+    --look-card: color-mix(in srgb, var(--card) 72%, transparent);
+    --look-blur: 22px;
+    --look-radius: 18px;
+    --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+    --dash-pad: 18px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(94, 200, 212, .12), transparent),
+                linear-gradient(180deg, #0c1118, var(--bg));
+    font: 15px/1.45 Inter, system-ui, sans-serif;
+    color: var(--text);
+  }
+  .mock-banner {
+    text-align: center;
+    padding: 14px 16px 0;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .mock-banner strong { color: var(--cyan-bright); font-weight: 650; }
+
+  .dash-overlay {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  padding: var(--dash-pad);
+  background: rgba(12, 17, 24, .72);
+  }
+  .dash-modal {
+    width: min(980px, 100%);
+    margin: 0 auto 88px;
+    padding: 8px 4px 24px;
+  }
+
+  .report-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .report-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--teal), var(--cyan-bright));
+    display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #071116;
+    flex: none;
+  }
+  .report-brand h1 {
+    margin: 0;
+    font: 400 1.35rem/1.15 var(--display);
+    letter-spacing: -.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .report-brand small { display: block; font: 500 11px/1.3 Inter, sans-serif; color: var(--muted); margin-top: 2px; }
+  .preview-pill {
+    font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 99px; border: 1px solid rgba(126, 246, 251, .35);
+    color: var(--cyan-bright); background: rgba(126, 246, 251, .08);
+  }
+  .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font: 600 12px/1 Inter, sans-serif; cursor: pointer;
+  }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-primary {
+    border-color: var(--cyan); background: var(--cyan); color: #102226;
+  }
+  .btn:focus-visible { outline: 2px solid var(--cyan-bright); outline-offset: 2px; }
+
+  .design-note {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    border: 1px solid var(--look-edge);
+    border-left: 4px solid var(--cyan);
+    border-radius: var(--look-radius);
+    background: color-mix(in srgb, var(--cyan) 8%, var(--card));
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.45;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .design-note strong { color: var(--text); }
+
+  .glass {
+    background: var(--look-card);
+    border: 1px solid var(--look-edge);
+    border-radius: var(--look-radius);
+    -webkit-backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+    backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+  }
+
+  .hero-card { padding: 20px 18px; margin-bottom: 14px; }
+  .eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .score-row {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px;
+  }
+  .overall {
+    font: 400 4.2rem/1 var(--display);
+    font-variant-numeric: tabular-nums;
+    color: var(--cyan-bright);
+    letter-spacing: -.03em;
+  }
+  .overall-meta .grade {
+    font-size: 1.1rem; font-weight: 650; color: var(--text);
+  }
+  .overall-meta .sub { font-size: 13px; color: var(--muted); margin-top: 4px; max-width: 36ch; }
+
+  .areas {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 18px;
+    width: 100%;
+  }
+  .area {
+    padding: 10px 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .03);
+    text-align: center;
+  }
+  .area b {
+    display: block;
+    font: 400 1.65rem/1 var(--display);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .area span { display: block; margin-top: 4px; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+  .area.warn b { color: var(--amber); }
+  .area.bad b { color: var(--red); }
+
+  .prime-card {
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--cyan);
+  }
+  .prime-card h2 {
+    margin: 0 0 8px;
+    font: 400 1.55rem/1.2 var(--display);
+    letter-spacing: -.02em;
+  }
+  .prime-card .case-sample-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 8px;
+  }
+  .prime-card p { margin: 0; font-size: 14px; line-height: 1.5; color: #dde8eb; }
+  .prime-card .verdict {
+    display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 700; background: rgba(243, 154, 139, .15); color: var(--red);
+    border: 1px solid rgba(243, 154, 139, .35);
+  }
+  .prime-card code {
+    font: 500 12px/1.4 "Fira Code", ui-monospace, monospace;
+    background: rgba(0, 0, 0, .25); padding: 2px 6px; border-radius: 4px;
+  }
+
+  .sections { margin-top: 8px; }
+  .fold-bar {
+    display: flex; justify-content: flex-end; margin: 0 0 10px;
+  }
+  #fold-all {
+    border: 1px solid var(--line); background: transparent; color: var(--cyan);
+    border-radius: 999px; padding: 6px 14px; font: 600 12px Inter, sans-serif; cursor: pointer;
+  }
+
+  .sec-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px 14px;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card) 55%, transparent);
+    transition: border-color .15s, background .15s;
+  }
+  .sec-row:hover { border-color: rgba(126, 246, 251, .35); }
+  .sec-row:focus-visible { outline: 2px solid var(--cyan-bright); outline-offset: 2px; }
+  .sec-row.locked .sec-title { color: var(--text); }
+  .sec-title {
+    font: 400 1.15rem/1.25 var(--display);
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+  .sec-state {
+    font-size: 12px; font-weight: 650; color: var(--muted); white-space: nowrap;
+  }
+  .sec-state.ok { color: var(--mint); }
+  .sec-state.warn { color: var(--amber); }
+  .sec-teaser {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 650; color: var(--muted);
+    padding: 5px 10px; border-radius: 99px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, .2);
+    white-space: nowrap;
+  }
+  .sec-teaser .lock { font-size: 10px; opacity: .9; }
+  .sec-panel {
+    margin: -4px 0 12px;
+    padding: 14px 16px 16px;
+    border: 1px solid var(--line);
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+    background: var(--panel);
+  }
+  .sec-panel[hidden] { display: none !important; }
+  .frost-preview {
+    position: relative;
+    padding: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px dashed rgba(126, 246, 251, .25);
+    min-height: 72px;
+  }
+  .frost-preview .fake-lines {
+    filter: blur(5px); opacity: .55; user-select: none; pointer-events: none;
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .frost-preview::after {
+    content: "Evidence stays frosted in preview — tap row opens checkout, not an empty blur page.";
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    padding: 12px; text-align: center;
+    font-size: 11px; font-weight: 600; color: var(--cyan);
+    background: rgba(16, 22, 29, .55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .unlock-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: min(980px, calc(100% - 24px));
+    margin-bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 12px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid rgba(126, 246, 251, .35);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, .45);
+  }
+  .unlock-bar strong {
+    display: block;
+    font: 400 1.25rem/1.2 var(--display);
+    color: var(--cyan-bright);
+  }
+  .unlock-bar span.meta { font-size: 12px; color: var(--muted); }
+  .unlock-bar .cta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(8, 12, 16, .62);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    display: grid; place-items: end center;
+    padding: 16px;
+  }
+  .sheet-backdrop[hidden] { display: none !important; }
+  .checkout-sheet {
+    width: min(440px, 100%);
+    padding: 22px 20px 20px;
+    border-radius: 22px 22px 18px 18px;
+    border: 1px solid var(--look-edge);
+    background: var(--look-card);
+    -webkit-backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+    backdrop-filter: blur(var(--look-blur)) saturate(1.35);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, .5);
+  }
+  .checkout-sheet h2 {
+    margin: 0 0 6px;
+    font: 400 1.75rem/1.15 var(--display);
+  }
+  .checkout-sheet .lede { margin: 0 0 16px; font-size: 13px; color: var(--muted); }
+  .checkout-sheet .offer-row { display: grid; gap: 10px; }
+  .offer {
+    display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line);
+    border-radius: 16px; background: var(--card); text-align: left; cursor: pointer; font: inherit; color: inherit;
+    width: 100%;
+  }
+  .offer b { font-size: 1.05rem; }
+  .offer span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+  .offer-full { border-color: var(--cyan); box-shadow: inset 0 0 0 1px rgba(94, 200, 212, .35); }
+  .sheet-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+  @media (max-width: 720px) {
+    :root { --dash-pad: 10px; }
+    .areas { grid-template-columns: repeat(3, 1fr); }
+    .overall { font-size: 3.2rem; }
+    .sec-row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "title teaser" "state teaser";
+    }
+    .sec-title { grid-area: title; font-size: 1.05rem; }
+    .sec-state { grid-area: state; }
+    .sec-teaser { grid-area: teaser; align-self: center; }
+    .report-toolbar .btn-ghost { display: none; }
+    .unlock-bar { flex-direction: column; align-items: stretch; text-align: center; }
+    .unlock-bar .cta { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<p class="mock-banner">#4425 · <strong>Web collapsed teaser</strong> · unpaid / soft preview · sibling of mobile spearhead (#4422)</p>
+
+<div class="dash-overlay is-sample" id="viewport-root">
+  <article class="dash-modal" aria-label="Report preview mock">
+    <header class="report-toolbar">
+      <div class="report-brand">
+        <span class="brand-mark" aria-hidden="true">QA</span>
+        <div>
+          <h1>automationexercise.com</h1>
+          <small>Soft preview · 1 page scanned · preview mode</small>
+        </div>
+      </div>
+      <span class="preview-pill">Preview</span>
+      <div class="toolbar-actions">
+        <button type="button" class="btn btn-ghost" id="dash-close">Close</button>
+      </div>
+    </header>
+
+    <p class="design-note glass"><strong>Product note:</strong> Paid or owned reports stay <strong>expanded by default</strong>. This accordion is the free / scan shell only — collapsed rows advertise locked depth without showing an empty blur page.</p>
+
+    <section class="hero-card glass" aria-label="Scores">
+      <p class="eyebrow">Health score</p>
+      <div class="score-row">
+        <div class="overall" aria-label="Overall score 68">68</div>
+        <div class="overall-meta">
+          <div class="grade">Grade D · Fair band</div>
+          <p class="sub">Scores and six areas stay readable in preview. Deep evidence stays frosted until unlock (#3506).</p>
+        </div>
+      </div>
+      <div class="areas" role="list">
+        <div class="area" role="listitem"><b>74</b><span>SEO</span></div>
+        <div class="area" role="listitem"><b>81</b><span>GEO</span></div>
+        <div class="area warn" role="listitem"><b>52</b><span>Analytics</span></div>
+        <div class="area" role="listitem"><b>77</b><span>Security</span></div>
+        <div class="area bad" role="listitem"><b>41</b><span>A11y</span></div>
+        <div class="area warn" role="listitem"><b>58</b><span>Performance</span></div>
+      </div>
+    </section>
+
+    <section class="prime-card glass" aria-label="Prime suspect">
+      <p class="case-sample-label">Prime suspect · readable teaser</p>
+      <h2>Text contrast fails on primary buttons</h2>
+      <p>On <code>/product_details/1</code> and the cart flow, several call-to-action buttons fall below WCAG AA contrast against their background — the most visible friction point on the storefront.</p>
+      <span class="verdict">High · Accessibility</span>
+    </section>
+
+    <button type="button" id="demo-row" hidden>Show checkout sheet (demo)</button>
+
+    <div class="sections glass" style="padding: 14px 14px 12px;">
+      <div class="fold-bar">
+        <button type="button" id="fold-all" aria-expanded="false">Expand all</button>
+      </div>
+
+      <div id="section-list"></div>
+    </div>
+  </article>
+</div>
+
+<aside class="unlock-bar glass" aria-label="Unlock report">
+  <div>
+    <strong>$5 once</strong>
+    <span class="meta">Print · share · export · full evidence</span>
+  </div>
+  <div class="cta">
+    <button type="button" class="btn btn-primary" id="unlock-cta">Unlock full report</button>
+  </div>
+</aside>
+
+<div class="sheet-backdrop" id="checkout-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="checkout-sheet glass">
+    <h2 id="sheet-title">Unlock this section</h2>
+    <p class="lede" id="sheet-lede">Opening a locked row routes here — not an empty frosted panel (#3523).</p>
+    <div class="offer-row">
+      <button type="button" class="offer offer-full">
+        <b>Full report · $5 once</b>
+        <span>All sections, evidence, scripts, print and export for automationexercise.com</span>
+      </button>
+      <button type="button" class="offer">
+        <b>Sign in</b>
+        <span>Already paid? Open with your account — no duplicate charge.</span>
+      </button>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" id="sheet-close">Not now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const sections = [
+    { id: "health", title: "Health score", state: "68 · Grade D", tone: "warn", locked: 0, teaser: null },
+    { id: "security", title: "Security and email", state: "Needs work", tone: "warn", locked: 6 },
+    { id: "checks", title: "Every check, with its verdict", state: "18 cases", tone: "", locked: 18 },
+    { id: "fixkit", title: "Checks and fixes", state: "3 groups", tone: "", locked: 3 },
+    { id: "scripts", title: "Fix kit", state: "12 scripts", tone: "", locked: 12 },
+    { id: "previews", title: "Google and share previews", state: "2 slots", tone: "", locked: 2 },
+    { id: "record", title: "Review record", state: "Metadata", tone: "ok", locked: 4 }
+  ];
+
+  const list = document.getElementById("section-list");
+  const foldAll = document.getElementById("fold-all");
+  const sheet = document.getElementById("checkout-sheet");
+  const sheetLede = document.getElementById("sheet-lede");
+  const unlockCta = document.getElementById("unlock-cta");
+
+  let panels = [];
+
+  function render() {
+    list.innerHTML = "";
+    panels = [];
+    for (const sec of sections) {
+      if (sec.id === "health") continue;
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "sec-row locked";
+      row.dataset.id = sec.id;
+      row.setAttribute("aria-expanded", "false");
+      const stateClass = sec.tone ? " sec-state " + sec.tone : " sec-state";
+      row.innerHTML =
+        '<h3 class="sec-title">' + sec.title + "</h3>" +
+        '<span class="' + stateClass.trim() + '">' + sec.state + "</span>" +
+        '<span class="sec-teaser"><span class="lock" aria-hidden="true">🔒</span> ' + sec.locked + " issues</span>";
+      row.addEventListener("click", () => onRow(sec, row));
+      list.appendChild(row);
+
+      const panel = document.createElement("div");
+      panel.className = "sec-panel";
+      panel.hidden = true;
+      panel.id = "panel-" + sec.id;
+      panel.innerHTML = '<div class="frost-preview"><div class="fake-lines">Evidence line one with host paths…\nFix diff hunks…\nMailbox headers…</div></div>';
+      list.appendChild(panel);
+      panels.push({ row, panel });
+    }
+    syncFoldAllLabel();
+  }
+
+  function openSheet(sec) {
+    sheetLede.textContent =
+      "Unlock \"" + sec.title + "\" and " + sec.locked + " more issues — checkout sheet, not an empty blur page.";
+    sheet.hidden = false;
+  }
+
+  function onRow(sec, row) {
+    if (sec.locked > 0) {
+      openSheet(sec);
+      return;
+    }
+    const open = row.getAttribute("aria-expanded") !== "true";
+    const panel = document.getElementById("panel-" + sec.id);
+    row.setAttribute("aria-expanded", open ? "true" : "false");
+    panel.hidden = !open;
+    syncFoldAllLabel();
+  }
+
+  function syncFoldAllLabel() {
+    const anyOpen = panels.some((p) => p.row.getAttribute("aria-expanded") === "true");
+    foldAll.textContent = anyOpen ? "Collapse all" : "Expand all";
+    foldAll.setAttribute("aria-expanded", anyOpen ? "true" : "false");
+  }
+
+  foldAll.addEventListener("click", () => {
+    const open = foldAll.getAttribute("aria-expanded") === "true";
+    const wants = !open;
+    panels.forEach((p) => {
+      p.row.setAttribute("aria-expanded", wants ? "true" : "false");
+      p.panel.hidden = !wants;
+    });
+    syncFoldAllLabel();
+  });
+
+  function closeSheet() { sheet.hidden = true; }
+  document.getElementById("sheet-close").addEventListener("click", closeSheet);
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) closeSheet(); });
+  unlockCta.addEventListener("click", () => openSheet({ title: "full report", locked: 47 }));
+
+  render();
+</script>
+</body>
+</html>

@@ -621,7 +621,7 @@ async function mainSha(fetchImpl, token) {
 }
 
 // A run that failed on an old commit fails again when re-run, so a workflow main has moved past starts afresh on main.
-async function dispatchMain(fetchImpl, token, workflowPath) {
+async function dispatchMain(fetchImpl, token, workflowPath, inputs) {
 	if (!token) throw new Error('No GitHub token is set.');
 	const file = String(workflowPath || '')
 		.split('/')
@@ -635,10 +635,12 @@ async function dispatchMain(fetchImpl, token, workflowPath) {
 		'X-GitHub-Api-Version': '2022-11-28',
 		'Content-Type': 'application/json',
 	};
+	const body = { ref: 'main' };
+	if (inputs && typeof inputs === 'object' && Object.keys(inputs).length) body.inputs = inputs;
 	const res = await fetchImpl('https://api.github.com/repos/' + REPO + '/actions/workflows/' + file + '/dispatches', {
 		method: 'POST',
 		headers,
-		body: JSON.stringify({ ref: 'main' }),
+		body: JSON.stringify(body),
 		signal: AbortSignal.timeout(15000),
 	});
 	if (res.status === 403 || res.status === 404)
@@ -1079,6 +1081,7 @@ const VOICE =
 	'reviews that already finished are run again, one site at a time, and one mail goes out after the new report; the pace, who is mailed and the 50% code are urlReviewPastRerun in the JSON; ' +
 	'clients can ask us to fix findings (fix it yourself with a free re-check, a quote, a fixed-price package paid by PayPal, or a call). ' +
 	'Growth locks (#3475): soft gate lets cold visitors paste a URL for a 1-page preview without OAuth; shared links show overall, six areas and the top finding clear; auto Live Reports already ship a 4-slide carousel and LinkedIn PDF via tips-studio. ' +
+	'Live Reports (#4444): if auto-live-reports keeps cancelling at ~180m on Render cards/stories/clips, state.since is frozen and the public index count stalls; fix with cards_only catch-up (commit cards + advance since, skip clips) and keep social posts ≤ SOCIAL_POSTS_PER_BATCH (12); rival/competitor reviews still get cards. ensureLiveReportsBatch dispatches cards_only after two cancelled runs. ' +
 	'Hashtag caps stay intentional (Instagram 5, LinkedIn 6, X 2). Refuse Claude-for-social, a parallel Telegram /scan bot, 7-second mute gauge loops, 30-tag walls, and opening GitHub issues on third-party OSS. ' +
 	'Next builds after Slide 3 + first-comment: money (#3482) white-label PDF + co-brand header, Full Stack Starter $29 and Complete $99, Agency CI HMAC webhook on Team/Pro; then channel-split compare (two-day on X/Telegram/Threads, same-carousel on LinkedIn/Instagram); MCP after money; light DOM-verified specs only. ' +
 	'Scouts learn (#4237): private to Carlos and the scouts (Firestore). The Learn tab shows lessons, odds and open questions with decision buttons; cadences are tool 7d, engagement 2d, field-sweep and trending 3d. Learning never goes in public posts or tool-scout draft PR bodies, and never auto-edits the arsenal. ' +

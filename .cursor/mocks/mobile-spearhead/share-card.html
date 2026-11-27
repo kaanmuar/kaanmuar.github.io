@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arena share card mock — Victory &amp; Defeat (#4424)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@450;550;650&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #7ef6fb;
+    --teal: #4db3bb;
+    --mint: #6fe3b1;
+    --gold: #e2c48a;
+    --coral: #f39a8b;
+    --muted: #9fb3b8;
+    --line: rgba(159, 214, 220, .16);
+    --bg-phone: #0e151c;
+    --bg-arena: #0a1218;
+    --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 28px 20px 40px;
+    background: #05080c;
+    font: 14px/1.4 Inter, system-ui, sans-serif;
+    color: #e8f3f4;
+  }
+  .lab {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .lab h1 {
+    margin: 0;
+    font: 400 1.1rem/1.3 var(--display);
+    color: var(--muted);
+    letter-spacing: .02em;
+  }
+  .lab p {
+    margin: 6px 0 0;
+    font-size: 11px;
+    color: #5d7078;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .variant-tag {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .variant-tag.victory { color: var(--mint); }
+  .variant-tag.defeat { color: var(--coral); }
+
+  /* Phone shell — 390×520 card area for screenshot */
+  .phone {
+    width: 390px;
+    border-radius: 28px;
+    border: 2px solid #2a3540;
+    background: var(--bg-phone);
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
+  }
+  .card-inner {
+    padding: 22px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 650;
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: #e4eef2;
+  }
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--teal), var(--cyan));
+    display: grid;
+    place-items: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #071116;
+  }
+  .pill {
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .pill.unblurred {
+    color: var(--cyan);
+    border-color: rgba(126, 246, 251, .35);
+    background: rgba(126, 246, 251, .08);
+  }
+
+  .domain {
+    font: 400 1.35rem/1.15 var(--display);
+    color: #f2f8f9;
+    margin: 0;
+    word-break: break-word;
+  }
+  .domain small {
+    display: block;
+    font: 500 10px/1.3 Inter, sans-serif;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  .score-block {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+  }
+  .score-num {
+    font: 400 52px/1 var(--display);
+    font-variant-numeric: tabular-nums;
+  }
+  .score-block.victory .score-num { color: var(--mint); }
+  .score-block.defeat .score-num { color: var(--coral); }
+  .score-meta .label {
+    font-size: 11px;
+    font-weight: 650;
+    color: #e4eef2;
+  }
+  .score-meta .sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .score-bar {
+    grid-column: 1 / -1;
+    height: 6px;
+    border-radius: 99px;
+    background: #0a1014;
+    overflow: hidden;
+  }
+  .score-bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+  }
+  .victory .score-bar i {
+    width: 87%;
+    background: linear-gradient(90deg, var(--teal), var(--mint));
+  }
+  .defeat .score-bar i {
+    width: 54%;
+    background: linear-gradient(90deg, #8b5a50, var(--coral));
+  }
+
+  .finding {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 550;
+    line-height: 1.35;
+    border: 1px solid var(--line);
+  }
+  .victory .finding {
+    color: #dff5ea;
+    background: rgba(110, 227, 177, .1);
+    border-color: rgba(110, 227, 177, .28);
+  }
+  .defeat .finding {
+    color: #fde8e4;
+    background: rgba(243, 154, 139, .1);
+    border-color: rgba(243, 154, 139, .3);
+  }
+  .finding em {
+    font-style: normal;
+    color: var(--gold);
+  }
+
+  .arena {
+    position: relative;
+    height: 148px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    background: var(--bg-arena);
+  }
+  .arena-bg {
+    position: absolute;
+    inset: 0;
+  }
+  .victory .arena-bg {
+    background: radial-gradient(55% 70% at 50% 30%, rgba(110, 227, 177, .22), transparent),
+                linear-gradient(180deg, #14202a, var(--bg-arena));
+  }
+  .defeat .arena-bg {
+    background: radial-gradient(55% 70% at 50% 30%, rgba(243, 154, 139, .2), transparent),
+                linear-gradient(180deg, #1a1820, var(--bg-arena));
+  }
+  .arena-actor {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: 88px;
+    height: 56px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45));
+  }
+  .arena-actor svg { width: 100%; height: 100%; overflow: visible; }
+  .arena-caption {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .victory .arena-caption .status { color: var(--mint); }
+  .defeat .arena-caption .status { color: var(--coral); }
+  .arena-caption .hint { color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+  .share-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding-top: 4px;
+  }
+  .share-strip button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .04);
+    color: #e4eef2;
+    font: 650 10px/1 Inter, sans-serif;
+    padding: 10px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .share-strip button:hover:not(:disabled) {
+    border-color: rgba(126, 246, 251, .35);
+    background: rgba(126, 246, 251, .06);
+  }
+  .share-strip button:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+    color: var(--muted);
+  }
+  .share-strip button.primary {
+    border-color: rgba(126, 246, 251, .4);
+    color: var(--cyan);
+  }
+  .footnote {
+    text-align: center;
+    font-size: 9px;
+    color: #4d5f68;
+    margin-top: 2px;
+  }
+
+  @keyframes hop { 35% { transform: translateX(-50%) translateY(-6px); } }
+  @keyframes shake {
+    25% { transform: translateX(calc(-50% - 3px)) rotate(-4deg); }
+    75% { transform: translateX(calc(-50% + 3px)) rotate(4deg); }
+  }
+  .victory .arena-actor { animation: hop 1.2s ease 2; }
+  .defeat .arena-actor { animation: shake .5s ease 3; }
+</style>
+</head>
+<body>
+  <div class="lab">
+    <h1>QA-lab · Mobile spearhead share card</h1>
+    <p>#4424 mock · Victory ≥80 · Defeat roast · Unblurred for social</p>
+  </div>
+
+  <div class="row">
+    <!-- VICTORY -->
+    <div>
+      <div class="variant-tag victory">Victory · score ≥ 80</div>
+      <article class="phone victory" id="card-victory" aria-label="Victory share card">
+        <div class="card-inner">
+          <div class="brand-row">
+            <div class="brand">
+              <span class="brand-mark" aria-hidden="true">QA</span>
+              QA-lab
+            </div>
+            <span class="pill unblurred">Share preview</span>
+          </div>
+          <h2 class="domain">example.com<small>Full report on carlosandmunoz.com</small></h2>
+          <div class="score-block victory">
+            <div class="score-num">87</div>
+            <div class="score-meta">
+              <div class="label">Overall score</div>
+              <div class="sub">Signed after arena pass</div>
+            </div>
+            <div class="score-bar"><i></i></div>
+          </div>
+          <p class="finding">Lab cleared the front door — <em>HTTPS, certs, and crawlability pass.</em></p>
+          <div class="arena">
+            <div class="arena-bg"></div>
+            <div class="arena-actor" aria-hidden="true">
+              <svg viewBox="0 0 88 56" fill="none">
+                <g class="torso">
+                  <rect x="28" y="18" width="18" height="14" rx="3" fill="#6fe3b1"/>
+                  <circle cx="37" cy="12" r="6" fill="#6fe3b1"/>
+                  <circle cx="35" cy="11.5" r="1.2" fill="#071116"/>
+                  <circle cx="39" cy="11.5" r="1.2" fill="#071116"/>
+                  <g transform-origin="37px 22px">
+                    <path d="M37 20h14l2 2-4 2h-6" stroke="#7ef6fb" stroke-width="2" fill="none"/>
+                    <rect x="48" y="21" width="7" height="3" rx="1" fill="#e2c48a"/>
+                  </g>
+                  <path d="M46 8h14l-2 4 2 4H46" fill="#6fe3b1"/>
+                  <path d="M46 12V28" stroke="#9fb3b8" stroke-width="1.5"/>
+                </g>
+                <rect x="30" y="32" width="4" height="11" rx="1" fill="#9fb3b8"/>
+                <rect x="38" y="32" width="4" height="11" rx="1" fill="#9fb3b8"/>
+              </svg>
+            </div>
+            <div class="arena-caption">
+              <span class="status">Report signed</span>
+              <span class="hint">Arena · winning pose</span>
+            </div>
+          </div>
+          <div class="share-strip" role="group" aria-label="Share actions">
+            <button type="button" class="primary">Copy link</button>
+            <button type="button">Share to X</button>
+            <button type="button" disabled title="Unlock full report to export PNG">Save image</button>
+          </div>
+          <p class="footnote">Blurred reports don’t go viral — this card is the tip.</p>
+        </div>
+      </article>
+    </div>
+
+    <!-- DEFEAT -->
+    <div>
+      <div class="variant-tag defeat">Defeat · roast card</div>
+      <article class="phone defeat" id="card-defeat" aria-label="Defeat share card">
+        <div class="card-inner">
+          <div class="brand-row">
+            <div class="brand">
+              <span class="brand-mark" aria-hidden="true">QA</span>
+              QA-lab
+            </div>
+            <span class="pill unblurred">Share preview</span>
+          </div>
+          <h2 class="domain">rival.shop<small>Full report on carlosandmunoz.com</small></h2>
+          <div class="score-block defeat">
+            <div class="score-num">54</div>
+            <div class="score-meta">
+              <div class="label">Overall score</div>
+              <div class="sub">Arena stalled on speed</div>
+            </div>
+            <div class="score-bar"><i></i></div>
+          </div>
+          <p class="finding">Your LCP is slower than molasses — <em>4.2s before anything useful paints.</em></p>
+          <div class="arena">
+            <div class="arena-bg"></div>
+            <div class="arena-actor" aria-hidden="true">
+              <svg viewBox="0 0 88 56" fill="none">
+                <g class="torso">
+                  <rect x="28" y="20" width="18" height="14" rx="3" fill="#f39a8b"/>
+                  <circle cx="37" cy="14" r="6" fill="#f39a8b"/>
+                  <circle cx="35" cy="13.5" r="1.2" fill="#071116"/>
+                  <circle cx="39" cy="13.5" r="1.2" fill="#071116"/>
+                  <g transform-origin="37px 24px">
+                    <rect x="32" y="18" width="14" height="8" rx="1.5" fill="#e2c48a" opacity=".9"/>
+                  </g>
+                </g>
+                <rect x="30" y="34" width="4" height="11" rx="1" fill="#9fb3b8" transform="rotate(8 32 34)"/>
+                <rect x="38" y="34" width="4" height="11" rx="1" fill="#9fb3b8" transform="rotate(-10 40 34)"/>
+              </svg>
+            </div>
+            <div class="arena-caption">
+              <span class="status">Lane failed</span>
+              <span class="hint">Arena · stumble pose</span>
+            </div>
+          </div>
+          <div class="share-strip" role="group" aria-label="Share actions">
+            <button type="button" class="primary">Copy link</button>
+            <button type="button">Share to X</button>
+            <button type="button" disabled title="Unlock full report to export PNG">Save image</button>
+          </div>
+          <p class="footnote">Roast is public; fixes stay in the unlocked report.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</body>
+</html>
