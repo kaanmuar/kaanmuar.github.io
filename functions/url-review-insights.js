@@ -15,6 +15,7 @@ const lookalikes = require('./url-review-lookalikes');
 const hackSigns = require('./url-review-hack-signs');
 const targeted = require('./url-review-targeted');
 const geoAgent = require('./url-review-geo-agent');
+const geoCitation = require('./url-review-geo-citation');
 const carbonModel = require('./url-review-carbon');
 const gscOutcomes = require('./url-review-gsc-outcomes');
 const headOrder = require('./url-review-head-order');
@@ -3240,6 +3241,13 @@ function analyze(input) {
 		);
 	}
 	const geoAgentReports = geoAgent.findings({ extras, pages }, add);
+	const cite = extras.geoCitation;
+	if (cite && cite.ok && cite.citations && cite.citations.length) {
+		geoCitation.findings(
+			{ brandHost: cite.brandHost || host, topic: cite.topic, citations: cite.citations },
+			add
+		);
+	}
 	const llmsReport = geoAgentReports.llms;
 	const homeSchema = (face.schema && face.schema.items) || [];
 	const allItems = [].concat.apply(

@@ -198,6 +198,80 @@ function findings(input, add) {
 	return { cited: false, share: 0, total: voice.total };
 }
 
+const CITATION_CAP = 20;
+
+function topicFromInspect(inspect, hostname) {
+	const clip = (s, n) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, n);
+	return clip((inspect && (inspect.description || inspect.title || inspect.h1)) || brandKey(hostname), 120);
+}
+
+function trimGeoCitationPayload(raw, brandHost, topic, via) {
+	const host = brandKey(brandHost);
+	const base = { topic, brandHost: host, citations: [] };
+	if (!raw) return Object.assign({ ok: false, skipped: 'not-run' }, base);
+	if (raw.skipped) return Object.assign({ ok: false, skipped: raw.skipped }, base);
+	const citations = (raw.citations || []).slice(0, CITATION_CAP).map(({ host: h, url, title }) => ({
+		host: h,
+		url,
+		title,
+	}));
+	if (!raw.ok) return Object.assign({ ok: false, error: raw.error || 'check failed' }, base, { citations });
+	const voice = citations.length ? scoreShareOfVoice(citations, host) : { share: 0, cited: false };
+	return {
+		ok: true,
+		via: via || raw.via,
+		topic,
+		brandHost: host,
+		citations,
+		share: voice.share,
+		cited: voice.cited,
+		prompt: raw.prompt ? String(raw.prompt).slice(0, 500) : undefined,
+	};
+}
+
+// gatherExtras hook: gates match rescue groundedCall (Vertex/quota); inject generate + geminiReady in unit tests.
+async function geoCitationExtra(ctx) {
+	const {
+		url,
+		inspect,
+		softPreview,
+		passive,
+		env,
+		halt,
+		fetch: fetchImpl,
+		generate,
+		geminiReady,
+	} = ctx || {};
+	let brandHost = '';
+	try {
+		brandHost = registrable(new URL(url).hostname);
+	} catch {
+		return trimGeoCitationPayload({ ok: false, error: 'bad url' }, '', '', undefined);
+	}
+	const empty = () => trimGeoCitationPayload({ ok: false, skipped: 'not-run' }, brandHost, '', undefined);
+	if (softPreview) return trimGeoCitationPayload({ ok: false, skipped: 'soft-preview' }, brandHost, '', undefined);
+	if (passive) return trimGeoCitationPayload({ ok: false, skipped: 'passive' }, brandHost, '', undefined);
+	if (typeof halt === 'function' && halt()) return trimGeoCitationPayload({ ok: false, skipped: 'stopped' }, brandHost, '', undefined);
+	if (!inspect) return trimGeoCitationPayload({ ok: false, skipped: 'no-inspect' }, brandHost, '', undefined);
+	const ready = typeof geminiReady === 'boolean' ? geminiReady : Gemini.ready(env || process.env);
+	if (!ready) return trimGeoCitationPayload({ ok: false, skipped: 'no-gemini' }, brandHost, '', undefined);
+	if (typeof fetchImpl !== 'function') return empty();
+	const topic = topicFromInspect(inspect, brandHost);
+	const runEnv = env || process.env;
+	let via;
+	const captureVia = (answer) => {
+		if (answer && answer.via) via = answer.via;
+		return answer;
+	};
+	const gen =
+		typeof generate === 'function'
+			? (...args) => Promise.resolve(generate(...args)).then(captureVia)
+			: (f, e, body, opts) => Gemini.generate(f, e, body, opts).then(captureVia);
+	const raw = await groundedCitationCheck({ brandHost, topic }, { fetch: fetchImpl, generate: gen, env: runEnv });
+	if (!via && raw.ok && typeof generate !== 'function') via = Gemini.vertexReady(runEnv) ? 'vertex' : 'studio';
+	return trimGeoCitationPayload(raw, brandHost, topic, via);
+}
+
 module.exports = {
 	normalizeCitationItem,
 	aiCitationDiff,
@@ -207,4 +281,7 @@ module.exports = {
 	citationPrompt,
 	findings,
 	chunksFromResponse,
+	topicFromInspect,
+	trimGeoCitationPayload,
+	geoCitationExtra,
 };
