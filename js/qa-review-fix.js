@@ -3,6 +3,7 @@
  * and "Fix this for me", and the report ends with the four paths: fix it yourself, a fixed-price package,
  * a quote, or a call. Requests go to /review/fix/request; prices come from functions/url-review-fix-offers.js.
  * A package is paid through the review checkout (#3102); a paid report also gets one free re-check after the client's own fix.
+ * Paid reports also get the after-report outcomes strip (#4416): watch, IndexNow, and fix desk — honest gates, no live enable from here.
  */
 (function (root) {
 	'use strict';
@@ -70,6 +71,27 @@
 			invalid: 'Check the findings and the deadline, then send again.',
 			limit: 'You sent several requests today. Write to qa@carlosandmunoz.com for more.',
 			failed: 'The request did not go out. Try again in a moment.',
+			outcomesEyebrow: 'After this report',
+			outcomesTitle: 'Audit → outcomes',
+			outcomesLead:
+				'Optional next steps for SEO and visibility. Nothing here turns on mail, IndexNow, or desk work by itself — the server and operator gate each path.',
+			outcomeWatchTitle: 'Continuous watch',
+			outcomeWatchCopy:
+				'On a watch plan we re-score this host on a schedule and email score and area deltas. Enrolling needs your account and operator approval; this page does not start a schedule.',
+			outcomeWatchButton: 'Open your account',
+			outcomeWatchSignIn: 'Sign in to see watch settings on your account.',
+			outcomeIndexTitle: 'Notify search engines',
+			outcomeIndexCopy:
+				'After an approved fix goes live, our desk can ping IndexNow with your site key — never from this browser. Self-serve IndexNow from here is not available yet.',
+			outcomeIndexLink: 'How IndexNow works',
+			outcomeDeskTitle: 'Send fixes to the fix desk',
+			outcomeDeskCopy:
+				'We can prepare surgical fix packs from selected SEO, GEO, and performance findings for human review when your account is enrolled. Nothing publishes automatically.',
+			outcomeDeskPick: 'Choose findings for the desk',
+			outcomeDeskCopyBtn: 'Copy desk summary',
+			outcomeDeskCopied: 'Summary copied. Paste it in mail to qa@carlosandmunoz.com if you are not enrolled yet.',
+			outcomeDeskNone: 'No open SEO, GEO, or performance findings to pack for the desk.',
+			outcomeDeskSignIn: 'Sign in with the account that ran this report to send findings to the desk.',
 		},
 		es: {
 			getFix: 'Ver el arreglo',
@@ -134,6 +156,27 @@
 			invalid: 'Revisa los hallazgos y la fecha límite, y envía de nuevo.',
 			limit: 'Enviaste varias solicitudes hoy. Escribe a qa@carlosandmunoz.com para más.',
 			failed: 'La solicitud no salió. Intenta de nuevo en un momento.',
+			outcomesEyebrow: 'Después de este informe',
+			outcomesTitle: 'Auditoría → resultados',
+			outcomesLead:
+				'Pasos opcionales para SEO y visibilidad. Nada aquí activa correo, IndexNow ni trabajo del desk por sí solo: el servidor y el operador controlan cada camino.',
+			outcomeWatchTitle: 'Vigilancia continua',
+			outcomeWatchCopy:
+				'Con un plan de vigilancia volvemos a puntuar este host según un calendario y enviamos por correo los deltas de puntuación y área. Inscribirse requiere tu cuenta y la aprobación del operador; esta página no inicia un cron.',
+			outcomeWatchButton: 'Abrir tu cuenta',
+			outcomeWatchSignIn: 'Inicia sesión para ver la vigilancia en tu cuenta.',
+			outcomeIndexTitle: 'Avisar a los buscadores',
+			outcomeIndexCopy:
+				'Cuando un arreglo aprobado esté en producción, el desk puede enviar IndexNow con la clave de tu sitio, nunca desde este navegador. IndexNow autoservicio aquí aún no está disponible.',
+			outcomeIndexLink: 'Cómo funciona IndexNow',
+			outcomeDeskTitle: 'Enviar arreglos al fix desk',
+			outcomeDeskCopy:
+				'Podemos preparar paquetes quirúrgicos a partir de hallazgos SEO, GEO y rendimiento abiertos para revisión humana cuando tu cuenta esté inscrita. Nada se publica solo.',
+			outcomeDeskPick: 'Elegir hallazgos para el desk',
+			outcomeDeskCopyBtn: 'Copiar resumen para el desk',
+			outcomeDeskCopied: 'Resumen copiado. Pégalo en un correo a qa@carlosandmunoz.com si aún no estás inscrito.',
+			outcomeDeskNone: 'No hay hallazgos SEO, GEO o rendimiento abiertos para empaquetar.',
+			outcomeDeskSignIn: 'Inicia sesión con la cuenta que hizo este informe para enviar hallazgos al desk.',
 		},
 		pt: {
 			getFix: 'Ver a correção',
@@ -198,6 +241,27 @@
 			invalid: 'Confira os achados e o prazo, e envie de novo.',
 			limit: 'Você enviou vários pedidos hoje. Escreva para qa@carlosandmunoz.com para mais.',
 			failed: 'O pedido não saiu. Tente de novo em instantes.',
+			outcomesEyebrow: 'Depois deste relatório',
+			outcomesTitle: 'Auditoria → resultados',
+			outcomesLead:
+				'Próximos passos opcionais para SEO e visibilidade. Nada aqui liga e-mail, IndexNow ou trabalho do desk sozinho — servidor e operador controlam cada caminho.',
+			outcomeWatchTitle: 'Monitoramento contínuo',
+			outcomeWatchCopy:
+				'Num plano de watch reavaliamos este host em agenda e enviamos por e-mail os deltas de pontuação e área. Entrar exige sua conta e aprovação do operador; esta página não inicia um cron.',
+			outcomeWatchButton: 'Abrir sua conta',
+			outcomeWatchSignIn: 'Entre para ver o monitoramento na sua conta.',
+			outcomeIndexTitle: 'Avisar mecanismos de busca',
+			outcomeIndexCopy:
+				'Depois de um conserto aprovado no ar, o desk pode enviar IndexNow com a chave do site — nunca neste navegador. IndexNow self-service aqui ainda não está disponível.',
+			outcomeIndexLink: 'Como funciona o IndexNow',
+			outcomeDeskTitle: 'Enviar correções ao fix desk',
+			outcomeDeskCopy:
+				'Podemos preparar pacotes cirúrgicos a partir de achados SEO, GEO e performance em aberto para revisão humana quando a conta estiver inscrita. Nada publica sozinho.',
+			outcomeDeskPick: 'Escolher achados para o desk',
+			outcomeDeskCopyBtn: 'Copiar resumo para o desk',
+			outcomeDeskCopied: 'Resumo copiado. Cole num e-mail para qa@carlosandmunoz.com se ainda não estiver inscrito.',
+			outcomeDeskNone: 'Nenhum achado SEO, GEO ou performance em aberto para empacotar.',
+			outcomeDeskSignIn: 'Entre com a conta que fez este relatório para enviar achados ao desk.',
 		},
 		de: {
 			getFix: 'Korrektur ansehen',
@@ -264,6 +328,27 @@
 			invalid: 'Prüfen Sie die Befunde und die Frist und senden Sie erneut.',
 			limit: 'Sie haben heute mehrere Anfragen gesendet. Schreiben Sie für weitere an qa@carlosandmunoz.com.',
 			failed: 'Die Anfrage wurde nicht gesendet. Versuchen Sie es gleich noch einmal.',
+			outcomesEyebrow: 'Nach diesem Bericht',
+			outcomesTitle: 'Audit → Ergebnisse',
+			outcomesLead:
+				'Optionale nächste Schritte für SEO und Sichtbarkeit. Nichts hier schaltet Mail, IndexNow oder Desk-Arbeit von selbst ein — Server und Betreiber steuern jeden Weg.',
+			outcomeWatchTitle: 'Kontinuierliches Monitoring',
+			outcomeWatchCopy:
+				'Mit einem Watch-Plan bewerten wir diesen Host nach Plan neu und mailen Score- und Bereichs-Deltas. Die Anmeldung braucht Ihr Konto und die Freigabe des Betreibers; diese Seite startet keinen Cron.',
+			outcomeWatchButton: 'Ihr Konto öffnen',
+			outcomeWatchSignIn: 'Melden Sie sich an, um Watch-Einstellungen auf Ihrem Konto zu sehen.',
+			outcomeIndexTitle: 'Suchmaschinen benachrichtigen',
+			outcomeIndexCopy:
+				'Nach einem freigegebenen Live-Fix kann unser Desk IndexNow mit Ihrem Site-Key aufrufen — nie aus diesem Browser. Self-Serve-IndexNow ist hier noch nicht verfügbar.',
+			outcomeIndexLink: 'So funktioniert IndexNow',
+			outcomeDeskTitle: 'Korrekturen an den Fix-Desk senden',
+			outcomeDeskCopy:
+				'Aus offenen SEO-, GEO- und Performance-Befunden können wir chirurgische Pakete für die menschliche Prüfung vorbereiten, wenn Ihr Konto eingeschrieben ist. Nichts wird automatisch veröffentlicht.',
+			outcomeDeskPick: 'Befunde für den Desk wählen',
+			outcomeDeskCopyBtn: 'Desk-Zusammenfassung kopieren',
+			outcomeDeskCopied: 'Zusammenfassung kopiert. Einfügen in eine Mail an qa@carlosandmunoz.com, wenn Sie noch nicht eingeschrieben sind.',
+			outcomeDeskNone: 'Keine offenen SEO-, GEO- oder Performance-Befunde zum Verpacken.',
+			outcomeDeskSignIn: 'Melden Sie sich mit dem Konto an, das diesen Bericht erstellt hat, um Befunde an den Desk zu senden.',
 		},
 		fr: {
 			getFix: 'Voir le correctif',
@@ -329,6 +414,27 @@
 			invalid: "Vérifiez les constats et l'échéance, puis renvoyez.",
 			limit: "Vous avez envoyé plusieurs demandes aujourd'hui. Écrivez à qa@carlosandmunoz.com pour d'autres.",
 			failed: "La demande n'est pas partie. Réessayez dans un instant.",
+			outcomesEyebrow: 'Après ce rapport',
+			outcomesTitle: 'Audit → résultats',
+			outcomesLead:
+				'Étapes optionnelles pour le SEO et la visibilité. Rien ici n’active mail, IndexNow ou travail desk seul — le serveur et l’opérateur contrôlent chaque voie.',
+			outcomeWatchTitle: 'Veille continue',
+			outcomeWatchCopy:
+				'Avec un plan de veille nous re-scoreons cet hôte selon un calendrier et envoyons les deltas de score et de domaine par e-mail. L’inscription demande votre compte et l’accord de l’opérateur ; cette page ne démarre pas de cron.',
+			outcomeWatchButton: 'Ouvrir votre compte',
+			outcomeWatchSignIn: 'Connectez-vous pour voir la veille sur votre compte.',
+			outcomeIndexTitle: 'Prévenir les moteurs de recherche',
+			outcomeIndexCopy:
+				'Après un correctif approuvé en ligne, le desk peut appeler IndexNow avec la clé de votre site — jamais depuis ce navigateur. L’IndexNow en libre-service n’est pas encore disponible ici.',
+			outcomeIndexLink: 'Comment fonctionne IndexNow',
+			outcomeDeskTitle: 'Envoyer les correctifs au fix desk',
+			outcomeDeskCopy:
+				'Nous pouvons préparer des packs chirurgicaux à partir de constats SEO, GEO et performance ouverts pour revue humaine quand le compte est inscrit. Rien ne se publie seul.',
+			outcomeDeskPick: 'Choisir les constats pour le desk',
+			outcomeDeskCopyBtn: 'Copier le résumé desk',
+			outcomeDeskCopied: 'Résumé copié. Collez-le dans un mail à qa@carlosandmunoz.com si vous n’êtes pas encore inscrit.',
+			outcomeDeskNone: 'Aucun constat SEO, GEO ou performance ouvert à empaqueter.',
+			outcomeDeskSignIn: 'Connectez-vous avec le compte qui a lancé ce rapport pour envoyer des constats au desk.',
 		},
 		it: {
 			getFix: 'Vedi la correzione',
@@ -394,10 +500,33 @@
 			invalid: 'Controlla i risultati e la scadenza, poi invia di nuovo.',
 			limit: 'Oggi hai inviato diverse richieste. Scrivi a qa@carlosandmunoz.com per altre.',
 			failed: 'La richiesta non è partita. Riprova tra un momento.',
+			outcomesEyebrow: 'Dopo questo report',
+			outcomesTitle: 'Audit → esiti',
+			outcomesLead:
+				'Passi opzionali per SEO e visibilità. Nulla qui attiva mail, IndexNow o lavoro desk da solo — server e operatore controllano ogni percorso.',
+			outcomeWatchTitle: 'Monitoraggio continuo',
+			outcomeWatchCopy:
+				'Con un piano watch rivalutiamo questo host a calendario e inviamo per email i delta di punteggio e area. L’iscrizione richiede il tuo account e l’ok dell’operatore; questa pagina non avvia un cron.',
+			outcomeWatchButton: 'Apri il tuo account',
+			outcomeWatchSignIn: 'Accedi per vedere il monitoraggio sul tuo account.',
+			outcomeIndexTitle: 'Avvisare i motori di ricerca',
+			outcomeIndexCopy:
+				'Dopo una correzione approvata online, il desk può chiamare IndexNow con la chiave del sito — mai da questo browser. IndexNow self-service qui non è ancora disponibile.',
+			outcomeIndexLink: 'Come funziona IndexNow',
+			outcomeDeskTitle: 'Invia le correzioni al fix desk',
+			outcomeDeskCopy:
+				'Possiamo preparare pacchetti chirurgici da risultati SEO, GEO e performance aperti per revisione umana quando l’account è iscritto. Nulla si pubblica da solo.',
+			outcomeDeskPick: 'Scegli i risultati per il desk',
+			outcomeDeskCopyBtn: 'Copia riepilogo desk',
+			outcomeDeskCopied: 'Riepilogo copiato. Incollalo in una mail a qa@carlosandmunoz.com se non sei ancora iscritto.',
+			outcomeDeskNone: 'Nessun risultato SEO, GEO o performance aperto da impacchettare.',
+			outcomeDeskSignIn: 'Accedi con l’account che ha creato questo report per inviare risultati al desk.',
 		},
 	};
 
 	const OPEN = ['fail', 'risk'];
+	const DESK_AREA = /^(seo|geo|perf)-/;
+	const INDEXNOW_DOCS = 'https://www.indexnow.org/documentation';
 	// The four ways of the panel as qa_review_fix_way labels; the free re-check reports as qa_review_fix_recheck.
 	const WAYS = { fixSelf: 'self', fixGet: 'self', fixRequest: 'quote', fixPackage: 'package', fixCall: 'call' };
 
@@ -420,6 +549,29 @@
 		return ((report && report.insights && report.insights.findings) || []).filter(
 			(f) => OPEN.indexOf(f.verdict) !== -1
 		);
+	}
+
+	function deskFindings(report) {
+		return openFindings(report).filter((f) => DESK_AREA.test(String(f.key || '')));
+	}
+
+	function deskSummary(report, findings, titleOf) {
+		const name = titleOf || ((item) => item.title);
+		const lines = [
+			'QA-lab URL Review — fix desk pack request',
+			'Report: ' + (report.id || ''),
+			'Host: ' + (report.host || report.url || ''),
+			'',
+			'Open findings for surgical desk review:',
+		];
+		findings.forEach((f) => {
+			lines.push('- ' + f.id + ': ' + name(f));
+		});
+		lines.push(
+			'',
+			'Note: packs are prepared for human review when the account is enrolled. IndexNow and publish steps stay on the server.'
+		);
+		return lines.join('\n');
 	}
 
 	function packageFor(packages, key) {
@@ -452,9 +604,23 @@
 		return 'book.html?' + query.toString();
 	}
 
+	function ensureOutcomesSlot(slot) {
+		let node = document.getElementById('fix-outcomes');
+		if (!node && slot && slot.parentNode) {
+			node = document.createElement('section');
+			node.className = 'fix-offer fix-outcomes no-print';
+			node.id = 'fix-outcomes';
+			node.hidden = true;
+			node.setAttribute('aria-labelledby', 'fix-outcomes-title');
+			slot.parentNode.insertBefore(node, slot.nextSibling);
+		}
+		return node;
+	}
+
 	function mount() {
 		const slot = document.getElementById('fix-offer');
 		if (!slot) return null;
+		const outcomesSlot = ensureOutcomesSlot(slot);
 		const lang = () =>
 			String(document.documentElement.lang || 'en')
 				.slice(0, 2)
@@ -612,25 +778,96 @@
 			mark(slot);
 		}
 
+		function paintOutcomes(next) {
+			if (!outcomesSlot || !next) return;
+			const words = L();
+			const report = next.report;
+			const signedIn = !!(root.ReviewAuth && root.ReviewAuth.signedIn());
+			const signedInOwner = signedIn;
+			const path = (key, title, copy, action) =>
+				'<article class="fix-path fix-outcome" data-outcome="' +
+				key +
+				'"><h3>' +
+				esc(title) +
+				'</h3><p>' +
+				esc(copy) +
+				'</p>' +
+				action +
+				'</article>';
+			const watchAction = signedInOwner
+				? '<a class="btn btn-ghost" href="qa-review-account.html" data-fix-outcome-watch>' +
+					esc(words.outcomeWatchButton) +
+					'</a>'
+				: '<p class="fix-muted">' +
+					esc(words.outcomeWatchSignIn) +
+					'</p><button type="button" class="btn btn-ghost" data-fix-outcome-sign-in>' +
+					esc(words.signInButton) +
+					'</button>';
+			const indexAction =
+				'<a class="btn btn-ghost" href="' +
+				esc(INDEXNOW_DOCS) +
+				'" target="_blank" rel="noopener noreferrer" data-fix-outcome-index>' +
+				esc(words.outcomeIndexLink) +
+				'</a>';
+			const deskRows = deskFindings(report);
+			let deskAction = '<p class="fix-muted">' + esc(words.outcomeDeskNone) + '</p>';
+			if (deskRows.length) {
+				deskAction = signedInOwner
+					? '<button type="button" class="btn btn-primary" data-fix-outcome-desk>' +
+						esc(words.outcomeDeskPick) +
+						'</button>' +
+						'<button type="button" class="btn btn-ghost" data-fix-outcome-copy>' +
+						esc(words.outcomeDeskCopyBtn) +
+						'</button>' +
+						'<p class="fix-outcome-msg" role="status" aria-live="polite"></p>'
+					: '<p class="fix-muted">' +
+						esc(words.outcomeDeskSignIn) +
+						'</p><button type="button" class="btn btn-ghost" data-fix-outcome-sign-in>' +
+						esc(words.signInButton) +
+						'</button>';
+			}
+			outcomesSlot.innerHTML =
+				'<p class="eyebrow">' +
+				esc(words.outcomesEyebrow) +
+				'</p><h2 id="fix-outcomes-title">' +
+				esc(words.outcomesTitle) +
+				'</h2><p class="fix-lead">' +
+				esc(words.outcomesLead) +
+				'</p><div class="fix-paths fix-outcome-paths">' +
+				path('watch', words.outcomeWatchTitle, words.outcomeWatchCopy, watchAction) +
+				path('indexnow', words.outcomeIndexTitle, words.outcomeIndexCopy, indexAction) +
+				path('desk', words.outcomeDeskTitle, words.outcomeDeskCopy, deskAction) +
+				'</div>';
+			mark(outcomesSlot);
+			outcomesSlot.hidden = false;
+		}
+
 		function show(next, options) {
 			const report = next && next.report;
-			const ok = !!(report && report.id && !next.sample && !report.preview && openFindings(report).length);
-			payload = ok ? next : null;
+			const baseOk = !!(report && report.id && !next.sample && !report.preview);
+			const hasOpen = baseOk && openFindings(report).length;
+			const showOutcomes = baseOk && next.paid === true;
+			payload = hasOpen || showOutcomes ? next : null;
 			if (options && typeof options.title === 'function') titleOf = options.title;
-			slot.hidden = !ok;
-			if (!ok) {
-				slot.innerHTML = '';
-				return;
+			slot.hidden = !hasOpen;
+			if (!hasOpen) slot.innerHTML = '';
+			else paint();
+			if (showOutcomes) paintOutcomes(next);
+			else if (outcomesSlot) {
+				outcomesSlot.hidden = true;
+				outcomesSlot.innerHTML = '';
 			}
-			paint();
-			if (root.SiteAnalytics)
+			if (!hasOpen && !showOutcomes) return;
+			if (hasOpen && root.SiteAnalytics)
 				root.SiteAnalytics.once(
 					'fix-open-' + report.id,
 					'qa_review_fix_open',
 					'URL Review',
 					paid() ? 'paid' : 'unpaid'
 				);
-			if (!packages)
+			if (showOutcomes && root.SiteAnalytics)
+				root.SiteAnalytics.once('fix-outcomes-' + report.id, 'qa_review_fix_outcomes', 'URL Review', 'paid');
+			if (!packages && hasOpen)
 				loadPackages().then(() => {
 					if (payload === next) paint();
 				});
@@ -963,7 +1200,67 @@
 			}
 		}
 
+		async function copyDesk(report) {
+			const words = L();
+			const rows = deskFindings(report);
+			const box = outcomesSlot && outcomesSlot.querySelector('.fix-outcome-msg');
+			if (!rows.length) return;
+			const text = deskSummary(report, rows, titleOf);
+			try {
+				if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+				else throw new Error('clipboard');
+			} catch (error) {
+				const area = document.createElement('textarea');
+				area.value = text;
+				area.setAttribute('readonly', '');
+				area.style.position = 'fixed';
+				area.style.left = '-9999px';
+				document.body.appendChild(area);
+				area.select();
+				try {
+					document.execCommand('copy');
+				} catch (ignored) {
+					/* fall through */
+				}
+				area.remove();
+			}
+			if (box) box.textContent = words.outcomeDeskCopied;
+			if (root.SiteAnalytics) root.SiteAnalytics.trackEvent('qa_review_fix_outcome', 'URL Review', 'desk-copy');
+		}
+
 		document.addEventListener('click', (event) => {
+			const outcomeBtn = event.target.closest && event.target.closest('[data-fix-outcome-sign-in]');
+			if (outcomeBtn) {
+				const closer = document.getElementById('dash-close');
+				if (closer) closer.click();
+				if (root.ReviewAuth) root.ReviewAuth.focus();
+				return;
+			}
+			const outcome =
+				event.target.closest &&
+				event.target.closest('[data-fix-outcome-watch], [data-fix-outcome-index], [data-fix-outcome-desk], [data-fix-outcome-copy]');
+			if (outcome && payload) {
+				if (outcome.hasAttribute('data-fix-outcome-watch')) {
+					if (root.SiteAnalytics) root.SiteAnalytics.trackEvent('qa_review_fix_outcome', 'URL Review', 'watch');
+					return;
+				}
+				if (outcome.hasAttribute('data-fix-outcome-index')) {
+					if (root.SiteAnalytics) root.SiteAnalytics.trackEvent('qa_review_fix_outcome', 'URL Review', 'indexnow');
+					return;
+				}
+				if (outcome.hasAttribute('data-fix-outcome-desk')) {
+					if (root.SiteAnalytics) root.SiteAnalytics.trackEvent('qa_review_fix_outcome', 'URL Review', 'desk');
+					request(
+						deskFindings(payload.report).map((f) => f.id),
+						''
+					);
+					return;
+				}
+				if (outcome.hasAttribute('data-fix-outcome-copy')) {
+					copyDesk(payload.report);
+					return;
+				}
+			}
 			const button =
 				event.target.closest &&
 				event.target.closest(
@@ -985,7 +1282,7 @@
 		return { show, cardLinks, request };
 	}
 
-	const api = { T, openFindings, offersFor, packageFor, bookUrl };
+	const api = { T, openFindings, deskFindings, deskSummary, offersFor, packageFor, bookUrl };
 	if (typeof module === 'object' && module.exports) module.exports = api;
 	else {
 		root.QAReviewFix = api;
