@@ -16,6 +16,7 @@
 // Only put a change here once it is live. Words: no internal ticket numbers, no code names.
 // Each item must trace to a commit on main that shipped it. Do not add items from plans or drafts.
 // #4142 (in flight): lenient HTTP parser retry for bad CSP header line feeds — no visitor-facing deck line until live.
+// #4329: review-page script cache bust only — outcome packs already on 2026-11-24 above.
 
 const CHANGES = [
 	{
@@ -25,10 +26,10 @@ const CHANGES = [
 			{ face: 'fixkit', t: 'Rival prices on three fix packages', d: 'While launch prices last, accessibility, SEO meta, and performance packages on a paid report name what similar tools charge, in all six languages.' },
 			{ face: 'ai', t: 'Landing hero leads with AI and local', d: 'The URL Review start page headline in all six languages now asks whether AI search can read and cite your site and whether your local profile matches it. The security checkup stays in the paragraph below the headline.' },
 			{ face: 'login', t: 'One clear buy on an unpaid report', d: 'On a stored report you have not paid for yet, the 5 USD fix list is now the only big button. The full report sits in one line underneath, and local-business reports also name the 9 USD competitor compare.' },
-			{ face: 'tools', t: 'Freelancer pass vs audit subscriptions', d: 'On the account pass card and the Freelancer pay page, one line names SE Ranking Core and Ahrefs Lite monthly prices next to the 29 USD pass. Team and Pro are unchanged.' },
-			{ face: 'health', t: 'Outcome packs on the health strip', d: 'When a review finds open issues, the unpaid report’s health area shows short commerce, marketing, engagement and security packs with a clear next step—so owners see the business cost of leaving a failure open.' },
-			{ face: 'a11y', t: 'Live keyboard Tab walk', d: 'On the lab and review pages, an optional Tab walk follows real focus moves and reports when a modal or dialog lets Tab escape the trap.' },
-			{ face: 'a11y', t: 'Accessibility checklist IDs on findings', d: 'Accessibility findings can carry ACT, RGAA, eMAG and related checklist IDs so auditors can map a result to the standard they already use.' },
+			{ face: 'tools', t: 'Freelancer pass vs audit subscriptions', d: 'Pass and Freelancer pay pages name SE Ranking Core and Ahrefs Lite monthly prices beside the 29 USD pass.' },
+			{ face: 'health', t: 'Outcome packs on the health strip', d: 'Unpaid reports show short commerce, marketing, engagement and security packs when issues stay open, each with a clear next step.' },
+			{ face: 'a11y', t: 'Live keyboard Tab walk', d: 'Optional Tab walk on lab and review pages follows focus and flags modals or dialogs that let Tab leave the trap.' },
+			{ face: 'a11y', t: 'Accessibility checklist IDs on findings', d: 'Findings can list ACT, RGAA, eMAG and related checklist IDs so auditors can map them to their standard.' },
 			{ face: 'tls', t: 'Clearer “site did not answer” wording', d: 'When TLS opens but the site stays silent, or a handshake aborts on the site’s side, the report says so in plain words instead of sounding like our scanner failed.' },
 			{ face: 'a11y', t: 'Accessibility statement links under Help', d: 'Links to accessibility statements stay on help-style paths so they are easy to find and are not mixed into marketing pages.' },
 			{ face: 'preview', t: 'Report sheet stays solid when open', d: 'Opening a report no longer leaves a see-through sheet under the golden look—the content stays readable.' },
