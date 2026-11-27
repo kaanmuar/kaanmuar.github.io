@@ -12,6 +12,7 @@
 		A00100000000000000000003 /* EntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000003 /* EntryView.swift */; };
 		A00100000000000000000004 /* ArenaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* ArenaView.swift */; };
 		A00100000000000000000005 /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* ReportView.swift */; };
+		A00100000000000000000006 /* ReviewApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* ReviewApi.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,7 @@
 		A00200000000000000000004 /* ArenaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArenaView.swift; sourceTree = "<group>"; };
 		A00200000000000000000005 /* ReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportView.swift; sourceTree = "<group>"; };
 		A00200000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00200000000000000000007 /* ReviewApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewApi.swift; sourceTree = "<group>"; };
 		A00300000000000000000001 /* URLReview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = URLReview.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -48,6 +50,7 @@
 			children = (
 				A00200000000000000000001 /* URLReviewApp.swift */,
 				A00200000000000000000002 /* ContentView.swift */,
+				A00500000000000000000005 /* Data */,
 				A00500000000000000000004 /* Views */,
 				A00200000000000000000006 /* Info.plist */,
 			);
@@ -70,6 +73,14 @@
 				A00200000000000000000005 /* ReportView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A00500000000000000000005 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				A00200000000000000000007 /* ReviewApi.swift */,
+			);
+			path = Data;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -145,6 +156,7 @@
 				A00100000000000000000003 /* EntryView.swift in Sources */,
 				A00100000000000000000004 /* ArenaView.swift in Sources */,
 				A00100000000000000000005 /* ReportView.swift in Sources */,
+				A00100000000000000000006 /* ReviewApi.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

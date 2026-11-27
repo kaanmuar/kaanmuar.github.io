@@ -10,6 +10,7 @@ struct EntryView: View {
     ]
 
     @State private var urlText = "https://"
+    @State private var isRunning = false
     @FocusState private var urlFocused: Bool
 
     let onRun: (ReviewDraft) -> Void
@@ -56,7 +57,9 @@ struct EntryView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(
+                urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isRunning
+            )
         }
         .padding()
         .onAppear { urlFocused = true }
@@ -64,8 +67,23 @@ struct EntryView: View {
 
     private func runTapped() {
         let trimmed = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalized = Self.normalizeURL(trimmed)
-        onRun(ReviewDraft(inputURL: trimmed, normalizedURL: normalized))
+        guard !trimmed.isEmpty, !isRunning else { return }
+        isRunning = true
+        Task {
+            let proceed: Bool
+            do {
+                _ = try await ReviewApi.preview(url: trimmed)
+                proceed = true
+            } catch {
+                proceed = ReviewApi.useMock
+            }
+            await MainActor.run {
+                isRunning = false
+                guard proceed else { return }
+                let normalized = Self.normalizeURL(trimmed)
+                onRun(ReviewDraft(inputURL: trimmed, normalizedURL: normalized))
+            }
+        }
     }
 
     private static func normalizeURL(_ raw: String) -> URL? {

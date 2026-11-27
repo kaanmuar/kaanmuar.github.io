@@ -24,10 +24,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.carlosandmunoz.urlreview.data.ReviewApi
+import kotlinx.coroutines.launch
 
 private val StubChips = listOf(
     "National retail",
@@ -41,6 +44,8 @@ private val StubChips = listOf(
 fun EntryScreen(onRun: (String) -> Unit) {
     var url by rememberSaveable { mutableStateOf("https://") }
     var selectedChip by rememberSaveable { mutableStateOf<String?>(null) }
+    var isRunning by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -103,8 +108,20 @@ fun EntryScreen(onRun: (String) -> Unit) {
         Button(
             onClick = {
                 val trimmed = url.trim()
-                if (trimmed.isNotEmpty()) onRun(trimmed)
+                if (trimmed.isEmpty() || isRunning) return@Button
+                scope.launch {
+                    isRunning = true
+                    val proceed = try {
+                        ReviewApi.previewUrl(trimmed)
+                        true
+                    } catch (_: Exception) {
+                        ReviewApi.USE_MOCK
+                    }
+                    isRunning = false
+                    if (proceed) onRun(trimmed)
+                }
             },
+            enabled = !isRunning,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
