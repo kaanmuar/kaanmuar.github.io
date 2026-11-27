@@ -71,7 +71,8 @@ jobs:
           VALIDATE_JAVA: false
           # Jarvis Android: Compose functions are PascalCase, which ktlint's default rules reject; Gradle builds the code instead.
           VALIDATE_KOTLIN: false
-          FILTER_REGEX_EXCLUDE: android/gradlew.*
+          # Jarvis: exclude only the Gradle wrapper scripts (build uses .kts, not Groovy). URL Review Capacitor scaffold uses generated Groovy Gradle + CocoaPods Podfile (#4502).
+          FILTER_REGEX_EXCLUDE: (android/gradlew.*|apps/url-review/android/|apps/url-review/ios/App/Podfile)
           VALIDATE_JAVASCRIPT_ES: false
           VALIDATE_JAVASCRIPT_STANDARD: false
           # The cf CLI only reads cloudflare.config.ts (#1866); TypeScript Standard ran out of heap on it.
