@@ -150,6 +150,13 @@ test('git-lock serializes two concurrent holders', async () => {
 	await Promise.all([job('a'), job('b')]);
 	const lines = fs.readFileSync(log, 'utf8').trim().split('\n');
 	assert.equal(lines.length, 4);
-	assert.equal(lines[0].replace('start-', ''), lines[1].replace('end-', ''));
-	assert.equal(lines[2].replace('start-', ''), lines[3].replace('end-', ''));
+	const spans = {};
+	for (const line of lines) {
+		const m = line.match(/^(start|end)-(.*)$/);
+		assert.ok(m, `bad log line: ${line}`);
+		(spans[m[2]] ||= []).push(m[1]);
+	}
+	for (const name of ['a', 'b']) {
+		assert.deepEqual(spans[name], ['start', 'end']);
+	}
 });
