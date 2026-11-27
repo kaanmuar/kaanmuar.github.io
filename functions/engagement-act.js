@@ -891,6 +891,18 @@ async function saveTelegram(deps, body) {
 						where +
 						' so it sees every comment; until then it sees only replies to its own messages.'
 					: '';
+	let groupInviteLink = '';
+	let inviteNote = '';
+	if (admin && group && group.id) {
+		try {
+			const Invites = require('./telegram-invites');
+			const ensured = await Invites.ensureGroupInviteLink(tg, { group: group.id });
+			groupInviteLink = ensured.link || '';
+			if (ensured.error) inviteNote = ' Invite link: ' + ensured.error + '.';
+		} catch (error) {
+			inviteNote = ' Invite link failed: ' + clip(error.message, 120) + '.';
+		}
+	}
 	await privateRef(deps.db, 'telegram').set({
 		token,
 		handle: '@' + me.username,
@@ -900,6 +912,7 @@ async function saveTelegram(deps, body) {
 		group: group ? group.id : null,
 		groupTitle: clip(group && group.title, 120),
 		groupUser: clip(group && group.username, 64),
+		groupInviteLink: groupInviteLink || null,
 		admin,
 		connectedAt: new Date(deps.now).toISOString(),
 		error: missing,
@@ -911,7 +924,8 @@ async function saveTelegram(deps, body) {
 			'Telegram is connected as @' +
 			me.username +
 			'. ' +
-			(missing || 'It reacts to and answers comments under ' + channel + "'s posts in " + where + '.'),
+			(missing || 'It reacts to and answers comments under ' + channel + "'s posts in " + where + '.') +
+			(groupInviteLink ? ' Discussion invite: ' + groupInviteLink + '.' : inviteNote),
 	};
 }
 

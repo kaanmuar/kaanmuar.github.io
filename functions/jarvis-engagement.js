@@ -538,6 +538,58 @@ async function reportSites(deps, again) {
 }
 
 /**
+ * Soft invites into our Telegram discussion group (#4467): live-report cards that name a public Telegram handle get a
+ * Jarvis draft with the group invite link. The bot cannot force-add or cold-DM.
+ */
+async function telegramInvitePass(deps, conf) {
+	const Invites = require('./telegram-invites');
+	const tgApi = require('./telegram-api');
+	const out = { candidates: 0, queued: 0, skipped: 0, error: '' };
+	if (conf && conf.paused) return out;
+	const { db, now, fetch: fetchImpl } = deps;
+	const res = await fetchImpl(LIVE_INDEX, { signal: AbortSignal.timeout(15000) });
+	if (!res.ok) throw new Error('The Live Reports index answered ' + res.status);
+	const index = await res.json();
+	const reports = (index && index.reports) || [];
+	out.candidates = Invites.candidatesFromReports(reports).length;
+	if (!out.candidates) return out;
+	const snap = await db.collection('engagement_private').doc('telegram').get();
+	const saved = snap.exists ? snap.data() || {} : {};
+	let link = String(saved.groupInviteLink || '').trim();
+	if (!link && saved.token && saved.group && saved.admin) {
+		const tg = tgApi.createApi(saved.token, { fetchImpl, timeoutMs: 15000, retries: 2 });
+		const ensured = await Invites.ensureGroupInviteLink(tg, saved);
+		link = ensured.link || '';
+		if (link)
+			await db
+				.collection('engagement_private')
+				.doc('telegram')
+				.set({ groupInviteLink: link }, { merge: true });
+		if (ensured.error) out.error = ensured.error;
+	}
+	if (!link) {
+		out.error = out.error || 'no discussion-group invite link (reconnect Telegram in Jarvis as admin)';
+		return out;
+	}
+	const queued = await Invites.queueInvites(deps, reports, link);
+	out.queued = queued.queued;
+	out.skipped = queued.skipped;
+	if (queued.errors && queued.errors.length) out.error = queued.errors.slice(0, 3).join('; ');
+	if (deps.push && queued.queued)
+		await deps
+			.push({
+				title: 'Telegram group invites',
+				body:
+					queued.queued +
+					' soft invite' +
+					(queued.queued === 1 ? '' : 's') +
+					' from Live Reports wait in Engagement (discussion group).',
+			})
+			.catch(() => null);
+	return out;
+}
+
+/**
  * Report replies (#2465): this slot's Live Reports are looked for on the networks, and each post that names one, or
  * fits its niche or a problem its report found (#2468), is read by Gemini, decided (functions/engagement-reports.js), stored with campaign "report-reply", counted under
  * engagement_daily report, and its invite pushed to Carlos. again: as reportSites.
@@ -970,6 +1022,17 @@ async function scout(deps) {
 			error: String(error.message || error).slice(0, 200),
 		};
 	}
+	let telegramInvites;
+	try {
+		telegramInvites = await telegramInvitePass(deps, conf);
+	} catch (error) {
+		telegramInvites = {
+			candidates: 0,
+			queued: 0,
+			skipped: 0,
+			error: String(error.message || error).slice(0, 200),
+		};
+	}
 
 	let acted = {};
 	let actError = '';
@@ -1045,6 +1108,12 @@ async function scout(deps) {
 			aiError: profiles.aiError,
 			errors: profiles.errors,
 			error: profiles.error || '',
+		},
+		telegramInvites: {
+			candidates: telegramInvites.candidates || 0,
+			queued: telegramInvites.queued || 0,
+			skipped: telegramInvites.skipped || 0,
+			error: telegramInvites.error || '',
 		},
 		reruns: {
 			changed: reruns.changed,
@@ -1896,6 +1965,7 @@ module.exports = {
 	autoApprove,
 	reportSites,
 	reportPass,
+	telegramInvitePass,
 	rerunPass,
 	profilePass,
 	profilePosts,

@@ -727,6 +727,8 @@ function build(run, series) {
 			msg: msgOf(f, ['title', 'evidence', 'fix']),
 		}));
 
+	const Handles = require('../functions/telegram-handles');
+	const telegram = Handles.fromReport(report);
 	const card = {
 		id: run.id,
 		series,
@@ -752,6 +754,8 @@ function build(run, series) {
 		headline: (run.title || []).map((line) => ({ t: fill(line, score).replace(/\*/g, ''), em: /^\*.*\*$/.test(line) })),
 		focus,
 		tags,
+		// Public Telegram handles from crawl socialLinks (#4467); empty when the site names none.
+		telegram,
 	};
 
 	const detail = Object.assign({}, card, {

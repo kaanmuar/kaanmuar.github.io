@@ -15,6 +15,10 @@
                                                                         reports and edits those that changed, so a withdrawn
                                                                         site leaves the channel too (#2564)
      TELEGRAM_BOT_TOKEN=... node scripts/telegram-live.js chats        chats and channels the bot was added to (to find a channel id)
+     TELEGRAM_BOT_TOKEN=... [TELEGRAM_GROUP=-100…] node scripts/telegram-live.js invites [--dry-run]
+                                                                        list live-report Telegram handles and ensure a
+                                                                        discussion-group invite link (#4467); Jarvis queues
+                                                                        the soft invites on the next engagement scout
 
    TELEGRAM_APP is the Mini App's direct link from BotFather's /newapp, https://t.me/qalab_live_bot/live; a report
    opens in the app as <TELEGRAM_APP>?startapp=<report id>. Without it, links open live.html in the browser.
@@ -478,13 +482,71 @@ async function post() {
 	});
 	ledgers.write(LEDGER, ledger);
 	console.log('Posted ' + fresh.length + ' reports (' + (since || 'start') + ' to ' + day + ') to ' + handle + '.');
+	const Invites = require('../functions/telegram-invites');
+	const withTg = Invites.candidatesFromReports(fresh);
+	if (withTg.length)
+		console.log(
+			'Telegram handles in this batch (Jarvis soft-invites on next scout): ' +
+				withTg.map((c) => '@' + c.handle + ' (' + c.host + ')').join(', ')
+		);
+}
+
+/** List live-report Telegram handles and ensure a discussion-group invite link (#4467). */
+async function invites() {
+	const Invites = require('../functions/telegram-invites');
+	const index = JSON.parse(fs.readFileSync(INDEX, 'utf8'));
+	const list = Invites.candidatesFromReports(index.reports || []);
+	const group = process.env.TELEGRAM_GROUP || '';
+	if (dry || !token) {
+		console.log(
+			JSON.stringify(
+				{
+					candidates: list.length,
+					handles: list.map((c) => ({ handle: c.handle, host: c.host, reportId: c.reportId })),
+					group: group || null,
+					dry: true,
+				},
+				null,
+				1
+			)
+		);
+		return;
+	}
+	if (!group) {
+		console.log(
+			JSON.stringify(
+				{
+					candidates: list.length,
+					handles: list.map((c) => ({ handle: c.handle, host: c.host, reportId: c.reportId })),
+					error: 'Set TELEGRAM_GROUP to the discussion group id (or reconnect Telegram in Jarvis) to create the invite link.',
+				},
+				null,
+				1
+			)
+		);
+		return;
+	}
+	const ensured = await Invites.ensureGroupInviteLink(api, { group });
+	console.log(
+		JSON.stringify(
+			{
+				candidates: list.length,
+				handles: list.map((c) => ({ handle: c.handle, host: c.host, reportId: c.reportId })),
+				inviteLink: ensured.link || null,
+				reused: !!ensured.reused,
+				error: ensured.error || null,
+			},
+			null,
+			1
+		)
+	);
 }
 
 if (require.main === module) {
-	const RUN = { setup, whoami, chats, post, scrub };
+	const RUN = { setup, whoami, chats, post, scrub, invites };
 	if (!RUN[cmd]) {
 		console.error(
-			'usage: node scripts/telegram-live.js setup [--dry-run] | whoami | chats | post [--dry-run] | scrub [--dry-run]'
+			'usage: node scripts/telegram-live.js setup [--dry-run] | whoami | chats | post [--dry-run] | scrub [--dry-run] | invites [--dry-run]'
 		);
 		process.exit(2);
 	}
@@ -504,4 +566,5 @@ module.exports = {
 	batches,
 	scrubPlan,
 	scrubLedger,
+	invites,
 };
