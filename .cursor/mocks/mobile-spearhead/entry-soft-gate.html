@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entry soft-gate · first paint (#4438)</title>
+<title>Entry soft-gate · dynamic hero (#4440)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,8 +17,8 @@
     --muted: #8ea8ae;
     --cyan: #7ef6fb;
     --mint: #6fe3b1;
-    --coral: #ff5a4a;
     --gold: #f0c85a;
+    --coral: #ff5a4a;
     --glass: rgba(7, 17, 22, .62);
     --font-ui: "Sora", system-ui, sans-serif;
     --font-display: "Instrument Serif", Georgia, serif;
@@ -59,6 +59,7 @@
     overflow: hidden;
     position: relative;
     box-shadow: 0 36px 90px rgba(0, 0, 0, .55);
+    perspective: 900px;
   }
   .notch {
     position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
@@ -69,31 +70,136 @@
     display: flex; justify-content: space-between;
     font: 600 12px/1 var(--font-ui); z-index: 7; pointer-events: none;
   }
-
-  /* Full-bleed hero plane — product first paint */
   .screen {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
-  }
-  .hero-plane {
-    position: absolute; inset: 0;
-    background:
-      linear-gradient(180deg, rgba(5, 13, 17, .35) 0%, rgba(5, 13, 17, .55) 38%, rgba(5, 13, 17, .92) 72%, #050d11 100%),
-      url("../../../assets/url-review-hero/hero-3d-en-safe.png") center 28% / cover no-repeat;
-  }
-  .hero-plane::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: radial-gradient(70% 50% at 50% 20%, transparent 0%, rgba(5, 13, 17, .35) 100%);
-    pointer-events: none;
+    transform-style: preserve-3d;
   }
 
+  /* —— Soft / blurred / opaque 3D background layers —— */
+  .world {
+    position: absolute; inset: -8%;
+    transform-style: preserve-3d;
+    animation: world-drift 18s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes world-drift {
+    0%   { transform: rotateX(4deg) rotateY(-6deg) translate3d(-2%, -1%, 0); }
+    100% { transform: rotateX(-3deg) rotateY(7deg) translate3d(2%, 1.5%, 0); }
+  }
+
+  .bg-layer {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center 30%;
+    transition: opacity 1.4s ease, filter 1.4s ease, transform 1.4s ease;
+    will-change: opacity, transform, filter;
+  }
+  .bg-layer.safe {
+    background-image: url("../../../assets/url-review-hero/hero-3d-en-safe.png");
+    filter: blur(0.6px) saturate(1.05);
+    opacity: .9;
+    transform: translateZ(-80px) scale(1.12);
+  }
+  .bg-layer.scan {
+    background-image: url("../../../assets/url-review-hero/hero-3d-en-scan.png");
+    filter: blur(2.2px) saturate(1.15) brightness(1.05);
+    opacity: 0;
+    transform: translateZ(-40px) scale(1.18);
+  }
+  .phone[data-scene="scan"] .bg-layer.safe { opacity: .25; filter: blur(3px) saturate(.9); }
+  .phone[data-scene="scan"] .bg-layer.scan { opacity: .85; filter: blur(0.4px) saturate(1.2); }
+
+  .veil {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(5, 13, 17, .28) 0%, rgba(5, 13, 17, .5) 36%, rgba(5, 13, 17, .9) 70%, #050d11 100%),
+      radial-gradient(70% 50% at 50% 22%, transparent 0%, rgba(5, 13, 17, .4) 100%);
+    z-index: 1;
+  }
+
+  /* Floating marks / icons — soft parallax orbits */
+  .orbit {
+    position: absolute; inset: 0; z-index: 2;
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+  .float {
+    position: absolute;
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: grid; place-items: center;
+    background: rgba(7, 17, 22, .35);
+    border: 1px solid rgba(126, 214, 224, .28);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(.86);
+    transition: opacity .9s ease, transform .9s ease, border-color .9s ease;
+  }
+  .float.on {
+    opacity: .92;
+    transform: translate3d(0, 0, 40px) scale(1);
+  }
+  .float img, .float svg { width: 34px; height: 34px; display: block; }
+  .float.a { top: 16%; left: 8%; animation: bob-a 7s ease-in-out infinite; }
+  .float.b { top: 22%; right: 10%; animation: bob-b 8.5s ease-in-out infinite; }
+  .float.c { top: 38%; left: 14%; animation: bob-c 9s ease-in-out infinite; }
+  .float.d { top: 34%; right: 12%; animation: bob-d 6.5s ease-in-out infinite; }
+  @keyframes bob-a {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 6px -10px; }
+  }
+  @keyframes bob-b {
+    0%, 100% { translate: 0 0; }
+    50% { translate: -8px 8px; }
+  }
+  @keyframes bob-c {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 10px 6px; }
+  }
+  @keyframes bob-d {
+    0%, 100% { translate: 0 0; }
+    50% { translate: -4px -12px; }
+  }
+
+  .icon-glyph {
+    width: 28px; height: 28px;
+    stroke: var(--cyan);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .float.warn .icon-glyph { stroke: var(--gold); }
+  .float.bad .icon-glyph { stroke: var(--coral); }
+  .float.ok .icon-glyph { stroke: var(--mint); }
+
+  /* Brand + rotating phrases */
   .copy {
-    position: relative; z-index: 2;
+    position: relative; z-index: 3;
     margin-top: 56px;
     padding: 0 18px 18px;
     display: flex; flex-direction: column;
     flex: 1; min-height: 0;
+  }
+  .brand-row {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 40px;
+  }
+  .brand-mark {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex: none;
+    box-shadow: 0 0 0 1px rgba(126, 246, 251, .35), 0 8px 24px rgba(0, 0, 0, .4);
+    animation: mark-glow 5s ease-in-out infinite;
+  }
+  .brand-mark img { width: 100%; height: 100%; display: block; }
+  @keyframes mark-glow {
+    0%, 100% { filter: drop-shadow(0 0 0 transparent); transform: rotateY(0deg); }
+    50% { filter: drop-shadow(0 0 12px rgba(126, 246, 251, .45)); transform: rotateY(18deg); }
   }
   .eyebrow {
     margin: 0;
@@ -101,22 +207,62 @@
     letter-spacing: .16em;
     text-transform: uppercase;
     color: var(--cyan);
+    transition: opacity .5s ease, transform .5s ease, color .5s ease;
+  }
+  .eyebrow.swap { opacity: 0; transform: translateY(-6px); }
+
+  .display-wrap {
+    position: relative;
+    margin-top: 14px;
+    min-height: 7.2rem;
   }
   .display {
-    margin: 14px 0 0;
+    margin: 0;
     font: 400 2.05rem/1.02 var(--font-display);
     letter-spacing: -.01em;
+    position: absolute; inset: 0 auto auto 0;
+    max-width: 100%;
+    opacity: 0;
+    transform: translateY(14px) rotateX(8deg);
+    filter: blur(4px);
+    transition: opacity .85s ease, transform .85s ease, filter .85s ease;
+    transform-origin: left top;
+  }
+  .display.is-in {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+    filter: blur(0);
+  }
+  .display.is-out {
+    opacity: 0;
+    transform: translateY(-10px) rotateX(-6deg);
+    filter: blur(3px);
   }
   .display .em { color: var(--cyan); font-style: italic; display: block; }
   .display span { display: block; }
+
   .support {
     margin: 14px 0 0;
     color: rgba(232, 243, 244, .78);
     font: 400 13px/1.45 var(--font-ui);
     max-width: 34ch;
+    min-height: 3.9em;
+    transition: opacity .55s ease;
   }
+  .support.dim { opacity: .35; }
 
-  /* Soft gate — product #3478 shape, mobile stacked */
+  .phrase-dots {
+    display: flex; gap: 6px; margin-top: 12px;
+  }
+  .phrase-dots button {
+    width: 7px; height: 7px; border-radius: 50%;
+    border: 0; padding: 0;
+    background: rgba(126, 214, 224, .28);
+    cursor: pointer;
+  }
+  .phrase-dots button.on { background: var(--cyan); box-shadow: 0 0 10px rgba(126, 246, 251, .55); }
+
+  /* Soft gate */
   .stage-start {
     margin-top: auto;
     padding: 14px;
@@ -190,9 +336,8 @@
     text-align: center;
     opacity: .85;
   }
-
   .facts {
-    position: relative; z-index: 2;
+    position: relative; z-index: 3;
     display: flex; gap: 10px; flex-wrap: wrap;
     margin: 12px 0 0; padding: 0 18px 22px;
     list-style: none;
@@ -204,11 +349,7 @@
   }
   .facts b { color: var(--cyan); margin-right: 4px; }
 
-  /* Annotation panel */
-  .notes h2 {
-    margin: 0 0 14px;
-    font: 400 1.45rem/1.1 var(--font-display);
-  }
+  .notes h2 { margin: 0 0 14px; font: 400 1.45rem/1.1 var(--font-display); }
   .callouts { display: flex; flex-direction: column; gap: 12px; }
   .callout {
     padding: 14px 16px;
@@ -225,10 +366,7 @@
   }
   .callout p { margin: 0; color: var(--muted); font-size: 13px; }
   .callout p strong { color: var(--text); font-weight: 600; }
-  .callout code {
-    font-size: 11.5px;
-    color: var(--cyan);
-  }
+  .callout code { font-size: 11.5px; color: var(--cyan); }
   .approve {
     margin-top: 18px;
     padding: 16px;
@@ -238,36 +376,59 @@
   }
   .approve .n { color: var(--mint); font: 700 10px/1 var(--font-ui); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 8px; }
   .approve p { margin: 0; font-size: 13.5px; color: var(--text); }
-  .approve ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) {
+    .world, .float, .brand-mark { animation: none !important; }
+    .display, .bg-layer, .float, .eyebrow, .support { transition: none !important; }
+  }
 </style>
 </head>
 <body>
   <div class="deck">
-    <div class="ticket">Design · #4438 · child of #4422 · soft gate #3478</div>
-    <h1>Mobile entry — first paint</h1>
+    <div class="ticket">Design · #4440 · entry motion · soft gate #3478</div>
+    <h1>Mobile entry — dynamic first paint</h1>
     <p class="lede">
-      What a mobile user sees the moment they open URL Review on the web
-      (<code>qa-review.html</code> — no separate customer native app).
-      Consent overlay stays <strong>hidden</strong>; soft-gate URL + Run starts the anonymous 1-page preview.
+      While the URL is entered, the <strong>hero phrase rotates every 5s</strong>, the background
+      drifts in soft 3D (blurred / opaque layers), and brand marks + threat icons crossfade.
+      Soft-gate URL + Run stays put; <code>#gate</code> stays hidden.
     </p>
 
     <div class="layout">
-      <div class="phone" id="phone-entry" aria-label="Mobile entry first paint">
+      <div class="phone" id="phone-entry" data-scene="safe" aria-label="Mobile entry dynamic first paint">
         <div class="notch"></div>
         <div class="status"><span>9:41</span><span>5G · 88%</span></div>
         <div class="screen">
-          <div class="hero-plane" aria-hidden="true"></div>
+          <div class="world" aria-hidden="true">
+            <div class="bg-layer safe"></div>
+            <div class="bg-layer scan"></div>
+          </div>
+          <div class="veil" aria-hidden="true"></div>
+          <div class="orbit" aria-hidden="true">
+            <div class="float a on" data-slot="0">
+              <img src="../../../assets/qa-review-mark.svg" alt="">
+            </div>
+            <div class="float b ok" data-slot="1">
+              <svg class="icon-glyph" viewBox="0 0 28 28"><path d="M14 3l9 4v6c0 6-4 10-9 12-5-2-9-6-9-12V7z"/><path d="M10 14l2.5 2.5L18 11"/></svg>
+            </div>
+            <div class="float c warn" data-slot="2">
+              <svg class="icon-glyph" viewBox="0 0 28 28"><path d="M14 5l10 18H4z"/><path d="M14 12v5"/><circle cx="14" cy="20" r="1.2" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <div class="float d bad" data-slot="3">
+              <svg class="icon-glyph" viewBox="0 0 28 28"><circle cx="14" cy="14" r="9"/><path d="M10 10l8 8M18 10l-8 8"/></svg>
+            </div>
+          </div>
+
           <div class="copy">
-            <p class="eyebrow">QA-lab URL Review</p>
-            <h2 class="display">
-              <span>Find the leaks,</span>
-              <span class="em">breaks and blocks</span>
-              <span>before customers</span>
-              <span>or regulators do.</span>
-            </h2>
-            <p class="support">
-              Phishing and malware lists, hacked-site signs, lookalike domains — deeper than most checkers. Fix at a fixed price; re-review free.
-            </p>
+            <div class="brand-row">
+              <div class="brand-mark"><img src="../../../assets/qa-review-mark.svg" alt=""></div>
+              <p class="eyebrow" id="brand-eyebrow">QA-lab URL Review</p>
+            </div>
+            <div class="display-wrap" aria-live="polite">
+              <h2 class="display is-in" id="phrase-a"></h2>
+              <h2 class="display" id="phrase-b" hidden></h2>
+            </div>
+            <p class="support" id="support-line"></p>
+            <div class="phrase-dots" id="phrase-dots" role="tablist" aria-label="Hero phrases"></div>
+
             <form class="stage-start" id="stage-start" onsubmit="return false">
               <label class="stage-start-label" for="stage-url">Start with the address of a public page</label>
               <div class="url-row" id="stage-url-field">
@@ -276,7 +437,7 @@
               </div>
               <button class="run" type="submit">Run</button>
               <p class="stage-note">Paste a public https page and run. You get real scores and the top finding with no account. Sign in only when you unlock a full site audit.</p>
-              <div class="hidden-gate" title="Not shown on first paint">#gate consent · hidden until unlock / sign-in</div>
+              <div class="hidden-gate">#gate consent · hidden until unlock / sign-in</div>
             </form>
           </div>
           <ul class="facts">
@@ -288,39 +449,187 @@
       </div>
 
       <aside class="notes">
-        <h2>Approval checklist</h2>
+        <h2>Motion spec</h2>
         <div class="callouts">
           <div class="callout">
-            <div class="n">1 · Surface</div>
-            <p><strong>Mobile web</strong> on <code>qa-review.html</code>, not a separate customer App Store binary. Phone chrome here is for review only.</p>
+            <div class="n">Hero phrases · 5s</div>
+            <p>Five rotating headlines while typing. Crossfade + slight 3D tilt. Dots are scrubbable; focus on the URL field does <strong>not</strong> pause the loop (background keeps living).</p>
           </div>
           <div class="callout">
-            <div class="n">2 · First paint</div>
-            <p><strong>Full-bleed marketing hero</strong> (product <code>hero-3d-en-safe</code>) + brand eyebrow + display headline. Consent <code>#gate</code> is <code>hidden</code> — not the first thing.</p>
+            <div class="n">Background 3D</div>
+            <p>Layered <code>hero-3d-en-safe</code> / <code>hero-3d-en-scan</code> with soft blur/opacity crossfade and a slow <code>rotateX/Y</code> drift. Veil keeps the soft-gate readable.</p>
           </div>
           <div class="callout">
-            <div class="n">3 · Soft-gate textbox</div>
-            <p>Label <strong>“Start with the address of a public page”</strong>. Prefixed <code>https://</code> + <code>#stage-url</code>, placeholder <code>example.com</code>, <code>inputmode="url"</code>, 16px text (no iOS zoom). On narrow screens: field then full-width <strong>Run</strong>.</p>
-          </div>
-          <div class="callout">
-            <div class="n">4 · Promise under the field</div>
-            <p>Real scores + top finding with <strong>no account</strong>. Sign-in / OAuth / terms wait for unlock (soft gate #3478 / #3523).</p>
-          </div>
-          <div class="callout">
-            <div class="n">5 · After Run</div>
-            <p>Not shown here: product <strong>Lab Tries</strong> arena during the run → frosted StatusCard report → $5 unlock for print/share/export (#4432).</p>
+            <div class="n">Brand + icons</div>
+            <p>QA-lab mark breathes/rotates on Y. Floating shield / warn / fail icons fade and orbit in soft glass chips — transitions sync to phrase index.</p>
           </div>
         </div>
         <div class="approve">
-          <div class="n">Approve this entry?</div>
-          <p>If yes, product stays hero-first soft-gate (already live). Spearhead-tight entry (textbox as spear tip, less lede) would be a follow-up ticket.</p>
-          <ul>
-            <li>Keep hero-first soft-gate as shipped first paint</li>
-            <li>Or ask for a spearhead-tight alternate mock next</li>
-          </ul>
+          <div class="n">Approve motion?</div>
+          <p>If yes, next step is product-wiring the same phrase loop + layered hero on <code>qa-review.html</code> (ticket follow-up) without touching the soft-gate contract.</p>
         </div>
       </aside>
     </div>
   </div>
+<script>
+(function () {
+  const PHRASES = [
+    {
+      brand: "QA-lab URL Review",
+      scene: "safe",
+      floats: [0, 1],
+      lines: ["Find the leaks,", "breaks and blocks", "before customers", "or regulators do."],
+      em: 1,
+      support: "Phishing and malware lists, hacked-site signs, lookalike domains — deeper than most checkers."
+    },
+    {
+      brand: "Safe · Fast · Clear",
+      scene: "scan",
+      floats: [0, 1, 2],
+      lines: ["See the cracks", "before the breach", "makes the news."],
+      em: 1,
+      support: "Web Risk, PageSpeed, and host lookalikes on the first public page — no account for the soft preview."
+    },
+    {
+      brand: "One address to begin",
+      scene: "safe",
+      floats: [1, 3],
+      lines: ["Paste a URL.", "Watch the lab", "try the page."],
+      em: 2,
+      support: "Lab Tries runs while you wait. Soft preview gifts real scores and the top finding."
+    },
+    {
+      brand: "Fix · then re-review",
+      scene: "scan",
+      floats: [0, 2],
+      lines: ["We find it.", "We can fix it", "at a fixed price."],
+      em: 0,
+      support: "Fixed-price remediation, then a free re-review so the report stays honest."
+    },
+    {
+      brand: "Unlock when ready",
+      scene: "safe",
+      floats: [0, 1, 3],
+      lines: ["Scores first.", "Full audit when", "you need the seal."],
+      em: 0,
+      support: "Sign in only to unlock print, share, export, and the full site audit — not to start."
+    }
+  ];
+
+  const phone = document.getElementById("phone-entry");
+  const a = document.getElementById("phrase-a");
+  const b = document.getElementById("phrase-b");
+  const support = document.getElementById("support-line");
+  const eyebrow = document.getElementById("brand-eyebrow");
+  const dots = document.getElementById("phrase-dots");
+  const floats = Array.from(document.querySelectorAll(".float"));
+  let idx = 0;
+  let frontIsA = true;
+  let timer = null;
+  const INTERVAL = 5000;
+
+  function renderHtml(p) {
+    return p.lines.map(function (line, i) {
+      const cls = i === p.em ? ' class="em"' : "";
+      return "<span" + cls + ">" + line + "</span>";
+    }).join("");
+  }
+
+  function setFloats(active) {
+    const set = new Set(active);
+    floats.forEach(function (el) {
+      const slot = Number(el.getAttribute("data-slot"));
+      el.classList.toggle("on", set.has(slot));
+    });
+  }
+
+  function syncDots(i) {
+    Array.from(dots.children).forEach(function (dot, di) {
+      dot.classList.toggle("on", di === i);
+      dot.setAttribute("aria-selected", di === i ? "true" : "false");
+    });
+  }
+
+  function applyChrome(p) {
+    phone.setAttribute("data-scene", p.scene);
+    setFloats(p.floats);
+    eyebrow.textContent = p.brand;
+    eyebrow.classList.remove("swap");
+    support.textContent = p.support;
+    support.classList.remove("dim");
+  }
+
+  function paint(i, animate) {
+    const p = PHRASES[i];
+    syncDots(i);
+    idx = i;
+
+    if (!animate) {
+      a.classList.remove("is-in", "is-out");
+      b.classList.remove("is-in", "is-out");
+      a.innerHTML = renderHtml(p);
+      a.hidden = false;
+      a.classList.add("is-in");
+      b.hidden = true;
+      frontIsA = true;
+      applyChrome(p);
+      return;
+    }
+
+    const incoming = frontIsA ? b : a;
+    const outgoing = frontIsA ? a : b;
+    incoming.hidden = false;
+    incoming.innerHTML = renderHtml(p);
+    support.classList.add("dim");
+    eyebrow.classList.add("swap");
+    outgoing.classList.remove("is-in");
+    outgoing.classList.add("is-out");
+    incoming.classList.remove("is-out");
+    void incoming.offsetWidth;
+    incoming.classList.add("is-in");
+    phone.setAttribute("data-scene", p.scene);
+    setFloats(p.floats);
+    window.setTimeout(function () {
+      applyChrome(p);
+      outgoing.hidden = true;
+      outgoing.classList.remove("is-out");
+      frontIsA = incoming === a;
+    }, 420);
+  }
+
+  PHRASES.forEach(function (_, i) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("role", "tab");
+    btn.setAttribute("aria-label", "Phrase " + (i + 1));
+    btn.addEventListener("click", function () {
+      paint(i, true);
+      arm();
+    });
+    dots.appendChild(btn);
+  });
+
+  function next() {
+    paint((idx + 1) % PHRASES.length, true);
+  }
+
+  function arm() {
+    window.clearInterval(timer);
+    timer = window.setInterval(next, INTERVAL);
+  }
+
+  // Seed phrase A as the front face, then start the 5s loop.
+  a.hidden = false;
+  b.hidden = true;
+  frontIsA = true;
+  paint(0, false);
+  arm();
+
+  const url = document.getElementById("stage-url");
+  url.addEventListener("input", function () {
+    if (url.value.length > 3) phone.setAttribute("data-scene", "scan");
+  });
+})();
+</script>
 </body>
 </html>
