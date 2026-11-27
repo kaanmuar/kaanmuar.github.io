@@ -80,7 +80,9 @@ object Engagement {
     fun joinLine(j: JsonObject): String = listOfNotNull(
         when (j.str("status")) { "dry" -> "would join (dry run)"; "member" -> "already in it"; else -> j.str("status") },
         j.str("kind")?.ifEmpty { null }, j.str("lang")?.ifEmpty { null }, "${fmt(j.num("members") ?: 0.0)} members",
-        j.str("topic")?.ifEmpty { null }, j.str("error")?.ifEmpty { null }
+        j.str("topic")?.ifEmpty { null },
+        j.str("botAdd")?.takeIf { it.isNotEmpty() }?.let { "bot: $it" },
+        j.str("error")?.ifEmpty { null }
     ).joinToString(" · ")
 
     fun metrics(post: JsonObject): String {
@@ -211,7 +213,7 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
 
     g.obj("metaScout")?.let { meta ->
         Panel("Meta scout", id = "engagement-meta-scout") {
-            val titles = mapOf("cloud" to "Cloud", "mac" to "Mac", "reddit" to "Reddit", "ownerTags" to "Owner tags", "students" to "Students")
+            val titles = mapOf("cloud" to "Cloud", "mac" to "Mac", "reddit" to "Reddit", "ownerTags" to "Owner tags", "students" to "Students", "telegram" to "Telegram")
             titles.keys.forEach { k ->
                 val p = meta.obj("passes")?.obj(k)
                 val ok = p?.bool("ok") == true
@@ -278,7 +280,32 @@ fun EngagementScreen(s: UiState, vm: JarvisViewModel) {
             log.take(15).forEach { j ->
                 StatusRow(when (j.str("status")) { "joined" -> "good"; "failed" -> "alert"; else -> "info" }, j.str("name").orEmpty(), Engagement.joinLine(j), j.str("url"))
             }
-            Muted("One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.")
+            Muted("One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings. Telegram rows show bot-add after join.")
+        }
+    }
+
+    g.obj("telegram")?.let { tg ->
+        Panel("Telegram growth", id = "engagement-telegram") {
+            val inv = tg.obj("invites")
+            val bot = tg.obj("botAdd")
+            val ask = tg.obj("botAsk")
+            KeyRow("Advance", tg.str("advanceLabel") ?: "steady", when (tg.num("advance")?.toInt()) { 1 -> J.green; -1 -> J.pink; else -> J.text })
+            KeyRow("Soft-invites waiting", fmt(inv.num("waiting") ?: 0.0))
+            KeyRow("Soft-invites posted", fmt(inv.num("posted") ?: 0.0))
+            KeyRow("Bot in field chats", fmt((bot.num("added") ?: 0.0) + (bot.num("already") ?: 0.0)))
+            KeyRow("Needs admin ask", fmt(bot.num("needs_admin") ?: 0.0))
+            KeyRow("Admin asks waiting", fmt(ask.num("waiting") ?: 0.0))
+            tg.str("groupInviteLink")?.takeIf { it.isNotEmpty() }?.let { KeyRow("Discussion invite", "open", url = it) }
+            tg.objs("flags").forEach { f ->
+                StatusRow(when (f.str("level")) { "ok" -> "good"; "bad" -> "alert"; else -> "info" }, f.str("text").orEmpty(), "")
+            }
+            val scout = tg.obj("lastScout")
+            if ((scout.num("candidates") ?: 0.0) > 0.0 || (scout.num("queued") ?: 0.0) > 0.0)
+                KeyRow("Last scout", "${fmt(scout.num("candidates") ?: 0.0)} candidates · ${fmt(scout.num("queued") ?: 0.0)} queued")
+            scout.str("error")?.takeIf { it.isNotEmpty() }?.let { KeyRow("Scout error", it, J.pink) }
+            (tg.get("needs") as? JsonArray)?.strings()?.takeIf { it.isNotEmpty() }?.forEach { Muted(it) }
+            if ((tg.get("needs") as? JsonArray)?.isEmpty() != false && tg.objs("flags").isEmpty())
+                Muted("No Telegram action needed right now.")
         }
     }
 

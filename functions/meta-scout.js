@@ -17,6 +17,7 @@ const REDDIT_STALE = 3 * 3600000;
 const BROWSER = Object.keys(E.NETWORKS).filter((k) => E.NETWORKS[k].browser);
 
 const chip = (ok, label) => ({ ok: !!ok, label: String(label || '').slice(0, 240) });
+const num = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.round(Number(v)) : 0);
 
 /** Pass chips for cloud, Mac, Reddit sync, owner tags and student outreach. */
 async function passStatus(deps, run) {
@@ -101,7 +102,27 @@ async function passStatus(deps, run) {
 			.join('; ') || 'idle'
 	);
 
-	return { cloud, mac, reddit: redditChip, ownerTags: ownerTagsChip, students: studentsChip };
+	const tg = (run && run.telegramInvites) || {};
+	const tgCred = await db
+		.collection('engagement_private')
+		.doc('telegram')
+		.get()
+		.then((s) => (s.exists ? s.data() : null))
+		.catch(() => null);
+	const telegramChip = chip(
+		!!(tgCred && tgCred.groupInviteLink) || num(tg.queued) + num(tg.candidates) > 0,
+		[
+			tgCred && tgCred.groupInviteLink ? 'invite link ready' : tgCred && tgCred.token ? 'no invite link' : 'bot not connected',
+			num(tg.candidates) ? tg.candidates + ' candidates' : '',
+			num(tg.queued) ? tg.queued + ' queued' : '',
+			num(tg.skipped) ? tg.skipped + ' skipped' : '',
+			tg.error ? 'error: ' + String(tg.error).slice(0, 80) : '',
+		]
+			.filter(Boolean)
+			.join('; ') || 'idle'
+	);
+
+	return { cloud, mac, reddit: redditChip, ownerTags: ownerTagsChip, students: studentsChip, telegram: telegramChip };
 }
 
 function envelopeNeeds(passes, run, existing) {
@@ -110,6 +131,8 @@ function envelopeNeeds(passes, run, existing) {
 	if (run && run.aiError) needs.push('Gemini: ' + run.aiError);
 	if (!passes.mac.ok) needs.push('Mac agent: ' + passes.mac.label);
 	if (!passes.reddit.ok) needs.push('Reddit sync: ' + passes.reddit.label);
+	if (passes.telegram && !passes.telegram.ok)
+		needs.push('Telegram: ' + passes.telegram.label);
 	return [...new Set(needs)].slice(0, 12);
 }
 
