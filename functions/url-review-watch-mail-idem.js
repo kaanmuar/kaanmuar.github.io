@@ -3,10 +3,6 @@
 /**
  * Idempotent continuous-watch report mail (#4396 / #4360; hardens #4390).
  * Pure gate + lock helpers; Firestore via webhook-idempotency runOnce. No SendGrid here.
- *
- * Wire in index.js mailReportToAsker (or the watch cron) after #4390 lands:
- *   const watchIdem = require('./url-review-watch-mail-idem');
- *   await watchIdem.sendOnce({ db, record, stopUrl, env: process.env, send: (extra) => … });
  */
 
 const crypto = require('node:crypto');
@@ -111,6 +107,19 @@ function mergeMailHeaders(mail, stopUrl) {
 	return Object.assign({}, m, { headers: Object.assign({}, m.headers || {}, extra) });
 }
 
+/** Continuous-watch re-run: a report row linked to the prior snapshot (#4390). */
+function isWatchRerun(record) {
+	return !!String(record && record.watchOf || '').trim();
+}
+
+/** True when the customer already has (or just got) the idempotent watch report mail. */
+function mailedFromIdem(result) {
+	const r = result || {};
+	if (!r.ok) return false;
+	if (r.sent) return true;
+	return r.state === 'duplicate';
+}
+
 function storeOf(input) {
 	if (input.store) return input.store;
 	if (!input.db) return webhookIdem.memoryStore();
@@ -163,6 +172,8 @@ module.exports = {
 	cronGate,
 	listUnsubscribeHeaders,
 	mergeMailHeaders,
+	isWatchRerun,
+	mailedFromIdem,
 	sendOnce,
 	memoryStore: webhookIdem.memoryStore,
 	firestoreStore: (db) => webhookIdem.firestoreStore(db, COLLECTION),
