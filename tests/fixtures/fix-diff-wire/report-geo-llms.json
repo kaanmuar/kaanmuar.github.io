@@ -1,0 +1,22 @@
+{
+  "id": "aabbccddeeff00112233445566778899",
+  "status": "complete",
+  "host": "shop.example.com",
+  "finalUrl": "https://shop.example.com/",
+  "insights": {
+    "findings": [
+      {
+        "key": "geo-llms",
+        "area": "GEO",
+        "verdict": "fail",
+        "severity": "medium"
+      }
+    ],
+    "fixkit": {
+      "llmsTxt": "# Shop Example\n\n> Example widgets.\n\n## Pages\n\n- [Home](https://shop.example.com/)\n"
+    },
+    "extras": {
+      "llms": { "status": 404, "html": false, "body": "" }
+    }
+  }
+}
