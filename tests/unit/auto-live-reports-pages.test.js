@@ -1,8 +1,14 @@
 // auto-live-reports.js reads /publishable page by page (#2038): one request with every review since a stuck cursor
 // ran the function out of memory, and a failed run never moved the cursor.
+// When render times out before commit (#4444), needsCardsOnly tells the watchdog to catch up without clips.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { fetchPublishable, PAGE } = require('../../scripts/auto-live-reports.js');
+const {
+	fetchPublishable,
+	PAGE,
+	SOCIAL_POSTS_PER_BATCH,
+	needsCardsOnly,
+} = require('../../scripts/auto-live-reports.js');
 
 const page = (since, until, read, host) => ({
 	since,
@@ -44,5 +50,25 @@ test('a page that fails after the first keeps what came back; a first page that 
 			throw new Error('publishable answered 500');
 		}),
 		/500/
+	);
+});
+
+test('two cancelled Live Reports runs mean the next dispatch should be cards-only (#4444)', () => {
+	assert.equal(SOCIAL_POSTS_PER_BATCH, 12);
+	assert.equal(needsCardsOnly([]), false);
+	assert.equal(
+		needsCardsOnly([
+			{ status: 'completed', conclusion: 'cancelled' },
+			{ status: 'completed', conclusion: 'success' },
+		]),
+		false
+	);
+	assert.equal(
+		needsCardsOnly([
+			{ status: 'completed', conclusion: 'cancelled' },
+			{ status: 'completed', conclusion: 'timed_out' },
+			{ status: 'in_progress', conclusion: null },
+		]),
+		true
 	);
 });

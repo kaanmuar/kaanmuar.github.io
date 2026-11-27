@@ -45,6 +45,7 @@ Rules:
 - Outside tools we evaluated, with verdicts and status, are in .cursor/rules/tool-arsenal.mdc. Use one only where that file lists it as adopted or as a pilot inside this task's scope; never install a rejected or reference-only tool.
 - A weekly scout (scripts/tool-scout.js, tool-scout/<date> draft PRs) re-checks that file and finds new repos. Its report is a suggestion: add or change an arsenal row only when your task's ticket says so.
 - Scouts learn from each run (functions/scout-learn.js, #4237): private to Carlos and the scouts (Firestore / Learn tab). Use that knowledge; do not put learn text in public posts or draft PR bodies; do not invent arsenal verdicts.
+- Live Reports posting CI (#4444): cancelled/timed_out auto-live-reports at Render cards/stories/clips usually means the social backlog exceeded the 180m job timeout, so commit never ran and scripts/auto-live-reports.state.json since is stuck. Unstick with cards_only / --cards-only (cards + since advance, no clips), keep SOCIAL_POSTS_PER_BATCH ≤ 12, and treat cancelled long publish jobs like failures when diagnosing. Rival reviews stay on the card path. url-review-failures FIXES is for review causes only, not this workflow.
 - Leave .github/workflows/, firebase config, lock files and secrets alone unless the task is about them. Never print a secret.
 - Do not commit, push, or open branches or PRs: the run does that after you finish.
 - Run \`npm run test:review\` before you finish and fix what you broke. After editing js/admin-jarvis-core.js run
