@@ -57,9 +57,11 @@ function causeOf(log) {
 			clip(stalled.replace(/^##\[error\]/, ''), 100) +
 			"), not in the commit: Jarvis starts Pages again on main's newest commit after the countdown"
 		);
-	const liveStuck = find(
-		/The job has exceeded the maximum execution time|Render cards, stories, and clips|read \d+, held .*social=\d+/i
-	);
+	// Three separate finds — avoid held .*social (ReDoS) (#4444).
+	const liveStuck =
+		find(/The job has exceeded the maximum execution time/i) ||
+		find(/Render cards, stories, and clips/i) ||
+		find(/social=\d{2,}/);
 	if (
 		liveStuck &&
 		/Render cards|auto-live|Live reports|social=\d+|cards=\d+/i.test(String(log || ''))
