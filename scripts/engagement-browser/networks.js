@@ -1643,18 +1643,73 @@ const telegram = {
     const m = info.match(/(\d[\d\s.,]*)\s*(subscribers?|members?|suscriptores|miembros)/i);
     return m ? Number(m[1].replace(/[\s.,]/g, "")) || 0 : 0;
   },
+  // Add our bot after a join (#4468); bots cannot self-join.
+  async addBot(page, task) {
+    const bot = String(task.bot || "").replace(/^@/, "").toLowerCase();
+    if (!bot || String(task.id).toLowerCase() === TG_OWN) return { botAdd: "skipped" };
+    try {
+      await go(page, this, tgOpen(task.id));
+      await pause(2000, 4000);
+      const listed = await evaluate(page, `
+        const want = arg.toLowerCase();
+        const rows = Array.from(document.querySelectorAll('.sidebar-right .chatlist-chat, .chat-info .group-members .group-member, .profile-content .chatlist-chat'));
+        const hit = rows.find((r) => ((r.querySelector('.peer-title, .user-title') || {}).textContent || '').toLowerCase().includes(want) || ((r.querySelector('.row-subtitle, .user-subtitle') || {}).textContent || '').toLowerCase().includes('@' + want));
+        return !!hit;`, bot);
+      if (listed) return { botAdd: "already" };
+      const head = page.locator(".sidebar-header, .chat-info-container, .top").first();
+      await click(await need(head.locator(".btn-menu, .chat-info").filter({ visible: true }).first(), "Chat menu"));
+      await pause(800, 1600);
+      const add = page.locator(".btn-menu-item, .sidebar-right .btn-primary, .profile-content button").filter({ visible: true, hasText: TG_MENU(["Add Member", "Add Members", "Add Subscriber", "Invite", "Invite Members", "Agregar", "Invitar", "Añadir", "Einladen", "Inviter"]) });
+      if (!(await visible(add, 6000))) return { botAdd: "needs_admin" };
+      await click(add.first());
+      await pause(1500, 3000);
+      const box = await need(page.locator(".popup-add-members input, .add-members-container input, .selector-search-input input").filter({ visible: true }), "The member search");
+      await type(page, box, bot);
+      await pause(2500, 4500);
+      const pick = page.locator(".chatlist-chat, .selector-user, .row.no-wrap").filter({ visible: true, hasText: new RegExp(bot, "i") });
+      if (!(await visible(pick, 8000))) return { botAdd: "needs_admin" };
+      await click(pick.first());
+      await pause(800, 1600);
+      const ok = page.locator(".popup-add-members .btn-primary, .btn-color-primary").filter({ visible: true, hasText: TG_MENU(["Add", "Invite", "Done", "Agregar", "Invitar", "Listo", "Fertig", "Ajouter"]) });
+      if (await visible(ok, 4000)) await click(ok.first());
+      await pause(2000, 4000);
+      const now = await evaluate(page, `
+        const want = arg.toLowerCase();
+        return Array.from(document.querySelectorAll('.sidebar-right .chatlist-chat, .chat-info .group-members .group-member, .profile-content .chatlist-chat')).some((r) => ((r.querySelector('.peer-title, .user-title') || {}).textContent || '').toLowerCase().includes(want) || ((r.querySelector('.row-subtitle, .user-subtitle') || {}).textContent || '').toLowerCase().includes('@' + want));`, bot);
+      return { botAdd: now ? "added" : "needs_admin" };
+    } catch (error) {
+      const msg = String(error.message || error);
+      if (/member search|Add Member|Chat menu/i.test(msg)) return { botAdd: "needs_admin", botError: msg.slice(0, 180) };
+      return { botAdd: "failed", botError: msg.slice(0, 180) };
+    }
+  },
+  async say(page, task) {
+    const name = String(task.id || "").replace(/^@/, "").split("/")[0];
+    await go(page, this, tgOpen(name));
+    await pause(2000, 4000);
+    const input = await need(page.locator(TG_INPUT).filter({ visible: true }), "The message box");
+    await type(page, input, task.draft);
+    await page.keyboard.press("Enter");
+    await pause(2000, 3500);
+    if ((await input.innerText().catch(() => "")).includes(String(task.draft).slice(0, 20))) throw new Error("The message did not send.");
+    return { url: "https://t.me/" + name };
+  },
   async join(page, task) {
     await go(page, this, tgOpen(task.id));
     await pause(2000, 4000);
     const members = await this.members(page);
     const join = page.locator(".chat-join, .chat-input button").filter({ visible: true, hasText: TG_MENU(["Join", "Join Channel", "Join Group", "Subscribe", "Unirse", "Unirse al grupo", "Unirse al canal", "Suscribirse"]) });
+    let out;
     if (!(await visible(join, 8000))) {
-      if (await visible(page.locator(TG_INPUT + ", .chat-input .btn-unmute, .chat-input .btn-mute").filter({ visible: true }), 3000)) return { already: true, members };
-      throw new Error("Telegram showed no Join button for @" + task.id + ".");
+      if (await visible(page.locator(TG_INPUT + ", .chat-input .btn-unmute, .chat-input .btn-mute").filter({ visible: true }), 3000)) out = { already: true, members };
+      else throw new Error("Telegram showed no Join button for @" + task.id + ".");
+    } else {
+      await click(join.first());
+      await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
+      out = { members };
     }
-    await click(join.first());
-    await join.first().waitFor({ state: "hidden", timeout: 12000 }).catch(() => { throw new Error("The join did not stick."); });
-    return { members };
+    if (task.bot) Object.assign(out, await this.addBot(page, task));
+    return out;
   }
 };
 

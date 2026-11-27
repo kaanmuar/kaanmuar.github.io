@@ -49,7 +49,7 @@
  *   engagement-mac-linkedin-result { key, date, name, outcome, ok, error, url }  one connect: marks sent in outreach,
  *                                                                        pushes Carlos
  *   engagement-mac-result  { key, action, ok, url, reaction, error, retry, already, card, cardError, target, none,
- *                          mentions, extras }                            what came of one task; already: the post had
+ *                          mentions, extras, botAdd, botError }          what came of one task; already: the post had
  *                                                                        our earlier reply (url), so none was sent;
  *                                                                        card: "attached" or "text"; target: the
  *                                                                        { id, url } a latest task answered; none: it
@@ -70,6 +70,7 @@ const J = require('./jarvis-engagement');
 const R = require('./engagement-reports');
 const Act = require('./engagement-act');
 const Joins = require('./engagement-joins');
+const TgBot = require('./telegram-join-bot');
 const Communities = require('./student-communities');
 const Students = require('./student-outreach');
 const OwnerTags = require('./owner-tags');
@@ -573,13 +574,15 @@ async function queue(deps, body) {
 		if (extras && extras.gif) gifs[t.doc.network] -= 1;
 		const profileUrl = profileLatest ? (t.doc.report || {}).profile || t.doc.url : t.doc.url;
 		const drafts = t.action === 'reply' || t.action === 'edit';
+		const botAsk = t.doc.campaign === TgBot.CAMPAIGN && t.action === 'reply';
+		const groupId = botAsk ? String(((t.doc.join || {}).id || t.doc.id || '').split('/')[0]) : '';
 		tasks.push(
 			Object.assign(
 				{
 					key: t.key,
 					network: t.doc.network,
 					action: t.action,
-					id: profileLatest ? '' : t.doc.id,
+					id: botAsk ? groupId : profileLatest ? '' : t.doc.id,
 					url: profileUrl,
 					author: { handle: (t.doc.author || {}).handle || '', id: (t.doc.author || {}).id || '' },
 					draft: drafts ? r.draft || '' : '',
@@ -597,7 +600,8 @@ async function queue(deps, body) {
 					: {},
 				card.error ? { cardError: card.error } : {},
 				extras ? { extras } : {},
-				student || {}
+				student || {},
+				botAsk ? { say: true } : {}
 			)
 		);
 	};

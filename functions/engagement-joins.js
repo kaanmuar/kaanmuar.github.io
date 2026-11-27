@@ -5,7 +5,7 @@
  * (E.joinCap). Each group is one document, engagement_joins/<network>_<hash of its id>, which is also the join log:
  *
  *   { network, id, name, url, kind, lang, members, about, topic, topics, relevance, score, query,
- *     status, foundAt, seenAt, at, joinedAt, error, tries, leasedAt }
+ *     status, foundAt, seenAt, at, joinedAt, botAdd, botAskAt, error, tries, leasedAt }
  *
  *   found    a candidate: named for our field or described as in it, public, safe for work, at least MIN_MEMBERS
  *   dry      a dry run (settings.live off) would have joined it; it is joined once live
@@ -22,6 +22,7 @@
  */
 const E = require('./engagement');
 const Students = require('./student-communities');
+const TgBot = require('./telegram-join-bot');
 
 const COLLECTION = 'engagement_joins';
 const JOINS = Object.keys(E.NETWORKS).filter((k) => (E.NETWORKS[k].caps || {}).join);
@@ -208,15 +209,22 @@ async function queue(deps, conf, want) {
 					.doc('mac')
 					.set({ joinsFrom: { [k]: at } }, { merge: true });
 			}
-			tasks.push({
-				key: r.key,
-				network: k,
-				action: 'join',
-				id: r.doc.id,
-				url: r.doc.url,
-				name: r.doc.name,
-				kind: r.doc.kind || '',
-			});
+			tasks.push(
+				Object.assign(
+					{
+						key: r.key,
+						network: k,
+						action: 'join',
+						id: r.doc.id,
+						url: r.doc.url,
+						name: r.doc.name,
+						kind: r.doc.kind || '',
+					},
+					k === 'telegram' && TgBot.shouldAddBot(r.doc.id, TgBot.botUser(deps.env))
+						? { bot: TgBot.botUser(deps.env) }
+						: {}
+				)
+			);
 		}
 	}
 	return { tasks, dry };
@@ -235,17 +243,23 @@ async function result(deps, b) {
 			.doc(E.bogotaDay(now))
 			.set({ n: { [doc.network]: { [c]: inc(1) } } }, { merge: true });
 	let status = doc.status;
+	let ask = null;
 	if (b.ok) {
 		status = b.already ? 'member' : b.pending ? 'requested' : 'joined';
-		await ref(db, b.key).update({
+		const patch = {
 			status,
 			at,
 			joinedAt: b.already ? doc.joinedAt || '' : at,
 			members: num(b.members) || doc.members || 0,
 			error: '',
 			leasedAt: '',
-		});
+		};
+		const botAdd = doc.network === 'telegram' ? TgBot.botAddStatus(b) : '';
+		if (botAdd) patch.botAdd = botAdd;
+		await ref(db, b.key).update(patch);
 		if (!b.already) await count('join_done');
+		if (doc.network === 'telegram' && b.ok && botAdd === 'needs_admin' && !doc.botAskAt)
+			ask = await TgBot.queueAdminAsk(deps, Object.assign({}, doc, patch), b.key);
 		if ((doc.topics || []).includes('Students') || b.rules)
 			await Students.joined(
 				deps,
@@ -260,7 +274,7 @@ async function result(deps, b) {
 		await ref(db, b.key).update({ status, at, tries, error: clip(b.error, 200), leasedAt: '' });
 		if (status === 'failed') await count('join_failed');
 	}
-	return { ok: true, key: b.key, action: 'join', status };
+	return { ok: true, key: b.key, action: 'join', status, botAskQueued: !!(ask && ask.queued) };
 }
 
 /** The join log and today's caps for Jarvis: the latest joins (with group, language and members), and how many are found. */
@@ -287,6 +301,7 @@ async function summary(db, conf, mac, used, now) {
 				at: d.at,
 				joinedAt: d.joinedAt || '',
 				error: d.error || '',
+				botAdd: d.botAdd || '',
 			})),
 		found: Object.fromEntries(
 			JOINS.map((k) => [k, rows.filter((d) => d.network === k && d.status === 'found').length])
