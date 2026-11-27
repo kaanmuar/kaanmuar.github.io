@@ -8,7 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.carlosandmunoz.urlreview.ui.arena.ArenaPlaceholder
 import com.carlosandmunoz.urlreview.ui.entry.EntryScreen
-import com.carlosandmunoz.urlreview.ui.report.ReportPlaceholder
+import com.carlosandmunoz.urlreview.ui.report.ReportScreen
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -47,6 +47,9 @@ fun UrlReviewNavHost() {
                         launchSingleTop = true
                     }
                 },
+                onCancel = {
+                    navController.popBackStack(Routes.Entry, inclusive = false)
+                },
             )
         }
         composable(
@@ -58,7 +61,7 @@ fun UrlReviewNavHost() {
                 },
             ),
         ) {
-            ReportPlaceholder(
+            ReportScreen(
                 targetUrl = it.arguments?.getString("url").orEmpty(),
                 onNewReview = {
                     navController.popBackStack(Routes.Entry, inclusive = false)

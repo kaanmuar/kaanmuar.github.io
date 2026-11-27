@@ -13,9 +13,17 @@ struct ContentView: View {
             .navigationDestination(for: ReviewFlow.self) { step in
                 switch step {
                 case let .arena(draft):
-                    ArenaView(draft: draft) {
-                        path.append(ReviewFlow.report(draft))
-                    }
+                    ArenaView(
+                        draft: draft,
+                        onContinue: {
+                            path.append(ReviewFlow.report(draft))
+                        },
+                        onCancel: {
+                            if !path.isEmpty {
+                                path.removeLast()
+                            }
+                        },
+                    )
                 case let .report(draft):
                     ReportView(draft: draft) {
                         path = NavigationPath()

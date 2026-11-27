@@ -1,23 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lab Tries</title>
-  <style>
-    :root { --bg: #0e151c; --text: #e8f3f4; --muted: #8ea8ae; --cyan: #7ef6fb; }
-  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 500 15px/1.45 system-ui, sans-serif; }
-  .wrap { display: grid; place-items: center; min-height: 100vh; padding: 24px; text-align: center; }
-  h1 { margin: 0 0 8px; font-size: 1.5rem; color: var(--cyan); letter-spacing: .08em; text-transform: uppercase; }
-  p { margin: 0; color: var(--muted); max-width: 28ch; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab Tries</title>
+<link rel="stylesheet" href="css/qa-review-progress.css?v=20261120g">
+<link rel="stylesheet" href="css/qa-review-arena.css?v=20261120g">
+<style>
+  html, body { margin: 0; min-height: 100%; background: #050d11; color: #e8f3f4; }
+  html.rc-noscroll { overflow: hidden; }
+  #run-panel {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-height: 100dvh;
+    max-width: none;
+    box-shadow: none;
+    background: #050d11;
+  }
+  #run-panel h2,
+  #report-once,
+  #log-next {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  #run-log { list-style: none; margin: 0; padding: 0; }
+  #run-log > li {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  #run-panel .rp { max-width: 100%; }
+  #run-panel.rp-on .rp { margin: 0; padding: 8px 8px 0; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div>
-      <h1>Lab Tries</h1>
-      <p>Arena placeholder — real ReviewArena assets wire in Wave 2 (#4505).</p>
-    </div>
-  </div>
+<section id="run-panel" class="card log-card">
+  <h2>Review log</h2>
+  <p id="report-once">Native packaged arena.</p>
+  <ol class="log" id="run-log"></ol>
+  <ol class="log-next" id="log-next"></ol>
+</section>
+<script src="js/qa-review-progress.js"></script>
+<script src="js/qa-review-arena-facts.js?v=20261120a"></script>
+<script src="js/qa-review-arena-atlas.js?v=20261120a"></script>
+<script src="js/qa-review-arena-motion.js?v=20261120e"></script>
+<script src="js/qa-review-console.js?v=20261120g"></script>
+<script src="js/qa-review-arena.js?v=20261120g"></script>
+<script src="js/native-bridge.js"></script>
 </body>
 </html>

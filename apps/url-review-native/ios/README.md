@@ -33,8 +33,8 @@ xcodebuild -project URLReview.xcodeproj -scheme URLReview \
 
 ## Simulator notes
 
-- Wave 1 screens: **Entry** (URL + prediction chips stub + Run), **Arena** (`WKWebView` stub), **Report** (score hero + collapsed rows).
-- Arena loads the entered URL when possible; offline or invalid URLs show a placeholder page.
+- **Entry** (URL + prediction chips stub + Run), **Arena** (packaged Lab Tries canvas in `URLReview/Arena/`), **Report** (score hero stub).
+- Refresh arena bundle from repo root: `../scripts/sync-arena-assets.sh` (see script header). Bridge: `webkit.messageHandlers.urlReview`.
 - Later waves will call `https://carlosandmunoz.com` APIs; **ATS** already allows that domain (see `URLReview/Info.plist`).
 
 ## Build without full Xcode.app

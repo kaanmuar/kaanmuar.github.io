@@ -13,6 +13,7 @@
 		A00100000000000000000004 /* ArenaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000004 /* ArenaView.swift */; };
 		A00100000000000000000005 /* ReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000005 /* ReportView.swift */; };
 		A00100000000000000000006 /* ReviewApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000007 /* ReviewApi.swift */; };
+		A00100000000000000000008 /* Arena in Resources */ = {isa = PBXBuildFile; fileRef = A00200000000000000000008 /* Arena */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		A00200000000000000000005 /* ReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportView.swift; sourceTree = "<group>"; };
 		A00200000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A00200000000000000000007 /* ReviewApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewApi.swift; sourceTree = "<group>"; };
+		A00200000000000000000008 /* Arena */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Arena; sourceTree = "<group>"; };
 		A00300000000000000000001 /* URLReview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = URLReview.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -52,6 +54,7 @@
 				A00200000000000000000002 /* ContentView.swift */,
 				A00500000000000000000005 /* Data */,
 				A00500000000000000000004 /* Views */,
+				A00200000000000000000008 /* Arena */,
 				A00200000000000000000006 /* Info.plist */,
 			);
 			path = URLReview;
@@ -141,6 +144,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00100000000000000000008 /* Arena in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

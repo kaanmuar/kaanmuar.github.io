@@ -25,7 +25,9 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 ## Wave 1 flow
 
 - **Entry** — URL field, stub prediction chips, Run
-- **Arena** — full-screen WebView → `assets/arena/index.html` (Lab Tries placeholder)
+- **Arena** — full-screen WebView → packaged `assets/arena/` (product ReviewArena lab skin + `native-bridge.js`)
 - **Report** — score hero + three collapsed section rows (stub data)
 
-Spearhead dark theme (`#0e151c`, cyan accent). Network and real arena assets land in Wave 2.
+Spearhead dark theme (`#0e151c`, cyan accent). Refresh arena assets from repo root: `../scripts/sync-arena-assets.sh` (Wave 2, ~1.5 MB packaged).
+
+Bridge: `UrlReviewAndroid.postMessage(JSON)` — `progress`, `finish`, `cancel` (see `web/js/native-bridge.js`).
