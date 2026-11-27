@@ -186,13 +186,17 @@
 			typeof window.matchMedia === 'function' &&
 			window.matchMedia('(max-width: 699px)').matches;
 		if (unpaid && narrow) {
-			// Mobile spearhead: collapsed fold heads; glance/teaser sections stay readable (#4422).
+			// Mobile spearhead: collapse most folds; keep glance + Cases (watch soft-preview lives there).
 			folds.forEach((item) => {
 				if (!item || !item.panel || !item.button) return;
 				const head = item.button.closest('h2, .fold-head');
+				const group = (head && head.dataset.indexGroup) || item.group || '';
 				const keep =
 					head &&
-					(/health|prime|glance|exec/i.test(head.textContent || '') || head.dataset.indexGroup === 'glance');
+					(/health|prime|glance|exec|cases/i.test(head.textContent || '') ||
+						group === 'glance' ||
+						group === 'cases' ||
+						!!item.panel.querySelector('#watch-cases'));
 				if (!keep && typeof opts.setFold === 'function') opts.setFold(item, false);
 				else if (!keep) {
 					item.panel.hidden = true;

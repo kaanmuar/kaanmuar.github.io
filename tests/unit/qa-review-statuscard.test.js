@@ -119,3 +119,9 @@ test('QAReviewStatusCard paints StatusCard chrome on unpaid folds and clears whe
 	sandbox.QAReviewStatusCard.sync({ unpaid: false, folds, report: {} });
 	assert.equal(appended.length, 0, 'paid clears StatusCard chrome');
 });
+
+test('mobile unpaid keep-list includes cases group for watch soft-preview', () => {
+	const src = fs.readFileSync(path.join(__dirname, '../../js/qa-review-statuscard.js'), 'utf8');
+	assert.match(src, /group === 'cases'/);
+	assert.match(src, /#watch-cases/);
+});
