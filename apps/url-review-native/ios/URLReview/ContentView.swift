@@ -8,8 +8,6 @@ struct ContentView: View {
             EntryView { draft in
                 path.append(ReviewFlow.arena(draft))
             }
-            .navigationTitle("URL Review")
-            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: ReviewFlow.self) { step in
                 switch step {
                 case let .arena(draft):
