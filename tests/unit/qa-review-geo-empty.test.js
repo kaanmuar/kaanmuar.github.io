@@ -33,5 +33,5 @@ test('qa-review.js wires GSC connect and watch notes in paintGeo (#4414)', () =>
 	assert.ok(source.includes('data-part="gsc-connect"'), 'GSC card marker');
 	assert.match(source, /report\.watchOf/, 'watch note must skip watch reruns');
 	assert.ok(source.includes('paintGeo(ins, report)'), 'paintInsights must pass report');
-	assert.match(source, /qa-review-account\.html/, 'must link account');
+	assert.match(source, /qa-review-account\.html#gsc/, 'empty states must link account GSC');
 });

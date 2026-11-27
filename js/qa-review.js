@@ -5206,7 +5206,7 @@
 			esc(rc.t('geoGscTitle')) +
 			'</h3><p class="muted" data-note>' +
 			esc(rc.t('geoGscBody')) +
-			' <a href="qa-review-account.html">' +
+			' <a href="qa-review-account.html#gsc">' +
 			esc(rc.t('geoGscCta')) +
 			'</a>.</p></article>'
 		);
@@ -5217,7 +5217,7 @@
 		return (
 			'<p class="meta-line" data-note style="margin-top:12px">' +
 			esc(rc.t('geoWatchNote')) +
-			' <a href="qa-review-account.html">' +
+			' <a href="qa-review-account.html#gsc">' +
 			esc(rc.t('geoWatchCta')) +
 			'</a>.</p>'
 		);
