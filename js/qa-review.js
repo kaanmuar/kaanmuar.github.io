@@ -3540,11 +3540,10 @@
 				);
 			})
 			.join('');
-		const pickOpen = rivals.open || document.body.classList.contains('preview-copy');
 		box.innerHTML =
 			rivalsHead(report) +
 			'<details class="rivals-pick"' +
-			(pickOpen ? ' open' : '') +
+			(rivals.open ? ' open' : '') +
 			'><summary>' +
 			esc(picked.length ? cc.t('rivalsPick', { n: picked.length }) : cc.t('rivalsChoose')) +
 			'</summary>' +

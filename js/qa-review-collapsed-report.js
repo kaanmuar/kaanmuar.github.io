@@ -1,5 +1,5 @@
 /* Unpaid/preview report: collapsed sections by default (#4463 / #4425).
-   Runs after StatusCard.sync — keeps glance, health, fix-first, cases, and rivals readable (#3506). */
+   Runs after StatusCard.sync — keeps glance, health scores, fix-first, and cases readable (#3506). */
 (function () {
 	'use strict';
 
@@ -11,9 +11,9 @@
 		const group = (head && head.dataset.indexGroup) || item.group || '';
 		const face = head && head.dataset.face;
 		if (group === 'glance' || group === 'cases') return true;
-		if (face === 'health' || face === 'fixfirst' || face === 'compare') return true;
+		if (face === 'health' || face === 'fixfirst') return true;
 		const panel = item.panel;
-		return !!panel.querySelector('#health, #fix-first, #report-visuals, #cases, #watch-cases, #rivals, #compare');
+		return !!panel.querySelector('#health, #fix-first, #report-visuals, #cases, #watch-cases');
 	}
 
 	function sync(opts) {
