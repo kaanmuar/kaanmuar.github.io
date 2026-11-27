@@ -738,6 +738,13 @@
 		.catch(() => paintProviders([]));
 	const params = new URLSearchParams(location.search);
 	if (params.get('signin') && params.get('key')) finishLink(params);
-	else if (params.get('state') && (params.get('code') || params.get('error'))) finishOAuth(params);
-	else confirmSaved();
+	else if (params.get('state') && (params.get('code') || params.get('error'))) {
+		let gscConnect = false;
+		try {
+			gscConnect = sessionStorage.getItem('reviewGscConnect') === '1';
+		} catch (_) {
+			gscConnect = false;
+		}
+		if (!gscConnect) finishOAuth(params);
+	} else confirmSaved();
 })();
