@@ -21,7 +21,7 @@ const live = require('./build-live-reports');
 const { siteKind } = require('./tips-studio/site-assets');
 const { tldCountry } = require('./live-report-countries');
 const QAReviewScripts = require('../js/qa-review-scripts');
-const { buildTrackedBatch, BATCH_FILE: SOCIAL_BATCH_TRACKED } = require('./live-reports-social-queue');
+const { buildTrackedBatch, retainBatch, BATCH_FILE: SOCIAL_BATCH_TRACKED } = require('./live-reports-social-queue');
 
 const ROOT = path.resolve(__dirname, '..');
 const STATE = path.join(__dirname, 'auto-live-reports.state.json');
@@ -50,6 +50,21 @@ function needsCardsOnly(runs) {
 	const recent = (runs || []).filter((run) => run && run.status === 'completed').slice(0, 4);
 	const stuck = recent.filter((run) => run.conclusion === 'cancelled' || run.conclusion === 'timed_out');
 	return stuck.length >= 2;
+}
+
+// Hours since state.since. Missing/invalid since → Infinity so catch-up still runs (#4483).
+function sinceLagHours(state, now = Date.now()) {
+	const t = Date.parse(state && state.since);
+	if (!Number.isFinite(t)) return Infinity;
+	return (now - t) / 36e5;
+}
+
+// After (auto-TODAY) lands, schedule/backup used to skip the rest of the UTC day even when
+// more reviews arrived after state.since. Re-run cards when the cursor is older than lagHours.
+const SAME_DAY_CATCHUP_HOURS = 4;
+function needsSameDayCatchUp(state, { lagHours = SAME_DAY_CATCHUP_HOURS, now = Date.now() } = {}) {
+	if (state && state.socialPending && state.socialPending.count > 0) return false;
+	return sinceLagHours(state, now) > lagHours;
 }
 
 function clearSocialPending(state) {
@@ -848,11 +863,10 @@ async function main() {
 	fs.writeFileSync(path.join(BATCH_DIR, 'batch.json'), JSON.stringify(batch, null, 1) + '\n');
 	const batchId = 'auto-' + today;
 	if (!cardsOnly && batch.length) {
+		const tracked = buildTrackedBatch(batchId, batch);
 		fs.mkdirSync(path.dirname(SOCIAL_BATCH), { recursive: true });
-		fs.writeFileSync(
-			SOCIAL_BATCH,
-			JSON.stringify(buildTrackedBatch(batchId, batch), null, 1) + '\n'
-		);
+		fs.writeFileSync(SOCIAL_BATCH, JSON.stringify(tracked, null, 1) + '\n');
+		retainBatch(tracked);
 		state.socialPending = { batch: batchId, count: batch.length, at: new Date().toISOString() };
 	} else if (!cardsOnly) {
 		Object.assign(state, clearSocialPending(state));
@@ -891,7 +905,10 @@ module.exports = {
 	PAGE,
 	SOCIAL_POSTS_PER_BATCH,
 	SOCIAL_BATCH,
+	SAME_DAY_CATCHUP_HOURS,
 	needsCardsOnly,
+	sinceLagHours,
+	needsSameDayCatchUp,
 	clearSocialPending,
 	copyFor,
 	caseFix,
