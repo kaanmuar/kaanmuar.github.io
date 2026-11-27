@@ -18,6 +18,8 @@ const apiToken = require('../functions/url-review-api-token');
 const phraser = require('../functions/url-review-phrase');
 const accountData = require('../functions/url-review-account-data');
 const oauth = require('../functions/url-review-oauth');
+const gscOauth = require('../functions/url-review-gsc-oauth');
+const GSC_REDIRECT_PAGE = 'http://127.0.0.1:8765/qa-review.html';
 const fixOffers = require('../functions/url-review-fix-offers');
 const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
@@ -853,6 +855,64 @@ const server = http.createServer(async (req, res) => {
 			createdAt: new Date().toISOString(),
 		});
 		sendJson(res, 200, { ok: true }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname.indexOf('/account/gsc/') === 0) {
+		let gscBody = {};
+		try {
+			gscBody = await readBody(req);
+		} catch (error) {
+			gscBody = {};
+		}
+		const signedIn = await auth.checkSession(signIns, Object.assign({}, gscBody, { touch: false }));
+		if (!signedIn.ok) {
+			sendJson(res, signedIn.status, { error: signedIn.error, signIn: true }, origin, deviceHint);
+			return;
+		}
+		const gscInput = { email: signedIn.email, deviceKey: gscBody.deviceKey, env: process.env };
+		const answerGsc = (result) => {
+			sendJson(res, result.ok ? 200 : result.status, result, origin, deviceHint);
+		};
+		if (url.pathname === '/account/gsc/connect/start') {
+			answerGsc(
+				await gscOauth.startConnect(
+					signIns,
+					Object.assign(gscInput, { redirectUri: gscBody.redirectUri || GSC_REDIRECT_PAGE })
+				)
+			);
+			return;
+		}
+		if (url.pathname === '/account/gsc/connect/finish') {
+			answerGsc(
+				await gscOauth.finishConnect(
+					signIns,
+					Object.assign(gscInput, { state: gscBody.state, code: gscBody.code, error: gscBody.error })
+				)
+			);
+			return;
+		}
+		if (url.pathname === '/account/gsc/status') {
+			answerGsc(
+				await gscOauth.connectStatus(
+					signIns,
+					Object.assign(gscInput, { reviewUrl: gscBody.reviewUrl, reviewHost: gscBody.reviewHost })
+				)
+			);
+			return;
+		}
+		if (url.pathname === '/account/gsc/sites') {
+			answerGsc(await gscOauth.listSites(signIns, gscInput));
+			return;
+		}
+		if (url.pathname === '/account/gsc/bind') {
+			answerGsc(await gscOauth.bindProperty(signIns, Object.assign(gscInput, { siteUrl: gscBody.siteUrl })));
+			return;
+		}
+		if (url.pathname === '/account/gsc/disconnect') {
+			answerGsc(await gscOauth.disconnectConnect(signIns, gscInput));
+			return;
+		}
+		sendJson(res, 404, { error: 'Not found.' }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'POST' && url.pathname === '/review/capture') {
