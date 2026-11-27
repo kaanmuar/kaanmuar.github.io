@@ -166,6 +166,17 @@
     "checked": "2026-11-27T00:20:31.848Z"
    }
   ],
+  "auto-2026-10-26/04-u-cng-edu": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "150",
+    "at": "2026-11-27T23:49:28.072Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/150",
+    "checked": "2026-11-27T23:49:31.504Z"
+   }
+  ],
   "auto-2026-11-03/02-u-iteso-mx": [
    {
     "channel": "telegram",
@@ -186,6 +197,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/132",
     "checked": "2026-11-25T23:02:06.780Z"
+   }
+  ],
+  "auto-2026-11-03/06-u-vitibet-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "151",
+    "at": "2026-11-27T23:49:31.504Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/151",
+    "checked": "2026-11-27T23:49:35.537Z"
    }
   ],
   "auto-2026-11-04/01-u-selia-co": [
@@ -771,6 +793,17 @@
     "checked": "2026-11-26T23:37:26.598Z"
    }
   ],
+  "evergreen-2026-11/17-field-vs-lab": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "149",
+    "at": "2026-11-27T23:49:21.946Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/149",
+    "checked": "2026-11-27T23:49:28.072Z"
+   }
+  ],
   "evergreen-2026-11/18-myth-keywords": [
    {
     "channel": "telegram",
@@ -1216,6 +1249,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/144",
     "checked": "2026-11-27T00:20:40.378Z"
+   }
+  ],
+  "runs-100/13-dw": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "152",
+    "at": "2026-11-27T23:49:35.537Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/152",
+    "checked": "2026-11-27T23:49:40.517Z"
    }
   ],
   "runs-2026-10/01-govuk": [

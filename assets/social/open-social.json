@@ -443,6 +443,73 @@
     "checked": "2026-11-27T00:19:45.573Z"
    }
   ],
+  "auto-2026-10-26/04-u-cng-edu": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3dennpwl32y",
+    "at": "2026-11-27T23:45:11.834Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3dennpwl32y",
+    "checked": "2026-11-27T23:45:22.108Z"
+   },
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18137617270801177",
+    "at": "2026-11-27T23:49:05.758Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4039981507691215547",
+    "checked": "2026-11-27T23:49:13.189Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "17912229357325784",
+    "at": "2026-11-27T23:47:41.499Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DgQ5SZVzg-v/",
+    "checked": "2026-11-27T23:48:21.883Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18362623528222723",
+    "at": "2026-11-27T23:45:55.486Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DgQ5JuGiaHW",
+    "checked": "2026-11-27T23:46:46.501Z"
+   }
+  ],
+  "auto-2026-10-26/05-u-montesofia-com": [
+   {
+    "channel": "instagram-story",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18008834648794693",
+    "at": "2026-11-27T23:49:13.189Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/stories/qaurlreview/4039981569346152543",
+    "checked": "2026-11-27T23:49:21.294Z"
+   },
+   {
+    "channel": "instagram",
+    "profile": "instagram.com/qaurlreview",
+    "id": "18111339116364601",
+    "at": "2026-11-27T23:48:21.883Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/reel/DgQ5XWJByBL/",
+    "checked": "2026-11-27T23:49:05.436Z"
+   },
+   {
+    "channel": "threads",
+    "profile": "threads.net/@qaurlreview",
+    "id": "18036754919676009",
+    "at": "2026-11-27T23:46:46.501Z",
+    "result": "sent",
+    "url": "https://www.threads.com/@qaurlreview/post/DgQ5P90Dmc4",
+    "checked": "2026-11-27T23:47:40.639Z"
+   }
+  ],
   "auto-2026-10-27/01-u-ciedi-edu-co": [
    {
     "channel": "bluesky",
@@ -554,6 +621,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n36azlixvo27",
     "checked": "2026-11-25T22:57:09.354Z"
+   }
+  ],
+  "auto-2026-11-03/06-u-vitibet-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3deo5tcv52r",
+    "at": "2026-11-27T23:45:22.108Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3deo5tcv52r",
+    "checked": "2026-11-27T23:45:39.275Z"
    }
   ],
   "auto-2026-11-03/09-u-udg-mx": [
@@ -2317,6 +2395,17 @@
     "checked": "2026-11-26T23:32:37.400Z"
    }
   ],
+  "evergreen-2026-11/17-field-vs-lab": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3denagngf27",
+    "at": "2026-11-27T23:44:52.789Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3denagngf27",
+    "checked": "2026-11-27T23:45:11.833Z"
+   }
+  ],
   "evergreen-2026-11/18-myth-keywords": [
    {
     "channel": "bluesky",
@@ -2690,6 +2779,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3aw5dgzla2r",
     "checked": "2026-11-27T00:20:22.831Z"
+   }
+  ],
+  "runs-100/13-dw": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3deom66ot2i",
+    "at": "2026-11-27T23:45:39.275Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3deom66ot2i",
+    "checked": "2026-11-27T23:45:54.309Z"
    }
   ],
   "runs-2026-10/01-govuk": [
