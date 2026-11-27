@@ -73,7 +73,7 @@ function inviteDoc(candidate, inviteLink, now) {
 		author: { handle: candidate.handle, name: clip(candidate.name, 120) || candidate.handle },
 		text: '',
 		lang: 'en',
-		via: 'live-reports',
+		via: 'mac',
 		topic: 'Live reports',
 		topics: ['Live reports'],
 	};
