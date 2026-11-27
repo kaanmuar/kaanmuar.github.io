@@ -6,6 +6,7 @@
  */
 
 const fixDiff = require('./url-review-fix-diff');
+const outcomesSnapshot = require('./url-review-outcomes-snapshot');
 
 const COLLECTION = 'url_review_fix_diff_packs';
 const STATUSES = ['pending', 'approved', 'rejected'];
@@ -151,7 +152,17 @@ async function deskDecide(req, res, operator, deps) {
 	const patch = decisionPatch(before, body, operator, deps.nowMs);
 	if (patch.error) return fail(res, 400, patch.error);
 	await ref.update(patch);
-	res.status(200).json({ ok: true, pack: deskRow(id, Object.assign({}, before, patch)) });
+	const merged = Object.assign({}, before, patch);
+	try {
+		await outcomesSnapshot.captureOnPackApproved(deps.db, Object.assign({ id }, merged), {
+			env: (deps && deps.env) || process.env,
+			hooks: (deps && deps.hooks) || {},
+			report: deps && deps.report,
+		});
+	} catch (error) {
+		console.error('Outcomes snapshot baseline failed:', error);
+	}
+	res.status(200).json({ ok: true, pack: deskRow(id, merged) });
 }
 
 async function enqueue(db, body, nowMs) {

@@ -1,0 +1,29 @@
+{
+	"fetchedAt": "2026-12-06T12:00:00.000Z",
+	"insights": {
+		"score": {
+			"overall": 66,
+			"areas": {
+				"SEO": { "score": 78 },
+				"GEO": { "score": 90 }
+			}
+		},
+		"extras": {
+			"gsc": {
+				"current": [
+					{ "page": "/", "clicks": 150, "impressions": 2600, "position": 7.1 },
+					{ "page": "/pricing", "clicks": 55, "impressions": 950, "position": 10.2 }
+				]
+			},
+			"geoCitation": {
+				"brandHost": "shop.example.com",
+				"share": 18.2,
+				"cited": true,
+				"citations": [
+					{ "host": "shop.example.com", "url": "https://shop.example.com/" },
+					{ "host": "rival.example", "url": "https://rival.example/" }
+				]
+			}
+		}
+	}
+}
