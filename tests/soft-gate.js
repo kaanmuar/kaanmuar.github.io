@@ -64,7 +64,7 @@ function fulfillSoftPreview(route, cors, overrides) {
 
 // Soft gate: Review soft-runs; Unlock opens terms / sign-in / client checks / pricing / full crawl.
 async function softThenUnlock(page, expect) {
-	const unlock = page.locator('#soft-unlock-btn');
+	const unlock = page.locator('#unlock-offer #soft-unlock-btn');
 	if (!(await unlock.isVisible().catch(() => false))) {
 		await page.locator('#review-btn').click();
 		await expect(unlock).toBeVisible({ timeout: 20000 });
@@ -75,7 +75,7 @@ async function softThenUnlock(page, expect) {
 async function softPreviewFromHero(page, expect, url) {
 	await page.locator('#stage-url').fill(url);
 	await page.locator('#stage-start button[type="submit"]').click();
-	await expect(page.locator('#soft-unlock-btn')).toBeVisible({ timeout: 20000 });
+	await expect(page.locator('#unlock-offer #soft-unlock-btn')).toBeVisible({ timeout: 20000 });
 }
 
 module.exports = {
