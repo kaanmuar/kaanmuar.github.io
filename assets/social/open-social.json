@@ -432,6 +432,17 @@
     "checked": "2026-11-26T23:32:46.958Z"
    }
   ],
+  "auto-2026-10-26/03-u-millanenlinea-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3aw4a5csj2s",
+    "at": "2026-11-27T00:19:34.207Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3aw4a5csj2s",
+    "checked": "2026-11-27T00:19:45.573Z"
+   }
+  ],
   "auto-2026-10-27/01-u-ciedi-edu-co": [
    {
     "channel": "bluesky",
@@ -1594,10 +1605,11 @@
    {
     "channel": "instagram",
     "profile": "instagram.com/qaurlreview",
-    "at": "2026-11-26T23:36:10.992Z",
-    "result": "failed",
-    "error": "Instagram media_publish 403: Application request limit reached",
-    "checked": "2026-11-26T23:37:00.892Z"
+    "id": "18182714110428770",
+    "at": "2026-11-27T00:19:33.338Z",
+    "result": "sent",
+    "url": "https://www.instagram.com/p/DgOTOrKIJ2Y/",
+    "checked": "2026-11-27T00:20:26.352Z"
    },
    {
     "channel": "threads",
@@ -1610,6 +1622,15 @@
    }
   ],
   "auto-2026-11-19/35-u-amforaproperty-com": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3aw4rj24q2t",
+    "at": "2026-11-27T00:19:45.573Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3aw4rj24q2t",
+    "checked": "2026-11-27T00:20:04.588Z"
+   },
    {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
@@ -2355,6 +2376,17 @@
     "checked": "2026-11-19T18:41:39.140Z"
    }
   ],
+  "launch-2026-10/fr/security": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3aw5f4k4h2l",
+    "at": "2026-11-27T00:20:22.832Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3aw5f4k4h2l",
+    "checked": "2026-11-27T00:20:24.326Z"
+   }
+  ],
   "launch-2026-10/pt/a11y": [
    {
     "channel": "bluesky",
@@ -2625,6 +2657,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3atjggeqb27",
     "checked": "2026-11-26T23:33:27.255Z"
+   }
+  ],
+  "runs-100/12-aljazeera": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3aw5dgzla2r",
+    "at": "2026-11-27T00:20:04.588Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3aw5dgzla2r",
+    "checked": "2026-11-27T00:20:22.831Z"
    }
   ],
   "runs-2026-10/01-govuk": [
