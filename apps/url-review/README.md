@@ -12,7 +12,7 @@ Native shells for [qa-review](https://carlosandmunoz.com/qa-review.html). Shared
 
 - Node.js 20+
 - **iOS:** Xcode 16+ (command line tools + full Xcode for device/archive)
-- **Android:** Android Studio (sibling ticket #4494)
+- **Android:** JDK **21+** (Capacitor 7.4 Android), Android SDK / Android Studio (#4494)
 
 Never commit signing material (`*.p12`, `*.mobileprovision`, `*.cer`). Use Xcode’s automatic signing or export profiles only on the build machine / CI secret store.
 
@@ -73,9 +73,51 @@ If `xcodebuild` points at Command Line Tools, run `sudo xcode-select -s /Applica
 
 Signing errors on a fresh clone are expected until a team is selected in Xcode; they do not block committing the scaffold.
 
-## Android
+## Android — debug APK (#4494)
 
-Android platform lives in the same folder (`android/`). See #4494 for Gradle / Play Console notes.
+Jarvis lives in repo-root `android/` (`com.carlosandmunoz.jarvis`). **Do not** run Capacitor sync there; this app is only under `apps/url-review/android/`.
+
+| Field | Value |
+| --- | --- |
+| Application ID | `com.carlosandmunoz.urlreview` |
+| Debug application ID | `com.carlosandmunoz.urlreview.debug` |
+
+### Prerequisites
+
+- **JDK 21+** (`capacitor.build.gradle` targets Java 21; Android Studio’s bundled JBR works)
+- **Android SDK** via `ANDROID_HOME` or `ANDROID_SDK_ROOT` (Android Studio install)
+- Accept SDK licenses: `sdkmanager --licenses`
+
+### Build
+
+```bash
+cd apps/url-review
+npm ci
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  # or any JDK 21+
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+npx cap sync android
+cd android && ./gradlew assembleDebug
+```
+
+Shortcut: `npm run android:assembleDebug` from `apps/url-review/`.
+
+APK: `android/app/build/outputs/apk/debug/app-debug.apk`
+
+Open in Android Studio: `npm run cap:open:android`.
+
+### CSP / WebView
+
+Release builds use `server.url` → `https://carlosandmunoz.com/qa-review.html` (see `capacitor.config.ts`). The WebView loads the live site over HTTPS; `qa-review.html` meta CSP applies as in mobile Chrome. `www/index.html` is an offline fallback only.
+
+### Deep links (later)
+
+App Links for `carlosandmunoz.com` / `qa-review*.html` and OAuth return URLs are not in M1; add `assetlinks.json` on the domain when billing or GSC redirects must open this app.
+
+### Smoke tests
+
+```bash
+cd apps/url-review && npm test
+```
 
 ## Scripts
 
