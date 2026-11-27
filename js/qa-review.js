@@ -7234,6 +7234,13 @@
 				setFold: setFold,
 			});
 		}
+		if (window.QAReviewCollapsedReport) {
+			QAReviewCollapsedReport.sync({
+				unpaid: !paid && !sample,
+				folds: folds,
+				paintFoldAll: paintFoldAll,
+			});
+		}
 		if (stickyUnlock) {
 			stickyUnlock.sync({
 				unpaid: !paid && !sample && !payload.free,

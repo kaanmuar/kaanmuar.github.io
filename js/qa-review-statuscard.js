@@ -181,29 +181,6 @@
 		document.body.classList.toggle('scard-mode', unpaid);
 		const folds = opts.folds || [];
 		folds.forEach((item) => paintButton(item, opts.report || null, unpaid));
-		const narrow =
-			typeof window !== 'undefined' &&
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(max-width: 699px)').matches;
-		if (unpaid && narrow) {
-			// Mobile spearhead: collapse most folds; keep glance + Cases (watch soft-preview lives there).
-			folds.forEach((item) => {
-				if (!item || !item.panel || !item.button) return;
-				const head = item.button.closest('h2, .fold-head');
-				const group = (head && head.dataset.indexGroup) || item.group || '';
-				const keep =
-					head &&
-					(/health|prime|glance|exec|cases/i.test(head.textContent || '') ||
-						group === 'glance' ||
-						group === 'cases' ||
-						!!item.panel.querySelector('#watch-cases'));
-				if (!keep && typeof opts.setFold === 'function') opts.setFold(item, false);
-				else if (!keep) {
-					item.panel.hidden = true;
-					item.button.setAttribute('aria-expanded', 'false');
-				}
-			});
-		}
 	}
 
 	window.QAReviewStatusCard = { sync: sync };
