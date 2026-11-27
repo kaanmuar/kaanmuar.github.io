@@ -11,7 +11,7 @@ git config user.name "github-actions[bot]"
 git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
 
 if [ "$MODE" = cards ]; then
-	git add assets/live-reports data/live-report-countries.json data/live-reports-social-batch.json \
+	git add assets/live-reports data/live-report-countries.json data/live-reports-social-batch.json data/live-reports-batches \
 		llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases 2>/dev/null || true
 	# Drop the social batch file from the index when it was removed (empty social day).
 	git add -u -- data/live-reports-social-batch.json scripts/auto-live-reports.state.json 2>/dev/null || true

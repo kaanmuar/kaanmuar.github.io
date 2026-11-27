@@ -21,7 +21,7 @@ const live = require('./build-live-reports');
 const { siteKind } = require('./tips-studio/site-assets');
 const { tldCountry } = require('./live-report-countries');
 const QAReviewScripts = require('../js/qa-review-scripts');
-const { buildTrackedBatch, BATCH_FILE: SOCIAL_BATCH_TRACKED } = require('./live-reports-social-queue');
+const { buildTrackedBatch, retainBatch, BATCH_FILE: SOCIAL_BATCH_TRACKED } = require('./live-reports-social-queue');
 
 const ROOT = path.resolve(__dirname, '..');
 const STATE = path.join(__dirname, 'auto-live-reports.state.json');
@@ -848,11 +848,10 @@ async function main() {
 	fs.writeFileSync(path.join(BATCH_DIR, 'batch.json'), JSON.stringify(batch, null, 1) + '\n');
 	const batchId = 'auto-' + today;
 	if (!cardsOnly && batch.length) {
+		const tracked = buildTrackedBatch(batchId, batch);
 		fs.mkdirSync(path.dirname(SOCIAL_BATCH), { recursive: true });
-		fs.writeFileSync(
-			SOCIAL_BATCH,
-			JSON.stringify(buildTrackedBatch(batchId, batch), null, 1) + '\n'
-		);
+		fs.writeFileSync(SOCIAL_BATCH, JSON.stringify(tracked, null, 1) + '\n');
+		retainBatch(tracked);
 		state.socialPending = { batch: batchId, count: batch.length, at: new Date().toISOString() };
 	} else if (!cardsOnly) {
 		Object.assign(state, clearSocialPending(state));
