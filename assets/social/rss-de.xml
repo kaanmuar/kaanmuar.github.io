@@ -5,9 +5,145 @@
     <link>https://carlosandmunoz.com/qa-review-social-de.html</link>
     <description>Jeder Beitrag von QA-lab URL Review: Tipps, echte Website-Prüfungen und kurze Clips.</description>
     <language>de</language>
-    <lastBuildDate>Thu, 26 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 27 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss-de.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social-de.html</link></image>
+    <item>
+      <title>afel.cl: 67. Die Lücke: Textkontrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/09-u-afel-cl-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/09-u-afel-cl-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Elemente müssen Mindestwerte beim Farbkontrast erfüllen.
+
+Was zu ändern ist: Halten Sie Fließtext bei einem Kontrastverhältnis von 4.5:1 oder mehr zum Hintergrund.
+
+Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Momentaufnahme zum Start, kein Urteil.
+Bericht: https://carlosandmunoz.com/qa-review.html?live=u-afel-cl
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/09-u-afel-cl.jpg" length="227371" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/09-u-afel-cl.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>alexu.edu.eg: 46. Die Lücke: Linknamen.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/08-u-alexu-edu-eg-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/08-u-alexu-edu-eg-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Links brauchen erkennbaren Text.
+
+Nehmen Sie das mit: Geben Sie jedem Link einen Text, der sagt, wohin er führt. Ein Icon allein braucht ein aria-label.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19 November 2026, angefordert durch QA-lab URL Review. Eine erste Analyse, kein endgültiger Entscheid.
+Vollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-alexu-edu-eg
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #Chrome #DevOps #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/08-u-alexu-edu-eg.jpg" length="229925" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/08-u-alexu-edu-eg.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>artisandob.fr: 76. Die Lücke: noindex.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/07-u-artisandob-fr-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/07-u-artisandob-fr-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 3 Seiten verlangen von Suchmaschinen, sie nicht zu indizieren.
+
+Die Lektion für jedes Team: Überprüfen Sie absichtlich jeden Noindex und entfernen Sie ihn von den Seiten, die Sie finden möchten.
+
+Eine automatisierte Analyse öffentlicher Seiten am 20 November 2026, angefordert durch QA-lab URL Review. Ein erster Blick, kein Urteil.
+Vollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-artisandob-fr
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#SEO #OpenSource #WebDev #QA #SERP #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/07-u-artisandob-fr.jpg" length="233830" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/07-u-artisandob-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bancatlan.hn: 65. Die Lücke: Formular-Labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/06-u-bancatlan-hn-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/06-u-bancatlan-hn-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 40 Formularfelder haben kein Label.
+
+Lektion: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
+
+Eine automatisierte Analyse öffentlicher Seiten am 21 November 2026, angefordert durch QA-lab URL Review. Eine Ausgangslage, kein Urteilsspruch.
+Sehen Sie den vollständigen Bericht: https://carlosandmunoz.com/qa-review.html?live=u-bancatlan-hn
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #QA #Forms #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/06-u-bancatlan-hn.jpg" length="236790" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/06-u-bancatlan-hn.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bikkg.de: 71. Die Lücke: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/05-u-bikkg-de-de.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/05-u-bikkg-de-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Requested</category>
+      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
+
+Die Lektion für jedes Team: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 22 November 2026, angefordert durch QA-lab URL Review. Eine erste Analyse, kein endgültiger Entscheid.
+Vollständiger Bericht: https://carlosandmunoz.com/qa-review.html?live=u-bikkg-de
+
+Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/05-u-bikkg-de.jpg" length="224803" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/05-u-bikkg-de.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Creative Commons wechselt mit 302 zu https.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/34-creativecommons-de.html</link>
+      <guid isPermaLink="false">runs-100/34-creativecommons-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Ein Sitemap-Index, Seiten, die ihre Sprache angeben, und ein robots-Meta-Tag, das große Vorschauen erlaubt. Doch http:// erreicht https über eine temporäre 302, und keine analysierte Seite sendet Strict-Transport-Security.
+
+Die Lektion für jedes Team: Leiten Sie per 301 von http auf https um und ergänzen Sie Strict-Transport-Security, damit Browser http künftig überspringen.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=creativecommons
+
+#WebSecurity #HTTPS #HSTS #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg" length="253164" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Die Seiten der EFF senden kein HSTS.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/35-eff-de.html</link>
+      <guid isPermaLink="false">runs-100/35-eff-de</guid>
+      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Website-Prüfung</category>
+      <category>Worldwide</category>
+      <description>Eine Content Security Policy im Report-only-Modus, nosniff, Framing nur vom eigenen Origin und eine Sitemap. Doch keine analysierte Seite sendet Strict-Transport-Security, also stufen Browser einen ersten http-Besuch nicht hoch.
+
+Die Lektion für jedes Team: Ergänzen Sie Strict-Transport-Security mit einem langen max-age. Es sagt Browsern, https zu nutzen, bevor die Anfrage rausgeht.
+
+Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
+So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=eff
+
+#WebSecurity #HSTS #DigitalRights #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg" length="243121" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>aeurus.cl: 47. Die Lücke: Formular-Labels.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/08-u-aeurus-cl-de.html</link>
@@ -856,146 +992,6 @@ Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
 https://www.youtube.com/shorts/9VsQrSbAErA</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" length="231556" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/43-u-abstract-cl.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>acs.edu.au: 59. Die Lücke: der Sitemap-Host.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-17/49-u-acs-edu-au-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-17/49-u-acs-edu-au-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Aber 905 Sitemap-URLs verweisen auf einen anderen Host oder ein anderes Schema.
-
-Die Lektion für jedes Team: Stellen Sie sitemap.xml vom selben Host wie die aufgelisteten Seiten bereit und benennen Sie es in robots.txt.
-
-Eine automatisierte Analyse öffentlicher Seiten am 17 November 2026, angefordert durch QA-lab URL Review. Ein Ausgangspunkt, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-acs-edu-au
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#SEO #DevOps #Automation #QA #Sitemap #QAlab
-
-https://www.youtube.com/shorts/bbt0gIMK7ys</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" length="237927" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-17/feed/49-u-acs-edu-au.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>aegas247.co.uk: 72. Die Lücke: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/03-u-aegas247-co-uk-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/03-u-aegas247-co-uk-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
-
-Was zu ändern ist: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Ausgangslage, kein Urteilsspruch.
-Bericht: https://carlosandmunoz.com/qa-review.html?live=u-aegas247-co-uk
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #DevOps #Automation #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/03-u-aegas247-co-uk.jpg" length="231708" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/03-u-aegas247-co-uk.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Erzielte 79 von 100. Die Lücke: Textkontrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/42-u-aireacondicionadointegral-com-mx-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/42-u-aireacondicionadointegral-com-mx-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Elemente müssen Mindestwerte beim Farbkontrast erfüllen.
-
-Die Lektion für jedes Team: Halten Sie Fließtext bei einem Kontrastverhältnis von 4.5:1 oder mehr zum Hintergrund.
-
-Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Ausgangslage, kein Urteilsspruch.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-aireacondicionadointegral-com-mx
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #SoftwareTesting #DevOps #QA #Contrast #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/42-u-aireacondicionadointegral-com-mx.jpg" length="240595" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/42-u-aireacondicionadointegral-com-mx.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>airequipo.com: 71. Die Lücke: Textkontrast.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-18/48-u-airequipo-com-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-18/48-u-airequipo-com-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch Elemente müssen Mindestwerte beim Farbkontrast erfüllen.
-
-Lektion: Halten Sie Fließtext bei einem Kontrastverhältnis von 4.5:1 oder mehr zum Hintergrund.
-
-Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Momentaufnahme zum Start, kein Urteil.
-Der vollständige Bericht: https://carlosandmunoz.com/qa-review.html?live=u-airequipo-com
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #Automation #QA #Contrast #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" length="235201" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/48-u-airequipo-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>alpenverein.li: 57. Die Lücke: Formular-Labels.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-19/02-u-alpenverein-li-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-19/02-u-alpenverein-li-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch 31 Formularfelder haben kein Label.
-
-Fazit: Geben Sie jedem Eingabefeld ein sichtbares Label, verknüpft über for und id. Screenreader sagen es an, und die Tippfläche wächst.
-
-Eine automatisierte Analyse öffentlicher Seiten am 18 November 2026, angefordert durch QA-lab URL Review. Eine Ausgangslage, kein Urteilsspruch.
-Bericht: https://carlosandmunoz.com/qa-review.html?live=u-alpenverein-li
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#Accessibility #DevOps #SoftwareTesting #QA #Forms #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" length="236984" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/02-u-alpenverein-li.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>artedentalmvd.com: 54. Die Lücke: HSTS.</title>
-      <link>https://carlosandmunoz.com/social/auto-2026-11-20/01-u-artedentalmvd-com-de.html</link>
-      <guid isPermaLink="false">auto-2026-11-20/01-u-artedentalmvd-com-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Requested</category>
-      <description>Jeder geöffnete interne Link hat geantwortet, und KI-Antwort- und Such-Crawler dürfen die Startseite lesen. Doch HSTS wird nicht gesendet.
-
-Fazit: Senden Sie Strict-Transport-Security mit einem max-age von mindestens einem Jahr, damit Browser nie wieder einfaches http versuchen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 20 November 2026, angefordert durch QA-lab URL Review. Eine Momentaufnahme zum Start, kein Urteil.
-Bericht: https://carlosandmunoz.com/qa-review.html?live=u-artedentalmvd-com
-
-Prüfen Sie Ihre eigene Website: https://carlosandmunoz.com/qa-review.html
-
-#WebSecurity #SoftwareTesting #CyberSecurity #QA #HSTS #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" length="233433" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/01-u-artedentalmvd-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>Apache.org läuft ohne Beschreibungen.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/22-apache-de.html</link>
-      <guid isPermaLink="false">runs-100/22-apache-de</guid>
-      <pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Website-Prüfung</category>
-      <category>Worldwide</category>
-      <description>HSTS mit Preload, eine security.txt, eine Content Security Policy und Core Web Vitals, die bei echten Besuchern bestehen. Doch keine der 20 analysierten Seiten, auch die Startseite nicht, hat eine Meta-Description.
-
-Die Lektion für jedes Team: Geben Sie jeder Seite eine Beschreibung mit etwa 150 Zeichen. Suche und KI-Antworten zitieren sie, wenn sie Sie vorstellen.
-
-Eine automatisierte Analyse öffentlicher Seiten am 19. Okt. 2026. Ein Ausgangspunkt, kein Urteil.
-So funktioniert die Prüfung, Schritt für Schritt: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=apache
-
-#SEO #MetaDescription #OpenSource #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" length="245653" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/22-apache.jpg" medium="image" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
