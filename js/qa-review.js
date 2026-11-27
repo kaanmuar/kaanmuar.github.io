@@ -6594,10 +6594,13 @@
 		folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
 	}
 
+	let unlockGate = null;
+
 	function setFold(item, open) {
 		item.panel.hidden = !open;
 		item.button.setAttribute('aria-expanded', String(open));
 		paintFoldAll();
+		if (open && unlockGate && current && current.report) unlockGate.onFoldExpanded(current.report.id);
 	}
 
 	function paintFoldAll() {
@@ -8132,6 +8135,14 @@
 		});
 	}
 
+	if (window.QAReviewUnlockGate) {
+		unlockGate = QAReviewUnlockGate.mount({
+			getCurrent: () => current,
+			openReportPay,
+			fileUses,
+		});
+	}
+
 	document.addEventListener('click', (event) => {
 		const offer = event.target.closest && event.target.closest('a[data-offer]');
 		if (!offer || !current || !current.report) return;
@@ -8764,6 +8775,7 @@
 	});
 
 	function spend(kind, action) {
+		if (unlockGate) return unlockGate.spend(kind, action);
 		if (!current || !current.report) return;
 		if (current.paid) {
 			action();
@@ -8853,6 +8865,7 @@
 			if (!current || !current.paid) {
 				event.preventDefault();
 				document.body.classList.add('capture-hold');
+				if (unlockGate && unlockGate.openSheet('print-key')) return;
 				setStatus('The print sheet does not include the report. The attempt is recorded.', false);
 			}
 		}
@@ -8950,6 +8963,7 @@
 	}
 	bindMenu('export-toggle', 'export-menu');
 	bindMenu('share-toggle', 'share-menu');
+	if (unlockGate) unlockGate.bindToolbar();
 	document.addEventListener('click', closeMenus);
 	document.getElementById('share-row').addEventListener('click', (event) => {
 		const button = event.target.closest('[data-net]');
