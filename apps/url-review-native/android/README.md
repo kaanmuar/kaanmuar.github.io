@@ -1,4 +1,4 @@
-# URL Review — Android (Wave 1)
+# URL Review — Android (Wave 3 report)
 
 Jetpack Compose shell for [#4505](https://github.com/carlosandmunoz-hq/kaanmuar.github.io/issues/4505). Branch `feat/4505-urlreview-native` (shared with `../ios/`).
 
@@ -26,7 +26,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 - **Entry** — URL field, stub prediction chips, Run
 - **Arena** — full-screen WebView → packaged `assets/arena/` (product ReviewArena lab skin + `native-bridge.js`)
-- **Report** — score hero + three collapsed section rows (stub data)
+- **Report** — score hero, six collapsed/frosted sections, expand/collapse all, sticky Unlock $5 bar + sheet (stub data)
 
 Spearhead dark theme (`#0e151c`, cyan accent). Refresh arena assets from repo root: `../scripts/sync-arena-assets.sh` (Wave 2, ~1.5 MB packaged).
 
