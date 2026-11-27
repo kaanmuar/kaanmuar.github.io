@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Punta de lanza — Mobile spearhead (#4422 / #4423)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050d11;
+    --panel: #0a161b;
+    --phone: #0e151c;
+    --line: rgba(126, 214, 224, .16);
+    --line2: rgba(126, 214, 224, .32);
+    --text: #e8f3f4;
+    --muted: #8ea8ae;
+    --cyan: #7ef6fb;
+    --teal: #4db3bb;
+    --mint: #6fe3b1;
+    --gold: #e2c48a;
+    --coral: #f39a8b;
+    --red: #ff5a4a;
+    --amber: #f0c85a;
+    --glass: rgba(14, 24, 30, .72);
+    --font-ui: "Sora", system-ui, sans-serif;
+    --font-display: "Instrument Serif", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font: 400 14px/1.45 var(--font-ui);
+    background:
+      radial-gradient(90% 70% at 10% 0%, rgba(126, 246, 251, .12), transparent 55%),
+      radial-gradient(70% 50% at 100% 100%, rgba(111, 227, 177, .07), transparent 50%),
+      var(--bg);
+  }
+  .deck {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 48px;
+  }
+  .deck-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .deck-head h1 {
+    margin: 0;
+    font: 400 2rem/1 var(--font-display);
+    letter-spacing: -.02em;
+  }
+  .deck-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    max-width: 52ch;
+    font-size: 13px;
+  }
+  .ticket {
+    font: 700 11px/1 var(--font-ui);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .phones { grid-template-columns: 1fr; justify-items: center; }
+  }
+  .col-label {
+    margin: 0 0 10px;
+    text-align: center;
+    font: 700 10px/1 var(--font-ui);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .phone {
+    width: 390px;
+    height: 844px;
+    border-radius: 36px;
+    border: 3px solid #2a3540;
+    background: var(--phone);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+  }
+  .notch {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 118px;
+    height: 28px;
+    background: #05080c;
+    border-radius: 20px;
+    z-index: 8;
+  }
+  .status {
+    position: absolute;
+    top: 14px;
+    left: 22px;
+    right: 22px;
+    display: flex;
+    justify-content: space-between;
+    font: 600 11px/1 var(--font-ui);
+    z-index: 7;
+    pointer-events: none;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    padding: 52px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* —— Entry —— */
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(126, 246, 251, .35), rgba(111, 227, 177, .15));
+    border: 1px solid var(--line2);
+    display: grid;
+    place-items: center;
+  }
+  .brand b {
+    font: 600 17px/1 var(--font-display);
+    letter-spacing: .01em;
+  }
+  .brand small {
+    display: block;
+    font: 700 8px/1.2 var(--font-ui);
+    letter-spacing: .18em;
+    color: var(--cyan);
+    margin-top: 3px;
+  }
+  .pill {
+    font: 600 10px/1 var(--font-ui);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    color: var(--muted);
+  }
+  .pill.live { color: var(--mint); border-color: rgba(111, 227, 177, .35); }
+  .hero-stage {
+    flex: 0 0 168px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(50% 60% at 50% 80%, rgba(126, 246, 251, .16), transparent),
+      linear-gradient(180deg, #14202a, #0a1218);
+  }
+  .hero-stage svg { position: absolute; inset: auto 0 0; width: 100%; height: 70%; }
+  .hero-caption {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 14px;
+    font: 400 1.35rem/1.05 var(--font-display);
+    letter-spacing: -.02em;
+  }
+  .hero-caption span { color: var(--cyan); font-style: italic; }
+  .dock {
+    margin-top: auto;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--line2);
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+  }
+  .dock label {
+    display: block;
+    font: 700 9px/1 var(--font-ui);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .url-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, .28);
+  }
+  .url-row input {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: 500 13px/1.2 var(--font-ui);
+    outline: none;
+    min-width: 0;
+  }
+  .url-row .paste {
+    font: 700 9px/1 var(--font-ui);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    padding: 5px 7px;
+    border-radius: 6px;
+    background: rgba(126, 246, 251, .1);
+  }
+  .predict {
+    margin: 12px 0 4px;
+    font: 600 11px/1.3 var(--font-ui);
+    color: var(--muted);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .chip {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font: 600 11px/1 var(--font-ui);
+    cursor: pointer;
+    transition: .2s;
+  }
+  .chip.on {
+    color: #041014;
+    background: linear-gradient(135deg, var(--cyan), var(--mint));
+    border-color: transparent;
+  }
+  .run {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font: 700 14px/1 var(--font-ui);
+    letter-spacing: .02em;
+    color: #041014;
+    background: linear-gradient(135deg, #9ff9fd, #6fe3b1);
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(126, 246, 251, .25);
+  }
+  .proof {
+    margin: 10px 0 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* —— Arena —— */
+  .arena-top {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .domain-pill {
+    font: 650 11px/1 ui-monospace, monospace;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, .25);
+  }
+  .wager {
+    font: 650 10px/1 var(--font-ui);
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(226, 196, 138, .12);
+    border: 1px solid rgba(226, 196, 138, .35);
+    color: var(--gold);
+  }
+  .arena {
+    flex: 1;
+    min-height: 280px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(40% 50% at 20% 80%, rgba(126, 246, 251, .14), transparent),
+      linear-gradient(180deg, #14202a, #0a1218);
+  }
+  .lane {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 22%;
+    height: 110px;
+    border-radius: 12px;
+    border: 1px solid rgba(126, 246, 251, .18);
+    background:
+      linear-gradient(90deg, rgba(126, 246, 251, .06), transparent 40%),
+      rgba(0, 0, 0, .32);
+  }
+  .lane::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 58%;
+    height: 3px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .08);
+  }
+  .lane::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 58%;
+    width: 42%;
+    height: 3px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--teal), var(--cyan));
+    animation: laneFill 4.2s ease-in-out infinite alternate;
+  }
+  @keyframes laneFill { from { width: 18%; } to { width: 72%; } }
+  .actor {
+    position: absolute;
+    top: calc(22% + 28px);
+    left: 8%;
+    width: 72px;
+    height: 44px;
+    z-index: 2;
+    animation: walk 4.2s ease-in-out infinite alternate;
+  }
+  @keyframes walk {
+    from { left: 8%; }
+    to { left: 62%; }
+  }
+  .actor.work .arm { animation: swing .38s ease-in-out infinite; }
+  @keyframes swing { 50% { transform: rotate(18deg); } }
+  .telemetry {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(0, 0, 0, .28);
+  }
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .phases i {
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .08);
+  }
+  .phases i.on { background: linear-gradient(90deg, var(--teal), var(--cyan)); }
+  .phases i.busy { animation: pulse .9s ease-in-out infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.4); } }
+  .ticker {
+    font: 500 12px/1.35 var(--font-ui);
+    color: var(--text);
+    min-height: 2.7em;
+  }
+  .ticker em { color: var(--cyan); font-style: normal; font-weight: 650; }
+  .cancel {
+    margin-top: 8px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: 600 11px/1 var(--font-ui);
+    cursor: pointer;
+  }
+
+  /* —— Report —— */
+  .report-tools {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font: 650 10px/1 var(--font-ui);
+    cursor: pointer;
+  }
+  .score-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    background:
+      radial-gradient(60% 80% at 0% 50%, rgba(240, 200, 90, .12), transparent),
+      rgba(0, 0, 0, .22);
+  }
+  .ring {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background:
+      conic-gradient(var(--amber) 0 74%, rgba(255, 255, 255, .08) 0);
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .ring::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: var(--phone);
+  }
+  .ring b {
+    position: relative;
+    z-index: 1;
+    font: 400 1.85rem/1 var(--font-display);
+  }
+  .ring small {
+    position: relative;
+    z-index: 1;
+    display: block;
+    text-align: center;
+    font: 700 8px/1 var(--font-ui);
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .score-meta h2 {
+    margin: 0;
+    font: 400 1.35rem/1.05 var(--font-display);
+  }
+  .score-meta p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .pred-result {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(111, 227, 177, .12);
+    border: 1px solid rgba(111, 227, 177, .35);
+    color: var(--mint);
+    font: 650 10px/1 var(--font-ui);
+  }
+  .prime {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(243, 154, 139, .35);
+    background: rgba(243, 154, 139, .08);
+    flex: none;
+  }
+  .prime .kicker {
+    font: 700 9px/1 var(--font-ui);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 6px;
+  }
+  .prime strong {
+    display: block;
+    font: 650 13px/1.3 var(--font-ui);
+  }
+  .prime p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .sections {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-bottom: 118px;
+    scrollbar-width: none;
+  }
+  .sections::-webkit-scrollbar { display: none; }
+  .row {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    border-radius: 12px;
+    padding: 11px 12px;
+    color: var(--text);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .row:hover { border-color: var(--line2); }
+  .row .t { font: 650 12.5px/1.2 var(--font-ui); }
+  .row .s {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .row .right {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 4px;
+  }
+  .score-pill {
+    font: 700 11px/1 var(--font-ui);
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .06);
+  }
+  .score-pill.warn { color: var(--amber); background: rgba(240, 200, 90, .12); }
+  .score-pill.bad { color: var(--coral); background: rgba(243, 154, 139, .12); }
+  .score-pill.ok { color: var(--mint); background: rgba(111, 227, 177, .12); }
+  .lock {
+    font: 650 10px/1 var(--font-ui);
+    color: var(--gold);
+  }
+  .sticky {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    z-index: 6;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    background: rgba(8, 16, 20, .88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  }
+  .sticky .acts {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .sticky .acts button {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    color: var(--muted);
+    border-radius: 9px;
+    padding: 8px 4px;
+    font: 650 10px/1 var(--font-ui);
+    cursor: pointer;
+    opacity: .55;
+  }
+  .unlock {
+    width: 100%;
+    border: 0;
+    border-radius: 11px;
+    padding: 13px 12px;
+    font: 700 13px/1 var(--font-ui);
+    color: #041014;
+    background: linear-gradient(135deg, var(--gold), #f0c85a);
+    cursor: pointer;
+  }
+  .unlock small {
+    display: block;
+    margin-top: 5px;
+    font: 500 10px/1.2 var(--font-ui);
+    opacity: .8;
+  }
+
+  /* sheet */
+  .sheet-back {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 8, .55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9;
+    opacity: 0;
+    pointer-events: none;
+    transition: .25s;
+  }
+  .sheet-back.on { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    padding: 14px 16px 28px;
+    border-radius: 22px 22px 0 0;
+    border: 1px solid var(--line2);
+    border-bottom: 0;
+    background: rgba(10, 18, 24, .96);
+    transform: translateY(110%);
+    transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+  }
+  .sheet.on { transform: translateY(0); }
+  .grab {
+    width: 42px;
+    height: 4px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .18);
+    margin: 0 auto 14px;
+  }
+  .sheet h3 {
+    margin: 0;
+    font: 400 1.45rem/1.1 var(--font-display);
+  }
+  .sheet p {
+    margin: 8px 0 14px;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  .price {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 196, 138, .35);
+    background: rgba(226, 196, 138, .08);
+    margin-bottom: 12px;
+  }
+  .price b { font: 400 2rem/1 var(--font-display); color: var(--gold); }
+  .sheet .pay {
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    font: 700 14px/1 var(--font-ui);
+    color: #041014;
+    background: linear-gradient(135deg, #9ff9fd, #6fe3b1);
+    cursor: pointer;
+  }
+  .sheet .later {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: 600 12px/1 var(--font-ui);
+    cursor: pointer;
+  }
+  .toast {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 56px;
+    z-index: 12;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: rgba(8, 18, 22, .95);
+    font: 600 12px/1.3 var(--font-ui);
+    transform: translateY(-12px);
+    opacity: 0;
+    transition: .25s;
+    pointer-events: none;
+  }
+  .toast.on { opacity: 1; transform: none; }
+
+  .live-note {
+    margin-top: 28px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .03);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .live-note code { color: var(--cyan); }
+</style>
+</head>
+<body>
+  <div class="deck">
+    <div class="deck-head">
+      <div>
+        <div class="ticket">Design · #4422 / #4423 · Punta de lanza</div>
+        <h1>Mobile spearhead</h1>
+        <p>URL + call-your-shot → arena wait → score hero with one clear finding, locked section rows, sticky $5 unlock. Tap a lock → checkout sheet (never empty blur).</p>
+      </div>
+    </div>
+
+    <div class="phones">
+      <!-- A ENTRY -->
+      <div>
+        <p class="col-label">A · Entry</p>
+        <div class="phone" id="phone-a" data-screen="entry">
+          <div class="notch"></div>
+          <div class="status"><span>9:41</span><span>5G · 88%</span></div>
+          <div class="screen">
+            <div class="brand-row">
+              <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 12h4V4h5" stroke="#7ef6fb" stroke-width="1.6"/><circle cx="12" cy="10" r="2" fill="#6fe3b1"/></svg>
+                </div>
+                <div>
+                  <b>QA-lab</b>
+                  <small>URL REVIEW</small>
+                </div>
+              </div>
+              <span class="pill live">Bench ready</span>
+            </div>
+
+            <div class="hero-stage" aria-hidden="true">
+              <div class="hero-caption">Drop a URL on the <span>specimen tray</span></div>
+              <svg viewBox="0 0 360 200" fill="none">
+                <ellipse cx="180" cy="168" rx="92" ry="14" fill="rgba(126,246,251,.08)"/>
+                <rect x="118" y="118" width="124" height="42" rx="8" stroke="#7ef6fb" stroke-width="2" fill="rgba(0,0,0,.25)"/>
+                <path d="M130 132h50M130 142h34" stroke="#4db3bb" stroke-width="2"/>
+                <g class="actor work" style="animation:none;position:static;transform:translate(210px,70px)">
+                  <rect x="0" y="8" width="28" height="22" rx="6" fill="#1a2a32" stroke="#7ef6fb"/>
+                  <circle cx="14" cy="4" r="6" fill="#e2c48a"/>
+                  <path class="arm" d="M28 14h22" stroke="#6fe3b1" stroke-width="3" stroke-linecap="round"/>
+                </g>
+                <circle cx="250" cy="100" r="3" fill="#e2c48a">
+                  <animate attributeName="cy" values="96;104;96" dur="1.2s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            </div>
+
+            <div class="dock">
+              <label for="url">Specimen URL</label>
+              <div class="url-row">
+                <input id="url" value="https://example-shop.com" spellcheck="false">
+                <span class="paste">Paste</span>
+              </div>
+              <p class="predict">Call the flaw before we run it</p>
+              <div class="chips" id="chips">
+                <button type="button" class="chip on" data-chip="Speed Trap">Speed Trap</button>
+                <button type="button" class="chip" data-chip="SEO Leaks">SEO Leaks</button>
+                <button type="button" class="chip" data-chip="Trust Gaps">Trust Gaps</button>
+                <button type="button" class="chip" data-chip="UX Friction">UX Friction</button>
+              </div>
+              <button type="button" class="run" id="run-btn">Run diagnostics</button>
+              <p class="proof">Soft preview · 1 page · 4 runs left today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B ARENA -->
+      <div>
+        <p class="col-label">B · Arena</p>
+        <div class="phone" id="phone-b" data-screen="arena">
+          <div class="notch"></div>
+          <div class="status"><span>9:41</span><span>5G · 88%</span></div>
+          <div class="screen">
+            <div class="brand-row">
+              <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 12h4V4h5" stroke="#7ef6fb" stroke-width="1.6"/><circle cx="12" cy="10" r="2" fill="#6fe3b1"/></svg>
+                </div>
+                <div>
+                  <b>QA-lab</b>
+                  <small>IN THE ARENA</small>
+                </div>
+              </div>
+              <span class="pill">00:18</span>
+            </div>
+
+            <div class="arena-top">
+              <span class="domain-pill">example-shop.com</span>
+              <span class="wager" id="wager-pill">Wager · Speed Trap</span>
+            </div>
+
+            <div class="arena" aria-label="Review arena">
+              <div class="lane"></div>
+              <svg class="actor work" viewBox="0 0 72 44" fill="none">
+                <rect class="torso" x="8" y="12" width="30" height="22" rx="7" fill="#15232c" stroke="#7ef6fb" stroke-width="2"/>
+                <circle cx="23" cy="7" r="6" fill="#e2c48a"/>
+                <path class="arm" d="M38 18h26" stroke="#6fe3b1" stroke-width="3.5" stroke-linecap="round"/>
+                <path d="M16 34l-4 8M30 34l4 8" stroke="#4db3bb" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              <svg style="position:absolute;right:14px;top:18px;width:64px;height:64px" viewBox="0 0 70 70" fill="none">
+                <rect x="8" y="14" width="40" height="28" rx="3" stroke="#7ef6fb" stroke-width="2"/>
+                <path d="M8 22h40" stroke="#7ef6fb"/>
+                <circle cx="52" cy="42" r="10" stroke="#e2c48a" stroke-width="2"/>
+                <path d="M58 48l8 8" stroke="#e2c48a" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <div style="position:absolute;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between;gap:8px;align-items:end">
+                <span class="pill live" id="arena-bubble">Stress-testing assets</span>
+                <span style="font:500 10px/1.2 var(--font-ui);color:var(--muted);text-align:right;max-width:48%">Lane 2 · render-blocking scripts</span>
+              </div>
+            </div>
+
+            <div class="telemetry">
+              <div class="phases" id="phases">
+                <i class="on"></i><i class="on"></i><i class="on busy"></i><i></i>
+              </div>
+              <div class="ticker" id="ticker">Found <em>3 render-blocking scripts</em> lurking in &lt;head&gt;…</div>
+              <button type="button" class="cancel">Cancel run</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C REPORT -->
+      <div>
+        <p class="col-label">C · Collapsed report</p>
+        <div class="phone" id="phone-c" data-screen="report">
+          <div class="notch"></div>
+          <div class="status"><span>9:41</span><span>5G · 88%</span></div>
+          <div class="toast" id="toast">Unsealed. Print, share & export are live.</div>
+          <div class="sheet-back" id="sheet-back"></div>
+          <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+            <div class="grab"></div>
+            <h3 id="sheet-title">Unseal all 14 lab notes</h3>
+            <p>Pay once for this report on <strong style="color:var(--text)">example-shop.com</strong>. Full findings, PDF, share link, and print — no monthly seat.</p>
+            <div class="price">
+              <span>This report unlock</span>
+              <b>$5</b>
+            </div>
+            <label for="sheet-email" style="display:block;font:700 9px/1 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px">Email the unlocked link</label>
+            <div class="url-row" style="margin-bottom:12px">
+              <input id="sheet-email" type="email" placeholder="you@company.com" spellcheck="false">
+            </div>
+            <button type="button" class="pay" id="pay-btn">Pay $5 · Apple Pay</button>
+            <button type="button" class="later" id="later-btn">Maybe later · keep soft preview</button>
+          </div>
+          <div class="screen">
+            <div class="report-tools">
+              <div class="brand">
+                <div>
+                  <b style="font:600 16px/1 var(--font-display)">example-shop.com</b>
+                  <small style="display:block;margin-top:3px;color:var(--muted);font:600 10px/1 var(--font-ui);letter-spacing:.04em">Soft preview · scored</small>
+                </div>
+              </div>
+              <button type="button" class="toggle" id="expand-all">Expand all</button>
+            </div>
+
+            <div class="score-hero">
+              <div class="ring" aria-label="Score 74 of 100">
+                <div>
+                  <b>74</b>
+                  <small>/ 100</small>
+                </div>
+              </div>
+              <div class="score-meta">
+                <h2>Passable, barely</h2>
+                <p>Four areas need a fix pack before launch week.</p>
+                <span class="pred-result">Nailed it · Speed Trap found</span>
+              </div>
+            </div>
+
+            <div class="prime">
+              <div class="kicker">Prime suspect · clear</div>
+              <strong>LCP waits 4.8s on the hero image</strong>
+              <p>Unsized &lt;img&gt; + two render-blocking CSS files. Your Speed Trap wager was right — this one stays readable so you can verify we are not inventing scores.</p>
+            </div>
+
+            <div class="sections" id="sections">
+              <button type="button" class="row" data-locked="1">
+                <div>
+                  <div class="t">Health score</div>
+                  <div class="s">Areas · trust · a11y · SEO</div>
+                </div>
+                <div class="right">
+                  <span class="score-pill warn">74</span>
+                  <span class="lock">🔒 6 notes</span>
+                </div>
+              </button>
+              <button type="button" class="row" data-locked="1">
+                <div>
+                  <div class="t">Core vitals &amp; bloat</div>
+                  <div class="s">LCP · CLS · script weight</div>
+                </div>
+                <div class="right">
+                  <span class="score-pill bad">58</span>
+                  <span class="lock">🔒 4 fixes</span>
+                </div>
+              </button>
+              <button type="button" class="row" data-locked="1">
+                <div>
+                  <div class="t">Trust &amp; headers</div>
+                  <div class="s">HSTS · CSP · cookies</div>
+                </div>
+                <div class="right">
+                  <span class="score-pill bad">42</span>
+                  <span class="lock">🔒 5 gaps</span>
+                </div>
+              </button>
+              <button type="button" class="row" data-locked="1">
+                <div>
+                  <div class="t">Findability</div>
+                  <div class="s">Canonical · meta · schema</div>
+                </div>
+                <div class="right">
+                  <span class="score-pill warn">61</span>
+                  <span class="lock">🔒 3 leaks</span>
+                </div>
+              </button>
+              <button type="button" class="row" data-locked="1">
+                <div>
+                  <div class="t">Cases to run</div>
+                  <div class="s">P0–P2 journeys</div>
+                </div>
+                <div class="right">
+                  <span class="score-pill ok">12</span>
+                  <span class="lock">🔒 12 cases</span>
+                </div>
+              </button>
+            </div>
+
+            <div class="sticky">
+              <div class="acts">
+                <button type="button" class="gated" data-gate="Print">Print</button>
+                <button type="button" class="gated" data-gate="Share">Share</button>
+                <button type="button" class="gated" data-gate="Export">Export</button>
+              </div>
+              <button type="button" class="unlock" id="unlock-btn">
+                Unlock full lab report — $5
+                <small>One-time · print, share link, PDF/JSON</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="live-note">
+      Interactive on C: locked rows and Print/Share/Export open the <code>$5</code> sheet; Pay dismisses frost mentally (toast). Chips on A update the arena wager. Parallel tickets: <code>#4424</code> share card · <code>#4425</code> web collapsed teaser.
+    </div>
+  </div>
+
+<script>
+(function () {
+  const chips = document.getElementById('chips');
+  const wager = document.getElementById('wager-pill');
+  chips.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    chips.querySelectorAll('.chip').forEach((c) => c.classList.remove('on'));
+    chip.classList.add('on');
+    wager.textContent = 'Wager · ' + chip.dataset.chip;
+  });
+
+  const sheet = document.getElementById('sheet');
+  const back = document.getElementById('sheet-back');
+  const toast = document.getElementById('toast');
+  let unlocked = false;
+
+  function openSheet(why) {
+    if (unlocked) {
+      toast.textContent = why + ' is ready — full report unsealed.';
+      toast.classList.add('on');
+      setTimeout(() => toast.classList.remove('on'), 1600);
+      return;
+    }
+    document.getElementById('sheet-title').textContent =
+      why && why !== 'Unlock' ? 'Unlock to ' + why.toLowerCase() : 'Unseal all 14 lab notes';
+    sheet.classList.add('on');
+    back.classList.add('on');
+  }
+  function closeSheet() {
+    sheet.classList.remove('on');
+    back.classList.remove('on');
+  }
+
+  document.getElementById('sections').addEventListener('click', (e) => {
+    const row = e.target.closest('.row');
+    if (!row) return;
+    openSheet('Unlock');
+  });
+  document.getElementById('unlock-btn').addEventListener('click', () => openSheet('Unlock'));
+  document.querySelectorAll('.gated').forEach((btn) => {
+    btn.addEventListener('click', () => openSheet(btn.dataset.gate));
+  });
+  back.addEventListener('click', closeSheet);
+  document.getElementById('later-btn').addEventListener('click', closeSheet);
+  document.getElementById('pay-btn').addEventListener('click', () => {
+    unlocked = true;
+    closeSheet();
+    document.querySelectorAll('.lock').forEach((el) => {
+      el.textContent = 'Open';
+      el.style.color = 'var(--mint)';
+    });
+    document.querySelectorAll('.gated').forEach((el) => { el.style.opacity = '1'; });
+    document.getElementById('unlock-btn').innerHTML = 'Report unsealed<svg width="0" height="0"></svg><small>Print · share · export unlocked</small>';
+    document.getElementById('unlock-btn').style.background = 'linear-gradient(135deg, #9ff9fd, #6fe3b1)';
+    toast.classList.add('on');
+    setTimeout(() => toast.classList.remove('on'), 2200);
+  });
+
+  const expand = document.getElementById('expand-all');
+  let expanded = false;
+  expand.addEventListener('click', () => {
+    expanded = !expanded;
+    expand.textContent = expanded ? 'Collapse all' : 'Expand all';
+    if (!unlocked) openSheet('Unlock');
+  });
+
+  const lines = [
+    'Found <em>3 render-blocking scripts</em> lurking in &lt;head&gt;…',
+    'Measuring <em>LCP bloat</em> on the hero tray…',
+    'Checking <em>HSTS</em> and cookie flags…',
+    'Scoring damage · wax seal warming up…'
+  ];
+  let i = 0;
+  setInterval(() => {
+    i = (i + 1) % lines.length;
+    document.getElementById('ticker').innerHTML = lines[i];
+    const phases = [...document.querySelectorAll('#phases i')];
+    phases.forEach((el, idx) => {
+      el.classList.toggle('on', idx <= i);
+      el.classList.toggle('busy', idx === i);
+    });
+  }, 2200);
+})();
+</script>
+</body>
+</html>
