@@ -30,6 +30,9 @@ on:
         description: 'Skip ingest; render the pending batch from data/live-reports-social-batch.json (#4457)'
         type: boolean
         default: false
+      batch:
+        description: 'Optional retained batch id (auto-YYYY-MM-DD); restores from data/live-reports-batches/ before social (#1853)'
+        required: false
 
 concurrency:
   group: auto-live-reports
@@ -242,8 +245,13 @@ jobs:
 
       - name: Resolve batch id
         id: batch
+        env:
+          RESTORE_BATCH: ${{ inputs.batch }}
         run: |
           mkdir -p previews/auto-live-reports data
+          if [ -n "$RESTORE_BATCH" ]; then
+            node scripts/live-reports-restore-batch.js --batch "$RESTORE_BATCH"
+          fi
           if [ -f data/live-reports-social-batch.json ]; then
             BATCH=$(node -p "require('./data/live-reports-social-batch.json').batch")
             SOCIAL=$(node -p "String(require('./data/live-reports-social-batch.json').posts.length)")
