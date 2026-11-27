@@ -8414,9 +8414,7 @@ export function mountJarvis({
 				{ label: 'Needs admin ask', value: tgBot.needs_admin || 0 },
 			]) +
 			`<p class="jv-note">Advance: <strong>${esc(tg.advanceLabel || 'steady')}</strong>${tg.groupInviteLink ? ` · <a href="${esc(tg.groupInviteLink)}" target="_blank" rel="noopener">discussion invite</a>` : ''}${tg.channel ? ' · ' + esc(tg.channel) : ''}${tg.groupTitle ? ' · ' + esc(tg.groupTitle) : ''}</p>` +
-			((tg.flags || []).length
-				? `<p class="jv-note">Quality: ${(tg.flags || []).map(tgFlagChip).join(' ')}</p>`
-				: '') +
+			((tg.flags || []).length ? `<p class="jv-note">Quality: ${(tg.flags || []).map(tgFlagChip).join(' ')}</p>` : '') +
 			funnel([
 				{ label: 'Soft-invites drafted', value: tgInv.total || 0 },
 				{ label: 'Waiting', value: tgInv.waiting || 0 },
