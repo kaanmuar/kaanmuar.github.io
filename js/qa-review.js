@@ -6627,6 +6627,7 @@
 	}
 
 	let unlockGate = null;
+	let stickyUnlock = null;
 
 	function setFold(item, open) {
 		item.panel.hidden = !open;
@@ -7227,6 +7228,12 @@
 				report: report,
 				folds: folds,
 				setFold: setFold,
+			});
+		}
+		if (stickyUnlock) {
+			stickyUnlock.sync({
+				unpaid: !paid && !sample && !payload.free,
+				sample: sample,
 			});
 		}
 		const names = ['All'].concat(layers.map((pair) => pair[0]));
@@ -8181,6 +8188,17 @@
 			getCurrent: () => current,
 			openReportPay,
 			fileUses,
+		});
+	}
+	if (window.QAReviewStickyUnlock) {
+		stickyUnlock = QAReviewStickyUnlock.mount({
+			getCurrent: () => current,
+			dashEl: dash,
+			payEl: payBox,
+			openSheet: (source) => unlockGate && unlockGate.openSheet(source),
+			priceUsd: () => reportUsd(current),
+			formatUsd,
+			title: (price) => 'Unlock full lab report — ' + price + ' USD',
 		});
 	}
 
