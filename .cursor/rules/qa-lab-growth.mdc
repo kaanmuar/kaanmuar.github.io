@@ -10,7 +10,7 @@ Source: Gemini share sHTBVrGq1BXc, stress-tested against our stack. Parent stays
 ## Already shipped — do not rebuild greenfield
 - Soft gate: `POST /review/preview` (gauges + top finding, no OAuth); unlock = terms + OAuth → full crawl (#3478).
 - Shared links: overall + 6 areas + top finding clear; rest frosted (#3477).
-- Auto Live Reports: 4-slide carousel JPG + LinkedIn `document/{slug}.pdf` via tips-studio (#3476), not a standalone `generate-carousel.js`.
+- Auto Live Reports: 4-slide carousel JPG + LinkedIn `document/{slug}.pdf` via tips-studio (#3476), not a standalone `generate-carousel.js`. If the batch cancels at the 180m render timeout, dispatch `cards_only` so cards and `state.since` still commit; keep social ≤ `SOCIAL_POSTS_PER_BATCH` (12) (#4444).
 - GEO `llms.txt` check + fix-kit starter (#3479).
 - Telegram `@qalab_live` is a **publish channel**; drafts/approvals stay Jarvis Hub / share-queue.
 

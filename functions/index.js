@@ -2563,13 +2563,24 @@ async function ensureLiveReportsBatch() {
 		);
 		return null;
 	}
+	// When recent runs die at the 180m render timeout (conclusion cancelled), dispatch cards-only so
+	// assets/live-reports and state.since still commit; social catches up once the cursor is small again (#4444).
+	const recent = await githubGet(repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/runs?per_page=10', token);
+	const cardsOnly = require('../scripts/auto-live-reports').needsCardsOnly(recent.workflow_runs || []);
 	await github(
 		repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/dispatches',
-		{ ref: 'main', inputs: { backup: 'true' } },
+		{ ref: 'main', inputs: { backup: 'true', cards_only: cardsOnly ? 'true' : 'false' } },
 		token
 	);
 	const finished = runs.workflow_runs.map((run) => run.event + ' ' + run.conclusion).join(', ') || 'none';
-	console.log('Live Reports watchdog: dispatched batch auto-' + today + " (today's earlier runs: " + finished + ').');
+	console.log(
+		'Live Reports watchdog: dispatched batch auto-' +
+			today +
+			(cardsOnly ? ' cards-only' : '') +
+			" (today's earlier runs: " +
+			finished +
+			').'
+	);
 	return null;
 }
 
@@ -11185,7 +11196,7 @@ function jarvisAutoOps(settings, now, th) {
 		rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),
 		refreshPr: async (number) => jarvis.refreshPr(fetch, await gh(), number),
 		mainSha: async () => jarvis.mainSha(fetch, await gh()),
-		dispatch: async (workflow) => jarvis.dispatchMain(fetch, await gh(), workflow),
+		dispatch: async (workflow, inputs) => jarvis.dispatchMain(fetch, await gh(), workflow, inputs),
 		reviewFix: async () => {
 			const fix = reviewFailures.FIXES.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
 			const run = await db

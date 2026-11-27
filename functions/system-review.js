@@ -57,6 +57,20 @@ function causeOf(log) {
 			clip(stalled.replace(/^##\[error\]/, ''), 100) +
 			"), not in the commit: Jarvis starts Pages again on main's newest commit after the countdown"
 		);
+	// Three separate finds — avoid held .*social (ReDoS) (#4444).
+	const liveStuck =
+		find(/The job has exceeded the maximum execution time/i) ||
+		find(/Render cards, stories, and clips/i) ||
+		find(/social=\d{2,}/);
+	if (
+		liveStuck &&
+		/Render cards|auto-live|Live reports|social=\d+|cards=\d+/i.test(String(log || ''))
+	)
+		return (
+			'Live Reports render timed out before commit (' +
+			clip(liveStuck, 100) +
+			'): dispatch auto-live-reports with cards_only=true (or --cards-only) so cards and state.since advance, keep SOCIAL_POSTS_PER_BATCH ≤ 12 (#4444)'
+		);
 	const timeout = find(/timed out|ETIMEDOUT|exceeded the maximum execution time/i);
 	if (timeout) return 'timed out (' + clip(timeout, 120) + ')';
 	const end = lines.findIndex((l) => /##\[error\]/.test(l));
@@ -170,27 +184,38 @@ async function run({ fetch, token, now }) {
 	const runs = await get('/actions/runs?branch=main&status=completed&per_page=100');
 	const newest = new Map();
 	// Dependabot's update runs (event "dynamic") each carry their own name, so no later run ever replaces a failed one;
-	// its alert counts below stand for them.
+	// its alert counts below stand for them. Live Reports (#4444): a 180m job timeout marks the run cancelled, not
+	// failed — still keep that newest cancelled run so the stuck cursor surfaces.
+	const liveReportsCancelled = (r) =>
+		r.conclusion === 'cancelled' && /live reports/i.test(String(r.name || ''));
 	(runs.workflow_runs || []).forEach((r) => {
-		if (r.event !== 'dynamic' && !['cancelled', 'skipped'].includes(r.conclusion) && !newest.has(r.name))
-			newest.set(r.name, r);
+		if (r.event === 'dynamic') return;
+		if (['cancelled', 'skipped'].includes(r.conclusion) && !liveReportsCancelled(r)) return;
+		if (!newest.has(r.name)) newest.set(r.name, r);
 	});
 	const failing = Array.from(newest.values()).filter(
-		(r) => ['failure', 'timed_out'].includes(r.conclusion) && now - Date.parse(r.updated_at) < 2 * DAY
+		(r) =>
+			(['failure', 'timed_out'].includes(r.conclusion) || liveReportsCancelled(r)) &&
+			now - Date.parse(r.updated_at) < 2 * DAY
 	);
 	for (const r of failing.slice(0, MAX_LOGS)) {
 		let cause = 'failed';
 		try {
-			const job = ((await get('/actions/runs/' + r.id + '/jobs?filter=latest')).jobs || []).find(
-				(j) => j.conclusion === 'failure'
-			);
+			const jobs = (await get('/actions/runs/' + r.id + '/jobs?filter=latest')).jobs || [];
+			const job =
+				jobs.find((j) => j.conclusion === 'failure' || j.conclusion === 'timed_out') ||
+				(liveReportsCancelled(r) &&
+					jobs.find((j) => j.conclusion === 'cancelled' && String(j.name || '').toLowerCase() === 'publish')) ||
+				null;
 			if (job) {
 				const res = await fetch('https://api.github.com/repos/' + REPO + '/actions/jobs/' + job.id + '/logs', {
 					headers,
 					signal: AbortSignal.timeout(20000),
 				});
 				cause = res.ok ? causeOf(await res.text()) : 'failed (its log answered ' + res.status + ')';
-				const step = (job.steps || []).find((s) => s.conclusion === 'failure');
+				const step = (job.steps || []).find(
+					(s) => s.conclusion === 'failure' || s.conclusion === 'cancelled' || s.conclusion === 'timed_out'
+				);
 				if (step) cause = 'step "' + clip(step.name, 60) + '": ' + cause;
 			}
 		} catch (error) {

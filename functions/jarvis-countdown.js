@@ -222,8 +222,16 @@ async function execute(row, ops, now) {
 		return { count: 1, detail: 'Closed and reopened #' + p.pr + ' for a fresh merge with main.' };
 	}
 	if (action === 'rerun-ci' && p.workflow) {
-		await ops.dispatch(p.workflow);
-		return { count: 1, detail: 'Started ' + (p.name || p.workflow) + " on main's newest commit." };
+		const inputs = p.cards_only ? { cards_only: 'true', backup: 'true' } : undefined;
+		await ops.dispatch(p.workflow, inputs);
+		return {
+			count: 1,
+			detail:
+				'Started ' +
+				(p.name || p.workflow) +
+				(p.cards_only ? ' cards-only' : '') +
+				" on main's newest commit.",
+		};
 	}
 	if (action === 'rerun-ci' && p.run) {
 		// Main may have moved during the countdown: re-running the old commit then fails again on what main already fixed (#2893).
