@@ -8280,7 +8280,14 @@ export function mountJarvis({
 				: `<p class="jv-empty">${g.paused ? 'Paused: no replies are drafted.' : g.waiting.length ? 'None of the waiting replies is of this kind.' : 'No reply is waiting. Field drafts arrive as the engagement scout finds posts; trending-tag drafts arrive from scout-drafts.json.'}</p>`);
 		const last = g.lastRun;
 		const scoutMeta = g.metaScout;
-		const metaTitles = { cloud: 'Cloud', mac: 'Mac', reddit: 'Reddit', ownerTags: 'Owner tags', students: 'Students' };
+		const metaTitles = {
+			cloud: 'Cloud',
+			mac: 'Mac',
+			reddit: 'Reddit',
+			ownerTags: 'Owner tags',
+			students: 'Students',
+			telegram: 'Telegram',
+		};
 		const metaChip = (k) => {
 			const p = scoutMeta && scoutMeta.passes && scoutMeta.passes[k];
 			if (!p) return '';
@@ -8386,13 +8393,45 @@ export function mountJarvis({
 					[
 						'Status',
 						(j) =>
-							`<span class="jv-chip ${j.status === 'joined' ? 'c-fast' : j.status === 'failed' ? 'c-slow' : ''}">${esc(j.status === 'dry' ? 'would join (dry run)' : j.status === 'member' ? 'already in it' : j.status)}</span>${j.error ? `<br><span class="jv-note">${esc(j.error)}</span>` : ''}`,
+							`<span class="jv-chip ${j.status === 'joined' ? 'c-fast' : j.status === 'failed' ? 'c-slow' : ''}">${esc(j.status === 'dry' ? 'would join (dry run)' : j.status === 'member' ? 'already in it' : j.status)}</span>${j.botAdd ? `<br><span class="jv-note">bot: ${esc(j.botAdd)}</span>` : ''}${j.error ? `<br><span class="jv-note">${esc(j.error)}</span>` : ''}`,
 					],
 					['When', (j) => `<span class="jv-nowrap">${esc(when(j.at))}</span>`],
 				],
 				joins.log,
 				'No join yet. The Mac finds groups with its topic searches and joins the best ones once live.'
 			);
+		const tg = g.telegram || {};
+		const tgInv = tg.invites || {};
+		const tgBot = tg.botAdd || {};
+		const tgAsk = tg.botAsk || {};
+		const tgFlagChip = (f) =>
+			`<span class="jv-chip ${f.level === 'ok' ? 'c-fast' : f.level === 'bad' ? 'c-slow' : 'c-average'}">${esc(f.text)}</span>`;
+		const telegramBody =
+			stats([
+				{ label: 'Soft-invites waiting', value: tgInv.waiting || 0 },
+				{ label: 'Soft-invites posted', value: tgInv.posted || 0 },
+				{ label: 'Bot in field chats', value: (tgBot.added || 0) + (tgBot.already || 0) },
+				{ label: 'Needs admin ask', value: tgBot.needs_admin || 0 },
+			]) +
+			`<p class="jv-note">Advance: <strong>${esc(tg.advanceLabel || 'steady')}</strong>${tg.groupInviteLink ? ` · <a href="${esc(tg.groupInviteLink)}" target="_blank" rel="noopener">discussion invite</a>` : ''}${tg.channel ? ' · ' + esc(tg.channel) : ''}${tg.groupTitle ? ' · ' + esc(tg.groupTitle) : ''}</p>` +
+			((tg.flags || []).length
+				? `<p class="jv-note">Quality: ${(tg.flags || []).map(tgFlagChip).join(' ')}</p>`
+				: '') +
+			funnel([
+				{ label: 'Soft-invites drafted', value: tgInv.total || 0 },
+				{ label: 'Waiting', value: tgInv.waiting || 0 },
+				{ label: 'Approved', value: tgInv.approved || 0 },
+				{ label: 'Posted', value: tgInv.posted || 0 },
+			]) +
+			stats([
+				{ label: 'Last scout candidates', value: (tg.lastScout && tg.lastScout.candidates) || 0 },
+				{ label: 'Last scout queued', value: (tg.lastScout && tg.lastScout.queued) || 0 },
+				{ label: 'Admin asks waiting', value: tgAsk.waiting || 0 },
+				{ label: 'Handles invited (cadence)', value: tg.cadence || 0 },
+			]) +
+			((tg.needs || []).length
+				? `<ul class="jv-facts">${(tg.needs || []).map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`
+				: '<p class="jv-empty">No Telegram action needed right now.</p>');
 		const netBody = table(
 			[
 				['Network', (n) => `<strong>${esc(n.name)}</strong>`],
@@ -8536,7 +8575,8 @@ export function mountJarvis({
             ${panel('engagement-meta-scout', 'Meta scout', metaBody, { wide: true, data: meta ? [meta] : [], note: 'Umbrella run (#3613): cloud scout plus Mac, Reddit, owner-tags and student passes, stored in engagement_meta_runs. Learning (#4237) keeps scoped lessons, odds and questions for Carlos.' })}
             ${panel('engagement-status', 'Scout', statusBody, { wide: true, data: g.runs, note: 'Every 30 minutes. Pause stops every planned action, draft, reply and push at once; the scout keeps reading so the reports stay whole. In a dry run, planned likes, reposts and follows are only logged; Go live carries them out.' })}
             ${panel('engagement-accounts', 'Accounts', accountsBody, { wide: true, data: accounts, note: "The poster acts as these accounts. Connect signs in on the network's own page and comes back here; Mastodon is marked as a bot when it connects." })}
-            ${panel('engagement-joins', 'Joins', joinsBody, { wide: true, data: joins.log, note: 'Telegram channels and groups and subreddits in our field, found by topic searches in any language. One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings.' })}
+            ${panel('engagement-joins', 'Joins', joinsBody, { wide: true, data: joins.log, note: 'Telegram channels and groups and subreddits in our field, found by topic searches in any language. One join a day for the first two weeks after the first live join, two in the third, then the daily cap in Settings. Telegram rows show bot-add outcome after join (#4468).' })}
+            ${panel('engagement-telegram', 'Telegram growth', telegramBody, { wide: true, data: tg.flags || [], note: 'Soft-invites from live-report t.me handles into our discussion group (#4467/#4481), and adding @qalab_live_bot after field joins (#4468). Quality flags and advance come from the engagement scout and Mac delivery.' })}
             ${panel('engagement-networks', 'Networks', netBody, { wide: true, data: g.networks.map((n) => ({ network: n.name, reads: n.reads, lastRead: n.lastRead, error: n.error, acting: n.acts })) })}
             ${panel(
 							'engagement-daily',

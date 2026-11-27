@@ -1891,6 +1891,26 @@ async function source(ctx) {
 	const scoutDecided = scoutDecisionsSnap && scoutDecisionsSnap.exists ? scoutDecisionsSnap.data().decisions || {} : {};
 	const scoutWaiting = await loadScoutDrafts(ctx.fetch, scoutDecided, now);
 	const fieldWaiting = waitingSnap.docs.map((d) => brief(Object.assign({ key: d.id }, d.data())));
+	const approvedDocs = approvedSnap.docs.map((d) => Object.assign({ key: d.id }, d.data()));
+	const waitingDocs = waitingSnap.docs.map((d) => Object.assign({ key: d.id }, d.data()));
+	const TgMon = require('./telegram-monitor');
+	const telegram = await TgMon.summary(
+		{ db, now },
+		waitingDocs.concat(approvedDocs),
+		joins.log,
+		last
+	).catch((error) => ({
+		ok: false,
+		connected: false,
+		invites: {},
+		botAsk: {},
+		botAdd: {},
+		flags: [{ id: 'monitor-error', level: 'bad', text: String(error.message || error).slice(0, 120) }],
+		needs: ['Telegram monitor failed: ' + String(error.message || error).slice(0, 140)],
+		advance: 0,
+		advanceLabel: 'steady',
+	}));
+	(telegram.needs || []).forEach((n) => needs.push(n));
 	return {
 		ok: true,
 		settings: conf,
@@ -1904,8 +1924,8 @@ async function source(ctx) {
 		ownerTags,
 		waiting: fieldWaiting.concat(scoutWaiting).sort(byScore),
 		scoutDrafts: scoutWaiting.length,
-		approved: approvedSnap.docs
-			.map((d) => brief(Object.assign({ key: d.id }, d.data())))
+		approved: approvedDocs
+			.map((d) => brief(d))
 			.sort((a, b) => String(b.actions.reply.decidedAt).localeCompare(String(a.actions.reply.decidedAt)))
 			.slice(0, 30),
 		posts: top.map(brief),
@@ -1932,6 +1952,7 @@ async function source(ctx) {
 		caps: conf.caps,
 		used,
 		joins,
+		telegram,
 		daily: range.map((day) => {
 			const t = E.report(
 				'day',
