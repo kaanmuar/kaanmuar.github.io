@@ -1681,6 +1681,17 @@
     "checked": "2026-11-27T05:21:52.574Z"
    }
   ],
+  "auto-2026-11-22/01-u-haj-gov-bh": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3cjb6ms372i",
+    "at": "2026-11-27T15:34:58.165Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3cjb6ms372i",
+    "checked": "2026-11-27T15:35:12.964Z"
+   }
+  ],
   "compare-2026-11/01-quiz-berlin-vienna": [
    {
     "channel": "bluesky",
