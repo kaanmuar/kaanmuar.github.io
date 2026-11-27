@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.cer
+*.certSigningRequest
+DerivedData/
+ios/App/build/
+ios/App/Pods/
+android/.gradle/
+android/app/build/
+android/local.properties
