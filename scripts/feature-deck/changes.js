@@ -19,6 +19,12 @@
 
 const CHANGES = [
 	{
+		date: '2026-11-26',
+		items: [
+			{ face: 'login', t: 'Search Console on your account', d: 'On the reviews account page, signed-in owners can connect Google Search Console read-only, pick a property, and see which site is bound—when the service is enabled on that deployment.' },
+		],
+	},
+	{
 		date: '2026-11-24',
 		eg: 'Outcome packs turn a finding into a sales, marketing, engagement or security next step on the report.',
 		items: [
