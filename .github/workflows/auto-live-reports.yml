@@ -1,20 +1,11 @@
 # .github/workflows/auto-live-reports.yml
-# Once a day, every publishable user review becomes a Live Report, a feed card, a story, and a clip,
-# and goes into the Buffer queues, onto the Facebook Page, and into the social hub (qa-review-social*.html). Filtering and privacy live in functions/url-review-publish.js.
-# What Buffer and the Page took goes into assets/social/buffer.json and facebook.json (scripts/social-ledger.js), committed after the queue steps.
-# When Buffer's daily limit is spent, the batch is listed for the nightly buffer-batch.yml run to queue (#1188).
-# Secrets: PUBLISH_KEY (same value as the PUBLISH_KEY secret in Secret Manager), BUFFER_API_KEY (Buffer → Settings → API),
-# LIVE_REPORTS_DEPLOY_KEY (write deploy key), FACEBOOK_PAGE_ID (the Graph ID, not the profile ID in Page URLs) and
-# FACEBOOK_PAGE_TOKEN (never-expiring Page token from the "QA-lab Page Publisher" Meta app, with pages_manage_posts;
-# changing the Facebook password revokes it, see scripts/facebook-queue.js). Deploy keys bypass the "main: fast checks before merge"
-# ruleset, so this job pushes its data commit straight to main, with [skip ci].
+# Gate → cards (always commit Live Reports + advance state.since) → social (capped clips + Buffer/FB/Telegram).
+# Cards never wait on Playwright (#4457). Social ≤ SOCIAL_POSTS_PER_BATCH (12). cards_only / social_only for catch-up (#4444).
+# Secrets: PUBLISH_KEY, BUFFER_API_KEY, LIVE_REPORTS_DEPLOY_KEY, FACEBOOK_PAGE_ID/TOKEN (+ _ES), TELEGRAM_BOT_TOKEN.
 
 name: Live reports from user reviews
 
 on:
-  # The Firebase ensureLiveReportsBatch function starts the batch at 06:00 Bogotá (dispatch with backup=true),
-  # after the country sweep's last tick, because GitHub starts scheduled runs hours late or drops them. These
-  # slots are backups: the gate job lets them run only when today's batch commit is not on main yet.
   schedule:
     - cron: '41 11 * * *' # backup, 06:41 Bogotá
     - cron: '17 13 * * *' # backup, 08:17 Bogotá
@@ -32,7 +23,11 @@ on:
         type: boolean
         default: false
       cards_only:
-        description: 'Commit Live Report cards and advance state.since without rendering social clips (catch-up when render times out, #4444)'
+        description: 'Commit Live Report cards and advance state.since without rendering social clips (#4444)'
+        type: boolean
+        default: false
+      social_only:
+        description: 'Skip ingest; render the pending batch from data/live-reports-social-batch.json (#4457)'
         type: boolean
         default: false
 
@@ -48,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       go: ${{ steps.today.outputs.go }}
+      social_only: ${{ steps.today.outputs.social_only }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -57,44 +53,64 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           SCHEDULE: ${{ github.event.schedule }}
           BACKUP: ${{ inputs.backup }}
+          SOCIAL_ONLY_IN: ${{ inputs.social_only }}
           REPO: ${{ github.repository }}
         run: |
-          if [ "$EVENT_NAME" != "schedule" ] && [ "$BACKUP" != "true" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$SOCIAL_ONLY_IN" = "true" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "social_only=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$EVENT_NAME" != "schedule" ] && [ "$BACKUP" != "true" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "social_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           TODAY=$(date -u +%F)
           DONE=$(gh api --paginate "repos/$REPO/commits?sha=main&since=${TODAY}T00:00:00Z&per_page=100" \
             --jq ".[] | select(.commit.message | contains(\"(auto-$TODAY)\")) | .sha" | wc -l | tr -d ' ')
-          if [ "$DONE" != "0" ]; then
-            echo "Batch auto-$TODAY is already on main; this slot ($(date -u +%H:%M) UTC) has nothing to do."
+          PENDING=$(gh api "repos/$REPO/contents/scripts/auto-live-reports.state.json?ref=main" --jq .content 2>/dev/null \
+            | tr -d '\n' | base64 -d 2>/dev/null \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const j=JSON.parse(d);console.log((j.socialPending&&j.socialPending.count)||0)}catch(e){console.log(0)}})" \
+            || echo 0)
+          if [ "$DONE" != "0" ] && [ "${PENDING:-0}" = "0" ]; then
+            echo "Batch auto-$TODAY is already on main with no social pending; this slot has nothing to do."
             echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "social_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$DONE" != "0" ] && [ "${PENDING:-0}" != "0" ]; then
+            echo "Cards for auto-$TODAY are on main but socialPending=$PENDING; running social_only."
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            echo "social_only=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ "$EVENT_NAME" = "schedule" ]; then
             echo "::warning::No auto-$TODAY batch on main yet, so the $SCHEDULE backup slot is running it; check ensureLiveReportsBatch."
           fi
           echo "go=true" >> "$GITHUB_OUTPUT"
+          echo "social_only=false" >> "$GITHUB_OUTPUT"
 
-  publish:
+  cards:
     needs: gate
-    if: needs.gate.outputs.go == 'true'
+    if: needs.gate.outputs.go == 'true' && needs.gate.outputs.social_only != 'true'
     runs-on: ubuntu-latest
-    # A 40 s scene clip draws about 1,200 frames; a 16-review day renders for about an hour.
-    timeout-minutes: 180
+    timeout-minutes: 45
     permissions:
       actions: write
       contents: write
       pages: write
     env:
       GH_TOKEN: ${{ github.token }}
+    outputs:
+      batch: ${{ steps.reports.outputs.batch }}
+      cards: ${{ steps.reports.outputs.cards }}
+      social: ${{ steps.reports.outputs.social }}
+      total: ${{ steps.reports.outputs.total }}
+      removed: ${{ steps.reports.outputs.removed }}
+      pushed: ${{ steps.commit.outputs.pushed }}
+      cards_only: ${{ steps.reports.outputs.cards_only }}
     steps:
-      - name: Require the Buffer key
-        if: ${{ !inputs.dry_run }}
-        env:
-          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-        run: |
-          if [ -z "$BUFFER_API_KEY" ]; then
-            echo "::error::Add the BUFFER_API_KEY secret (Buffer → Settings → API). Nothing is published until then, so no review loses its post."
-            exit 1
-          fi
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -115,69 +131,22 @@ jobs:
           [ "$CARDS_ONLY" = "true" ] && EXTRA="--cards-only"
           node scripts/auto-live-reports.js ${SINCE:+--since "$SINCE"} $EXTRA
 
-      # Signals only (no Gemini key here): sure countries go into data/live-report-countries.json and onto the
-      # cards; the unsure ones wait for a full run of the script, which queues them for Carlos in Jarvis (#2980).
-      # --decisions reads the countries he confirmed on the Jarvis Map tab and places every card of those sites (#3009).
       - name: Place the new cards in their country
         continue-on-error: true
         env:
           PUBLISH_KEY: ${{ secrets.PUBLISH_KEY }}
         run: node scripts/live-report-countries.js --recent 2 --apply --no-gemini --decisions
 
-      # cards_only (#4444/#4446): social=0 skips the full renderer, but Commit still runs build-social-hub.js, which needs sharp.
       - name: Install sharp for the hub
-        if: steps.reports.outputs.social == '0' && steps.reports.outputs.cards != '0'
+        if: ${{ !inputs.dry_run }}
         run: |
           locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
           npm install --no-save --ignore-scripts sharp@"$(locked sharp)"
 
-      - name: Install the renderer
-        if: steps.reports.outputs.social != '0'
-        # sharp writes the social hub thumbnails for the new posts.
-        run: |
-          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
-          npm install --no-save --ignore-scripts playwright@"$(locked playwright)" sharp@"$(locked sharp)"
-          npx playwright install --with-deps chromium
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          pip install -q edge-tts
-          echo "EDGE_TTS=$(command -v edge-tts)" >> "$GITHUB_ENV"
-          gh release download studio-assets -p bed.wav -D media/url-review-demos
-
-      - name: Render cards, stories, and clips
-        if: steps.reports.outputs.social != '0'
-        # The day number moves the language cycle on, so small daily batches still reach all six.
-        # GEMINI_API_KEY: translate.py falls back to Gemini when Google's free translator refuses (#3897).
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.reports.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
-
-      - name: Write the captions in six languages
-        if: steps.reports.outputs.social != '0'
-        # Sentences the phrasebooks lack go through Google's translator, marked for an agent to rewrite.
-        # If it refuses, the posts keep the languages the books already cover.
-        run: |
-          BATCH="${{ steps.reports.outputs.batch }}"
-          node scripts/social-hub/translate-captions.js --machine "$BATCH" \
-            || { echo "::warning::Google's translator refused; $BATCH keeps the languages the phrasebooks cover."; node scripts/social-hub/translate-captions.js "$BATCH"; }
-
-      - name: Slot the day's reviews in the social calendar
-        if: steps.reports.outputs.social != '0'
-        # Five posts a day per network, one per lane (#1039): the top review takes the next free site-review slot.
-        run: node scripts/social-calendar.js --write --batch "${{ steps.reports.outputs.batch }}"
-
       - name: Rebuild llms-full.txt and the Live Reports counts
         run: python3 scripts/build-llms-full.py
 
-      - name: Keep the render for a look
-        if: inputs.dry_run && steps.reports.outputs.social != '0'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ${{ steps.reports.outputs.batch }}
-          path: media/social-posts/${{ steps.reports.outputs.batch }}
-          retention-days: 7
-
       - name: Install the critical CSS builder
-        # build-social-hub.js inlines each page's critical CSS with these packages (#1028).
         if: ${{ !inputs.dry_run }}
         run: |
           read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
@@ -185,8 +154,6 @@ jobs:
           echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
 
       - name: Read each sent post's numbers from Buffer and Facebook, and the Telegram channel's members
-        # The hub sorts and labels cards by them (#1587); a network that fails keeps yesterday's numbers.
-        # Jarvis shows the Telegram member count and its change over the range (#2570).
         if: ${{ !inputs.dry_run }}
         continue-on-error: true
         env:
@@ -201,86 +168,159 @@ jobs:
           fi
           node scripts/social-metrics.js | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit and publish the site
+      - name: Commit and publish the cards
         id: commit
         if: ${{ !inputs.dry_run }}
         run: |
-          BATCH="${{ steps.reports.outputs.batch }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add assets/live-reports data/live-report-countries.json llms.txt llms-full.txt qa-review*.html scripts/auto-live-reports.state.json scripts/social-hub/phrases
-          if [ -d "media/social-posts/$BATCH" ]; then
-            git add "media/social-posts/$BATCH"
-            git add -f "media/social-posts/$BATCH/story"
+          chmod +x scripts/commit-live-reports.sh
+          scripts/commit-live-reports.sh cards "${{ steps.reports.outputs.batch }}" "${{ steps.reports.outputs.cards }}" "${{ steps.reports.outputs.social }}"
+
+      - name: Upload social batch artifact
+        if: steps.reports.outputs.social != '0' && steps.reports.outputs.cards_only != '1'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-reports-batch
+          path: |
+            previews/auto-live-reports/batch.json
+            data/live-reports-social-batch.json
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Live reports — cards"
+            echo "- New or refreshed cards: ${{ steps.reports.outputs.cards || 0 }} (carousel now ${{ steps.reports.outputs.total || '?' }})"
+            echo "- Removed on request: ${{ steps.reports.outputs.removed || 0 }}"
+            echo "- Social queued: ${{ steps.reports.outputs.social || 0 }} (batch ${{ steps.reports.outputs.batch }})"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  social:
+    needs: [gate, cards]
+    if: |
+      always() && needs.gate.outputs.go == 'true' &&
+      !cancelled() &&
+      !inputs.dry_run &&
+      inputs.cards_only != true &&
+      (
+        (needs.gate.outputs.social_only == 'true') ||
+        (needs.cards.result == 'success' && needs.cards.outputs.social != '0' && needs.cards.outputs.pushed == '1')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      actions: write
+      contents: write
+      pages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Require the Buffer key
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+        run: |
+          if [ -z "$BUFFER_API_KEY" ]; then
+            echo "::error::Add the BUFFER_API_KEY secret (Buffer → Settings → API). Nothing is published until then, so no review loses its post."
+            exit 1
           fi
-          # The hub reads tracked files only, so it is built once the batch is staged. It also picks up
-          # yesterday's clips, which Buffer uploads to YouTube a day after their batch.
-          node scripts/build-social-hub.js
-          # Picks added in the Social hub pane arrive with the edits the build just pulled; their missing
-          # sentences go through Google's translator, then the hub is rebuilt with them (#1893).
-          if node scripts/social-hub/translate-captions.js --picks --machine; then node scripts/build-social-hub.js --offline
-          else echo "::warning::Google's translator refused; new picks keep the languages the phrasebooks cover."; fi
-          # Hub pages can bring Tailwind classes style.css lacks; this commit skips CI, so nothing else would catch it (#2552).
-          node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
-          git add -u -- style.css '*.html'
-          git add assets/social qa-review-social*.html sitemap-social.xml social scripts/social-hub/phrases
-          # This commit skips CI, so a hub page in the wrong language would fail every PR after it.
-          scripts/social-hub/guard-hub-lang.sh
-          if git diff --cached --quiet; then echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0; fi
-          git commit -q -m "Live reports: ${{ steps.reports.outputs.cards }} reviews, ${{ steps.reports.outputs.social }} posts ($BATCH) [skip ci]"
-          # PRs merged during the render move main. The checkout is shallow, so the data commit is
-          # cherry-picked onto the new main (its files win) and the generated files are rebuilt from the merged site.
-          for attempt in 1 2 3 4 5; do
-            git push origin HEAD:main && break
-            if [ "$attempt" = 5 ]; then echo "::error::main kept moving; batch $BATCH was not pushed."; exit 1; fi
-            sleep $((attempt * 5))
-            DATA=$(git rev-parse HEAD)
-            git fetch -q --depth=1 origin main
-            git reset -q --hard FETCH_HEAD
-            # Another run already published this batch: nothing to push, and its clips and posts are already out.
-            if git diff --quiet HEAD "$DATA" -- assets/live-reports scripts/auto-live-reports.state.json; then
-              echo "main already has batch $BATCH."; echo "pushed=0" >> "$GITHUB_OUTPUT"; exit 0
-            fi
-            git cherry-pick -X theirs "$DATA"
-            python3 scripts/build-llms-full.py
-            node scripts/build-social-hub.js --offline
-            node scripts/build-style-css.js && node scripts/build-critical-css.js || echo "::warning::style.css was not rebuilt; run node scripts/build-style-css.js and build-critical-css.js on main (#2552)."
-            git add -u -- style.css '*.html'
-            git add llms.txt llms-full.txt qa-review*.html assets/social sitemap-social.xml social
-            scripts/social-hub/guard-hub-lang.sh HEAD~1
-            git diff --cached --quiet || git commit -q --amend --no-edit
-          done
-          gh workflow run pages.yml --ref main -R "${{ github.repository }}" || echo "::warning::Pages was not dispatched; the next push to main deploys this batch."
-          echo "pushed=1" >> "$GITHUB_OUTPUT"
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ssh-key: ${{ secrets.LIVE_REPORTS_DEPLOY_KEY }}
+          ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Download social batch artifact
+        if: needs.gate.outputs.social_only != 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: live-reports-batch
+          path: .
+
+      - name: Resolve batch id
+        id: batch
+        run: |
+          mkdir -p previews/auto-live-reports data
+          if [ -f data/live-reports-social-batch.json ]; then
+            BATCH=$(node -p "require('./data/live-reports-social-batch.json').batch")
+            SOCIAL=$(node -p "String(require('./data/live-reports-social-batch.json').posts.length)")
+          elif [ -f previews/auto-live-reports/batch.json ]; then
+            BATCH="${{ needs.cards.outputs.batch }}"
+            SOCIAL="${{ needs.cards.outputs.social }}"
+            node -e "const fs=require('fs');const posts=JSON.parse(fs.readFileSync('previews/auto-live-reports/batch.json','utf8'));fs.writeFileSync('data/live-reports-social-batch.json',JSON.stringify({batch:process.argv[1],posts,at:new Date().toISOString()},null,1)+'\n')" "$BATCH"
+          else
+            echo "::error::No social batch on main or in the artifact."
+            exit 1
+          fi
+          if [ ! -f previews/auto-live-reports/batch.json ]; then
+            node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('data/live-reports-social-batch.json','utf8'));fs.writeFileSync('previews/auto-live-reports/batch.json',JSON.stringify(j.posts,null,1)+'\n')"
+          fi
+          echo "batch=$BATCH" >> "$GITHUB_OUTPUT"
+          echo "social=$SOCIAL" >> "$GITHUB_OUTPUT"
+          echo "Social batch $BATCH ($SOCIAL posts)"
+
+      - name: Install the renderer
+        run: |
+          locked() { node -p "require('./package-lock.json').packages['node_modules/$1'].version"; }
+          npm install --no-save --ignore-scripts playwright@"$(locked playwright)" sharp@"$(locked sharp)"
+          npx playwright install --with-deps chromium
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -q edge-tts
+          echo "EDGE_TTS=$(command -v edge-tts)" >> "$GITHUB_ENV"
+          gh release download studio-assets -p bed.wav -D media/url-review-demos
+
+      - name: Render cards, stories, and clips
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/tips-studio/build.js --source runs-auto --batch "${{ steps.batch.outputs.batch }}" --start "$(date -u -d tomorrow +%F)" --lang-offset "$(( $(date -u +%s) / 86400 ))"
+
+      - name: Write the captions in six languages
+        run: |
+          BATCH="${{ steps.batch.outputs.batch }}"
+          node scripts/social-hub/translate-captions.js --machine "$BATCH" \
+            || { echo "::warning::Google's translator refused; $BATCH keeps the languages the phrasebooks cover."; node scripts/social-hub/translate-captions.js "$BATCH"; }
+
+      - name: Slot the day's reviews in the social calendar
+        run: node scripts/social-calendar.js --write --batch "${{ steps.batch.outputs.batch }}"
+
+      - name: Install the critical CSS builder
+        run: |
+          read -ra deps <<<"$(node scripts/build-critical-css.js --deps)"
+          npm install -s --no-save --prefix "$RUNNER_TEMP/critical-css" "${deps[@]}"
+          echo "NODE_PATH=$RUNNER_TEMP/critical-css/node_modules" >> "$GITHUB_ENV"
+
+      - name: Clear social pending and commit clips
+        id: commit
+        run: |
+          node scripts/auto-live-reports.js --clear-social-pending
+          chmod +x scripts/commit-live-reports.sh
+          scripts/commit-live-reports.sh social "${{ steps.batch.outputs.batch }}" "0" "${{ steps.batch.outputs.social }}"
 
       - name: Release the clips
-        if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
+        if: steps.commit.outputs.pushed == '1'
         run: |
-          BATCH="${{ steps.reports.outputs.batch }}"
+          BATCH="${{ steps.batch.outputs.batch }}"
           gh release create "$BATCH" media/social-posts/$BATCH/clip/*.mp4 --target main --latest=false \
             --title "Requested reviews $BATCH" --notes "TikTok and YouTube clips for the $BATCH Live Reports. Posted through Buffer."
 
       - name: Wait for a hub rebuild or Pages deploy on main
-        if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
+        if: steps.commit.outputs.pushed == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/hub-wait.sh
 
       - name: Queue the posts in Buffer
-        if: ${{ !inputs.dry_run && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' }}
+        if: steps.commit.outputs.pushed == '1'
         env:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-          CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.reports.outputs.batch }}
-        run: node scripts/buffer-queue.js --batch "${{ steps.reports.outputs.batch }}"
-
-      - name: Ask Buffer which queued posts went out
-        if: ${{ !inputs.dry_run && steps.reports.outputs.social == '0' }}
-        env:
-          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
-        run: node scripts/buffer-queue.js --check
+          CLIP_BASE: https://github.com/${{ github.repository }}/releases/download/${{ steps.batch.outputs.batch }}
+        run: node scripts/buffer-queue.js --batch "${{ steps.batch.outputs.batch }}"
 
       - name: Schedule the posts on the Facebook Page
-        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' && steps.reports.outputs.social != '0' && steps.reports.outputs.batch != '' }}
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
         env:
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_TOKEN: ${{ secrets.FACEBOOK_PAGE_TOKEN }}
@@ -288,13 +328,12 @@ jobs:
           FACEBOOK_PAGE_TOKEN_ES: ${{ secrets.FACEBOOK_PAGE_TOKEN_ES }}
         run: |
           if [ -z "$FACEBOOK_PAGE_ID" ] || [ -z "$FACEBOOK_PAGE_TOKEN" ]; then
-            echo "::warning::Add the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets. Batch ${{ steps.reports.outputs.batch }} was not posted to Facebook; run scripts/facebook-queue.js --batch ${{ steps.reports.outputs.batch }} once they are set."
+            echo "::warning::Add the FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN secrets. Batch ${{ steps.batch.outputs.batch }} was not posted to Facebook."
             exit 0
           fi
-          node scripts/facebook-queue.js --batch "${{ steps.reports.outputs.batch }}"
+          node scripts/facebook-queue.js --batch "${{ steps.batch.outputs.batch }}"
 
       - name: Post the batch to the Telegram channel
-        # One post per batch whose report links open in the Mini App (live.html, #2549).
         if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
         continue-on-error: true
         env:
@@ -303,13 +342,12 @@ jobs:
           TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
-            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. Batch ${{ steps.reports.outputs.batch }} was not posted to Telegram."
+            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable."
             exit 0
           fi
           node scripts/telegram-live.js post
 
       - name: Edit the channel posts of withdrawn reports
-        # Rebuilds the last 60 days of channel posts from the reports just pushed (#2564).
         if: ${{ !cancelled() && steps.commit.outcome == 'success' && steps.commit.outputs.pushed == '1' }}
         continue-on-error: true
         env:
@@ -318,21 +356,20 @@ jobs:
           TELEGRAM_APP: ${{ vars.TELEGRAM_APP }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHANNEL" ]; then
-            echo "::warning::Add the TELEGRAM_BOT_TOKEN secret and the TELEGRAM_CHANNEL variable. The Telegram channel posts were not scrubbed."
+            echo "::warning::Telegram scrub skipped."
             exit 0
           fi
           node scripts/telegram-live.js scrub
 
       - name: Commit the Buffer and Facebook ledgers
-        if: ${{ !cancelled() && !inputs.dry_run && steps.commit.outcome == 'success' }}
-        run: scripts/commit-social-ledgers.sh "${{ steps.reports.outputs.batch || 'check' }}"
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' }}
+        run: scripts/commit-social-ledgers.sh "${{ steps.batch.outputs.batch || 'check' }}"
 
       - name: Summary
         if: always()
         run: |
           {
-            echo "### Live reports from user reviews"
-            echo "- New or refreshed cards: ${{ steps.reports.outputs.cards || 0 }} (carousel now ${{ steps.reports.outputs.total || '?' }})"
-            echo "- Removed on request: ${{ steps.reports.outputs.removed || 0 }}"
-            echo "- Social posts: ${{ steps.reports.outputs.social || 0 }} (batch ${{ steps.reports.outputs.batch }})"
+            echo "### Live reports — social"
+            echo "- Batch: ${{ steps.batch.outputs.batch }}"
+            echo "- Posts: ${{ steps.batch.outputs.social }}"
           } >> "$GITHUB_STEP_SUMMARY"

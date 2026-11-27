@@ -25,6 +25,8 @@ const ownLine = (lang) =>
 		? OWN_LINE[lang] + ': ' + (lang === 'en' ? OWN : SITE + '/qa-review-' + lang + '.html')
 		: OWN_LINE.en + ': ' + OWN;
 const FILE = process.env.AUTO_BATCH || path.resolve(__dirname, '../../previews/auto-live-reports/batch.json');
+// Cards job commits this for the social job / retry after a failed render (#4457).
+const FALLBACK = path.resolve(__dirname, '../../data/live-reports-social-batch.json');
 const AREAS = [
 	['SEO', 'SEO'],
 	['GEO', 'GEO'],
@@ -51,7 +53,19 @@ const CATS = {
 };
 const CAMPAIGN = { National: 'country-sweep', Versus: 'natural-competitors' };
 
-const RUNS = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : [];
+function loadRuns() {
+	if (fs.existsSync(FILE)) {
+		const raw = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+		return Array.isArray(raw) ? raw : raw.posts || [];
+	}
+	if (fs.existsSync(FALLBACK)) {
+		const raw = JSON.parse(fs.readFileSync(FALLBACK, 'utf8'));
+		return raw.posts || [];
+	}
+	return [];
+}
+
+const RUNS = loadRuns();
 
 function shortDate(iso) {
 	return new Date(iso).toLocaleDateString('en-GB', {
