@@ -87,6 +87,15 @@ async function open(page, paid) {
 		return json(200, path === '/auth/providers' ? { providers: [{ id: 'email' }] } : { items: [] });
 	});
 	await page.goto('/qa-review.html?report=' + ID);
+	if (!paid) {
+		const compareToggle = page.locator('h2[data-face="compare"] .fold-toggle');
+		await expect(compareToggle).toBeVisible({ timeout: 20000 });
+		await page.evaluate(() => {
+			const btn = document.querySelector('h2[data-face="compare"] .fold-toggle');
+			if (btn && btn.getAttribute('aria-expanded') !== 'true') btn.click();
+		});
+		await expect(compareToggle).toHaveAttribute('aria-expanded', 'true');
+	}
 	const box = page.locator('#rivals');
 	await expect(box.locator('.rivals-pick')).toBeVisible({ timeout: 20000 });
 	await box.scrollIntoViewIfNeeded();

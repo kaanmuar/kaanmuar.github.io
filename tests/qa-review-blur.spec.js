@@ -51,6 +51,22 @@ async function openUnpaid(page, extra) {
 }
 
 test.describe('An unpaid report is blurred in every section, and its files cut where the blur starts', () => {
+	test('unpaid preview folds collapsed by default but health and cases stay open (#4463)', async ({ page }) => {
+		await openUnpaid(page);
+		await expect(page.locator('body')).toHaveClass(/report-collapsed-teaser/);
+		const folded = await page.locator('#report .fold-toggle[aria-expanded="false"]').count();
+		const opened = await page.locator('#report .fold-toggle[aria-expanded="true"]').count();
+		expect(folded).toBeGreaterThan(opened);
+		await expect(page.locator('#report h2', { hasText: 'Health score' }).locator('.fold-toggle')).toHaveAttribute(
+			'aria-expanded',
+			'true'
+		);
+		await expect(page.locator('#report h2', { hasText: 'Security and email' }).locator('.fold-toggle')).toHaveAttribute(
+			'aria-expanded',
+			'false'
+		);
+	});
+
 	test('no line longer than a short label is left in the clear outside headings, controls and scores', async ({
 		page,
 	}) => {
