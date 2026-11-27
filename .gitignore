@@ -3,6 +3,10 @@ __pycache__/
 .worktrees/
 functions/.env
 functions/.secret.local
+.env
+.env.*
+!.env.example
+cypress.env.json
 *.jdk/
 .DS_Store
 cypress/screenshots/
