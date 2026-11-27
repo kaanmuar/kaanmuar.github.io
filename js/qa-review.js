@@ -5193,7 +5193,37 @@
 		);
 	}
 
-	function paintGeo(ins) {
+	function hasGscInsights(ins) {
+		const extras = (ins && ins.extras) || {};
+		if (extras.gsc) return true;
+		return (ins && ins.findings || []).some((row) => row && /^seo-gsc-/.test(row.key || ''));
+	}
+
+	function geoGscConnectCard(ins) {
+		if (hasGscInsights(ins)) return '';
+		return (
+			'<article class="card" data-part="gsc-connect" style="margin-top:12px"><h3>' +
+			esc(rc.t('geoGscTitle')) +
+			'</h3><p class="muted" data-note>' +
+			esc(rc.t('geoGscBody')) +
+			' <a href="qa-review-account.html#gsc">' +
+			esc(rc.t('geoGscCta')) +
+			'</a>.</p></article>'
+		);
+	}
+
+	function geoWatchNoteCard(report) {
+		if (report && report.watchOf) return '';
+		return (
+			'<p class="meta-line" data-note style="margin-top:12px">' +
+			esc(rc.t('geoWatchNote')) +
+			' <a href="qa-review-account.html#gsc">' +
+			esc(rc.t('geoWatchCta')) +
+			'</a>.</p>'
+		);
+	}
+
+	function paintGeo(ins, report) {
 		const geo = ins.geo || {};
 		const view = geo.aiView || {};
 		const roles = [
@@ -5308,7 +5338,9 @@
 			esc(rc.t(geo.robotsFound ? 'robotsFound' : 'robotsNone')) +
 			'</p>' +
 			bots +
-			'</article></div>';
+			'</article></div>' +
+			geoGscConnectCard(ins) +
+			geoWatchNoteCard(report);
 	}
 
 	function paintAnalytics(ins) {
@@ -6552,7 +6584,7 @@
 		paintFixFirst(ins, open);
 		paintBrowser(report);
 		paintPreviews(ins);
-		paintGeo(ins);
+		paintGeo(ins, report);
 		paintAnalytics(ins);
 		paintSeo(ins);
 		paintGraph(ins);
@@ -6594,10 +6626,13 @@
 		folds.push({ button, panel, group: heading.dataset.indexGroup || heading.id });
 	}
 
+	let unlockGate = null;
+
 	function setFold(item, open) {
 		item.panel.hidden = !open;
 		item.button.setAttribute('aria-expanded', String(open));
 		paintFoldAll();
+		if (open && unlockGate && current && current.report) unlockGate.onFoldExpanded(current.report.id);
 	}
 
 	function paintFoldAll() {
@@ -7185,6 +7220,15 @@
 		paintMentions(report);
 		paintCredential(payload);
 		paintCall(report, sample);
+		// StatusCard glass fold heads on unpaid/preview (#4430 / #4422).
+		if (window.QAReviewStatusCard) {
+			QAReviewStatusCard.sync({
+				unpaid: !paid && !sample,
+				report: report,
+				folds: folds,
+				setFold: setFold,
+			});
+		}
 		const names = ['All'].concat(layers.map((pair) => pair[0]));
 		document.getElementById('layer-filters').innerHTML = names
 			.map(
@@ -8132,6 +8176,14 @@
 		});
 	}
 
+	if (window.QAReviewUnlockGate) {
+		unlockGate = QAReviewUnlockGate.mount({
+			getCurrent: () => current,
+			openReportPay,
+			fileUses,
+		});
+	}
+
 	document.addEventListener('click', (event) => {
 		const offer = event.target.closest && event.target.closest('a[data-offer]');
 		if (!offer || !current || !current.report) return;
@@ -8764,6 +8816,7 @@
 	});
 
 	function spend(kind, action) {
+		if (unlockGate) return unlockGate.spend(kind, action);
 		if (!current || !current.report) return;
 		if (current.paid) {
 			action();
@@ -8853,6 +8906,7 @@
 			if (!current || !current.paid) {
 				event.preventDefault();
 				document.body.classList.add('capture-hold');
+				if (unlockGate && unlockGate.openSheet('print-key')) return;
 				setStatus('The print sheet does not include the report. The attempt is recorded.', false);
 			}
 		}
@@ -8950,6 +9004,7 @@
 	}
 	bindMenu('export-toggle', 'export-menu');
 	bindMenu('share-toggle', 'share-menu');
+	if (unlockGate) unlockGate.bindToolbar();
 	document.addEventListener('click', closeMenus);
 	document.getElementById('share-row').addEventListener('click', (event) => {
 		const button = event.target.closest('[data-net]');

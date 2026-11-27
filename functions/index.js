@@ -2563,13 +2563,24 @@ async function ensureLiveReportsBatch() {
 		);
 		return null;
 	}
+	// When recent runs die at the 180m render timeout (conclusion cancelled), dispatch cards-only so
+	// assets/live-reports and state.since still commit; social catches up once the cursor is small again (#4444).
+	const recent = await githubGet(repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/runs?per_page=10', token);
+	const cardsOnly = require('../scripts/auto-live-reports').needsCardsOnly(recent.workflow_runs || []);
 	await github(
 		repo + '/actions/workflows/' + LIVE_REPORTS_WORKFLOW + '/dispatches',
-		{ ref: 'main', inputs: { backup: 'true' } },
+		{ ref: 'main', inputs: { backup: 'true', cards_only: cardsOnly ? 'true' : 'false' } },
 		token
 	);
 	const finished = runs.workflow_runs.map((run) => run.event + ' ' + run.conclusion).join(', ') || 'none';
-	console.log('Live Reports watchdog: dispatched batch auto-' + today + " (today's earlier runs: " + finished + ').');
+	console.log(
+		'Live Reports watchdog: dispatched batch auto-' +
+			today +
+			(cardsOnly ? ' cards-only' : '') +
+			" (today's earlier runs: " +
+			finished +
+			').'
+	);
 	return null;
 }
 
@@ -2764,13 +2775,17 @@ const reviewPromise = require('./url-review-promise');
 const reviewRescue = require('./url-review-rescue');
 const reviewPublish = require('./url-review-publish');
 
+// Prefer platform-trusted req.ip (#4446). Leftmost X-Forwarded-For is client-spoofable and must not
+// reset the anon soft-preview quota; fall back to it only when req.ip is empty (same order as bookingIp).
 function reviewClientIp(req) {
 	const forwarded = String(
 		(req.headers && (req.headers['x-forwarded-for'] || (req.get && req.get('x-forwarded-for')))) || ''
 	)
 		.split(',')[0]
 		.trim();
-	return String(forwarded || req.ip || '').slice(0, 80);
+	return String(req.ip || forwarded || '')
+		.trim()
+		.slice(0, 80);
 }
 
 // The Places lookup of the Local check (#2067), counted per UTC day in url_review_places for Jarvis > Local (#2118).
@@ -7189,6 +7204,7 @@ exports.reviewUrl = functions
 			['/desk/proof', 'proof'],
 			['/desk/fix', 'fix'],
 			['/desk/fix-diff/indexnow', 'fix-diff-indexnow'],
+			['/desk/fix-diff/rereview', 'fix-diff-rereview'],
 			['/desk/fix-diff/data', 'fix-diff-data'],
 			['/desk/fix-diff', 'fix-diff'],
 		];
@@ -7357,7 +7373,12 @@ exports.reviewUrl = functions
 			}
 			if (deskName === 'fix-diff-data' && req.method === 'GET') {
 				try {
-					const items = await fixDiffDesk.deskRows(getFirestore());
+					const db = getFirestore();
+					const items = await fixDiffDesk.deskRows(db, {
+						enrich: true,
+						env: process.env,
+						fixRequestForPack: (firestore, packId) => fixDiffDesk.findRereviewForPack(firestore, packId),
+					});
 					res.status(200).json({ summary: fixDiffDesk.summarize(items), items });
 				} catch (error) {
 					console.error('Desk fix-diff read failed:', error);
@@ -7374,8 +7395,20 @@ exports.reviewUrl = functions
 				});
 				return;
 			}
+			if (deskName === 'fix-diff-rereview' && req.method === 'POST') {
+				await fixDiffDesk.deskQueueRereview(req, res, operator, {
+					db: getFirestore(),
+					nowMs: Date.now(),
+					env: process.env,
+				});
+				return;
+			}
 			if (deskName === 'fix-diff' && req.method === 'POST') {
-				await fixDiffDesk.deskDecide(req, res, operator, { db: getFirestore(), nowMs: Date.now() });
+				await fixDiffDesk.deskDecide(req, res, operator, {
+					db: getFirestore(),
+					nowMs: Date.now(),
+					env: process.env,
+				});
 				return;
 			}
 			if (deskName === 'proof' && req.method === 'POST') {
@@ -9016,7 +9049,8 @@ async function unlockCredit(creditId) {
 	}
 }
 
-// Soft-gate 1-page preview (#3478): optional session for the 20/day bucket; IP for anon 5/day; Turnstile when secret is set.
+// Soft-gate 1-page preview (#3478): optional session for the 20/day bucket; IP for anon 5/day;
+// Turnstile required unless MCP key matches (#4446: fail closed when TURNSTILE_SECRET_KEY is unbound).
 async function runAgencyCi(req, res, hookId) {
 	const accounts = await getFirestore()
 		.collection('url_review_accounts')
@@ -9124,11 +9158,11 @@ async function runSoftPreview(req, res) {
 		return;
 	}
 	// MCP stdio clients cannot complete Turnstile (#3480 A): shared secret skips Siteverify; soft quota still applies.
+	// Missing TURNSTILE_SECRET_KEY fails closed via formGuard (reason config) — do not skip Siteverify (#4446).
 	const mcpOk = urlReview.testKeyMatches(req.get('x-qa-lab-mcp-key') || body.mcpKey, process.env.QA_LAB_MCP_KEY);
-	const secret = process.env.TURNSTILE_SECRET_KEY || '';
-	if (secret && !mcpOk) {
+	if (!mcpOk) {
 		const check = await formGuard.verifyTurnstile({
-			secret,
+			secret: process.env.TURNSTILE_SECRET_KEY || '',
 			token: body.turnstileToken || body.token,
 			ip,
 			action: 'soft-preview',
@@ -11185,7 +11219,7 @@ function jarvisAutoOps(settings, now, th) {
 		rerunCi: async (workflow) => jarvis.rerunCi(fetch, await gh(), workflow, { prs: false }),
 		refreshPr: async (number) => jarvis.refreshPr(fetch, await gh(), number),
 		mainSha: async () => jarvis.mainSha(fetch, await gh()),
-		dispatch: async (workflow) => jarvis.dispatchMain(fetch, await gh(), workflow),
+		dispatch: async (workflow, inputs) => jarvis.dispatchMain(fetch, await gh(), workflow, inputs),
 		reviewFix: async () => {
 			const fix = reviewFailures.FIXES.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
 			const run = await db

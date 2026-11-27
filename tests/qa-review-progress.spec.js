@@ -36,6 +36,20 @@ test.describe('Review progress', () => {
 		await expect(page.locator('#run-panel .rp')).toBeHidden();
 	});
 
+	test('#4433 ReviewProgress.start mounts product ReviewArena (lab or console)', async ({ page }) => {
+		await prime(page);
+		await page.goto('/qa-review.html');
+		await page.evaluate(() => window.ReviewProgress.start({ host: 'example.com', pages: 5 }));
+		await expect(page.locator('.rp')).toBeVisible();
+		await page.waitForFunction(() => window.ReviewArena && window.ReviewArena.snapshot().ready);
+		const skin = await page.evaluate(() => window.ReviewArena.snapshot().skin);
+		expect(['lab', 'console']).toContain(skin);
+		await expect(page.locator(`.ra--${skin} .rc`)).toBeVisible();
+		if (skin === 'lab') {
+			await expect(page.locator('.rc[data-skin="lab"] .rc-brandtxt small')).toHaveText(/LAB TRIES/i);
+		}
+	});
+
 	test('follows the server lines through the pages and ends at 100 with the report', async ({ page }) => {
 		await prime(page);
 		await page.goto('/qa-review.html');

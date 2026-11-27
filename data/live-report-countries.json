@@ -1015,6 +1015,19 @@
    ],
    "at": "2026-11-09"
   },
+  "ampliz.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.92,
+   "by": "signals",
+   "evidence": [
+    "phone +15107176083",
+    "phone +15107176083 (legal/contact page)",
+    "Google Maps link in US",
+    "Google Maps link in US (legal/contact page)"
+   ],
+   "at": "2026-11-27"
+  },
   "amway.com.vn": {
    "country": "VN",
    "scope": "country",
@@ -1434,6 +1447,18 @@
     "locale fr-BE"
    ],
    "at": "2026-11-09"
+  },
+  "asunciontransfers.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone +595991809877",
+    "locale es-PY"
+   ],
+   "at": "2026-11-27"
   },
   "atclimatizacion.com": {
    "country": "EC",
@@ -4987,6 +5012,19 @@
    ],
    "at": "2026-11-12"
   },
+  "designerlo.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "schema.org addressCountry PY (legal/contact page)",
+    "phone +595992909464",
+    "phone +595992909464 (legal/contact page)"
+   ],
+   "at": "2026-11-27"
+  },
   "desjardins.com": {
    "country": "CA",
    "scope": "country",
@@ -5171,6 +5209,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "divinatowerhotel.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone +595 994 648 242",
+    "phone +595991 712839 (legal/contact page)",
+    "address names PY"
+   ],
+   "at": "2026-11-27"
   },
   "diyanethaber.com.tr": {
    "country": "TR",
@@ -6594,6 +6645,19 @@
     "phone +50255326354 (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "esplendorasuncion.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +595) 994 398 061",
+    "phone +595) 994 398 061 (legal/contact page)",
+    "address names PY",
+    "address names PY (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "esplendorcervantes.com": {
    "country": "UY",
@@ -8594,6 +8658,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-15"
+  },
+  "hertzparaguay.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "phone +5950986802976 (legal/contact page)",
+    "Google Maps link in PY (legal/contact page)",
+    "locale es-PY",
+    "locale es-PY (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "hetushu.com": {
    "country": "CN",
@@ -12383,6 +12460,19 @@
    ],
    "at": "2026-11-16"
   },
+  "nationalcar.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "address names US (legal/contact page)",
+    "phone +18443826875",
+    "written in en, spoken in US"
+   ],
+   "at": "2026-11-27"
+  },
   "nationaltrust.org.ky": {
    "country": "KY",
    "scope": "country",
@@ -13445,6 +13535,19 @@
     "written in en, spoken in CA"
    ],
    "at": "2026-11-09"
+  },
+  "paseolagaleriahotel.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "schema.org addressCountry PY (legal/contact page)",
+    "phone +595216594600",
+    "phone +595216594600 (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "payex.com": {
    "country": "SE",
@@ -15249,6 +15352,19 @@
    ],
    "at": "2026-11-09"
   },
+  "rentaxmaquinarias.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.94,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "schema.org addressCountry PY (legal/contact page)",
+    "phone +595-992-346-282",
+    "phone +595-992-346-282 (legal/contact page)"
+   ],
+   "at": "2026-11-27"
+  },
   "reparacionautorizadojml.com": {
    "country": "PE",
    "scope": "country",
@@ -15549,6 +15665,19 @@
     "written in es, spoken in CO"
    ],
    "at": "2026-11-09"
+  },
+  "roshka.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "phone +595981184264",
+    "phone +595981184264 (legal/contact page)",
+    "address names PY",
+    "address names PY (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "rossmann.com.tr": {
    "country": "TR",
@@ -16421,6 +16550,19 @@
    ],
    "at": "2026-11-15"
   },
+  "shoppingaycelectronica.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone +595985864209",
+    "address names PY",
+    "locale es-PY"
+   ],
+   "at": "2026-11-27"
+  },
   "shortmake.com": {
    "country": "",
    "scope": "worldwide",
@@ -16967,6 +17109,19 @@
     "phone +59898042298 (legal/contact page)"
    ],
    "at": "2026-11-22"
+  },
+  "soireventos.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "phone ++595 0213261813",
+    "phone +595-976570756 (legal/contact page)",
+    "written in es, spoken in PY"
+   ],
+   "at": "2026-11-27"
   },
   "soldeinsa.com": {
    "country": "EC",
@@ -20439,6 +20594,19 @@
     "Confirmed by Carlos in Jarvis"
    ],
    "at": "2026-11-16"
+  },
+  "x4t.com": {
+   "country": "PY",
+   "scope": "country",
+   "confidence": 0.96,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry PY",
+    "schema.org addressCountry PY (legal/contact page)",
+    "phone +595-21-000000",
+    "phone +595-21-000000 (legal/contact page)"
+   ],
+   "at": "2026-11-27"
   },
   "xda-developers.com": {
    "country": "CA",

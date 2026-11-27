@@ -19,6 +19,22 @@
 
 const CHANGES = [
 	{
+		date: '2026-11-26',
+		items: [
+			{ face: 'login', t: 'Search Console on your account', d: 'On the reviews account page, signed-in owners can connect Google Search Console read-only, pick a property, and see which site is bound—when the service is enabled on that deployment.' },
+			{
+				face: 'seo',
+				t: 'Connect Search Console from the report',
+				d: 'When a review has no Search Console data yet, the GEO section explains how to connect it in your account so decay and cannibalization checks can use your real query rows.',
+			},
+			{
+				face: 'mail',
+				t: 'Watch and delta emails explained on the report',
+				d: 'Primary reports now note that continuous watch in your account can email score and outcome deltas on later reruns—without claiming watch is already on.',
+			},
+		],
+	},
+	{
 		date: '2026-11-24',
 		eg: 'Outcome packs turn a finding into a sales, marketing, engagement or security next step on the report.',
 		items: [

@@ -215,8 +215,11 @@ async function runsBetween(gh, from, to) {
 }
 
 const done = (run) => run.status === 'completed';
-const decided = (run) => done(run) && !QUIET.includes(run.conclusion);
-const failed = (run) => done(run) && FAIL.includes(run.conclusion);
+// Live Reports (#4444): the 180m job timeout marks the run cancelled, not failed — still treat it as red.
+const liveReportsTimeout = (run) =>
+	run.conclusion === 'cancelled' && /live reports/i.test(String(run.name || ''));
+const decided = (run) => done(run) && (!QUIET.includes(run.conclusion) || liveReportsTimeout(run));
+const failed = (run) => done(run) && (FAIL.includes(run.conclusion) || liveReportsTimeout(run));
 const green = (run) => done(run) && run.conclusion === 'success';
 const onMain = (run) => run.head_branch === 'main';
 const fileOf = (run) =>

@@ -1,0 +1,98 @@
+{
+  "snap": {
+    "skin": "lab",
+    "pose": "work",
+    "anomaly": "",
+    "activeId": "robots",
+    "stages": {
+      "fields": "idle",
+      "https": "idle",
+      "dns": "idle",
+      "open": "idle",
+      "psi-ask": "idle",
+      "robots": "wip",
+      "crawl": "idle",
+      "pages": "idle",
+      "browser": "idle",
+      "axe": "idle",
+      "security": "idle",
+      "a11y": "idle",
+      "malware": "idle",
+      "webrisk": "idle",
+      "blocklist": "idle",
+      "lookalike": "idle",
+      "wordpress": "idle",
+      "mail": "idle",
+      "lighthouse": "idle",
+      "cases": "idle",
+      "score": "idle",
+      "sign": "idle",
+      "save": "idle"
+    },
+    "items": {
+      "dns": "idle",
+      "robots": "wip",
+      "crawl": "idle",
+      "browser": "idle",
+      "axe": "idle",
+      "security": "idle",
+      "a11y": "idle",
+      "malware": "idle",
+      "webrisk": "idle",
+      "blocklist": "idle",
+      "lookalike": "idle",
+      "wordpress": "idle",
+      "mail": "idle",
+      "lighthouse": "idle",
+      "cases": "idle",
+      "score": "idle",
+      "sign": "idle",
+      "save": "idle"
+    },
+    "ready": true
+  },
+  "raHTML": "<div class=\"ra ra--lab\" data-skin=\"lab\" role=\"region\" aria-label=\"Browser pass / Lab tries\"><div class=\"rc-host\" style=\"display: block;\"></div></div>",
+  "all": [
+    {
+      "tag": "DIV",
+      "cls": "gate-progress",
+      "id": "",
+      "w": 0,
+      "h": 0,
+      "display": "block"
+    },
+    {
+      "tag": "CANVAS",
+      "cls": "",
+      "id": "",
+      "w": 1400,
+      "h": 744,
+      "display": "block"
+    },
+    {
+      "tag": "CANVAS",
+      "cls": "fx",
+      "id": "",
+      "w": 1400,
+      "h": 701,
+      "display": "block"
+    },
+    {
+      "tag": "DIV",
+      "cls": "rp",
+      "id": "",
+      "w": 629,
+      "h": 474,
+      "display": "block"
+    },
+    {
+      "tag": "DIV",
+      "cls": "ra ra--lab",
+      "id": "",
+      "w": 599,
+      "h": 337,
+      "display": "block"
+    }
+  ],
+  "progressHTML": "<div class=\"rp\" style=\"--p: 1.60;\"><div class=\"rp-top\"><p class=\"rp-num\" aria-hidden=\"true\"><b>1</b><span>%</span></p><div class=\"rp-text\"><p class=\"rp-phase\">Connecting</p><p class=\"rp-beat\"><i class=\"rp-dot is-beat\" aria-hidden=\"true\"></i><span class=\"rp-live\">Live</span><span class=\"rp-ago\">last line 3 s ago</span></p></div><time class=\"rp-clock\" title=\"Elapsed\">00:03</time></div><div class=\"rp-stage\" role=\"progressbar\" aria-label=\"Review progress\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"1\" aria-valuetext=\"0% · Connecting\"><div class=\"rp-tube\"><div class=\"rp-fill\"></div><i class=\"rp-head\"></i><i class=\"rp-bead\" data-i=\"1\" style=\"--at:12%\"></i><i class=\"rp-bead\" data-i=\"2\" style=\"--at:58%\"></i><i class=\"rp-bead\" data-i=\"3\" style=\"--at:72%\"></i><i class=\"rp-bead\" data-i=\"4\" s"
+}

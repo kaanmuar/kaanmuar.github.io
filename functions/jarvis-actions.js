@@ -679,6 +679,19 @@ async function autoRun({ db, now, settings, ops }) {
 		for (const run of failed) {
 			handled.add('ci:' + run.name);
 			if (run.attempt > 1 || (run.branch !== 'main' && !JARVIS_BRANCH.test(run.branch || ''))) continue;
+			// Live Reports (#4444): re-running the cancelled publish job just hits 180m again. Dispatch cards_only
+			// so cards and state.since commit; ensureLiveReportsBatch / a later full run cover social.
+			if (/live reports/i.test(run.name || '') && ops.dispatch && run.path) {
+				await onceOrLater(
+					'rerun-ci',
+					run.name + ' #' + run.id,
+					'Live Reports render timed out before commit; starting a cards-only catch-up on main.',
+					risky('rerun-ci', run.name),
+					{ run: run.id, name: run.name, workflow: run.path, cards_only: true },
+					() => ops.dispatch(run.path, { cards_only: 'true', backup: 'true' })
+				);
+				continue;
+			}
 			if (run.pr) {
 				if (!ops.refreshPr) continue;
 				const refresh = async () => {

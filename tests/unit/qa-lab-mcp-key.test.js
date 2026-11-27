@@ -22,10 +22,11 @@ describe('QA_LAB_MCP_KEY Turnstile exemption (#3480 A)', () => {
 		assert.equal(urlReview.testKeyMatches('short', 'short'), false);
 	});
 
-	it('skips Turnstile in runSoftPreview when the MCP key matches', () => {
+	it('skips Turnstile in runSoftPreview when the MCP key matches; otherwise Siteverify always runs (#4446)', () => {
 		const index = fs.readFileSync(path.join(__dirname, '../../functions/index.js'), 'utf8');
 		assert.match(index, /x-qa-lab-mcp-key/);
 		assert.match(index, /QA_LAB_MCP_KEY/);
-		assert.match(index, /if \(secret && !mcpOk\)/);
+		assert.match(index, /if \(!mcpOk\)/);
+		assert.doesNotMatch(index, /if \(secret && !mcpOk\)/);
 	});
 });
