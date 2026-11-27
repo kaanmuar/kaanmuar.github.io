@@ -50,12 +50,6 @@ async function openUnpaid(page, extra) {
 	await expect(page.locator('#cases .case').first()).toBeVisible();
 }
 
-async function exported(page, id) {
-	await page.locator('#export-toggle').click();
-	const [file] = await Promise.all([page.waitForEvent('download'), page.locator('#' + id).click()]);
-	return fs.readFileSync(await file.path(), 'utf8');
-}
-
 test.describe('An unpaid report is blurred in every section, and its files cut where the blur starts', () => {
 	test('no line longer than a short label is left in the clear outside headings, controls and scores', async ({
 		page,
@@ -152,36 +146,23 @@ test.describe('An unpaid report is blurred in every section, and its files cut w
 		await expect(page.locator('#unlock-offer .offer-local-compare')).toContainText('BrightLocal');
 	});
 
-	test('the JSON and the text file keep the readable opening and cut the rest', async ({ page }) => {
+	test('export on an unpaid report opens the checkout sheet instead of downloading (#4432)', async ({ page }) => {
 		await openUnpaid(page);
-		const card = page.locator('#cases .case:not(.case-sample)').first();
-		const caseId = (await card.locator('.id').textContent()).trim();
-		const shown = (await card.locator('strong .fade-line').evaluate((line) => line.firstChild.nodeValue)).trimEnd();
-		const full = sample.report.cases.find((item) => item.id === caseId);
-		expect(full.title.startsWith(shown)).toBe(true);
-
-		const json = JSON.parse(await exported(page, 'download-json'));
-		const item = json.report.cases.find((one) => one.id === caseId);
-		expect(item.title).toBe(shown + ' …');
-		const strings = [];
-		(function walk(value) {
-			if (typeof value === 'string') strings.push(value);
-			else if (value && typeof value === 'object') Object.values(value).forEach(walk);
-		})(json.report);
-		expect(strings.filter((text) => text.length >= 200 && text.split(/\s+/).length >= 4 && !/ …$/.test(text))).toEqual(
-			[]
-		);
-
-		const text = await exported(page, 'download-text');
-		expect(text).toContain(caseId + ' [' + item.layer + '] ' + shown + ' … — ');
-		expect(text).not.toContain(full.title);
+		await page.locator('#export-toggle').click();
+		const pay = page.locator('#pay');
+		await expect(pay).toBeVisible();
+		await expect(pay.locator('#pay-options .offer')).toHaveCount(1, { timeout: 5000 });
+		await expect(page.locator('#export-menu')).toBeHidden();
 	});
 });
 
-test('a report saved without counts still downloads as text, with its pages counted (#1482)', async ({ page }) => {
+test('a report saved without counts still opens checkout when export is tapped unpaid (#1482, #4432)', async ({
+	page,
+}) => {
 	const report = Object.assign({}, sample.report, { id: ID, counts: undefined });
 	await openUnpaid(page, { report });
 	const read = (report.limits && report.limits.pagesRead) || report.pages.length;
 	expect(read).toBeGreaterThan(0);
-	expect(await exported(page, 'download-text')).toContain('Pages: ' + read + '\n');
+	await page.locator('#export-toggle').click();
+	await expect(page.locator('#pay')).toBeVisible();
 });
