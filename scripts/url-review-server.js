@@ -25,6 +25,7 @@ const fixCheckout = require('../functions/url-review-fix-checkout');
 const fixRereview = require('../functions/url-review-fix-rereview');
 const threats = require('../functions/url-review-threats');
 const fixDiffDesk = require('../functions/url-review-fix-diff-desk');
+const indexnowDeskWire = require('../functions/url-review-indexnow-desk-wire');
 const reviewMap = require('../functions/url-review-map');
 const localSoftQuota = softQuota.memoryStore();
 
@@ -644,6 +645,45 @@ const server = http.createServer(async (req, res) => {
 		}
 		const items = readFixDiffLocal();
 		sendJson(res, 200, { summary: fixDiffDesk.summarize(items), items }, origin, deviceHint);
+		return;
+	}
+	if (req.method === 'POST' && url.pathname === '/desk/fix-diff/indexnow') {
+		if (!deskOperator(req)) {
+			sendJson(res, 401, { error: 'Sign in with the operator account.' }, origin, deviceHint);
+			return;
+		}
+		let inBody = {};
+		try {
+			inBody = await readBody(req);
+		} catch (error) {
+			inBody = {};
+		}
+		const prev = fixDiffLocal.get(inBody.id);
+		const pack = prev ? fixDiffDesk.deskRow(inBody.id, prev) : null;
+		if (!pack) {
+			sendJson(res, 404, { error: 'That fix pack is not saved.' }, origin, deviceHint);
+			return;
+		}
+		const mockRes = {
+			status(code) {
+				this.code = code;
+				return this;
+			},
+			json(body) {
+				sendJson(res, this.code || 200, body, origin, deviceHint);
+			},
+		};
+		await indexnowDeskWire.handleFixDiffIndexNow(
+			{ body: inBody },
+			mockRes,
+			'local-desk',
+			{
+				db: null,
+				env: process.env,
+				fetch: globalThis.fetch,
+				nowMs: Date.now(),
+			}
+		);
 		return;
 	}
 	if (req.method === 'POST' && url.pathname === '/desk/fix-diff') {
