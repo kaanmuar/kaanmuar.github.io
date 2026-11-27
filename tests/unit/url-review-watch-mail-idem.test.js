@@ -42,6 +42,15 @@ test('cronGate: dry-run unless env on; allowlist when set (#4396)', () => {
 	assert.deepEqual(W.cronGate({ env, email: 'agency@client.com' }), { ok: true });
 });
 
+test('isWatchRerun and mailedFromIdem (#4411)', () => {
+	assert.equal(W.isWatchRerun(record), true);
+	assert.equal(W.isWatchRerun({ id: 'x' }), false);
+	assert.equal(W.mailedFromIdem({ ok: false, why: 'dry-run' }), false);
+	assert.equal(W.mailedFromIdem({ ok: true, sent: true }), true);
+	assert.equal(W.mailedFromIdem({ ok: true, sent: false, state: 'duplicate' }), true);
+	assert.equal(W.mailedFromIdem({ ok: true, sent: false, state: 'busy' }), false);
+});
+
 test('listUnsubscribeHeaders and mergeMailHeaders (#4396)', () => {
 	const h = W.listUnsubscribeHeaders('https://x.test/stop?t=1');
 	assert.equal(h['List-Unsubscribe'], '<https://x.test/stop?t=1>');

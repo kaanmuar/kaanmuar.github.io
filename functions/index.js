@@ -2831,6 +2831,7 @@ const fixCheckout = require('./url-review-fix-checkout');
 const fixRereview = require('./url-review-fix-rereview');
 const watchCases = require('./url-review-watch');
 const watchMailDelta = require('./url-review-watch-mail-delta');
+const watchMailIdem = require('./url-review-watch-mail-idem');
 const fixMail = require('./url-review-fix-mail');
 // Review mail goes only to real users: no mail to a test account or its alias, nor a notice for its review (#3799).
 const reviewTest = require('./url-review-test-accounts');
@@ -3113,11 +3114,29 @@ async function mailReportToAsker(record, promise) {
 	const watchPayload = watchMailDelta.mailPayloadAttach(prior, record, record.lang);
 	const pdf = await reportPdfFor(record, watchPayload);
 	const mail = customerMail.reportMail(record, Object.assign({ stopUrl, attached: !!pdf, promise, csatUrl }, watchPayload));
-	const sent = await sendReportMail(
-		record.id,
-		() => sendAskerMail(record.email, mail, stopUrl, 'url-review-report', pdf ? [pdf] : []),
-		!!pdf
-	);
+	const attachments = pdf ? [pdf] : [];
+	let sent;
+	if (watchMailIdem.isWatchRerun(record)) {
+		const idem = await watchMailIdem.sendOnce({
+			db: getFirestore(),
+			record,
+			stopUrl,
+			env: process.env,
+			send: async ({ mergeMailHeaders }) => {
+				const merged = mergeMailHeaders(mail);
+				return sendAskerMail(record.email, merged, stopUrl, 'url-review-report', attachments);
+			},
+		});
+		sent = watchMailIdem.mailedFromIdem(idem);
+		if (sent)
+			await sendReportMail(record.id, () => Promise.resolve(true), !!pdf);
+	} else {
+		sent = await sendReportMail(
+			record.id,
+			() => sendAskerMail(record.email, mail, stopUrl, 'url-review-report', attachments),
+			!!pdf
+		);
+	}
 	if (sent)
 		await mailFixableFollowup(record, stopUrl).catch((error) => console.error('Fixable follow-up failed:', error));
 	return sent;
