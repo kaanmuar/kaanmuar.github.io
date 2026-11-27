@@ -7210,6 +7210,7 @@
 		paintTargeted(report, paid, payload);
 		const offer = document.getElementById('unlock-offer');
 		paintOffer(offer, !paid && !sample);
+		if (payload.softPreview || report.softPreview) payBox.hidden = true;
 		// Soft preview uses Unlock, not the paid reopen quote (#3478).
 		if (!paid && !sample && !payload.softPreview && !(report && report.softPreview)) {
 			loadFullQuote().then((quote) => {
@@ -8093,11 +8094,11 @@
 			host.setAttribute('lang', rc.lang);
 			host.setAttribute('translate', 'no');
 		}
-		if (current.softPreview || report.softPreview) {
+		if ((current.softPreview || report.softPreview) && host.id === 'unlock-offer') {
 			host.innerHTML =
 				'<div class="offer-row">' +
 				'<button type="button" class="offer offer-full" data-offer="soft-unlock" id="soft-unlock-btn"><b>Unlock full site audit</b><span>Sign in and accept the terms to queue a full crawl of this URL.</span></button></div>';
-			const unlock = document.getElementById('soft-unlock-btn');
+			const unlock = host.querySelector('[data-offer="soft-unlock"]');
 			if (unlock)
 				unlock.onclick = () => {
 					const raw = (urlInput.value || report.requestedUrl || report.url || report.host || '')
