@@ -57,7 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-internal data class ReportSection(
+private data class ReportSection(
     val id: String,
     val title: String,
     val score: Int,
@@ -66,7 +66,7 @@ internal data class ReportSection(
     val body: String,
 )
 
-internal val DefaultReportSections = listOf(
+private val DefaultReportSections = listOf(
     ReportSection(
         id = "seo",
         title = "SEO",
@@ -138,9 +138,9 @@ fun ReportScreen(
     targetUrl: String,
     overallScore: Int = 58,
     grade: String = "D",
-    sections: List<ReportSection> = DefaultReportSections,
     onNewReview: () -> Unit,
 ) {
+    val sections = DefaultReportSections
     val expanded = remember {
         mutableStateMapOf<String, Boolean>().apply {
             sections.forEach { put(it.id, false) }
