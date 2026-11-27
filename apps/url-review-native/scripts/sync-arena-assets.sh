@@ -23,17 +23,17 @@ ANDROID="$ROOT/android/app/src/main/assets/arena"
 IOS="$ROOT/ios/URLReview/Arena"
 
 JS_FILES=(
-  qa-review-progress.js
-  qa-review-arena-facts.js
-  qa-review-arena-atlas.js
-  qa-review-arena-motion.js
-  qa-review-console.js
-  qa-review-arena.js
+	qa-review-progress.js
+	qa-review-arena-facts.js
+	qa-review-arena-atlas.js
+	qa-review-arena-motion.js
+	qa-review-console.js
+	qa-review-arena.js
 )
 CSS_FILES=(
-  qa-review-progress.css
-  qa-review-arena.css
-  qa-review-console.css
+	qa-review-progress.css
+	qa-review-arena.css
+	qa-review-console.css
 )
 
 rm -rf "$ANDROID" "$IOS"
@@ -46,12 +46,12 @@ cp "$WEB/js/native-bridge.js" "$ANDROID/js/native-bridge.js"
 cp "$WEB/js/native-bridge.js" "$IOS/js/native-bridge.js"
 
 for f in "${JS_FILES[@]}"; do
-  cp "$REPO/js/$f" "$ANDROID/js/$f"
-  cp "$REPO/js/$f" "$IOS/js/$f"
+	cp "$REPO/js/$f" "$ANDROID/js/$f"
+	cp "$REPO/js/$f" "$IOS/js/$f"
 done
 for f in "${CSS_FILES[@]}"; do
-  cp "$REPO/css/$f" "$ANDROID/css/$f"
-  cp "$REPO/css/$f" "$IOS/css/$f"
+	cp "$REPO/css/$f" "$ANDROID/css/$f"
+	cp "$REPO/css/$f" "$IOS/css/$f"
 done
 cp -R "$REPO/assets/review-arena/v3/." "$ANDROID/assets/review-arena/v3/"
 cp -R "$REPO/assets/review-arena/v3/." "$IOS/assets/review-arena/v3/"
