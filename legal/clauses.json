@@ -1889,18 +1889,6 @@
 			"counselReviewedOn": null
 		},
 		{
-			"id": "national.contact.1b",
-			"kind": "item",
-			"notice": "national",
-			"language": "en",
-			"jurisdiction": "CO",
-			"text": "CV downloads, exports, and shares. Before a visitor downloads, exports, or shares the CV, the page asks for an email address and shows that it is used only to log who took that action. The address, the action (download, export, or share), the format or network, the page, approximate place, referrer, screen size, time zone, and browser are stored in Cloud Firestore. The operator may receive an email when it happens and in daily, weekly, and monthly reports. Purpose: to know who took a copy of the CV. A person can ask qa@carlosandmunoz.com to see, correct, or delete that record. It is kept for 24 months after the action, then due for deletion by the weekly job under Personal data (still in a dry run).",
-			"cites": [],
-			"lastChecked": "2026-11-26",
-			"status": "draft",
-			"counselReviewedOn": null
-		},
-		{
 			"id": "national.contact.2",
 			"kind": "item",
 			"notice": "national",

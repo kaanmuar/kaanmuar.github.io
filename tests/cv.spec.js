@@ -36,7 +36,7 @@ test.describe('CV desktop', () => {
 		const cv = new CVPage(page);
 		await cv.profilePhoto.click();
 		await expect(cv.imageModal).toBeVisible();
-		await page.locator('#image-modal-close').click();
+		await page.locator('.modal-close').click();
 		await expect(cv.imageModal).not.toHaveClass(/visible/);
 	});
 
@@ -167,7 +167,7 @@ test.describe('CV desktop', () => {
 			await download;
 		}
 		await cv.profilePhoto.click();
-		await page.locator('#image-modal-close').click();
+		await page.locator('.modal-close').click();
 		await cv.themeToggle.click();
 		await cv.selectLanguage('es');
 		await cv.selectLanguage('en');
@@ -283,7 +283,7 @@ test.describe('CV desktop', () => {
 		const modal = page.locator('#image-modal');
 		await expect(modal).toHaveAttribute('role', 'dialog');
 		await expect(modal).toHaveAttribute('aria-modal', 'true');
-		await expect(page.locator('#image-modal-close')).toBeFocused();
+		await expect(page.locator('.modal-close')).toBeFocused();
 		await page.keyboard.press('Escape');
 		await expect(modal).not.toHaveClass(/visible/);
 	});

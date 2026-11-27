@@ -49,7 +49,7 @@ function visitRows(visit, grouped) {
 		{ label: 'Accept-Language', value: clip(row.acceptLanguage, 120) },
 		{ label: 'Link', value: linkCode(row.label) || linkFromQuery(row.query) },
 	];
-	if (grouped) rows.push({ label: 'Also', value: grouped + ' more visits in the last hour' });
+	if (grouped) rows.push({ label: 'Also', value: grouped + ' more visits in the last 15 minutes' });
 	return rows;
 }
 
@@ -124,43 +124,6 @@ function reportBody(rows, titleOf) {
 		.slice(0, 12000);
 }
 
-function splitReportBody(realRows, testRows, titleOf) {
-	const parts = [];
-	if (realRows && realRows.length) parts.push('Real people\n\n' + reportBody(realRows, titleOf));
-	else parts.push('Real people\n\nNone');
-	if (testRows && testRows.length) parts.push('Testing\n\n' + reportBody(testRows, titleOf));
-	return parts.join('\n\n').slice(0, 12000);
-}
-
-function leadLine(row) {
-	const place = [row.city, row.region, row.country].filter(Boolean).join(', ');
-	return [
-		bogotaLabel(whenOf(row)),
-		clip(row.email, 120),
-		clip(row.action || row.name, 40),
-		clip(row.label, 40),
-		clip(row.page, 80),
-		place,
-		row.referrerHost ? clip(row.referrerHost, 80) : '',
-		row.screen === 'phone' || row.screen === 'desktop' ? row.screen : '',
-		clip(row.timezone, 60),
-		clip(row.ip, 80),
-		clip(row.userAgent, 180),
-	]
-		.filter(Boolean)
-		.join(' · ');
-}
-
-function leadReportBody(rows) {
-	const list = rows || [];
-	const lines = list.slice(0, 200).map(leadLine);
-	const more = list.length > lines.length ? '… and ' + (list.length - lines.length) + ' more' : '';
-	return ['Downloads, exports, and shares', lines.length ? lines.join('\n') : 'None', more]
-		.filter(Boolean)
-		.join('\n')
-		.slice(0, 12000);
-}
-
 function inboxBody(messages, ratings) {
 	const messageLines = (messages || [])
 		.slice(0, 60)
@@ -192,8 +155,6 @@ module.exports = {
 	visitRows,
 	visitSource,
 	reportBody,
-	splitReportBody,
-	leadReportBody,
 	inboxBody,
 	linkFromQuery,
 };

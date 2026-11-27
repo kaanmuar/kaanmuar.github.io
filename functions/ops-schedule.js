@@ -206,33 +206,15 @@ const JOBS = [
 	{ job: 'emailMonthlyReviewReport', cron: '50 7 1 * *', gap: 31 * 24 + 2, what: 'Monthly URL review report' },
 	{
 		job: 'emailQuarterSiteReport',
-		cron: '0 * * * *',
-		gap: 2,
-		what: 'Hourly CV site report (#4356), only when a real person did something; Real and Testing listed separately',
+		cron: '*/15 * * * *',
+		gap: 1,
+		what: 'Quarter-hour site report, only when something happened',
 	},
 	{
 		job: 'emailQuarterReviewReport',
 		cron: '*/15 * * * *',
 		gap: 1,
 		what: 'Quarter-hour review report, only when a real person ran a review (#4234)',
-	},
-	{
-		job: 'emailDailyCvLeadsReport',
-		cron: '20 7 * * *',
-		gap: 26,
-		what: 'Daily real CV download/export/share leads (#4356)',
-	},
-	{
-		job: 'emailWeeklyCvLeadsReport',
-		cron: '25 7 * * 1',
-		gap: 7 * 24 + 2,
-		what: 'Weekly real CV download/export/share leads (#4356)',
-	},
-	{
-		job: 'emailMonthlyCvLeadsReport',
-		cron: '30 7 1 * *',
-		gap: 31 * 24 + 2,
-		what: 'Monthly real CV download/export/share leads (#4356)',
 	},
 	{ job: 'exportFirestoreWeekly', cron: '0 8 * * 0', gap: 7 * 24 + 2, what: 'Firestore backup' },
 	{

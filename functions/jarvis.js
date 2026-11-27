@@ -1306,18 +1306,7 @@ const MOVED_MAIL = [
 	'ownerRemind',
 ];
 const MAIL_DEFAULTS = Object.assign(
-	{
-		daily: false,
-		gemini: true,
-		watch: false,
-		weekly: true,
-		digest: true,
-		// CV lead digests and instant ping (#4356): on by default so new installs and old settings pick them up.
-		cvLeadInstant: true,
-		cvLeadsDaily: true,
-		cvLeadsWeekly: true,
-		cvLeadsMonthly: true,
-	},
+	{ daily: false, gemini: true, watch: false, weekly: true, digest: true },
 	Object.fromEntries(MOVED_MAIL.map((key) => [key, false]))
 );
 // Settings saved before the digest kept daily and watch on; those two read as the new defaults until saved again.
