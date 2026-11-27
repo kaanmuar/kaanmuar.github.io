@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entry soft-gate · first paint (#4438)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050d11;
+    --phone: #071116;
+    --line: rgba(126, 214, 224, .18);
+    --line2: rgba(126, 214, 224, .38);
+    --text: #e8f3f4;
+    --muted: #8ea8ae;
+    --cyan: #7ef6fb;
+    --mint: #6fe3b1;
+    --coral: #ff5a4a;
+    --gold: #f0c85a;
+    --glass: rgba(7, 17, 22, .62);
+    --font-ui: "Sora", system-ui, sans-serif;
+    --font-display: "Instrument Serif", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font: 400 14px/1.45 var(--font-ui);
+    background:
+      radial-gradient(80% 55% at 15% -5%, rgba(126, 246, 251, .12), transparent 55%),
+      radial-gradient(60% 40% at 90% 10%, rgba(111, 227, 177, .08), transparent 50%),
+      var(--bg);
+  }
+  .deck { max-width: 1180px; margin: 0 auto; padding: 28px 18px 56px; }
+  .ticket { font: 700 11px/1 var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); }
+  h1 { margin: 8px 0 0; font: 400 2rem/1.05 var(--font-display); }
+  .lede { margin: 10px 0 0; max-width: 68ch; color: var(--muted); font-size: 13.5px; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .layout {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: 390px 1fr;
+    gap: 36px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; justify-items: center; }
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    border-radius: 40px;
+    border: 3px solid #2a3540;
+    background: var(--phone);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 36px 90px rgba(0, 0, 0, .55);
+  }
+  .notch {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 30px; background: #05080c; border-radius: 20px; z-index: 8;
+  }
+  .status {
+    position: absolute; top: 16px; left: 24px; right: 24px;
+    display: flex; justify-content: space-between;
+    font: 600 12px/1 var(--font-ui); z-index: 7; pointer-events: none;
+  }
+
+  /* Full-bleed hero plane — product first paint */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+  }
+  .hero-plane {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(5, 13, 17, .35) 0%, rgba(5, 13, 17, .55) 38%, rgba(5, 13, 17, .92) 72%, #050d11 100%),
+      url("../../../assets/url-review-hero/hero-3d-en-safe.png") center 28% / cover no-repeat;
+  }
+  .hero-plane::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(70% 50% at 50% 20%, transparent 0%, rgba(5, 13, 17, .35) 100%);
+    pointer-events: none;
+  }
+
+  .copy {
+    position: relative; z-index: 2;
+    margin-top: 56px;
+    padding: 0 18px 18px;
+    display: flex; flex-direction: column;
+    flex: 1; min-height: 0;
+  }
+  .eyebrow {
+    margin: 0;
+    font: 700 11px/1 var(--font-ui);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .display {
+    margin: 14px 0 0;
+    font: 400 2.05rem/1.02 var(--font-display);
+    letter-spacing: -.01em;
+  }
+  .display .em { color: var(--cyan); font-style: italic; display: block; }
+  .display span { display: block; }
+  .support {
+    margin: 14px 0 0;
+    color: rgba(232, 243, 244, .78);
+    font: 400 13px/1.45 var(--font-ui);
+    max-width: 34ch;
+  }
+
+  /* Soft gate — product #3478 shape, mobile stacked */
+  .stage-start {
+    margin-top: auto;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--line2);
+    background: var(--glass);
+    backdrop-filter: blur(18px) saturate(1.25);
+    -webkit-backdrop-filter: blur(18px) saturate(1.25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 40px rgba(0, 0, 0, .35);
+  }
+  .stage-start-label {
+    display: block;
+    margin: 0 0 10px;
+    font: 650 12.5px/1.3 var(--font-ui);
+    color: var(--text);
+  }
+  .url-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(159, 214, 220, .4);
+    background: rgba(255, 255, 255, .07);
+  }
+  .url-row:focus-within {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(126, 246, 251, .22);
+  }
+  .url-row > span {
+    flex: none;
+    color: rgba(233, 243, 244, .55);
+    font: 500 15px/1 var(--font-ui);
+  }
+  .url-row input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: #f4fafb;
+    font: 500 16px/1.2 var(--font-ui);
+    padding: 14px 8px 14px 2px;
+    outline: none;
+  }
+  .url-row input::placeholder { color: rgba(233, 243, 244, .45); }
+  .run {
+    margin-top: 10px;
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font: 700 14px/1 var(--font-ui);
+    color: #041014;
+    background: linear-gradient(135deg, #9ff9fd, #6fe3b1);
+    cursor: pointer;
+  }
+  .stage-note {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font: 400 11.5px/1.45 var(--font-ui);
+  }
+  .hidden-gate {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px dashed rgba(240, 200, 90, .35);
+    color: var(--gold);
+    font: 600 10px/1.35 var(--font-ui);
+    letter-spacing: .02em;
+    text-align: center;
+    opacity: .85;
+  }
+
+  .facts {
+    position: relative; z-index: 2;
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin: 12px 0 0; padding: 0 18px 22px;
+    list-style: none;
+  }
+  .facts li {
+    font: 600 10px/1.2 var(--font-ui);
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .facts b { color: var(--cyan); margin-right: 4px; }
+
+  /* Annotation panel */
+  .notes h2 {
+    margin: 0 0 14px;
+    font: 400 1.45rem/1.1 var(--font-display);
+  }
+  .callouts { display: flex; flex-direction: column; gap: 12px; }
+  .callout {
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(14, 21, 28, .55);
+  }
+  .callout .n {
+    font: 700 10px/1 var(--font-ui);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 6px;
+  }
+  .callout p { margin: 0; color: var(--muted); font-size: 13px; }
+  .callout p strong { color: var(--text); font-weight: 600; }
+  .callout code {
+    font-size: 11.5px;
+    color: var(--cyan);
+  }
+  .approve {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(111, 227, 177, .35);
+    background: rgba(111, 227, 177, .08);
+  }
+  .approve .n { color: var(--mint); font: 700 10px/1 var(--font-ui); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 8px; }
+  .approve p { margin: 0; font-size: 13.5px; color: var(--text); }
+  .approve ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="deck">
+    <div class="ticket">Design · #4438 · child of #4422 · soft gate #3478</div>
+    <h1>Mobile entry — first paint</h1>
+    <p class="lede">
+      What a mobile user sees the moment they open URL Review on the web
+      (<code>qa-review.html</code> — no separate customer native app).
+      Consent overlay stays <strong>hidden</strong>; soft-gate URL + Run starts the anonymous 1-page preview.
+    </p>
+
+    <div class="layout">
+      <div class="phone" id="phone-entry" aria-label="Mobile entry first paint">
+        <div class="notch"></div>
+        <div class="status"><span>9:41</span><span>5G · 88%</span></div>
+        <div class="screen">
+          <div class="hero-plane" aria-hidden="true"></div>
+          <div class="copy">
+            <p class="eyebrow">QA-lab URL Review</p>
+            <h2 class="display">
+              <span>Find the leaks,</span>
+              <span class="em">breaks and blocks</span>
+              <span>before customers</span>
+              <span>or regulators do.</span>
+            </h2>
+            <p class="support">
+              Phishing and malware lists, hacked-site signs, lookalike domains — deeper than most checkers. Fix at a fixed price; re-review free.
+            </p>
+            <form class="stage-start" id="stage-start" onsubmit="return false">
+              <label class="stage-start-label" for="stage-url">Start with the address of a public page</label>
+              <div class="url-row" id="stage-url-field">
+                <span>https://</span>
+                <input id="stage-url" type="text" inputmode="url" spellcheck="false" autocapitalize="none" autocomplete="off" placeholder="example.com" value="">
+              </div>
+              <button class="run" type="submit">Run</button>
+              <p class="stage-note">Paste a public https page and run. You get real scores and the top finding with no account. Sign in only when you unlock a full site audit.</p>
+              <div class="hidden-gate" title="Not shown on first paint">#gate consent · hidden until unlock / sign-in</div>
+            </form>
+          </div>
+          <ul class="facts">
+            <li><b>21</b>case kinds</li>
+            <li><b>20</b>frameworks</li>
+            <li><b>1</b>address to begin</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <h2>Approval checklist</h2>
+        <div class="callouts">
+          <div class="callout">
+            <div class="n">1 · Surface</div>
+            <p><strong>Mobile web</strong> on <code>qa-review.html</code>, not a separate customer App Store binary. Phone chrome here is for review only.</p>
+          </div>
+          <div class="callout">
+            <div class="n">2 · First paint</div>
+            <p><strong>Full-bleed marketing hero</strong> (product <code>hero-3d-en-safe</code>) + brand eyebrow + display headline. Consent <code>#gate</code> is <code>hidden</code> — not the first thing.</p>
+          </div>
+          <div class="callout">
+            <div class="n">3 · Soft-gate textbox</div>
+            <p>Label <strong>“Start with the address of a public page”</strong>. Prefixed <code>https://</code> + <code>#stage-url</code>, placeholder <code>example.com</code>, <code>inputmode="url"</code>, 16px text (no iOS zoom). On narrow screens: field then full-width <strong>Run</strong>.</p>
+          </div>
+          <div class="callout">
+            <div class="n">4 · Promise under the field</div>
+            <p>Real scores + top finding with <strong>no account</strong>. Sign-in / OAuth / terms wait for unlock (soft gate #3478 / #3523).</p>
+          </div>
+          <div class="callout">
+            <div class="n">5 · After Run</div>
+            <p>Not shown here: product <strong>Lab Tries</strong> arena during the run → frosted StatusCard report → $5 unlock for print/share/export (#4432).</p>
+          </div>
+        </div>
+        <div class="approve">
+          <div class="n">Approve this entry?</div>
+          <p>If yes, product stays hero-first soft-gate (already live). Spearhead-tight entry (textbox as spear tip, less lede) would be a follow-up ticket.</p>
+          <ul>
+            <li>Keep hero-first soft-gate as shipped first paint</li>
+            <li>Or ask for a spearhead-tight alternate mock next</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
