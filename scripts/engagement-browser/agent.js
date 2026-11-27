@@ -387,7 +387,7 @@ function cardFile(task) {
 // owner reply (latest, #2638) first finds the owner's newest post since task.since on their profile (task.url).
 async function act(page, task) {
   const net = NETWORKS[task.network];
-  const fn = task.chain && net && net[task.action + "Comment"] ? task.action + "Comment" : task.action;
+  const fn = task.say && net && net.say ? "say" : task.chain && net && net[task.action + "Comment"] ? task.action + "Comment" : task.action;
   if (!net || !net[fn]) return { ok: false, error: NETWORKS[task.network] ? net.name + " takes no " + task.action + " here." : "Unknown network." };
   if (task.latest && !net.latest) return { ok: false, error: net.name + " cannot find an account's latest post here." };
   try {
@@ -509,11 +509,12 @@ async function run(opts) {
     if (t.card || t.cardError) Object.assign(r, { card: r.card || "text", cardError: r.cardError || t.cardError || "" });
     if (r.retry) c.blocked[t.network] = new Date(Date.now() + HOLD_MS).toISOString();
     if (r.ok) done += 1;
-    await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, pending: !!r.pending, rules: r.rules || "", error: r.error || "", card: r.card || "", cardError: r.cardError || "",
+    await api("engagement-mac-result", { key: t.key, action: t.action, ok: r.ok, url: r.url || "", reaction: r.reaction || "", retry: !!r.retry, already: !!r.already, members: r.members || 0, pending: !!r.pending, rules: r.rules || "", error: r.error || "", card: r.card || "", cardError: r.cardError || "", botAdd: r.botAdd || "", botError: r.botError || "",
       target: r.target || null, none: !!r.none, mentions: r.mentions || [], extras: r.extras || null }).catch((error) => log(error.message));
     const linked = ((r.mentions || []).length ? ", mentions " + r.mentions.filter((m) => m.linked).length + " linked of " + r.mentions.length : "")
       + (r.extras ? ", " + Object.entries(r.extras).map(([k, v]) => k + " " + v).join(", ") : "");
-    log(NETWORKS[t.network].name + " " + t.action + " " + ((r.target || {}).url || t.url) + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + linked + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
+    const botNote = t.action === "join" && r.botAdd ? "; bot " + r.botAdd : "";
+    log(NETWORKS[t.network].name + " " + t.action + " " + ((r.target || {}).url || t.url) + ": " + (r.ok && t.action === "join" ? (r.already ? "already in it" : "joined") + (r.members ? " (" + r.members + " members)" : "") + botNote : r.ok ? "done" + (r.reaction ? " (" + r.reaction + ")" : "") + linked + (r.card ? ", card " + r.card + (r.cardError ? " (" + r.cardError + ")" : "") : "") : r.already ? "we had already replied (" + r.url + "), not sent" : r.error + (r.shot ? " (" + r.shot + ")" : "")));
     await pause(25000, 70000);
   };
   // fn(page, k) for each of a profile's networks in one minimized Chrome; a Chrome that fails costs only its networks.

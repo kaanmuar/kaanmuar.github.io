@@ -381,3 +381,41 @@ test("Reddit listings become posts, leaving out NSFW, stickied, locked, removed 
 	assert.equal(got[0].url, 'https://www.reddit.com/r/QualityAssurance/comments/a/x/');
 	assert.deepEqual(got[0].metrics, { likes: 12, replies: 4, reposts: 0, views: 0 });
 });
+
+test('Telegram join tasks carry the bot; needs_admin queues a Jarvis admin ask', async () => {
+	const T = require('../../functions/telegram-join-bot.js');
+	const db = await paired(true);
+	const key = E.keyOf('telegram', 'qa_testers');
+	await db.collection('engagement_joins').doc(key).set({
+		network: 'telegram',
+		id: 'qa_testers',
+		name: 'QA Testers',
+		url: 'https://t.me/qa_testers',
+		lang: 'en',
+		score: 9,
+		status: 'found',
+		members: 5000,
+	});
+	await db
+		.collection('engagement_private')
+		.doc('mac')
+		.set({ joinsFrom: { telegram: ago(30 * 24) }, tokenHash: M.hash(TOKEN), pairedAt: ago(1) });
+	const q = await Joins.queue(deps(db, { env: { TELEGRAM_BOT: 'qalab_live_bot' } }), E.settings({ live: true }), [
+		'telegram',
+	]);
+	assert.equal(q.tasks.length, 1);
+	assert.equal(q.tasks[0].bot, 'qalab_live_bot');
+	await Joins.result(deps(db, { env: { TELEGRAM_BOT: 'qalab_live_bot' } }), {
+		key,
+		action: 'join',
+		ok: true,
+		members: 5000,
+		botAdd: 'needs_admin',
+	});
+	const join = db.data.get('engagement_joins/' + key);
+	assert.equal(join.status, 'joined');
+	assert.equal(join.botAdd, 'needs_admin');
+	assert.ok(join.botAskAt);
+	const postKey = E.keyOf('telegram', 'qa_testers/bot-ask');
+	assert.equal(db.data.get('engagement_posts/' + postKey).campaign, T.CAMPAIGN);
+});
