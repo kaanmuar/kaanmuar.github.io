@@ -568,9 +568,5 @@
   "a11y-labels",
   "a11y-labels"
  ],
- "socialPending": {
-  "batch": "auto-2026-11-27",
-  "count": 4,
-  "at": "2026-11-27T18:17:33.010Z"
- }
+ "socialPending": null
 }

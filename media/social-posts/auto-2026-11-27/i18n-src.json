@@ -1,0 +1,111 @@
+{
+ "ui": {
+  "tryThis": "Try this",
+  "tip": "Tip",
+  "guided": "Guided tour",
+  "never": "Never runs your tests",
+  "end": "Let your page do the talking.",
+  "endNote": "How a public-page review works, step by step.",
+  "why": "Why it matters",
+  "more": "Did you know?",
+  "strongest": "Strongest area",
+  "weakest": "Weakest area"
+ },
+ "clips": {
+  "u-decathlon-com-py": {
+   "lang": "en",
+   "strings": {
+    "title.0": "decathlon.com.py: 58.",
+    "title.1": "*The gap: form labels.*",
+    "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 120 form controls have no label.",
+    "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+    "fixLines.0": "// FM-01: Fields on decathlon.com.py have labels",
+    "fixLines.1": "await page.goto(BASE + \"/\");",
+    "fixLines.2": "expect(found).toBe(0);",
+    "caseId": "FM-01",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "decathlon.com.py · 20 pages analyzed · 27 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 120 form controls have no label.\n\nApply this: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.\n\nOne automated analysis of public pages on 27 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.\n\nRead the complete report: https://carlosandmunoz.com/qa-review.html?live=u-decathlon-com-py&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-decathlon-com-py\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #DevOps #SoftwareTesting #QA #Forms #A11y #Coding #Programming #DigitalAccessibility #QAEngineer #UXDesign #QAlab"
+   }
+  },
+  "u-cng-edu": {
+   "lang": "es",
+   "strings": {
+    "title.0": "cng.edu: 51.",
+    "title.1": "*The gap: ARIA roles.*",
+    "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.",
+    "action": "Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.",
+    "fixLines.0": "// Gap: Certain ARIA roles must be contained by…",
+    "fixLines.1": "Use native HTML elements first. When you use ARIA roles, nest them the w",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "cng.edu · 20 pages analyzed · 27 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must be contained by particular parents.\n\nTakeaway: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.\n\nOne automated analysis of public pages on 27 Nov 2026, requested through QA-lab URL Review. A baseline, not a ruling.\n\nRead the complete report: https://carlosandmunoz.com/qa-review.html?live=u-cng-edu&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cng-edu\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#Accessibility #AI #DevOps #QA #ARIA #A11y #LearnOnYouTube #TechTips #InclusiveDesign #Testing #DigitalAccessibility #QAlab"
+   }
+  },
+  "u-co-computrabajo-com": {
+   "lang": "pt",
+   "strings": {
+    "title.0": "co.computrabajo.com: 62.",
+    "title.1": "*The gap: the https redirect.*",
+    "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.",
+    "action": "Redirect every http request to https with one permanent 301, then add HSTS.",
+    "fixLines.0": "// SEC-01: http://co.computrabajo.com/ redirects…",
+    "fixLines.1": "expect([301, 302, 307, 308]).toContain(res.status());",
+    "fixLines.2": "expect(res.headers().location || \"\").toMatch(/^https:\\/\\//);",
+    "caseId": "SEC-01",
+    "counter": "Requested review",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "co.computrabajo.com · 20 pages analyzed · 27 Nov 2026",
+    "cat.label": "Real run · requested",
+    "cap.youtube": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But plain http serves the site without redirecting.\n\nApply this: Redirect every http request to https with one permanent 301, then add HSTS.\n\nOne automated analysis of public pages on 27 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.\n\nOpen the full report: https://carlosandmunoz.com/qa-review.html?live=u-co-computrabajo-com&utm_source=youtube&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nRequested reviews · QA-lab URL Review\n\n#WebSecurity #SoftwareTesting #Automation #QA #HTTPS #Redirects #Coding #Programming #OWASP #SEOTips #QAEngineer #QAlab"
+   }
+  },
+  "u-transavia-com": {
+   "lang": "de",
+   "strings": {
+    "title.0": "transavia.com: 68.",
+    "title.1": "*The gap: tap targets.*",
+    "body": "Every page has a title, and AI answer and search crawlers may read the start page. But all touch targets must be 24px large, or leave sufficient space.",
+    "action": "Make every link and button at least 24 by 24 px, with space between them.",
+    "fixLines.0": "// MB-01: www.transavia.com holds its layout at…",
+    "fixLines.1": "await page.setViewportSize({ width: 390, height: 844 });",
+    "fixLines.2": "await page.goto(BASE + \"/\");",
+    "fixLines.3": "expect(overflow).toBeLessThanOrEqual(1);",
+    "caseId": "MB-01",
+    "counter": "Country sweep",
+    "actionLabel": "Lesson",
+    "footRight": "Analyzed on 27 Nov 2026",
+    "visual.areas.0.0": "SEO",
+    "visual.areas.1.0": "GEO",
+    "visual.areas.2.0": "Analytics",
+    "visual.areas.3.0": "Security",
+    "visual.areas.5.0": "Speed",
+    "visual.note": "transavia.com · 20 pages analyzed · 27 Nov 2026",
+    "cat.label": "Real run · national",
+    "cap.youtube": "Every page has a title, and AI answer and search crawlers may read the start page. But all touch targets must be 24px large, or leave sufficient space.\n\nCarry this forward: Make every link and button at least 24 by 24 px, with space between them.\n\nOne automated analysis of public pages on 27 Nov 2026, one of the most visited sites in its country, from QA-lab URL Review's country sweep. A baseline, not a ruling.\n\nRead the complete report: https://carlosandmunoz.com/qa-review.html?live=u-transavia-com&utm_source=youtube&utm_medium=social&utm_campaign=country-sweep&utm_content=u-transavia-com\n\nReview your own site: https://carlosandmunoz.com/qa-review.html\n\nCountry sweep · QA-lab URL Review\n\n#Accessibility #JavaScript #Programming #QA #MobileUX #A11y #TechTips #WebDevelopment #UXDesign #WebDesign #SDET #QAlab"
+   }
+  }
+ }
+}

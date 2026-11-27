@@ -1,0 +1,23 @@
+Text,Image URL,Tags,Posting Time
+"decathlon.com.py: 58. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce…
+
+carlosandmunoz.com/qa-review?live=u-decathlon-com-py&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-decathlon-com-py","https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/01-u-decathlon-com-py.jpg","","2026-11-28 08:35"
+"cng.edu: 51. The gap: ARIA roles.
+
+Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+carlosandmunoz.com/qa-review?live=u-cng-edu&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-cng-edu
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/02-u-cng-edu.jpg","","2026-11-29 13:25"
+"co.computrabajo.com: 62. The gap: the https redirect.
+
+Redirect every http request to https with one permanent 301, then add…
+
+carlosandmunoz.com/qa-review?live=u-co-computrabajo-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-co-computrabajo-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/03-u-co-computrabajo-com.jpg","","2026-11-30 11:35"
+"transavia.com: 68. The gap: tap targets.
+
+Make every link and button at least 24 by 24 px, with space between them.
+
+carlosandmunoz.com/qa-review?live=u-transavia-com&utm_source=x&utm_medium=social&utm_campaign=country-sweep&utm_content=u-transavia-com
+#Accessibility #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/04-u-transavia-com.jpg","","2026-12-01 09:50"
