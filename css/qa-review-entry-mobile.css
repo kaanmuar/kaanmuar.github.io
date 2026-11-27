@@ -1,0 +1,168 @@
+/* Mobile soft-gate hero-first first paint (#4462 / design #4439).
+   Uses :has(#stage-start) so layout applies with async CSS — no JS class required for paint. */
+
+@media (max-width: 800px) {
+	.wire:has(+ section.stage #stage-start) {
+		display: none;
+	}
+
+	section.stage:has(#stage-start) {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-end;
+		min-height: max(100svh, 640px);
+		min-height: max(100dvh, 640px);
+		padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
+		overflow: hidden;
+	}
+
+	section.stage:has(#stage-start) > .fx,
+	section.stage:has(#stage-start) > .stage-hero,
+	section.stage:has(#stage-start) > .stage-hero-still {
+		inset: 0;
+		height: 100%;
+		bottom: 0;
+	}
+
+	section.stage:has(#stage-start).fx-fallback:not(.stage-hero-still-on)::after {
+		top: 18%;
+		right: auto;
+		left: 50%;
+		width: min(200px, 52vw);
+		transform: translate(-50%, -50%);
+		opacity: 0.35;
+	}
+
+	section.stage:has(#stage-start)::before {
+		background: linear-gradient(
+			180deg,
+			rgba(7, 17, 22, 0.35) 0%,
+			rgba(7, 17, 22, 0.52) 22%,
+			rgba(7, 17, 22, 0.86) 58%,
+			#071116 100%
+		);
+	}
+
+	section.stage:has(#stage-start) .stage-copy {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		max-width: none;
+		width: 100%;
+		padding: calc(env(safe-area-inset-top, 0px) + 56px) 2px 0;
+		box-sizing: border-box;
+	}
+
+	.entry-brand-row,
+	html.entry-mobile .entry-brand-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 40px;
+		margin: 0 0 4px;
+		padding: 4px 8px;
+		border-radius: 12px;
+		background: linear-gradient(90deg, rgba(5, 13, 17, 0.72), rgba(5, 13, 17, 0.15) 72%, transparent);
+	}
+
+	.entry-brand-mark {
+		flex: none;
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		box-shadow: 0 0 0 1px rgba(126, 246, 251, 0.35), 0 8px 24px rgba(0, 0, 0, 0.4);
+	}
+
+	section.stage:has(#stage-start) .stage-copy > .eyebrow,
+	section.stage:has(#stage-start) .entry-brand-row .eyebrow {
+		margin: 0;
+	}
+
+	section.stage:has(#stage-start) #studio-title {
+		margin: 12px 0 0;
+		padding: 10px 12px 12px;
+		border-radius: 14px;
+		font-size: clamp(1.85rem, 9.2vw, 2.35rem);
+		line-height: 0.98;
+		background: linear-gradient(180deg, rgba(5, 13, 17, 0.55), rgba(5, 13, 17, 0.78));
+		box-shadow: 0 0 40px 18px rgba(5, 13, 17, 0.45);
+		text-shadow: 0 2px 18px rgba(5, 13, 17, 0.85);
+	}
+
+	section.stage:has(#stage-start) .stage-copy > .lede {
+		display: none;
+	}
+
+	section.stage:has(#stage-start) .entry-phrase-dots {
+		margin-top: 8px;
+	}
+
+	section.stage:has(#stage-start) #stage-start {
+		order: 50;
+		margin-top: auto;
+		max-width: none;
+		padding: 14px;
+		border-radius: 18px;
+		border: 1px solid rgba(159, 214, 220, 0.38);
+		background: rgba(7, 17, 22, 0.62);
+		-webkit-backdrop-filter: blur(18px) saturate(1.25);
+		backdrop-filter: blur(18px) saturate(1.25);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px rgba(0, 0, 0, 0.35);
+	}
+
+	section.stage:has(#stage-start) .stage-start-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	section.stage:has(#stage-start) .stage-start .btn-primary {
+		width: 100%;
+		margin-top: 10px;
+		padding: 14px 18px;
+		font-size: 14px;
+		font-weight: 700;
+		border-radius: 12px;
+	}
+
+	section.stage:has(#stage-start) .stage-start-note {
+		margin-top: 10px;
+		font-size: 11.5px;
+		line-height: 1.45;
+		color: rgba(169, 190, 194, 0.92);
+	}
+
+	section.stage:has(#stage-start) .facts {
+		order: 60;
+		gap: 8px 14px;
+		margin: 14px 0 0;
+		padding-bottom: 4px;
+	}
+
+	section.stage:has(#stage-start) .facts b {
+		font-size: 1.45rem;
+	}
+
+	section.stage:has(#stage-start) .facts span {
+		font-size: 10px;
+		letter-spacing: 0.06em;
+	}
+
+	section.stage:has(#stage-start) .stage-links {
+		order: 70;
+		display: none;
+	}
+}
+
+@media (min-width: 801px) {
+	.entry-brand-row {
+		display: contents;
+	}
+
+	.entry-brand-mark {
+		display: none;
+	}
+}
