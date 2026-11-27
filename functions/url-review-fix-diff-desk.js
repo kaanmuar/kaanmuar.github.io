@@ -7,6 +7,8 @@
 
 const fixDiff = require('./url-review-fix-diff');
 const outcomesSnapshot = require('./url-review-outcomes-snapshot');
+const deskOutcomes = require('./url-review-fix-diff-desk-outcomes');
+const fixRereview = require('./url-review-fix-rereview');
 
 const COLLECTION = 'url_review_fix_diff_packs';
 const STATUSES = ['pending', 'approved', 'rejected'];
@@ -103,10 +105,25 @@ function summarize(items) {
 	return { total: (items || []).length, byStatus: counts };
 }
 
-async function deskRows(db) {
+async function deskRows(db, deps) {
 	if (!db || typeof db.collection !== 'function') return [];
 	const snap = await db.collection(COLLECTION).orderBy('createdAt', 'desc').limit(100).get();
-	return snap.docs.map((doc) => deskRow(doc.id, doc.data()));
+	const rows = snap.docs.map((doc) => deskRow(doc.id, doc.data()));
+	if (!deps || !deps.enrich) return rows;
+	return Promise.all(rows.map((pack) => deskOutcomes.enrichPackRow(db, pack, deps)));
+}
+
+async function findRereviewForPack(db, packId) {
+	if (!db || !packId) return null;
+	try {
+		const id = 'pack-' + String(packId).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60);
+		const snap = await db.collection(fixRereview.COLLECTION).doc(id).get();
+		if (!snap.exists) return null;
+		const data = snap.data() || {};
+		return data.rereview || null;
+	} catch (error) {
+		return null;
+	}
 }
 
 function decisionPatch(before, body, operator, nowMs) {
@@ -153,16 +170,67 @@ async function deskDecide(req, res, operator, deps) {
 	if (patch.error) return fail(res, 400, patch.error);
 	await ref.update(patch);
 	const merged = Object.assign({}, before, patch);
+	let captureResult = null;
 	try {
-		await outcomesSnapshot.captureOnPackApproved(deps.db, Object.assign({ id }, merged), {
+		let report = deps && deps.report;
+		if (!report && merged.reportId && deps.db) report = await deskOutcomes.loadReportRow(deps.db, merged.reportId);
+		captureResult = await outcomesSnapshot.captureOnPackApproved(deps.db, Object.assign({ id }, merged), {
 			env: (deps && deps.env) || process.env,
 			hooks: (deps && deps.hooks) || {},
-			report: deps && deps.report,
+			report,
 		});
 	} catch (error) {
 		console.error('Outcomes snapshot baseline failed:', error);
+		captureResult = { enabled: true, ok: false, reason: 'error', error: String(error && error.message).slice(0, 120) };
 	}
-	res.status(200).json({ ok: true, pack: deskRow(id, merged) });
+	const baseline =
+		captureResult && captureResult.ok
+			? await deskOutcomes.loadBaseline(deps.db, id)
+			: merged.status === 'approved'
+				? await deskOutcomes.loadBaseline(deps.db, id)
+				: null;
+	const outcomes = deskOutcomes.outcomesView({
+		env: (deps && deps.env) || process.env,
+		hooks: (deps && deps.hooks) || {},
+		captureResult,
+		baseline,
+		packStatus: merged.status,
+		baselineId: id,
+	});
+	let rereview = null;
+	try {
+		rereview = await findRereviewForPack(deps.db, id);
+	} catch (error) {
+		rereview = null;
+	}
+	const verify = deskOutcomes.verifyView(Object.assign({ id }, merged), { rereview });
+	const pack = Object.assign(deskRow(id, merged), { outcomes, verify });
+	res.status(200).json({ ok: true, pack, outcomes, verify });
+}
+
+async function deskQueueRereview(req, res, operator, deps) {
+	const body = req.body || {};
+	const id = cleanId(body.id);
+	if (!id) return fail(res, 400, 'Which fix pack?');
+	const ref = deps.db.collection(COLLECTION).doc(id);
+	const snap = await ref.get();
+	if (!snap.exists) return fail(res, 404, 'That fix pack is not saved.');
+	const row = snap.data() || {};
+	if (row.status !== 'approved') return fail(res, 400, 'Only approved packs can queue a re-review.');
+	const out = await deskOutcomes.queueOperatorRereview(deps.db, Object.assign({ id }, deskRow(id, row)), operator, deps);
+	if (out.error) return fail(res, out.rereview ? 409 : 400, out.error);
+	let rereview = null;
+	try {
+		rereview = await findRereviewForPack(deps.db, id);
+	} catch (error) {
+		rereview = null;
+	}
+	res.status(200).json({
+		ok: true,
+		id: out.id,
+		rereview,
+		verify: deskOutcomes.verifyView(Object.assign({ id }, deskRow(id, row)), { rereview }),
+	});
 }
 
 async function enqueue(db, body, nowMs) {
@@ -182,5 +250,7 @@ module.exports = {
 	deskRows,
 	decisionPatch,
 	deskDecide,
+	deskQueueRereview,
+	findRereviewForPack,
 	enqueue,
 };

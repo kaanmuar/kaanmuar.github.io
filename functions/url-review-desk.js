@@ -478,6 +478,14 @@ const STYLE = `
     .fix-diff-st { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #e3f5f6; color: var(--teal); font: bold 12px Arial, sans-serif; }
     .fix-diff-st[data-status="pending"] { background: #fff1d6; color: #7a4d00; }
     .fix-diff-st[data-status="rejected"] { background: #fde2e2; color: #8c1d1d; }
+    .fix-diff-outcomes { margin: 10px 0; padding: 10px 12px; border-left: 4px solid #c5e6e8; background: #f4fbfc; font: 14px/1.45 Arial, sans-serif; }
+    .fix-diff-outcomes[data-tone="warn"] { border-color: #e8c76a; background: #fff9eb; }
+    .fix-diff-outcomes[data-tone="good"] { border-color: #7ab8a0; background: #edf8f2; }
+    .fix-diff-outcomes b { display: block; margin-bottom: 4px; }
+    .fix-diff-verify { margin: 12px 0; }
+    .fix-diff-verify ul { margin: 6px 0 0; padding-left: 1.2rem; }
+    .fix-diff-verify li { margin: 4px 0; }
+    .fix-diff-rereview { margin-top: 8px; }
     pre.log { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #0b1418; color: #d6ecef; padding: 10px 12px; border-radius: 8px; }
     .threat-lvl { display: inline-block; padding: 2px 8px; border-radius: 999px; font: bold 11px Arial, sans-serif; text-transform: uppercase; letter-spacing: .04em; background: #e3f5f6; color: var(--teal); }
     .threat-lvl[data-level="critical"] { background: #fde2e2; color: #8c1d1d; }
@@ -796,7 +804,7 @@ const PAGE = `<!DOCTYPE html>
     </section>
     <section id="fix-diff-block">
       <h2>Surgical fix packs</h2>
-      <p class="empty">Git diffs and CMS draft payloads queued from outcome fix packs (#4364). Preview only — Approve or Reject records your decision; nothing is merged or published automatically.</p>
+      <p class="empty">Git diffs and CMS draft payloads queued from outcome fix packs (#4364). Preview only — Approve or Reject records your decision; nothing is merged or published automatically. After approve, outcomes snapshot status (when URL_REVIEW_OUTCOMES_SNAPSHOT is on) and the path to a free re-review / before-after appear below.</p>
       <div class="stats" id="fix-diff-stats"></div>
       <div class="tools">
         <select id="fix-diff-status" aria-label="Fix pack status">
@@ -1708,6 +1716,62 @@ const PAGE = `<!DOCTYPE html>
       return item.path || "—";
     }
 
+    function paintFixDiffOutcomes(picked, parent) {
+      const panel = Object.assign(document.createElement("div"), { className: "fix-diff-outcomes", hidden: true });
+      const o = picked && picked.outcomes;
+      if (o) {
+        panel.hidden = false;
+        panel.dataset.tone = o.tone || "neutral";
+        panel.appendChild(node("b", o.label || "Outcomes"));
+        panel.appendChild(document.createTextNode(o.detail || ""));
+      }
+      parent.appendChild(panel);
+    }
+
+    function paintFixDiffVerify(picked, parent) {
+      const v = picked && picked.verify;
+      if (!v || picked.status !== "approved") return;
+      const block = document.createElement("div");
+      block.className = "fix-diff-verify";
+      block.appendChild(node("h2", v.title || "Verify fix → outcomes"));
+      const list = document.createElement("ul");
+      (v.steps || []).forEach((step) => {
+        const li = document.createElement("li");
+        if (step.href) {
+          const a = Object.assign(document.createElement("a"), { href: step.href, target: "_blank", rel: "noopener", textContent: step.label });
+          li.appendChild(a);
+          if (step.detail) li.appendChild(document.createTextNode(" — " + step.detail));
+        } else {
+          li.textContent = step.label + (step.detail ? " — " + step.detail : "");
+        }
+        list.appendChild(li);
+      });
+      block.appendChild(list);
+      const rr = v.rereview;
+      if (rr) {
+        const line = node("p", rr.status === "done"
+          ? "Re-review " + when(rr.at) + (rr.result ? ": " + rr.result.fixed + " of " + (rr.result.items && rr.result.items.length) + " fixed." : ".")
+          : rr.status === "failed" ? "Re-review failed " + when(rr.at) + (rr.error ? ": " + rr.error : "")
+          : "Re-review " + rr.status + " since " + when(rr.at));
+        line.className = "meta fix-diff-rereview";
+        block.appendChild(line);
+        if (rr.reportId) {
+          const fresh = Object.assign(document.createElement("a"), { href: "https://carlosandmunoz.com/qa-review.html?report=" + encodeURIComponent(rr.reportId), target: "_blank", rel: "noopener", textContent: " Open the new report" });
+          line.appendChild(fresh);
+        }
+      }
+      if (v.canQueue && (!rr || rr.status === "failed")) {
+        const row = document.createElement("div");
+        row.className = "fix-edit";
+        const go = Object.assign(document.createElement("button"), { type: "button", textContent: "Queue free re-review" });
+        const said = Object.assign(document.createElement("span"), { className: "meta" });
+        go.addEventListener("click", () => queueFixDiffRereview(picked.id, go, said, () => { loadFixDiffPacks(); }));
+        row.append(go, said);
+        block.appendChild(row);
+      }
+      parent.appendChild(block);
+    }
+
     function renderFixDiffPacks() {
       const sum = fixDiffData.summary || {};
       const by = (sum.byStatus || {});
@@ -1808,7 +1872,9 @@ const PAGE = `<!DOCTYPE html>
         [noteIn, approveBtn, rejectBtn, msg].forEach((el) => form.appendChild(el));
         fixDiffDetailEl.appendChild(form);
       }
+      paintFixDiffOutcomes(picked, fixDiffDetailEl);
       if (picked.status === "approved") {
+        paintFixDiffVerify(picked, fixDiffDetailEl);
         const ixForm = document.createElement("form");
         ixForm.className = "fix-edit";
         const keyIn = Object.assign(document.createElement("input"), { type: "text", placeholder: "Customer IndexNow key (hex)", autocomplete: "off" });
@@ -1820,6 +1886,22 @@ const PAGE = `<!DOCTYPE html>
         [keyIn, pingBtn, ixMsg].forEach((el) => ixForm.appendChild(el));
         fixDiffDetailEl.appendChild(ixForm);
       }
+    }
+
+    async function queueFixDiffRereview(id, button, said, done) {
+      button.disabled = true;
+      said.textContent = "";
+      const res = await fetch(deskBase() + "/desk/fix-diff/rereview", {
+        method: "POST",
+        credentials: "include",
+        headers: await deskHeaders(),
+        body: JSON.stringify({ id: id })
+      });
+      button.disabled = false;
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) { said.textContent = out.error || "Could not queue."; return; }
+      said.textContent = "Re-review queued.";
+      if (typeof done === "function") done();
     }
 
     async function pingFixDiffIndexNow(id, key, button, said) {
@@ -1850,7 +1932,19 @@ const PAGE = `<!DOCTYPE html>
       button.disabled = false;
       const out = await res.json().catch(() => ({}));
       if (!res.ok) { said.textContent = out.error || "Could not save."; return; }
-      said.textContent = decision === "approve" ? "Approved (not published)" : "Rejected";
+      if (decision === "approve") {
+        const oc = out.outcomes;
+        said.textContent = "Approved (not published)" + (oc && oc.label ? " · " + oc.label : "");
+        if (out.pack && out.pack.id) {
+          selectedFixDiff = out.pack.id;
+          const merged = (fixDiffData.items || []).map((item) => (item.id === out.pack.id ? out.pack : item));
+          fixDiffData = Object.assign({}, fixDiffData, { items: merged });
+          renderFixDiffPacks();
+          return;
+        }
+      } else {
+        said.textContent = "Rejected";
+      }
       loadFixDiffPacks();
     }
 

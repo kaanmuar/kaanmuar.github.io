@@ -644,7 +644,13 @@ const server = http.createServer(async (req, res) => {
 			return;
 		}
 		const items = readFixDiffLocal();
-		sendJson(res, 200, { summary: fixDiffDesk.summarize(items), items }, origin, deviceHint);
+		const deskOutcomes = require('../functions/url-review-fix-diff-desk-outcomes');
+		const enriched = items.map((pack) => {
+			const outcomes = deskOutcomes.outcomesView({ env: process.env, packStatus: pack.status });
+			const verify = deskOutcomes.verifyView(pack, {});
+			return Object.assign({}, pack, { outcomes, verify });
+		});
+		sendJson(res, 200, { summary: fixDiffDesk.summarize(enriched), items: enriched }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'POST' && url.pathname === '/desk/fix-diff/indexnow') {
@@ -707,8 +713,17 @@ const server = http.createServer(async (req, res) => {
 			sendJson(res, 400, { error: patch.error }, origin, deviceHint);
 			return;
 		}
-		fixDiffLocal.set(fdBody.id, Object.assign({}, prev, patch));
-		sendJson(res, 200, { ok: true, pack: fixDiffDesk.deskRow(fdBody.id, fixDiffLocal.get(fdBody.id)) }, origin, deviceHint);
+		const merged = Object.assign({}, prev, patch);
+		fixDiffLocal.set(fdBody.id, merged);
+		const deskOutcomes = require('../functions/url-review-fix-diff-desk-outcomes');
+		const pack = fixDiffDesk.deskRow(fdBody.id, merged);
+		const outcomes = deskOutcomes.outcomesView({
+			env: process.env,
+			captureResult: null,
+			packStatus: pack.status,
+		});
+		const verify = deskOutcomes.verifyView(pack, {});
+		sendJson(res, 200, { ok: true, pack: Object.assign(pack, { outcomes, verify }), outcomes, verify }, origin, deviceHint);
 		return;
 	}
 	if (req.method === 'GET' && url.pathname === '/desk/data') {
