@@ -322,6 +322,35 @@ test('the rival sweep runs after the country sweep starts and before the morning
 	assert.equal(ops.budget('rivalsPerDay', {}), 4);
 });
 
+test('webmail, platforms, government hosts and github.io pages are not rivals', () => {
+	const noise = [
+		'gmail.com',
+		'hotmail.com',
+		'live.com',
+		'chatgpt.com',
+		'lnkd.in',
+		'tumblr.com',
+		'ed.gov',
+		'virginia.gov',
+		'sede.gob.es',
+		'user.github.io',
+	];
+	for (const host of noise) assert.equal(rivals.noisy(core.registrable(host)), true, host);
+	const tally = rivals.tallyResults(
+		[
+			{
+				title: 'example.com competitors',
+				url: 'https://www.similarweb.com/x',
+				description: noise.join(', ') + ', rival-shop.co',
+			},
+		],
+		'example.com',
+		new Map(),
+		core.registrable
+	);
+	assert.deepEqual([...tally.keys()], ['rival-shop.co']);
+});
+
 test('app-piracy, gambling and directory sites are never competitors, and a result only hosted somewhere does not count', () => {
 	const tally = rivals.tallyResults(
 		[

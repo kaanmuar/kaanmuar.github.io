@@ -22,10 +22,6 @@ const { parseCsv } = require('./sweep-outreach');
 const PROJECT = process.env.GCLOUD_PROJECT || 'carlosm-interactive-cv';
 const FN = path.join(__dirname, '..', 'functions');
 const OWNER = /@carlosandmunoz\.com$/i;
-// Search results name these next to almost any site; none of them is anyone's competitor.
-const PLATFORM =
-	/^(gmail|googlemail|hotmail|outlook|live|yahoo|icloud|aol|proton|chatgpt|openai|tumblr|lnkd|medium|blogspot|wordpress|wix|substack|github|t|bit|tinyurl)\.[a-z.]+$/;
-const PUBLIC = /(^|\.)(gov|gob|mil|int)(\.[a-z]{2})?$|unglobalcompact\.org$/;
 const TLD_CC = { uk: 'gb' };
 
 function arg(name, fallback) {
@@ -105,13 +101,15 @@ function candidates(docs, skip) {
 			if (askers.has(host)) out('an asker');
 			else if (
 				rivals.NOISE.some((item) => host === item || host.endsWith('.' + item)) ||
-				PLATFORM.test(host) ||
+				rivals.PLATFORM.test(host) ||
+				host === 'github.io' ||
+				host.endsWith('.github.io') ||
 				rivals.shady(host) ||
 				sweep.BLOCKED.test(host) ||
 				sweep.RESERVED.test(host)
 			)
 				out('platform');
-			else if (PUBLIC.test(host)) out('public body');
+			else if (rivals.PUBLIC.test(host)) out('public body');
 			else if (rank && rank <= sweep.GLOBAL_RANK) out('global site');
 			else if (skip.has(host) || skip.has(sweep.suffixRegistrable(host))) out('already in outreach');
 			else {

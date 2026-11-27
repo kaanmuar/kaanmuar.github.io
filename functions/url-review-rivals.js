@@ -305,6 +305,11 @@ const NOISE = [
 	'websiteplanet.com',
 	'mybestwebsitebuilder.com',
 ];
+// Webmail, social short links and shared hosts search results cite next to almost any site.
+const PLATFORM =
+	/^(gmail|googlemail|hotmail|outlook|live|yahoo|icloud|aol|proton|chatgpt|openai|tumblr|lnkd|medium|blogspot|wordpress|wix|substack|github|t|bit|tinyurl)\.[a-z.]+$/;
+// National and regional government portals are not market competitors.
+const PUBLIC = /(^|\.)(gov|gob|mil|int)(\.[a-z]{2})?$|unglobalcompact\.org$/;
 const GENERIC = [
 	'com',
 	'net',
@@ -352,6 +357,10 @@ function endingOk(ending) {
 function noisy(domain) {
 	return (
 		NOISE.some((item) => domain === item || domain.endsWith('.' + item)) ||
+		PLATFORM.test(domain) ||
+		PUBLIC.test(domain) ||
+		domain === 'github.io' ||
+		domain.endsWith('.github.io') ||
 		/^yahoo\.|similar|sites?like|alternative|competitor|toplist|rankings?\b/.test(domain)
 	);
 }
@@ -716,6 +725,9 @@ module.exports = {
 	NAMED_SCORE,
 	REVISIT_DAYS,
 	NOISE,
+	PLATFORM,
+	PUBLIC,
+	noisy,
 	AREAS,
 	FIELDS,
 	bare,
