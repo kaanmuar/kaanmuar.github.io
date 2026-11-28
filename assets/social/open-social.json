@@ -483,6 +483,15 @@
   ],
   "auto-2026-10-26/05-u-montesofia-com": [
    {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3dwbdhxzm2y",
+    "at": "2026-11-28T05:00:27.480Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3dwbdhxzm2y",
+    "checked": "2026-11-28T05:00:36.617Z"
+   },
+   {
     "channel": "instagram-story",
     "profile": "instagram.com/qaurlreview",
     "id": "18008834648794693",
@@ -632,6 +641,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3deo5tcv52r",
     "checked": "2026-11-27T23:45:39.275Z"
+   }
+  ],
+  "auto-2026-11-03/07-u-webjuice-ie": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3dwbu7ozr2l",
+    "at": "2026-11-28T05:00:36.617Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3dwbu7ozr2l",
+    "checked": "2026-11-28T05:00:54.180Z"
    }
   ],
   "auto-2026-11-03/09-u-udg-mx": [
@@ -2498,6 +2518,17 @@
     "checked": "2026-11-27T00:20:24.326Z"
    }
   ],
+  "launch-2026-10/it/security": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3dwcf4ynb2s",
+    "at": "2026-11-28T05:01:09.575Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3dwcf4ynb2s",
+    "checked": "2026-11-28T05:01:11.395Z"
+   }
+  ],
   "launch-2026-10/pt/a11y": [
    {
     "channel": "bluesky",
@@ -2790,6 +2821,17 @@
     "result": "sent",
     "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3deom66ot2i",
     "checked": "2026-11-27T23:45:54.309Z"
+   }
+  ],
+  "runs-100/14-elpais": [
+   {
+    "channel": "bluesky",
+    "profile": "qalaburlreview.bsky.social",
+    "id": "at://did:plc:m6w6neqnvwnyvuzevryyuaft/app.bsky.feed.post/3n3dwcd3apu23",
+    "at": "2026-11-28T05:00:54.180Z",
+    "result": "sent",
+    "url": "https://bsky.app/profile/qalaburlreview.bsky.social/post/3n3dwcd3apu23",
+    "checked": "2026-11-28T05:01:09.575Z"
    }
   ],
   "runs-2026-10/01-govuk": [

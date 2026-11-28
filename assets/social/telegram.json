@@ -177,6 +177,17 @@
     "checked": "2026-11-27T23:49:31.504Z"
    }
   ],
+  "auto-2026-10-26/05-u-montesofia-com": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "153",
+    "at": "2026-11-28T05:01:13.184Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/153",
+    "checked": "2026-11-28T05:01:17.847Z"
+   }
+  ],
   "auto-2026-11-03/02-u-iteso-mx": [
    {
     "channel": "telegram",
@@ -208,6 +219,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/151",
     "checked": "2026-11-27T23:49:35.537Z"
+   }
+  ],
+  "auto-2026-11-03/07-u-webjuice-ie": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "154",
+    "at": "2026-11-28T05:01:17.847Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/154",
+    "checked": "2026-11-28T05:01:22.532Z"
    }
   ],
   "auto-2026-11-04/01-u-selia-co": [
@@ -870,6 +892,17 @@
     "checked": "2026-11-27T00:20:45.410Z"
    }
   ],
+  "launch-2026-10/it/security": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "156",
+    "at": "2026-11-28T05:01:27.274Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/156",
+    "checked": "2026-11-28T05:01:28.264Z"
+   }
+  ],
   "launch-2026-10/pt/a11y": [
    {
     "channel": "telegram",
@@ -1260,6 +1293,17 @@
     "result": "sent",
     "url": "https://t.me/qalab_live/152",
     "checked": "2026-11-27T23:49:40.517Z"
+   }
+  ],
+  "runs-100/14-elpais": [
+   {
+    "channel": "telegram",
+    "profile": "Telegram @qalab_live",
+    "id": "155",
+    "at": "2026-11-28T05:01:22.532Z",
+    "result": "sent",
+    "url": "https://t.me/qalab_live/155",
+    "checked": "2026-11-28T05:01:27.274Z"
    }
   ],
   "runs-2026-10/01-govuk": [
