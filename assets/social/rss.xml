@@ -5,9 +5,205 @@
     <link>https://carlosandmunoz.com/qa-review-social.html</link>
     <description>Every QA-lab URL Review post: tips, real site reviews and short clips.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 27 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sat, 28 Nov 2026 12:00:00 GMT</lastBuildDate>
     <atom:link href="https://carlosandmunoz.com/assets/social/rss.xml" rel="self" type="application/rss+xml"/>
     <image><url>https://carlosandmunoz.com/assets/qa-review-apple-touch-icon.png</url><title>QA-lab URL Review · Social</title><link>https://carlosandmunoz.com/qa-review-social.html</link></image>
+    <item>
+      <title>affection.org: 48. The gap: HSTS.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-18/10-u-affection-org.html</link>
+      <guid isPermaLink="false">auto-2026-11-18/10-u-affection-org</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.
+
+What to change: Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+One automated analysis of public pages on 18 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Report: https://carlosandmunoz.com/qa-review.html?live=u-affection-org
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#WebSecurity #CyberSecurity #SoftwareTesting #QA #HSTS #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/10-u-affection-org.jpg" length="226221" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-18/feed/10-u-affection-org.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>align-jurassic.be: 65. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/09-u-align-jurassic-be.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/09-u-align-jurassic-be</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+The lesson for every team: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Open the full report: https://carlosandmunoz.com/qa-review.html?live=u-align-jurassic-be
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #AI #DevOps #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/09-u-align-jurassic-be.jpg" length="237063" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/09-u-align-jurassic-be.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>ancasta.com: 51. The gap: text contrast.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/41-u-ancasta-com.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/41-u-ancasta-com</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.
+
+Carry this forward: Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Full report: https://carlosandmunoz.com/qa-review.html?live=u-ancasta-com
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #DevOps #SoftwareTesting #QA #Contrast #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/41-u-ancasta-com.jpg" length="231454" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/41-u-ancasta-com.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>anson.ch: 46. The gap: page titles.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-19/47-u-anson-ch.html</link>
+      <guid isPermaLink="false">auto-2026-11-19/47-u-anson-ch</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 4 pages have no title.
+
+Carry this forward: Give every page a unique title of about 60 characters: the page first, the site second.
+
+One automated analysis of public pages on 19 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-anson-ch
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#SEO #Automation #AI #QA #Titles #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/47-u-anson-ch.jpg" length="223803" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-19/feed/47-u-anson-ch.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Scored 53 of 100. The gap: ARIA roles.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-20/08-u-artisanplombierparis-fr.html</link>
+      <guid isPermaLink="false">auto-2026-11-20/08-u-artisanplombierparis-fr</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But certain ARIA roles must contain particular children.
+
+The lesson for every team: Use native HTML elements first. When you use ARIA roles, nest them the way the role requires.
+
+One automated analysis of public pages on 20 Nov 2026, requested through QA-lab URL Review. An opening read, not a final call.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-artisanplombierparis-fr
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #ARIA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/08-u-artisanplombierparis-fr.jpg" length="237756" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-20/feed/08-u-artisanplombierparis-fr.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bancociudad.com.ar: 42. The gap: link names.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-21/07-u-bancociudad-com-ar.html</link>
+      <guid isPermaLink="false">auto-2026-11-21/07-u-bancociudad-com-ar</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But links must have discernible text.
+
+Carry this forward: Give every link text that says where it goes. An icon alone needs an aria-label.
+
+One automated analysis of public pages on 21 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-bancociudad-com-ar
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #WebAssembly #OpenSource #QA #A11y #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/07-u-bancociudad-com-ar.jpg" length="235692" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-21/feed/07-u-bancociudad-com-ar.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>bingwacapital.co.ke: 46. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-22/06-u-bingwacapital-co-ke.html</link>
+      <guid isPermaLink="false">auto-2026-11-22/06-u-bingwacapital-co-ke</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 14 form controls have no label.
+
+Apply this: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 22 Nov 2026, requested through QA-lab URL Review. A snapshot to start from, not a verdict.
+The full report: https://carlosandmunoz.com/qa-review.html?live=u-bingwacapital-co-ke
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Outage #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/06-u-bingwacapital-co-ke.jpg" length="244377" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/06-u-bingwacapital-co-ke.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>decathlon.com.py: 58. The gap: form labels.</title>
+      <link>https://carlosandmunoz.com/social/auto-2026-11-27/01-u-decathlon-com-py.html</link>
+      <guid isPermaLink="false">auto-2026-11-27/01-u-decathlon-com-py</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Requested</category>
+      <description>Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 120 form controls have no label.
+
+Apply this: Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.
+
+One automated analysis of public pages on 27 Nov 2026, requested through QA-lab URL Review. A starting point, not a verdict.
+Read the complete report: https://carlosandmunoz.com/qa-review.html?live=u-decathlon-com-py
+
+Review your own site: https://carlosandmunoz.com/qa-review.html
+
+#Accessibility #SoftwareTesting #Automation #QA #Forms #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/01-u-decathlon-com-py.jpg" length="241526" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/01-u-decathlon-com-py.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>Wikimedia's home page has no h1.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/36-wikimedia.html</link>
+      <guid isPermaLink="false">runs-100/36-wikimedia</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>Preloaded HSTS, a content security policy starting at default-src 'self', and a sitemap per language. But the home page has no h1, and several About pages have two.
+
+The lesson for every team: One h1 per page, naming what the page is. Screen-reader users often jump to it first.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikimedia
+
+#Accessibility #A11y #Headings #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg" length="238429" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg" medium="image" type="image/jpeg"/>
+    </item>
+    <item>
+      <title>FAO's HTML is fast. Visitors still wait.</title>
+      <link>https://carlosandmunoz.com/social/runs-100/37-fao.html</link>
+      <guid isPermaLink="false">runs-100/37-fao</guid>
+      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Site review</category>
+      <category>Worldwide</category>
+      <description>The home page HTML arrives in about 0.2 s, behind preloaded HSTS and a content security policy. But real Chrome visitors wait 4.7 s at the 75th percentile for the largest content to appear.
+
+The lesson for every team: Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.
+
+One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
+How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=fao
+
+#WebPerformance #CoreWebVitals #LCP #QA #QAlab</description>
+      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg" length="242096" type="image/jpeg"/>
+      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg" medium="image" type="image/jpeg"/>
+    </item>
     <item>
       <title>afel.cl: 67. The gap: text contrast.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/09-u-afel-cl.html</link>
@@ -701,150 +897,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
 #WebSecurity #Outage #SupplyChainSecurity #QA #Clickjacking #QAlab</description>
       <enclosure url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/03-u-opinautos-com.jpg" length="231284" type="image/jpeg"/>
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-22/feed/03-u-opinautos-com.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>AI Shopping Agents Bought A Fake Deal 37% Of The Time – Claude Opus Never Did via @sejournal, @slobodanmanic</title>
-      <link>https://carlosandmunoz.com/social/pick/ai-shopping-agents-bought-a-fake-deal-37-of-the-time-claude-.html</link>
-      <guid isPermaLink="false">pick/ai-shopping-agents-bought-a-fake-deal-37-of-the-time-claude-</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>SEO</category>
-      <description>AI models flagged a deal as suspicious 315 times, bought the fake anyway 137 times, and never asked the shopper about the deal. The post AI Shopping Agents Bought A Fake Deal 37% Of The Time – Claude Opus Never Did appeared first on Search Engine Journal .
-
-Via Search Engine Journal, by Slobodan Manic, 2026-11-25.
-
-https://www.searchenginejournal.com/ai-shopping-agents-bought-a-fake-deal-37-of-the-time-claude-opus-never-did/598682/</description>
-      <media:content url="https://cdn.searchenginejournal.com/wp-content/uploads/2026/11/ai-shopping-featured-598682-1600x840-1.webp" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2023-25914: AK-SM 800A Series — Danfoss AK-SM 800A Series Path Traversal Vulnerability</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2023-25914-ak-sm-800a-series-danfoss-ak-sm-800a-series-p.html</link>
-      <guid isPermaLink="false">pick/cve-2023-25914-ak-sm-800a-series-danfoss-ak-sm-800a-series-p</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>Danfoss AK-SM 800A Series contains a path traversal vulnerability that could allow an attacker to access and read underlying server system files via the XML interface.
-
-Via CISA KEV, by Danfoss, 2026-11-25.
-
-https://www.cve.org/CVERecord?id=CVE-2023-25914</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>CVE-2026-133275: MiCollab — Mitel MiCollab Unrestricted Upload of File with Dangerous Type Vulnerability</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-133275-micollab-mitel-micollab-unrestricted-upload-.html</link>
-      <guid isPermaLink="false">pick/cve-2026-133275-micollab-mitel-micollab-unrestricted-upload-</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>Mitel MiCollab contains an unrestricted upload of file with dangerous type vulnerability in the Audio, Web and Video Conferencing (AWV) component due to insufficient file type validation that could allow an unauthenticated attacker to upload arbitrary files.
-
-Via CISA KEV, by Mitel, 2026-11-25.
-
-https://www.cve.org/CVERecord?id=CVE-2026-133275</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>CVE-2026-133323: MiCollab — Mitel MiCollab OS Command Injection Vulnerability</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-133323-micollab-mitel-micollab-os-command-injection.html</link>
-      <guid isPermaLink="false">pick/cve-2026-133323-micollab-mitel-micollab-os-command-injection</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>Mitel MiCollab contains an improper neutralization of special elements used in an OS command (OS command injection) vulnerability in its Audio, Web, and Video Conferencing (AWV) component that could allow an unauthenticated attacker to execute arbitrary system commands.
-
-Via CISA KEV, by Mitel, 2026-11-25.
-
-https://www.cve.org/CVERecord?id=CVE-2026-133323</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>CVE-2026-133324: MiCollab — Mitel MiCollab Not Failing Securely Vulnerability</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-133324-micollab-mitel-micollab-not-failing-securely.html</link>
-      <guid isPermaLink="false">pick/cve-2026-133324-micollab-mitel-micollab-not-failing-securely</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>Mitel MiCollab contains a not failing securely vulnerability in the Audio, Web and Video Conferencing (AWV) component that could allow an unauthenticated attacker to bypass authentication controls and perform unauthorized actions.
-
-Via CISA KEV, by Mitel, 2026-11-25.
-
-https://www.cve.org/CVERecord?id=CVE-2026-133324</description>
-      <enclosure url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" length="96606" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/assets/share/qa-review-social.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>CVE-2026-64670: @waline/client vulnerable to stored XSS through unsanitized comment edit previews</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-64670-waline-client-vulnerable-to-stored-xss-throug.html</link>
-      <guid isPermaLink="false">pick/cve-2026-64670-waline-client-vulnerable-to-stored-xss-throug</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>### Summary `@waline/client` renders the comment editor's live preview with `marked` and no sanitizer (`utils/markdown.ts`), and the preview is injected with `v-html`. When a comment is edited, the editor is seeded with the comment's raw, un-sanitized body (`orig`). Only administrators and the comment owner can edit. So an administrator who clicks Edit on an attacker's comment renders that…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-crj3-q72p-ggqm</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-65971: livewire-powergrid: SQL injection via sortDirection in naturalSort queries</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-65971-livewire-powergrid-sql-injection-via-sortdire.html</link>
-      <guid isPermaLink="false">pick/cve-2026-65971-livewire-powergrid-sql-injection-via-sortdire</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>## [Description] The public Livewire property `sortDirection` is interpolated **verbatim** into a raw SQL `ORDER BY` clause and is not restricted to `asc`/`desc`, allowing arbitrary SQL injection through `POST /livewire/update`. **Data flow** - **Source** — `src/Concerns/Sorting.php`: `public string $sortDirection;` is a Livewire-bound property with no whitelist/validation (it is only assigned…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-7fgc-3h6c-698r</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-69177: TastyIgniter allows stored XSS via file upload</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-69177-tastyigniter-allows-stored-xss-via-file-uploa.html</link>
-      <guid isPermaLink="false">pick/cve-2026-69177-tastyigniter-allows-stored-xss-via-file-uploa</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>### Summary Stored XSS via uploading SVG files ### Details It is possible to upload SVG files that contains XSS. ### PoC - login as admin - create the following SVG file ``` alert(1); ``` - upload the SVG file in media manager ``` POST /admin/media_manager HTTP/1.1 Host: localhost:8888 Content-Length: 514 sec-ch-ua-platform: &quot;Linux&quot; X-CSRF-TOKEN: 2vv3ZKpvfj2SkbbJzqmf8G053mNXqPLktxqd5eMx…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-mqg7-fw3f-mhp7</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>CVE-2026-69178: TastyIgniter mail template editor allows remote code execution via server-side template injection</title>
-      <link>https://carlosandmunoz.com/social/pick/cve-2026-69178-tastyigniter-mail-template-editor-allows-remo.html</link>
-      <guid isPermaLink="false">pick/cve-2026-69178-tastyigniter-mail-template-editor-allows-remo</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Security</category>
-      <description>### Summary **Where:** `POST /admin/mail_templates/edit/{id}` → body field **Who can trigger:** Any admin user with `Admin.MailTemplates` permission **Impact:** Arbitrary PHP execution on the server — full RCE ### Details The Mail templates is vulnerable to SSTI and did not perform an validation and sanitization. ### PoC - login as admin - create new mail template with following command ``` @php…
-
-Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
-
-https://github.com/advisories/GHSA-743w-g9pf-8p94</description>
-      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
-    </item>
-    <item>
-      <title>Cypress Ambassador Spotlight: Saran Kumar</title>
-      <link>https://carlosandmunoz.com/social/pick/cypress-ambassador-spotlight-saran-kumar.html</link>
-      <guid isPermaLink="false">pick/cypress-ambassador-spotlight-saran-kumar</guid>
-      <pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Pick</category>
-      <category>Testing</category>
-      <description>Every strong community has people who show up for others. They answer the question in the channel, review the flaky test, and walk a new teammate through their first spec. The Cypress Ambassador program recognizes those people, and our Ambassador Spotlight series introduces you to them: how they got into testing, what it has taught them, and what they’d tell someone writing their first test…
-
-Via Cypress, by Jessica Capuano Mora, 2026-11-25.
-
-https://www.cypress.io/blog/cypress-ambassador-spotlight-saran-kumar/</description>
-      <media:content url="https://storage.ghost.io/c/12/89/12899ca1-4786-4eea-b7e1-9c5268baa48a/content/images/2026/11/Blog_Ambassador-Spotlight_Saran-Kumar.png" medium="image"/>
     </item>
   </channel>
 </rss>
