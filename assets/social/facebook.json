@@ -1954,8 +1954,19 @@
     "profile": "Facebook Page",
     "id": "1384763784723160_122115128559532027",
     "at": "2026-11-28T19:32:00.000Z",
+    "result": "sent",
+    "url": "https://www.facebook.com/reel/1127237506770183/",
+    "checked": "2026-11-28T20:07:59.669Z"
+   }
+  ],
+  "auto-2026-11-28/01-u-denner-ch": [
+   {
+    "channel": "facebook",
+    "profile": "Facebook Page",
+    "id": "1551779360112292",
+    "at": "2026-11-29T20:33:00.000Z",
     "result": "queued",
-    "checked": "2026-11-28T16:08:44.058Z"
+    "checked": "2026-11-28T20:08:06.856Z"
    }
   ],
   "battle-vs-2026-11/01-vs-seo-scorecard": [
