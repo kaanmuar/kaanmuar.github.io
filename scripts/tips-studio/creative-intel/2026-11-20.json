@@ -1,0 +1,193 @@
+{
+  "date": "2026-11-20",
+  "draft": true,
+  "note": "Rewrite the takeaways in our words, then delete draft before any studio build.",
+  "formats": [
+    {
+      "kind": "audit",
+      "count": 13,
+      "score": 313,
+      "samples": [
+        {
+          "id": "auto-2026-10-22/02-u-mercadolibre-com-co",
+          "title": "mercadolibre.com.co: 50. The gap: AI crawler access.",
+          "score": 35.4
+        },
+        {
+          "id": "auto-2026-10-26/01-u-hubspot-com",
+          "title": "hubspot.com: 55. The gap: text contrast.",
+          "score": 29
+        },
+        {
+          "id": "auto-2026-10-24/03-u-nibo-com-br",
+          "title": "nibo.com.br: 79. The gap: text contrast.",
+          "score": 28.5
+        }
+      ]
+    },
+    {
+      "kind": "quiz",
+      "count": 2,
+      "score": 48.6,
+      "samples": [
+        {
+          "id": "compare-2026-11/08-quiz-metros",
+          "title": "Medellín's metro or Bogotá's: which site scored higher?",
+          "score": 25.3
+        },
+        {
+          "id": "compare-2026-11/03-three-universities",
+          "title": "Stanford, MIT, Harvard: each one wins somewhere.",
+          "score": 23.3
+        }
+      ]
+    }
+  ],
+  "wins": [
+    {
+      "id": "auto-2026-10-22/02-u-mercadolibre-com-co",
+      "key": "auto-2026-10-22/02-u-mercadolibre-com-co",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "mercadolibre.com.co: 50. The gap: AI crawler access.",
+      "score": 35.4,
+      "date": "2026-10-24"
+    },
+    {
+      "id": "auto-2026-10-26/01-u-hubspot-com",
+      "key": "auto-2026-10-26/01-u-hubspot-com",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "hubspot.com: 55. The gap: text contrast.",
+      "score": 29,
+      "date": "2026-10-27"
+    },
+    {
+      "id": "auto-2026-10-24/03-u-nibo-com-br",
+      "key": "auto-2026-10-24/03-u-nibo-com-br",
+      "kind": "audit",
+      "cat": "National",
+      "title": "nibo.com.br: 79. The gap: text contrast.",
+      "score": 28.5,
+      "date": "2026-10-27"
+    },
+    {
+      "id": "compare-2026-11/08-quiz-metros",
+      "key": "compare-2026-11/08-quiz-metros",
+      "kind": "quiz",
+      "cat": "Local",
+      "title": "Medellín's metro or Bogotá's: which site scored higher?",
+      "score": 25.3,
+      "date": "2026-11-02"
+    },
+    {
+      "id": "auto-2026-10-27/01-u-ciedi-edu-co",
+      "key": "auto-2026-10-27/01-u-ciedi-edu-co",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "ciedi.edu.co: 68. The gap: the CSP.",
+      "score": 23.8,
+      "date": "2026-10-28"
+    },
+    {
+      "id": "compare-2026-11/03-three-universities",
+      "key": "compare-2026-11/03-three-universities",
+      "kind": "quiz",
+      "cat": "Worldwide",
+      "title": "Stanford, MIT, Harvard: each one wins somewhere.",
+      "score": 23.3,
+      "date": "2026-10-28"
+    },
+    {
+      "id": "promo-social-hub-2026-10/01-one-page-en",
+      "key": "promo-social-hub-2026-10/01-one-page-en",
+      "kind": "audit",
+      "cat": "Social",
+      "title": "Every post, one page.",
+      "score": 23,
+      "date": "2026-10-26"
+    },
+    {
+      "id": "auto-2026-10-22/06-u-cognizant-com",
+      "key": "auto-2026-10-22/06-u-cognizant-com",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "cognizant.com: 73. The gap: alt text.",
+      "score": 22.8,
+      "date": "2026-10-28"
+    },
+    {
+      "id": "auto-2026-10-22/03-u-whatsapp-com",
+      "key": "auto-2026-10-22/03-u-whatsapp-com",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "whatsapp.com: 67. The gap: hreflang.",
+      "score": 22.3,
+      "date": "2026-10-25"
+    },
+    {
+      "id": "skits-friday-release/01-friday-release-en",
+      "key": "skits-friday-release/01-friday-release-en",
+      "kind": "audit",
+      "cat": "QA",
+      "title": "Friday, 5 pm: we release in an hour. Did anyone check the site?",
+      "score": 21.9,
+      "date": "2026-11-02"
+    },
+    {
+      "id": "auto-2026-10-24/01-u-grupoexito-com-co",
+      "key": "auto-2026-10-24/01-u-grupoexito-com-co",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "grupoexito.com.co: 68. The gap: button names.",
+      "score": 21.6,
+      "date": "2026-10-25"
+    },
+    {
+      "id": "auto-2026-10-23/02-u-postobon-com",
+      "key": "auto-2026-10-23/02-u-postobon-com",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "postobon.com: 49. The gap: form labels.",
+      "score": 21.3,
+      "date": "2026-10-25"
+    },
+    {
+      "id": "auto-2026-11-02/01-u-edeq-com-co",
+      "key": "auto-2026-11-02/01-u-edeq-com-co",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "edeq.com.co: 62. The gap: link names.",
+      "score": 21.2,
+      "date": "2026-11-03"
+    },
+    {
+      "id": "auto-2026-10-25/01-u-kemik-gt",
+      "key": "auto-2026-10-25/01-u-kemik-gt",
+      "kind": "audit",
+      "cat": "National",
+      "title": "kemik.gt: 77. The gap: AI crawler access.",
+      "score": 21.2,
+      "date": "2026-10-26"
+    },
+    {
+      "id": "auto-2026-10-23/01-u-pirouline-com",
+      "key": "auto-2026-10-23/01-u-pirouline-com",
+      "kind": "audit",
+      "cat": "Requested",
+      "title": "pirouline.com: 74. The gap: framing.",
+      "score": 21,
+      "date": "2026-10-24"
+    }
+  ],
+  "hooks": [
+    {
+      "kind": "audit",
+      "hook": "We ran the public checks. Here is what stood out."
+    },
+    {
+      "kind": "quiz",
+      "hook": "One of these headers is lying. Which?"
+    }
+  ]
+}
