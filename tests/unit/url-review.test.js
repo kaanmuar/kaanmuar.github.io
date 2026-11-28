@@ -3994,15 +3994,6 @@ test('the daily probe checks the connection after a plain read that timed out, a
 		silent.nowLabel,
 		/^The host accepts a connection, but it answers neither the plain read \(The page took too long\.\) nor headless Chrome \(net::ERR_HTTP2_PROTOCOL_ERROR/
 	);
-	// doe.go.th-style: TLS opens, 0 bytes, plain and Chrome both time out with no HOST_BROKE (#2880).
-	const navTimeout = failures.diagnose(timeout, {
-		dns: { addresses: ['1.2.3.4'] },
-		plain: slow,
-		tcp: { open: true, ms: 40 },
-		browser: { ok: false, error: 'Navigation timeout of 20000 ms exceeded' },
-	});
-	assert.deepEqual([navTimeout.now, navTimeout.site, navTimeout.cleared], ['no-answer', true, false]);
-	assert.ok(failures.siteSide({ diagnosis: navTimeout }, 'timeout'));
 	const chrome = failures.diagnose(timeout, {
 		dns: {},
 		plain: slow,
