@@ -9,8 +9,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <baseUrl>http://127.0.0.1:8767</baseUrl>
     <catalogIds></catalogIds>
-    <gatling.version>3.16.0</gatling.version>
-    <gatling-maven-plugin.version>4.21.12</gatling-maven-plugin.version>
+    <gatling.version>3.16.1</gatling.version>
+    <gatling-maven-plugin.version>4.22.3</gatling-maven-plugin.version>
   </properties>
   <dependencies>
     <dependency>
