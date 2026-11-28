@@ -580,9 +580,5 @@
   "sec-hsts",
   "ax-button-name"
  ],
- "socialPending": {
-  "batch": "auto-2026-11-28",
-  "count": 12,
-  "at": "2026-11-28T19:09:59.014Z"
- }
+ "socialPending": null
 }

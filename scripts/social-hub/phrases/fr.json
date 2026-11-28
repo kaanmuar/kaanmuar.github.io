@@ -1334,6 +1334,10 @@
   "text": "Donnez à chaque bouton un texte ou une étiquette aria, afin qu'un lecteur d'écran puisse…",
   "machine": true
  },
+ "Give every button text or an aria-label, so a screen reader…": {
+  "text": "Donnez à chaque bouton un texte ou une étiquette aria, donc un lecteur d'écran…",
+  "machine": true
+ },
  "Give every field a ⟦1⟧ or an aria-label.": "Donnez à chaque champ un ⟦1⟧ ou un aria-label.",
  "Give every input a visible label tied to it with for and id.": "Donnez à chaque champ un libellé visible, relié par for et id.",
  "Give every link text that says where it goes.": "Donnez à chaque lien un texte qui dit où il mène.",

@@ -169,42 +169,6 @@ Review your own site: https://carlosandmunoz.com/qa-review.html
       <media:content url="https://carlosandmunoz.com/media/social-posts/auto-2026-11-27/feed/01-u-decathlon-com-py.jpg" medium="image" type="image/jpeg"/>
     </item>
     <item>
-      <title>Wikimedia's home page has no h1.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/36-wikimedia.html</link>
-      <guid isPermaLink="false">runs-100/36-wikimedia</guid>
-      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>Preloaded HSTS, a content security policy starting at default-src 'self', and a sitemap per language. But the home page has no h1, and several About pages have two.
-
-The lesson for every team: One h1 per page, naming what the page is. Screen-reader users often jump to it first.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=wikimedia
-
-#Accessibility #A11y #Headings #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg" length="238429" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/36-wikimedia.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>FAO's HTML is fast. Visitors still wait.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/37-fao.html</link>
-      <guid isPermaLink="false">runs-100/37-fao</guid>
-      <pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>The home page HTML arrives in about 0.2 s, behind preloaded HSTS and a content security policy. But real Chrome visitors wait 4.7 s at the 75th percentile for the largest content to appear.
-
-The lesson for every team: Find your Largest Contentful Paint element, load it early, give it a size, and never lazy-load it.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=fao
-
-#WebPerformance #CoreWebVitals #LCP #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg" length="242096" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/37-fao.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>afel.cl: 67. The gap: text contrast.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/09-u-afel-cl.html</link>
       <guid isPermaLink="false">auto-2026-11-18/09-u-afel-cl</guid>
@@ -531,42 +495,6 @@ https://www.testingcatalog.com/testers-share-early-results-possible-claude-opus-
       <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/size/w1200/2026/11/claude-opus-text-official-hero.webp" medium="image"/>
     </item>
     <item>
-      <title>Creative Commons moves to https with 302.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/34-creativecommons.html</link>
-      <guid isPermaLink="false">runs-100/34-creativecommons</guid>
-      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A sitemap index, pages that name their language, and robots meta that allows large previews. But http:// reaches https through a temporary 302, and no page analyzed sends Strict-Transport-Security.
-
-The lesson for every team: Use a 301 from http to https, then add Strict-Transport-Security so browsers skip http next time.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=creativecommons
-
-#WebSecurity #HTTPS #HSTS #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg" length="253164" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/34-creativecommons.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
-      <title>The EFF's pages send no HSTS.</title>
-      <link>https://carlosandmunoz.com/social/runs-100/35-eff.html</link>
-      <guid isPermaLink="false">runs-100/35-eff</guid>
-      <pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
-      <category>Site review</category>
-      <category>Worldwide</category>
-      <description>A content security policy in report-only mode, nosniff, framing limited to its origin, and a sitemap. But no page analyzed sends Strict-Transport-Security, so browsers don't upgrade a first http visit.
-
-The lesson for every team: Add Strict-Transport-Security with a long max-age. It tells browsers to use https before the request leaves.
-
-One automated analysis of public pages on 19 Oct 2026. A starting point, not a verdict.
-How the review works, step by step: https://carlosandmunoz.com/qa-review-guide.html?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=runs-100-2026-11&amp;utm_content=eff
-
-#WebSecurity #HSTS #DigitalRights #QA #QAlab</description>
-      <enclosure url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg" length="243121" type="image/jpeg"/>
-      <media:content url="https://carlosandmunoz.com/media/social-posts/runs-100/feed/35-eff.jpg" medium="image" type="image/jpeg"/>
-    </item>
-    <item>
       <title>aeurus.cl: 47. The gap: form labels.</title>
       <link>https://carlosandmunoz.com/social/auto-2026-11-18/08-u-aeurus-cl.html</link>
       <guid isPermaLink="false">auto-2026-11-18/08-u-aeurus-cl</guid>
@@ -853,6 +781,62 @@ Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory D
 
 https://github.com/advisories/GHSA-vw2v-g4x7-xcqg</description>
       <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
+    </item>
+    <item>
+      <title>CVE-2026-69179: TastyIgniter allows Remote Code Execution (RCE) via Unrestricted file upload in Media Manager</title>
+      <link>https://carlosandmunoz.com/social/pick/cve-2026-69179-tastyigniter-allows-remote-code-execution-rce.html</link>
+      <guid isPermaLink="false">pick/cve-2026-69179-tastyigniter-allows-remote-code-execution-rce</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Security</category>
+      <description>### Summary Media manager accepts `.htaccess` file which can be used to perform RCE. ### Details The file upload functionality from media manager somehow accepts `.htaccess` file. This file could be used to allow any extension to run PHP command. By doing so, it is possible to perform RCE. ### PoC - Login as Admin - Create a `.htaccess` file with the following code. ``` SetHandler…
+
+Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
+
+https://github.com/advisories/GHSA-7wwv-x6mc-pxqx</description>
+      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
+    </item>
+    <item>
+      <title>CVE-2026-69181: TastyIgniter permits Path Traversal in Media Upload</title>
+      <link>https://carlosandmunoz.com/social/pick/cve-2026-69181-tastyigniter-permits-path-traversal-in-media-.html</link>
+      <guid isPermaLink="false">pick/cve-2026-69181-tastyigniter-permits-path-traversal-in-media-</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Security</category>
+      <description>### Summary Arbitrary file write outside `media/uploads/` ### Details It is possible to perform Path Traversal in Media Manager file upload function as admin. ### PoC - login as admin - upload a image but in the request, change the path from `/` to `/../../`. Request ```http POST /admin/media_manager HTTP/1.1 Host: localhost:8888 Content-Length: 302 sec-ch-ua-platform: &quot;Linux&quot; X-CSRF-TOKEN…
+
+Via GitHub Advisories, by GitHub Advisory, 2026-11-25. Credit: GitHub Advisory Database (CC BY 4.0).
+
+https://github.com/advisories/GHSA-rj59-9f77-mvg5</description>
+      <media:content url="https://github.githubassets.com/assets/advisory-database-show-f32c8207dfb2.png" medium="image"/>
+    </item>
+    <item>
+      <title>Make Streaming AI Usable with Keyboards and Screen Readers</title>
+      <link>https://carlosandmunoz.com/social/pick/make-streaming-ai-usable-with-keyboards-and-screen-readers.html</link>
+      <guid isPermaLink="false">pick/make-streaming-ai-usable-with-keyboards-and-screen-readers</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>Accessibility</category>
+      <description>Streaming text can reassure a sighted user that a feature is working. The same stream can become...
+
+Via DEV, by Raju Dandigam, 2026-11-26.
+
+https://dev.to/gde/make-streaming-ai-usable-with-keyboards-and-screen-readers-1pn6</description>
+      <media:content url="https://media2.dev.to/dynamic/image/width=1000,height=420,fit=cover,gravity=auto,format=auto/https%3A%2F%2Fdev-to-uploads.s3.us-east-2.amazonaws.com%2Fuploads%2Farticles%2Fkqhn3b6xtmdppg0l8gb3.jpg" medium="image"/>
+    </item>
+    <item>
+      <title>openairlabs/fleo-by-flyweel: Open-source, multi-model AI SEO + AEO content engine &amp; TUI. Live SERP &amp; community research, verified citations, BYOK routing, and drop-in publishing for any web stack…</title>
+      <link>https://carlosandmunoz.com/social/pick/openairlabs-fleo-by-flyweel-open-source-multi-model-ai-seo-a.html</link>
+      <guid isPermaLink="false">pick/openairlabs-fleo-by-flyweel-open-source-multi-model-ai-seo-a</guid>
+      <pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Pick</category>
+      <category>SEO</category>
+      <description>Open-source, multi-model AI SEO + AEO content engine &amp; TUI. Live SERP &amp; community research, verified citations, BYOK routing, and drop-in publishing for any web stack. Built with love by Flyweel,.
+
+Via GitHub, by openairlabs, 2026-11-23.
+
+https://github.com/openairlabs/fleo-by-flyweel</description>
+      <media:content url="https://opengraph.githubassets.com/1/openairlabs/fleo-by-flyweel" medium="image"/>
     </item>
   </channel>
 </rss>

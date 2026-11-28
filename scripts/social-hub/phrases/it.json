@@ -558,6 +558,10 @@
  "But ⟦1⟧ inner pages name ⟦2⟧ as their canonical, which asks search engines to index the home instead.": "Ma ⟦1⟧ pagine interne indicano ⟦2⟧ come canonical, chiedendo ai motori di ricerca di indicizzare invece la home.",
  "But ⟦1⟧ internal link leads to an error.": "Ma ⟦1⟧ link interno porta a un errore.",
  "But ⟦1⟧ internal links lead to an error.": "Ma ⟦1⟧ link interni portano a un errore.",
+ "But ⟦1⟧ JSON-LD block does not parse.": {
+  "text": "Ma il blocco ⟦1⟧ JSON-LD non viene analizzato.",
+  "machine": true
+ },
  "But ⟦1⟧ JSON-LD blocks do not parse.": "Ma ⟦1⟧ blocchi JSON-LD non si leggono senza errori.",
  "But ⟦1⟧ language alternate problems.": "Ma ⟦1⟧ problemi negli alternate di lingua.",
  "But ⟦1⟧ links on the English home page use /content/mygov/ paths that ⟦2⟧ to /en/, so every click takes an extra hop.": "Ma ⟦1⟧ link della home page in inglese usano percorsi /content/mygov/ che fanno ⟦2⟧ verso /en/, quindi ogni clic richiede un passaggio in più.",
@@ -1268,6 +1272,10 @@
  },
  "Give every button text or an aria-label, so a screen reader can…": {
   "text": "Assegna a ogni pulsante un testo o un'etichetta aria, in modo che uno screen reader possa...",
+  "machine": true
+ },
+ "Give every button text or an aria-label, so a screen reader…": {
+  "text": "Assegna a ogni pulsante un testo o un'etichetta aria, quindi uno screen reader...",
   "machine": true
  },
  "Give every field a ⟦1⟧ or an aria-label.": "Dai a ogni campo un ⟦1⟧ o un aria-label.",

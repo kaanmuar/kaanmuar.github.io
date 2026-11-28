@@ -1,0 +1,66 @@
+Text,Image URL,Tags,Posting Time
+"denner.ch: 74. The gap: alt text.
+
+Describe what each image shows in its alt attribute, and use alt="""" on purely decorative ones.
+
+carlosandmunoz.com/qa-review?live=u-denner-ch&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-denner-ch
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/01-u-denner-ch.jpg","","2026-11-29 08:35"
+"dedatec.de: 53. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.
+
+carlosandmunoz.com/qa-review?live=u-dedatec-de&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-dedatec-de
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/02-u-dedatec-de.jpg","","2026-11-30 13:25"
+"defacto.com.tr: 57. The gap: JSON-LD.
+
+Validate each JSON-LD block after every release. One stray comma hides all of it.
+
+carlosandmunoz.com/qa-review?live=u-defacto-com-tr&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-defacto-com-tr
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/03-u-defacto-com-tr.jpg","","2026-12-01 11:35"
+"defense-arab.com: 50. The gap: text contrast.
+
+Keep body text at a 4.5:1 contrast ratio or more against its background.
+
+carlosandmunoz.com/qa-review?live=u-defense-arab-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-defense-arab-com
+#QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/04-u-defense-arab-com.jpg","","2026-12-02 09:50"
+"delasabana.com: 51. The gap: broken links.
+
+Check your own links after each release, and fix or redirect every one that answers 404.
+
+carlosandmunoz.com/qa-review?live=u-delasabana-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delasabana-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/05-u-delasabana-com.jpg","","2026-12-03 16:55"
+"delfinbarquero.com: 59. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers…
+
+carlosandmunoz.com/qa-review?live=u-delfinbarquero-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delfinbarquero-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/06-u-delfinbarquero-com.jpg","","2026-12-04 16:05"
+"delica.com.py: 66. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http…
+
+carlosandmunoz.com/qa-review?live=u-delica-com-py&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delica-com-py","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/07-u-delica-com-py.jpg","","2026-12-05 15:30"
+"Scored 57 of 100. The gap: button names.
+
+Give every button text or an aria-label, so a screen reader…
+
+carlosandmunoz.com/qa-review?live=u-delicatessengourmetpremium-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delicatessengourmetpremium-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/08-u-delicatessengourmetpremium-com.jpg","","2026-12-06 11:15"
+"delifood-stbarth.com: 49. The gap: HSTS.
+
+Send Strict-Transport-Security with a max-age of at least a year, so browsers…
+
+carlosandmunoz.com/qa-review?live=u-delifood-stbarth-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delifood-stbarth-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/09-u-delifood-stbarth-com.jpg","","2026-12-07 14:10"
+"delika.cl: 57. The gap: form labels.
+
+Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target…
+
+carlosandmunoz.com/qa-review?live=u-delika-cl&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delika-cl","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/10-u-delika-cl.jpg","","2026-12-08 14:25"
+"delish.com: 47. The gap: AI crawler access.
+
+Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only…
+
+carlosandmunoz.com/qa-review?live=u-delish-com&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-delish-com","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/11-u-delish-com.jpg","","2026-12-09 16:10"
+"deliveroo.it: 45. The gap: page titles.
+
+Give every page a unique title of about 60 characters: the page first, the site second.
+
+carlosandmunoz.com/qa-review?live=u-deliveroo-it&utm_source=x&utm_medium=social&utm_campaign=requested-reviews&utm_content=u-deliveroo-it
+#SEO #QAlab","https://carlosandmunoz.com/media/social-posts/auto-2026-11-28/feed/12-u-deliveroo-it.jpg","","2026-12-10 13:00"
