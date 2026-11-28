@@ -1,0 +1,407 @@
+{
+ "batch": "auto-2026-11-28",
+ "at": "2026-11-28T19:09:59.013Z",
+ "posts": [
+  {
+   "id": "u-denner-ch",
+   "host": "denner.ch",
+   "title": [
+    "denner.ch: {overall}.",
+    "*The gap: alt text.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 267 images have no alt attribute.",
+   "action": "Describe what each image shows in its alt attribute, and use alt=\"\" on purely decorative ones.",
+   "tags": [
+    "Accessibility",
+    "A11y",
+    "WebDev"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:01:15.720Z",
+   "pages": 20,
+   "overall": 74,
+   "areas": {
+    "SEO": 65,
+    "GEO": 85,
+    "Analytics": 97,
+    "Security": 77,
+    "Accessibility": 71,
+    "Performance": 54
+   },
+   "fixLines": [
+    "// A11Y-01: Images on www.denner.ch expose a text…",
+    "await page.goto(BASE + \"/de/entdecken/ip-suisse-produkte\");",
+    "expect(found).toBe(0);"
+   ],
+   "caseId": "A11Y-01",
+   "status": "pending"
+  },
+  {
+   "id": "u-dedatec-de",
+   "host": "dedatec.de",
+   "title": [
+    "dedatec.de: {overall}.",
+    "*The gap: HSTS.*"
+   ],
+   "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+   "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+   "tags": [
+    "WebSecurity",
+    "HSTS",
+    "HTTPS"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:01:40.233Z",
+   "pages": 20,
+   "overall": 53,
+   "areas": {
+    "SEO": 45,
+    "GEO": 80,
+    "Analytics": 32,
+    "Security": 24,
+    "Accessibility": 70,
+    "Performance": 67
+   },
+   "fixLines": [
+    "// SEC-02: dedatec.de sets HSTS",
+    "expect(headers[\"strict-transport-security\"]).toBeTruthy();"
+   ],
+   "caseId": "SEC-02",
+   "status": "pending"
+  },
+  {
+   "id": "u-defacto-com-tr",
+   "host": "defacto.com.tr",
+   "title": [
+    "defacto.com.tr: {overall}.",
+    "*The gap: JSON-LD.*"
+   ],
+   "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 1 JSON-LD block does not parse.",
+   "action": "Validate each JSON-LD block after every release. One stray comma hides all of it.",
+   "tags": [
+    "StructuredData",
+    "SEO",
+    "GEO"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:02:04.407Z",
+   "pages": 20,
+   "overall": 57,
+   "areas": {
+    "SEO": 66,
+    "GEO": 80,
+    "Analytics": 50,
+    "Security": 24,
+    "Accessibility": 68,
+    "Performance": 58
+   },
+   "fixLines": [
+    "// CT-04: Structured data on www.defacto.com.tr…",
+    "await page.goto(BASE + \"/\");",
+    "expect(found).toBeGreaterThanOrEqual(1);"
+   ],
+   "caseId": "CT-04",
+   "status": "pending"
+  },
+  {
+   "id": "u-defense-arab-com",
+   "host": "defense-arab.com",
+   "title": [
+    "defense-arab.com: {overall}.",
+    "*The gap: text contrast.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But elements must meet minimum color contrast ratio thresholds.",
+   "action": "Keep body text at a 4.5:1 contrast ratio or more against its background.",
+   "tags": [
+    "Accessibility",
+    "Contrast",
+    "A11y"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:03:12.847Z",
+   "pages": 20,
+   "overall": 50,
+   "areas": {
+    "SEO": 38,
+    "GEO": 85,
+    "Analytics": 22,
+    "Security": 54,
+    "Accessibility": 23,
+    "Performance": 69
+   },
+   "fixLines": [
+    "// A11Y-04: Text contrast and keyboard focus on…",
+    "await page.goto(BASE + path);",
+    "await page.evaluate(axe);"
+   ],
+   "caseId": "A11Y-04",
+   "status": "pending"
+  },
+  {
+   "id": "u-delasabana-com",
+   "host": "delasabana.com",
+   "title": [
+    "delasabana.com: {overall}.",
+    "*The gap: broken links.*"
+   ],
+   "body": "Every external link that was checked answered, and AI answer and search crawlers may read the start page. But 3 internal links lead to an error.",
+   "action": "Check your own links after each release, and fix or redirect every one that answers 404.",
+   "tags": [
+    "SEO",
+    "BrokenLinks",
+    "QA"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:04:05.084Z",
+   "pages": 20,
+   "overall": 51,
+   "areas": {
+    "SEO": 45,
+    "GEO": 69,
+    "Analytics": 59,
+    "Security": 30,
+    "Accessibility": 68,
+    "Performance": 39
+   },
+   "fixLines": [
+    "// FN-06: Every page analyzed on delasabana.com…",
+    "// expect(…) — open the report for the full Playwright sample"
+   ],
+   "caseId": "FN-06",
+   "status": "pending"
+  },
+  {
+   "id": "u-delfinbarquero-com",
+   "host": "delfinbarquero.com",
+   "title": [
+    "delfinbarquero.com: {overall}.",
+    "*The gap: form labels.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 13 form controls have no label.",
+   "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+   "tags": [
+    "Accessibility",
+    "Forms",
+    "A11y"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:04:52.558Z",
+   "pages": 6,
+   "overall": 59,
+   "areas": {
+    "SEO": 48,
+    "GEO": 91,
+    "Analytics": 92,
+    "Security": 24,
+    "Accessibility": 62,
+    "Performance": 50
+   },
+   "fixLines": [
+    "// FM-01: Fields on delfinbarquero.com have labels",
+    "await page.goto(BASE + \"/\");",
+    "expect(found).toBe(0);"
+   ],
+   "caseId": "FM-01",
+   "status": "pending"
+  },
+  {
+   "id": "u-delica-com-py",
+   "host": "delica.com.py",
+   "title": [
+    "delica.com.py: {overall}.",
+    "*The gap: HSTS.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+   "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+   "tags": [
+    "WebSecurity",
+    "HSTS",
+    "HTTPS"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:05:11.973Z",
+   "pages": 20,
+   "overall": 66,
+   "areas": {
+    "SEO": 97,
+    "GEO": 80,
+    "Analytics": 62,
+    "Security": 0,
+    "Accessibility": 94,
+    "Performance": 77
+   },
+   "fixLines": [
+    "// SEC-02: delica.com.py sets HSTS",
+    "expect(headers[\"strict-transport-security\"]).toBeTruthy();"
+   ],
+   "caseId": "SEC-02",
+   "status": "pending"
+  },
+  {
+   "id": "u-delicatessengourmetpremium-com",
+   "host": "delicatessengourmetpremium.com",
+   "title": [
+    "Scored {overall} of 100.",
+    "*The gap: button names.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But buttons must have discernible text.",
+   "action": "Give every button text or an aria-label, so a screen reader can announce it.",
+   "tags": [
+    "Accessibility",
+    "A11y",
+    "WebDev"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:05:46.520Z",
+   "pages": 20,
+   "overall": 57,
+   "areas": {
+    "SEO": 61,
+    "GEO": 85,
+    "Analytics": 62,
+    "Security": 23,
+    "Accessibility": 33,
+    "Performance": 85
+   },
+   "fixLines": [
+    "Give each icon button visible text or an aria-label."
+   ],
+   "caseId": "",
+   "status": "pending"
+  },
+  {
+   "id": "u-delifood-stbarth-com",
+   "host": "delifood-stbarth.com",
+   "title": [
+    "delifood-stbarth.com: {overall}.",
+    "*The gap: HSTS.*"
+   ],
+   "body": "Every page has a title, and AI answer and search crawlers may read the start page. But HSTS is not sent.",
+   "action": "Send Strict-Transport-Security with a max-age of at least a year, so browsers never try plain http again.",
+   "tags": [
+    "WebSecurity",
+    "HSTS",
+    "HTTPS"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:06:27.158Z",
+   "pages": 20,
+   "overall": 49,
+   "areas": {
+    "SEO": 75,
+    "GEO": 77,
+    "Analytics": 51,
+    "Security": 16,
+    "Accessibility": 11,
+    "Performance": 69
+   },
+   "fixLines": [
+    "// SEC-02: delifood-stbarth.com/d-fr/accueil sets…",
+    "expect(headers[\"strict-transport-security\"]).toBeTruthy();"
+   ],
+   "caseId": "SEC-02",
+   "status": "pending"
+  },
+  {
+   "id": "u-delika-cl",
+   "host": "delika.cl",
+   "title": [
+    "delika.cl: {overall}.",
+    "*The gap: form labels.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 40 form controls have no label.",
+   "action": "Give every input a visible label tied to it with for and id. Screen readers announce it, and the tap target grows.",
+   "tags": [
+    "Accessibility",
+    "Forms",
+    "A11y"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:07:02.421Z",
+   "pages": 20,
+   "overall": 57,
+   "areas": {
+    "SEO": 83,
+    "GEO": 85,
+    "Analytics": 54,
+    "Security": 1,
+    "Accessibility": 51,
+    "Performance": 76
+   },
+   "fixLines": [
+    "// FM-01: Fields on delika.cl have labels",
+    "await page.goto(BASE + \"/\");",
+    "expect(found).toBe(0);"
+   ],
+   "caseId": "FM-01",
+   "status": "pending"
+  },
+  {
+   "id": "u-delish-com",
+   "host": "delish.com",
+   "title": [
+    "delish.com: {overall}.",
+    "*The gap: AI crawler access.*"
+   ],
+   "body": "Every internal link that was opened answered, and model-training crawlers are blocked by choice. But 1 AI answer or search crawler is blocked.",
+   "action": "Decide per bot in robots.txt: allow the answer engines you want to be cited by, and block only training crawlers.",
+   "tags": [
+    "GEO",
+    "AISearch",
+    "RobotsTxt"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:07:44.015Z",
+   "pages": 20,
+   "overall": 47,
+   "areas": {
+    "SEO": 59,
+    "GEO": 53,
+    "Analytics": 32,
+    "Security": 45,
+    "Accessibility": 59,
+    "Performance": 34
+   },
+   "fixLines": [
+    "// GEO-01: AI answer and search crawlers may read…",
+    "expect(await res.text()).not.toMatch(new RegExp(\"^user-agent:\\\\s*(?:OAI-SearchBot|ChatGP"
+   ],
+   "caseId": "GEO-01",
+   "status": "pending"
+  },
+  {
+   "id": "u-deliveroo-it",
+   "host": "deliveroo.it",
+   "title": [
+    "deliveroo.it: {overall}.",
+    "*The gap: page titles.*"
+   ],
+   "body": "Every internal link that was opened answered, and AI answer and search crawlers may read the start page. But 1 page has no title.",
+   "action": "Give every page a unique title of about 60 characters: the page first, the site second.",
+   "tags": [
+    "SEO",
+    "Titles",
+    "SERP"
+   ],
+   "scope": "Requested",
+   "fetchedAt": "2026-11-28T00:08:29.021Z",
+   "pages": 20,
+   "overall": 45,
+   "areas": {
+    "SEO": 8,
+    "GEO": 88,
+    "Analytics": 51,
+    "Security": 16,
+    "Accessibility": 59,
+    "Performance": 54
+   },
+   "fixLines": [
+    "// FN-02: deliveroo.it/it/ has a title",
+    "await page.goto(BASE + \"/it/\");",
+    "await expect(page).toHaveTitle(/\\S/);"
+   ],
+   "caseId": "FN-02",
+   "status": "pending"
+  }
+ ]
+}

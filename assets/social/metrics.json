@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updatedAt": "2026-11-27T18:21:57.163Z",
+ "updatedAt": "2026-11-28T19:13:10.807Z",
  "posts": {
   "auto-2026-10-21/01-u-teaminternational-com": {
    "linkedin": {
@@ -722,7 +722,7 @@
     "impressions": 1
    },
    "tiktok": {
-    "impressions": 61,
+    "impressions": 63,
     "views": 63
    },
    "x": {
@@ -737,7 +737,7 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 11
+    "views": 14
    }
   },
   "auto-2026-10-25/06-vs-subastasventura-com": {
@@ -767,6 +767,7 @@
     "impressions": 1
    },
    "tiktok": {
+    "impressions": 1,
     "views": 3,
     "likes": 1,
     "comments": 2
@@ -814,6 +815,14 @@
    },
    "linkedin": {
     "impressions": 2
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 17
    }
   },
   "auto-2026-10-26/03-u-millanenlinea-com": {
@@ -828,6 +837,27 @@
    },
    "x": {
     "impressions": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   }
+  },
+  "auto-2026-10-26/04-u-cng-edu": {
+   "linkedin": {
+    "impressions": 3
+   },
+   "telegram": {
+    "views": 2
+   }
+  },
+  "auto-2026-10-26/05-u-montesofia-com": {
+   "linkedin": {
+    "impressions": 1
+   },
+   "telegram": {
+    "views": 1
    }
   },
   "auto-2026-10-27/01-u-ciedi-edu-co": {
@@ -997,6 +1027,28 @@
    },
    "x": {
     "impressions": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   }
+  },
+  "auto-2026-11-03/06-u-vitibet-com": {
+   "telegram": {
+    "views": 2
+   }
+  },
+  "auto-2026-11-03/07-u-webjuice-ie": {
+   "linkedin": {
+    "impressions": 3
+   },
+   "telegram": {
+    "views": 1
+   },
+   "bluesky": {
+    "likes": 1,
+    "comments": 1
    }
   },
   "auto-2026-11-03/09-u-udg-mx": {
@@ -1547,7 +1599,7 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 2
+    "views": 3
    }
   },
   "auto-2026-11-15/03-vs-mccabespharmacy-com": {
@@ -1581,6 +1633,11 @@
    },
    "x": {
     "impressions": 2
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "auto-2026-11-16/02-u-predictz-com": {
@@ -1674,6 +1731,9 @@
   "auto-2026-11-17/31-u-accounts-google-com": {
    "x": {
     "impressions": 2
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "auto-2026-11-17/37-u-abogadosdiazyasociados-com": {
@@ -1700,11 +1760,11 @@
     "impressions": 1
    },
    "youtube": {
-    "views": 1
+    "views": 2
    },
    "tiktok": {
     "impressions": 63,
-    "views": 63,
+    "views": 64,
     "likes": 1
    }
   },
@@ -1880,6 +1940,14 @@
     "likes": 1,
     "shares": 1,
     "comments": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "auto-2026-11-19/35-u-amforaproperty-com": {
@@ -1903,6 +1971,11 @@
    },
    "x": {
     "impressions": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "auto-2026-11-21/01-u-kfintech-com": {
@@ -1913,12 +1986,14 @@
     "likes": 1
    },
    "linkedin": {
-    "impressions": 2,
+    "impressions": 4,
     "likes": 1,
     "comments": 2
    },
    "tiktok": {
-    "views": 1
+    "views": 2,
+    "likes": 1,
+    "comments": 1
    }
   },
   "auto-2026-11-22/01-u-haj-gov-bh": {
@@ -1927,6 +2002,10 @@
    },
    "bluesky": {
     "likes": 1,
+    "comments": 1
+   },
+   "linkedin": {
+    "impressions": 1,
     "comments": 1
    }
   },
@@ -1940,7 +2019,7 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 1
+    "views": 3
    }
   },
   "battle-vs-2026-11/02-us-vs-them-seo": {
@@ -2444,6 +2523,9 @@
    },
    "linkedin": {
     "impressions": 1
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "evergreen-2026-11/05-myth-https": {
@@ -2487,6 +2569,11 @@
    },
    "youtube": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "evergreen-2026-11/07-pre-release": {
@@ -2642,13 +2729,18 @@
   },
   "evergreen-2026-11/15-dmarc": {
    "telegram": {
-    "views": 1
+    "views": 2
    },
    "linkedin": {
     "impressions": 1
    },
    "x": {
     "impressions": 2
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "evergreen-2026-11/16-skip-link": {
@@ -2656,10 +2748,22 @@
     "views": 1
    },
    "linkedin": {
-    "impressions": 5
+    "impressions": 6
    },
    "x": {
     "impressions": 3
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1
+   }
+  },
+  "evergreen-2026-11/17-field-vs-lab": {
+   "linkedin": {
+    "impressions": 2
+   },
+   "telegram": {
+    "views": 2
    }
   },
   "evergreen-2026-11/18-myth-keywords": {
@@ -2808,6 +2912,11 @@
    },
    "bluesky": {
     "likes": 2
+   }
+  },
+  "launch-2026-10/it/security": {
+   "telegram": {
+    "views": 2
    }
   },
   "launch-2026-10/pt/a11y": {
@@ -3234,6 +3343,11 @@
    },
    "linkedin": {
     "impressions": 5
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-100/02-mozilla": {
@@ -3273,8 +3387,9 @@
    },
    "tiktok": {
     "impressions": 69,
-    "views": 69,
-    "likes": 1
+    "views": 70,
+    "likes": 2,
+    "comments": 1
    }
   },
   "runs-100/05-unesco": {
@@ -3283,7 +3398,7 @@
    },
    "tiktok": {
     "impressions": 54,
-    "views": 54
+    "views": 56
    },
    "x": {
     "impressions": 2
@@ -3298,7 +3413,9 @@
    },
    "tiktok": {
     "impressions": 70,
-    "views": 70
+    "views": 71,
+    "likes": 1,
+    "comments": 1
    },
    "x": {
     "impressions": 2
@@ -3309,12 +3426,15 @@
     "impressions": 5
    },
    "tiktok": {
-    "impressions": 60,
+    "impressions": 62,
     "views": 68,
     "likes": 1
    },
    "x": {
     "impressions": 3
+   },
+   "youtube": {
+    "views": 1
    }
   },
   "runs-100/08-icrc": {
@@ -3325,7 +3445,12 @@
     "impressions": 2
    },
    "youtube": {
-    "views": 2
+    "views": 3
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-100/09-msf": {
@@ -3340,6 +3465,11 @@
    },
    "youtube": {
     "views": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-100/10-amnesty": {
@@ -3348,6 +3478,11 @@
    },
    "x": {
     "impressions": 2
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-100/11-guardian": {
@@ -3359,6 +3494,14 @@
    },
    "x": {
     "impressions": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 5
    }
   },
   "runs-100/12-aljazeera": {
@@ -3375,11 +3518,33 @@
    },
    "x": {
     "impressions": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
+   },
+   "youtube": {
+    "views": 4
    }
   },
   "runs-100/13-dw": {
    "facebook": {
     "impressions": 1
+   },
+   "linkedin": {
+    "impressions": 1
+   },
+   "telegram": {
+    "views": 1
+   }
+  },
+  "runs-100/14-elpais": {
+   "linkedin": {
+    "impressions": 14
+   },
+   "telegram": {
+    "views": 1
    }
   },
   "runs-2026-10/01-govuk": {
@@ -3555,6 +3720,11 @@
    },
    "reddit": {
     "likes": 1
+   },
+   "tiktok": {
+    "views": 1,
+    "likes": 1,
+    "comments": 1
    }
   },
   "runs-2026-10/10-nasa": {
@@ -4356,16 +4526,16 @@
  },
  "pages": {
   "Facebook Page": {
-   "asked": 223,
-   "answered": 223,
-   "insights": 223
+   "asked": 228,
+   "answered": 228,
+   "insights": 228
   }
  },
  "channels": {
   "telegram": {
    "chat": "@qalab_live",
    "members": 3,
-   "at": "2026-11-27T18:21:57.163Z",
+   "at": "2026-11-28T19:13:10.807Z",
    "history": [
     {
      "date": "2026-11-05",
@@ -4437,6 +4607,10 @@
     },
     {
      "date": "2026-11-27",
+     "members": 3
+    },
+    {
+     "date": "2026-11-28",
      "members": 3
     }
    ]

@@ -1246,6 +1246,18 @@
    ],
    "at": "2026-11-15"
   },
+  "aramirestaurant.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.95,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "phone +591 77990858",
+    "written in es, spoken in BO"
+   ],
+   "at": "2026-11-28"
+  },
   "arandupyahu.com": {
    "country": "PY",
    "scope": "country",
@@ -2954,6 +2966,19 @@
     "written in es, spoken in GT"
    ],
    "at": "2026-11-13"
+  },
+  "cemlapaz.com": {
+   "country": "MX",
+   "scope": "country",
+   "confidence": 0.93,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry MX",
+    "schema.org addressCountry MX (legal/contact page)",
+    "locale es-MX",
+    "locale es-MX (legal/contact page)"
+   ],
+   "at": "2026-11-28"
   },
   "cengage.com": {
    "country": "US",
@@ -4679,6 +4704,19 @@
    ],
    "at": "2026-11-15"
   },
+  "delish.com": {
+   "country": "US",
+   "scope": "country",
+   "confidence": 0.9,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry US",
+    "schema.org addressCountry US (legal/contact page)",
+    "written in en, spoken in US",
+    "locale en-US"
+   ],
+   "at": "2026-11-28"
+  },
   "delsur.com.sv": {
    "country": "SV",
    "scope": "country",
@@ -5815,6 +5853,19 @@
     "written in sk (legal/contact page)"
    ],
    "at": "2026-11-09"
+  },
+  "egafabogados.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.98,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "schema.org addressCountry BO (legal/contact page)",
+    "phone +59176726330",
+    "phone +59176726330 (legal/contact page)"
+   ],
+   "at": "2026-11-28"
   },
   "eldominico.edu.do": {
    "country": "DO",
@@ -8291,6 +8342,17 @@
    ],
    "at": "2026-11-09"
   },
+  "goodcarsimport.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.89,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "written in es, spoken in BO"
+   ],
+   "at": "2026-11-28"
+  },
   "gorenje.com": {
    "country": "SI",
    "scope": "country",
@@ -9868,6 +9930,19 @@
    ],
    "at": "2026-11-15"
   },
+  "jardinesashic.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.97,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "phone +59172020979",
+    "address names BO",
+    "written in es, spoken in BO"
+   ],
+   "at": "2026-11-28"
+  },
   "javday.app": {
    "country": "CN",
    "scope": "country",
@@ -10634,6 +10709,18 @@
     "in the CrUX top sites of AL only"
    ],
    "at": "2026-11-09"
+  },
+  "larufinabolivia.com": {
+   "country": "BO",
+   "scope": "country",
+   "confidence": 0.86,
+   "by": "signals",
+   "evidence": [
+    "schema.org addressCountry BO",
+    "schema.org addressCountry BO (legal/contact page)",
+    "written in es, spoken in BO"
+   ],
+   "at": "2026-11-28"
   },
   "lascanasrestaurant.com": {
    "country": "AR",

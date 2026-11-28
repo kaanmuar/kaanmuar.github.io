@@ -1,5 +1,5 @@
 {
- "since": "2026-11-27T18:07:01.264Z",
+ "since": "2026-11-28T11:31:33.353Z",
  "posted": {
   "teaminternational.com": "2026-10-21",
   "epssura.com": "2026-10-21",
@@ -559,14 +559,30 @@
   "bullerbrewingco.com": "2026-11-22",
   "standardbank.co.mz": "2026-11-22",
   "decathlon.com.py": "2026-11-27",
-  "transavia.com": "2026-11-27"
+  "transavia.com": "2026-11-27",
+  "denner.ch": "2026-11-28",
+  "dedatec.de": "2026-11-28",
+  "defacto.com.tr": "2026-11-28",
+  "defense-arab.com": "2026-11-28",
+  "delasabana.com": "2026-11-28",
+  "delfinbarquero.com": "2026-11-28",
+  "delica.com.py": "2026-11-28",
+  "delicatessengourmetpremium.com": "2026-11-28",
+  "delifood-stbarth.com": "2026-11-28",
+  "delika.cl": "2026-11-28",
+  "delish.com": "2026-11-28",
+  "deliveroo.it": "2026-11-28"
  },
  "recent": [
-  "ax-target-size",
-  "sec-http",
-  "ax-aria-required-parent",
+  "seo-title-missing",
+  "geo-crawlers",
   "a11y-labels",
-  "a11y-labels"
+  "sec-hsts",
+  "ax-button-name"
  ],
- "socialPending": null
+ "socialPending": {
+  "batch": "auto-2026-11-28",
+  "count": 12,
+  "at": "2026-11-28T19:09:59.014Z"
+ }
 }
